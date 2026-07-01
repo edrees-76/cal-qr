@@ -45,6 +45,12 @@ namespace CAL_QR
             {
                 e.Cancel = true;
             }
+            else
+            {
+                _isLoggingOut = true;
+                var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
+                loginWindow.Show();
+            }
         }
 
         private void ViewModel_LockRequested(object? sender, EventArgs e)
@@ -99,7 +105,9 @@ namespace CAL_QR
             if (result == MessageBoxResult.Yes)
             {
                 _isLoggingOut = true;
-                Application.Current.Shutdown();
+                var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
+                loginWindow.Show();
+                this.Close();
             }
         }
     }

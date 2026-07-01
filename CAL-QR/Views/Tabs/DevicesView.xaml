@@ -48,6 +48,17 @@
                             </DataTemplate>
                         </Button.ContentTemplate>
                     </Button>
+
+                    <Button Command="{Binding PrintBatchCommand}" Content="طباعة المحدد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="طباعة المحدد" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
                 </StackPanel>
 
                 <!-- Search -->
@@ -158,6 +169,20 @@
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
+                        <!-- عمود التحديد المتعدد -->
+                        <DataGridTemplateColumn Width="50" IsReadOnly="False">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding DataContext.IsAllSelected, RelativeSource={RelativeSource AncestorType=DataGrid}, Mode=TwoWay}" ToolTip="تحديد/إلغاء تحديد الكل" HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
                         <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="120" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
@@ -258,7 +283,14 @@
 
                                     <!-- Content -->
                                     <StackPanel Grid.Row="1" Margin="15">
-                                        <TextBlock Text="{Binding CertificateNumber}" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding CertificateNumber}" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" />
+                                            <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="تحديد للطباعة الدفيعة" VerticalAlignment="Center" Margin="5,0,0,0" />
+                                        </Grid>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="#C9A227" Margin="0,0,5,0" VerticalAlignment="Center" />

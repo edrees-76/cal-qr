@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
+using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
@@ -20,6 +22,9 @@ namespace CAL_QR.ViewModels
         private readonly IOwnerRepository _ownerRepository;
         private readonly IDeviceTypeRepository _deviceTypeRepository;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly IQrService _qrService;
+        private readonly IPrintService _printService;
+        private readonly IPaperTemplateRepository _templateRepository;
 
         private ObservableCollection<DeviceDisplayItem> _devices = new();
         private ObservableCollection<Owner> _ownersFilter = new();
@@ -51,13 +56,19 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             IOwnerRepository ownerRepository,
             IDeviceTypeRepository deviceTypeRepository,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            IQrService qrService,
+            IPrintService printService,
+            IPaperTemplateRepository templateRepository)
         {
             _deviceRepository = deviceRepository;
             _contextFactory = contextFactory;
             _ownerRepository = ownerRepository;
             _deviceTypeRepository = deviceTypeRepository;
             _auditLogRepository = auditLogRepository;
+            _qrService = qrService;
+            _printService = printService;
+            _templateRepository = templateRepository;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             SearchCommand = new RelayCommand(async () => { CurrentPage = 1; await LoadDataAsync(); });
@@ -75,9 +86,27 @@ namespace CAL_QR.ViewModels
             EditDeviceCommand = new RelayCommand(OpenEditDialog);
             DeleteDeviceCommand = new RelayCommand(async (p) => await DeleteDeviceAsync(p));
             PrintDeviceCommand = new RelayCommand(OpenPrintPreviewDialog);
+            PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
         }
 
         public ICommand PrintDeviceCommand { get; }
+        public ICommand PrintBatchCommand { get; }
+
+        private bool _isAllSelected;
+        public bool IsAllSelected
+        {
+            get => _isAllSelected;
+            set
+            {
+                if (SetProperty(ref _isAllSelected, value))
+                {
+                    foreach (var device in Devices)
+                    {
+                        device.IsSelected = value;
+                    }
+                }
+            }
+        }
 
         #region Properties
         public ObservableCollection<DeviceDisplayItem> Devices
@@ -365,6 +394,9 @@ namespace CAL_QR.ViewModels
                         .ToList();
 
                     Devices = new ObservableCollection<DeviceDisplayItem>(paginated);
+
+                    _isAllSelected = false;
+                    OnPropertyChanged(nameof(IsAllSelected));
                 }
             }
             catch (Exception ex)
@@ -469,9 +501,186 @@ namespace CAL_QR.ViewModels
             dialog.Owner = Application.Current.MainWindow;
             dialog.ShowDialog();
         }
+
+        private async Task PrintBatchAsync()
+        {
+            var selectedItems = Devices.Where(d => d.IsSelected).ToList();
+            if (selectedItems.Count == 0)
+            {
+                MessageBox.Show(
+                    Application.Current.MainWindow,
+                    "يرجى تحديد جهاز واحد على الأقل للطباعة.",
+                    "تنبيه",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning,
+                    MessageBoxResult.OK,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                );
+                return;
+            }
+
+            var printableItems = selectedItems.Where(d => d.LatestCalibrationRecordId > 0).ToList();
+            if (printableItems.Count == 0)
+            {
+                MessageBox.Show(
+                    Application.Current.MainWindow,
+                    "الأجهزة المحددة لا تحتوي على أي سجلات معايرة صالحة للطباعة.",
+                    "تنبيه",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning,
+                    MessageBoxResult.OK,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                );
+                return;
+            }
+
+            try
+            {
+                PaperTemplate? template = null;
+                string printer = string.Empty;
+
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                {
+                    // الحل الثاني: استعلام مباشر داخل نفس سياق الاتصال المفتوح
+                    var templates = await context.PaperTemplates.AsNoTracking().ToListAsync();
+                    var lastTemplateIdSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastTemplateId");
+                    if (lastTemplateIdSetting != null && int.TryParse(lastTemplateIdSetting.Value, out int tid) && tid > 0)
+                    {
+                        template = templates.FirstOrDefault(t => t.Id == tid);
+                    }
+                    template ??= templates.FirstOrDefault(t => t.IsDefault) ?? templates.FirstOrDefault();
+
+                    if (template == null)
+                    {
+                        MessageBox.Show(
+                            Application.Current.MainWindow,
+                            "لا يوجد قالب طباعة معرف بالمنظومة.",
+                            "تنبيه",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning,
+                            MessageBoxResult.OK,
+                            MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                        );
+                        return;
+                    }
+
+                    var printers = _printService.GetAvailablePrinters().ToList();
+                    var lastPrinter = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastPrinterName");
+                    if (lastPrinter != null && !string.IsNullOrWhiteSpace(lastPrinter.Value) && printers.Contains(lastPrinter.Value))
+                    {
+                        printer = lastPrinter.Value;
+                    }
+                    else if (printers.Count > 0)
+                    {
+                        printer = printers[0];
+                    }
+                }
+
+                var recordIds = printableItems.Select(item => item.LatestCalibrationRecordId).ToList();
+                List<CalibrationRecord> records;
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                {
+                    records = await context.CalibrationRecords
+                        .AsNoTracking()
+                        .Include(r => r.Device!)
+                            .ThenInclude(d => d.Owner)
+                        .Include(r => r.Device!)
+                            .ThenInclude(d => d.DeviceType)
+                        .Where(r => recordIds.Contains(r.Id) && !r.IsDeleted)
+                        .ToListAsync();
+                }
+
+                if (records.Count == 0)
+                {
+                    MessageBox.Show(
+                        Application.Current.MainWindow,
+                        "لم يتم العثور على سجلات معايرة صالحة للأجهزة المحددة.",
+                        "تنبيه",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.OK,
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                    );
+                    return;
+                }
+
+                var jobs = new List<QrPrintJob>();
+                int currentColumn = 1;
+                int currentRow = 1;
+
+                foreach (var record in records)
+                {
+                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
+
+                    string qrContent = _qrService.GenerateVerificationText(
+                        ownerName: record.Device?.Owner?.Name ?? "",
+                        deviceType: record.Device?.DeviceType?.Name ?? "",
+                        model: record.Device?.Model ?? "",
+                        serial: record.Device?.SerialNumber ?? "",
+                        certNo: record.CertificateNumber,
+                        calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
+                        expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
+                        engineerName: record.EngineerName,
+                        description: record.CalibrationDescription ?? "",
+                        result: record.Result,
+                        verifyCode: record.HmacSignature
+                    );
+
+                    var qrPrintImage = _qrService.GenerateQrCodeImage(qrContent, 600);
+
+                    jobs.Add(new QrPrintJob
+                    {
+                        QrImage = qrPrintImage,
+                        Template = template,
+                        PrinterName = printer,
+                        StartColumn = currentColumn,
+                        StartRow = currentRow,
+                        CertificateNumber = record.CertificateNumber,
+                        DeviceInfoText = infoText
+                    });
+
+                    if (template.PaperType != "Roll")
+                    {
+                        currentColumn++;
+                        if (currentColumn > template.Columns)
+                        {
+                            currentColumn = 1;
+                            currentRow++;
+                        }
+                    }
+                }
+
+                _printService.PrintMultipleQrLabels(jobs);
+
+                string certNumbers = string.Join(", ", records.Select(r => r.CertificateNumber));
+                await _auditLogRepository.LogAsync("طباعة متعددة ملصقات QR", "Devices", "", $"طباعة رمز الاستجابة السريعة للشهادات: {certNumbers}");
+
+                MessageBox.Show(
+                    Application.Current.MainWindow,
+                    "تم إرسال دفعة الطباعة بنجاح.",
+                    "تمت الطباعة الدفيعة",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information,
+                    MessageBoxResult.OK,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                );
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    Application.Current.MainWindow,
+                    $"خطأ أثناء طباعة الدفعة: {ex.Message}",
+                    "خطأ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error,
+                    MessageBoxResult.OK,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                );
+            }
+        }
     }
 
-    public class DeviceDisplayItem
+    public class DeviceDisplayItem : BaseViewModel
     {
         public Device? Device { get; set; }
         public int Id { get; set; }
@@ -486,6 +695,13 @@ namespace CAL_QR.ViewModels
         public string Status { get; set; } = string.Empty;
         public string StatusColor { get; set; } = string.Empty;
         public int LatestCalibrationRecordId { get; set; }
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set => SetProperty(ref _isSelected, value);
+        }
 
         public string CalibrationDateString => CalibrationDate?.ToString("yyyy-MM-dd") ?? "-";
         public string ExpiryDateString => ExpiryDate?.ToString("yyyy-MM-dd") ?? "-";

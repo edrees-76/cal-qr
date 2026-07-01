@@ -1,0 +1,40 @@
+## Build outputs
+[Bb]in/
+[Oo]bj/
+[Tt]emp/
+
+## IDE and system configurations
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Database files (do not commit local SQLite databases containing sensitive data)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## Generated assets and local folders
+CAL-QR/QR/
+CAL-QR/Attachments/
+CAL-QR/Backups/
+CAL-QR/bin/
+CAL-QR/obj/
+CAL-QR.Tests/bin/
+CAL-QR.Tests/obj/
+
+## Word temporary files and releases
+~$*.docx
+Releases/
+*.zip
+
+## OS specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini

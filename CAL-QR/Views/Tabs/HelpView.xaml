@@ -1,0 +1,420 @@
+<UserControl x:Class="CAL_QR.Views.Tabs.HelpView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="900"
+             FlowDirection="RightToLeft"
+             Background="White">
+
+    <UserControl.Resources>
+        <FontFamily x:Key="CairoFont">/CAL-QR;component/Assets/Fonts/#Cairo</FontFamily>
+
+        <!-- Custom ListBoxItem Style for Help List -->
+        <Style x:Key="HelpListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="15,12" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="BorderThickness" Value="0,0,4,0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F0F4F8" />
+                                <Setter Property="Foreground" Value="#1A3A6B" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#1A3A6B" />
+                                <Setter Property="BorderBrush" Value="#C9A227" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Styling for Warning/Notice Card -->
+        <Style x:Key="NoticeCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFF8E1" />
+            <Setter Property="BorderBrush" Value="#FFE082" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="15,12" />
+            <Setter Property="Margin" Value="0,10,0,15" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Left Sidebar (Contents) -->
+            <ColumnDefinition Width="260" />
+            <!-- Vertical Separator -->
+            <ColumnDefinition Width="1" />
+            <!-- Right Content Area -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Sidebar -->
+        <Grid Grid.Column="0" Background="#F8FAFC">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Sidebar Title -->
+            <Border Grid.Row="0" Background="#1A3A6B" Padding="15,15" CornerRadius="0,0,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="PlaylistPlay" Foreground="White" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock Text="📋 المحتويات" FontSize="15" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+            </Border>
+
+            <!-- List of Sections -->
+            <ListBox x:Name="HelpSectionsListBox" Grid.Row="1" 
+                     BorderThickness="0" Background="Transparent"
+                     ItemContainerStyle="{StaticResource HelpListBoxItemStyle}"
+                     SelectionChanged="HelpSectionsListBox_SelectionChanged">
+                <ListBoxItem Content="1. معالج الإعداد الأول" IsSelected="True" />
+                <ListBoxItem Content="2. تسجيل الدخول وقفل الأمان" />
+                <ListBoxItem Content="3. لوحة التحكم للمتابعة" />
+                <ListBoxItem Content="4. إدخال وإدارة الأجهزة" />
+                <ListBoxItem Content="5. تسجيل عمليات المعايرة" />
+                <ListBoxItem Content="6. تصميم وضبط ملصقات QR" />
+                <ListBoxItem Content="7. إدخال الجهات والأنواع" />
+                <ListBoxItem Content="8. استخراج التقارير وتصديرها" />
+                <ListBoxItem Content="9. النسخ الاحتياطية واستعادتها" />
+                <ListBoxItem Content="10. تصفح سجل العمليات" />
+                <ListBoxItem Content="11. حل المشاكل الشائعة" />
+                <ListBoxItem Content="12. دورة العمل اليومية" />
+                <ListBoxItem Content="13. العناية بملصق QR المطبوع" />
+                <ListBoxItem Content="14. مسح كود QR بالهاتف" />
+            </ListBox>
+        </Grid>
+
+        <!-- Vertical Divider -->
+        <Border Grid.Column="1" Background="#E2E8F0" Width="1" />
+
+        <!-- Right Content Area -->
+        <Grid Grid.Column="2" Background="White">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Header Zone -->
+            <Border Grid.Row="0" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="25,18">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon x:Name="HeaderIcon" Kind="HelpCircleOutline" Foreground="#1A3A6B" Width="26" Height="26" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <TextBlock x:Name="TxtHeaderTitle" Text="معالج الإعداد الأول" FontSize="20" FontWeight="Bold" Foreground="#1A3A6B" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Scrollable Content Panels -->
+            <ScrollViewer Grid.Row="1" x:Name="HelpScrollViewer" VerticalScrollBarVisibility="Auto" Padding="25,20">
+                <Grid x:Name="ContentContainer">
+
+                    <!-- Panel 1: First Run Setup -->
+                    <StackPanel x:Name="Panel1" Visibility="Visible">
+                        <TextBlock Text="تشغيل البرنامج لأول مرة (معالج الإعداد)" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="عند فتح البرنامج لأول مرة على جهازك، ستظهر لك تلقائياً شاشة إعداد النظام المكونة من 4 خطوات:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="الخطوة 1: مرحباً بك" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="اضغط على زر 'البدء ←' مباشرة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="الخطوة 2: اختيار مسار قاعدة البيانات (مكان حفظ البيانات)" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• يقوم النظام بتحديد مسار افتراضي لحفظ البيانات داخل مجلد البرنامج." FontSize="13" Foreground="#4A5568" Margin="10,0,0,5" />
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock Text="💡 توصية هامة: يُفضل بشدة تغيير هذا المسار بالضغط على زر 'تصفح...' واختيار مجلد داخل القرص D: أو E: (بدلاً من القرص C:). هذا يضمن سلامة بياناتك وعدم ضياعها في حال تعرض نظام التشغيل Windows للتلف أو عند عمل فورمات للجهاز." FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
+                        </Border>
+                        <TextBlock Text="• اضغط 'التالي ←' للذهاب للخطوة التالية." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="الخطوة 3: إنشاء كلمة المرور وسؤال الأمان" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• اكتب كلمة المرور التي تريد استخدامها للدخول (4 خانات على الأقل).&#x0a;• أعِد كتابة كلمة المرور في خانة التأكيد.&#x0a;• اختر سؤال أمان سري واكتبه (مثال: ما هو أول هاتف امتلكته؟).&#x0a;• اكتب إجابة السؤال السري واحفظها جيداً.&#x0a;• اضغط 'التالي ←'." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="الخطوة 4: اكتمال الإعداد" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="تظهر لك علامة النجاح الخضراء (✅)، اضغط على زر 'بدء الاستخدام' ليفتح لك البرنامج نافذة تسجيل الدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                    </StackPanel>
+
+                    <!-- Panel 2: Login and Security -->
+                    <StackPanel x:Name="Panel2" Visibility="Collapsed">
+                        <TextBlock Text="تسجيل الدخول وقفل الأمان وخيارات الطوارئ" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        
+                        <TextBlock Text="تسجيل الدخول اليومي:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="أدخل كلمة مرورك ثم اضغط زر 'تسجيل الدخول' أو زر Enter بلوحة المفاتيح." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="الحظر التلقائي:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="إذا قمت بإدخال كلمة مرور خاطئة 3 مرات متتالية، سيقوم البرنامج بقفل نفسه لمدة 30 ثانية حماية للبيانات. يرجى الانتظار حتى انتهاء العد التنازلي لإعادة المحاولة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="القفل التلقائي عند الخمول:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="إذا تركت البرنامج مفتوحاً دون استخدام لفترة من الوقت (مثلاً 10 دقائق)، فسيقوم بقفل الواجهة تلقائياً لحماية سرية البيانات وإعادتك لشاشة الدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="نسيت كلمة المرور؟" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. انقر على رابط 'نسيت كلمة المرور' في نافذة تسجيل الدخول.&#x0a;2. سيطلب منك البرنامج الإجابة على السؤال السري الذي حددته في الإعداد الأول.&#x0a;3. عند إدخال الإجابة الصحيحة، سيسمح لك البرنامج بتعيين كلمة مرور جديدة فوراً والدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap" />
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock Text="⚠️ خيار الطوارئ الأخير: في حال نسيان الإجابة السرية أيضاً، يرجى التواصل مع مسؤول النظام (م. إدريس فتح الله الهري) للحصول على كلمة المرور الطارئة وإعادة الضبط." FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Panel 3: Dashboard -->
+                    <StackPanel x:Name="Panel3" Visibility="Collapsed">
+                        <TextBlock Text="الشاشة الرئيسية للمتابعة السريعة (لوحة التحكم)" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="هذه الشاشة مخصصة للمتابعة السريعة والفورية لحالة الأجهزة ولا تتطلب منك القيام بأي إجراء:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="• الأرقام الأربعة الكبيرة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="تعرض لك لمحة سريعة عن (إجمالي الأجهزة، الأجهزة ذات المعايرة السارية، الأجهزة التي ستنتهي صلاحيتها قريباً خلال 30 يوماً، والأجهزة منتهية الصلاحية)." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="• قائمة التنبيهات:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="تعرض جدولاً بالأجهزة التي تقترب معايرتها من الانتهاء لمعرفة الأجهزة التي تحتاج لمعايرة فوراً." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="• مخطط توزيع الأجهزة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="رسم تفاعلي دائري يوضح الجهات المالكة لأكثر الأجهزة الموجودة في النظام." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                    </StackPanel>
+
+                    <!-- Panel 4: Devices Management -->
+                    <StackPanel x:Name="Panel4" Visibility="Collapsed">
+                        <TextBlock Text="إدخال وإدارة الأجهزة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        
+                        <TextBlock Text="طرق العرض:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="يمكنك الضغط على أيقونة التبديل لعرض الأجهزة على هيئة جدول أو بطاقات." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="البحث والفلترة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• البحث السريع: اكتب اسم الموديل أو الرقم التسلسلي أو الجهة في شريط البحث العلوي لتصفية القائمة فوراً.&#x0a;• البحث المتقدم (الفلترة): انقر على زر الفلترة لتحديد شروط أدق مثل الأجهزة التابعة لجهة معينة فقط أو الأجهزة منتهية الصلاحية." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="إضافة جهاز جديد:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. انقر على زر 'إضافة جهاز جديد'.&#x0a;2. اكتب الموديل والرقم التسلسلي.&#x0a;3. اختر نوع الجهاز والجهة المالكة من القوائم المنسدلة (يمكنك البدء بكتابة اسم الجهة أو النوع للبحث السريع والاختيار الذاتي).&#x0a;4. اضغط 'حفظ'." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="تعديل أو حذف جهاز:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="انقر على زر التعديل (أيقونة القلم) أو زر الحذف (أيقونة السلة) بجانب الجهاز في الجدول لإزالته من العرض." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                    </StackPanel>
+
+                    <!-- Panel 5: Calibration & Attachments -->
+                    <StackPanel x:Name="Panel5" Visibility="Collapsed">
+                        <TextBlock Text="تسجيل عمليات المعايرة وإرفاق الشهادات" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        
+                        <TextBlock Text="فتح سجل المعايرات:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="من جدول الأجهزة، انقر على زر 'تفاصيل تاريخ الجهاز' (أيقونة العين) لتظهر لك قائمة بجميع المعايرات السابقة للجهاز." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="إضافة معايرة جديدة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="انقر زر 'إضافة معايرة جديدة' وعشئ الحقول كالتالي:&#x0a;1. رقم الشهادة: اكتب رقم الشهادة الورقية (أو اترك الرقم التلقائي الفريد الذي يوفره النظام).&#x0a;2. التواريخ: حدد تاريخ إجراء المعايرة وتاريخ انتهائها بدقة.&#x0a;3. النتيجة: اختر النتيجة من القائمة (سار، غير سار، مشروط).&#x0a;4. اسم المهندس: اكتب اسم المهندس القائم بالمعايرة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="تجهيز ورفع المرفقات (شهادة المعايرة الأصلية):" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• يُنصح بمسح الشهادة الورقية ضوئياً (Scanner) بجودة جيدة مع حفظها بصيغة PDF أو صورة JPG.&#x0a;• اسحب ملف الشهادة وأفلته في المربع المخصص، أو اضغط زر 'إضافة مرفق' لاختيار الملف من جهازك." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="توليد كود الـ QR:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="سيقوم النظام تلقائياً بتوليد رمز الـ QR المعتمد والمحمي إلكترونياً بناءً على هذه البيانات بعد الحفظ." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                    </StackPanel>
+
+                    <!-- Panel 6: QR Templates & Sizes -->
+                    <StackPanel x:Name="Panel6" Visibility="Collapsed">
+                        <TextBlock Text="تصميم وضبط مقاسات ملصقات كود الـ QR" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="يوفر النظام أداة مرنة للمشغّل لضبط مقاسات ملصق كود الـ QR المطبوع لتتناسب مع أحجام الملصقات المختلفة المتوفرة لديك:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="تعديل وضبط مقاسات الملصق:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. اذهب إلى نافذة طباعة الملصقات أو إعدادات القوالب.&#x0a;2. يمكنك تعيين الطول والعرض الفعلي للملصق بالمليمتر (mm).&#x0a;3. يمكنك ضبط الهوامش (العلوية والجانبية) لضمان توسيط كود الـ QR والبيانات المرافقة له على الورقة المطبوعة.&#x0a;4. يمكنك إدراج نصوص مخصصة تظهر بجانب الكود (مثل اسم الموديل أو تاريخ انتهاء المعايرة)." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="حفظ قوالب جديدة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="بعد ضبط المقاسات المناسبة لنوع ملصقات معين، يمكنك إدخال اسم للقالب (مثال: ملصقات مقاس 50x50 مم) وحفظه كقالب جديد لاستخدامه في المرات القادمة بضغطة زر واحدة دون الحاجة لإعادة ضبط المقاسات في كل مرة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 7: Owners & Types -->
+                    <StackPanel x:Name="Panel7" Visibility="Collapsed">
+                        <TextBlock Text="إدخال الجهات المالكة وأنواع الأجهزة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="لتسجيل وتسهيل عملية إدخال الأجهزة الجديدة لاحقاً دون أخطاء إملائية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="إضافة جهة مالكة جديدة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="افتح قسم 'الجهات المالكة'، اضغط زر إضافة واكتب اسم المؤسسة أو المستشفى أو القسم (مثل: مستشفى بنغازي الطبي) ثم احفظها. ستظهر لك هذه الجهة تلقائياً في قائمة الخيارات عند تسجيل أي جهاز جديد." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="إضافة نوع جهاز جديد:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="افتح قسم 'أنواع الأجهزة'، اضغط زر إضافة واكتب نوع الجهاز (مثل: جهاز مسح غيغر) واحفظه." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 8: Export & Reports -->
+                    <StackPanel x:Name="Panel8" Visibility="Collapsed">
+                        <TextBlock Text="استخراج التقارير وتصديرها (Excel &amp; PDF)" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="يمكنك استخراج البيانات وتصديرها بالصيغة المناسبة حسب حاجتك الإدارية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="خطوات التصدير:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="حدد الفلاتر المطلوبة (الجهة المالكة، نوع الجهاز، نطاق تاريخ انتهاء المعايرة) من الشاشة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+
+                        <TextBlock Text="اختيار نوع التقرير المناسب:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• تقرير ملخص (Summary): يقتصر على البيانات الأساسية الضرورية فقط (الرقم التسلسلي، الموديل، تاريخ الانتهاء، النتيجة). يُفضل استخدامه للمراجعات السريعة وحصر الأجهزة الإجمالي.&#x0a;• تقرير مفصل (Detailed): يتضمن كافة البيانات المدخلة بالتفصيل بما فيها الملاحظات وأسماء المهندسين وغيرها. يُفضل استخدامه للأرشفة الدقيقة وملفات التدقيق الفني." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="اختيار صيغة الملف المناسبة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="• تصدير إلى Excel: اختر هذه صيغة للتعديل اليدوي اللاحق أو لإجراء عمليات حسابية على البيانات.&#x0a;• تصدير إلى PDF: اختر هذه صيغة لطباعة التقرير مباشرة بشكل رسمي لتقديمه للإدارة أو للرقابة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 9: Backup & Restore -->
+                    <StackPanel x:Name="Panel9" Visibility="Collapsed">
+                        <TextBlock Text="حفظ النسخ الاحتياطية واستعادتها" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="لحماية المنظومة من الضياع التام نتيجة أعطال الأجهزة أو الفيروسات:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="إنشاء نسخة احتياطية يدوية:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. اذهب إلى تبويب 'الإعدادات'.&#x0a;2. انقر على زر 'نسخ احتياطي الآن'.&#x0a;3. سيقوم البرنامج بجمع قاعدة البيانات والشهادات المرفقة وضغطها في ملف ZIP واحد وحفظه في مسار النسخ الاحتياطي." FontSize="13" Foreground="#4A5568" Margin="10,0,0,5" TextWrapping="Wrap" />
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock Text="💡 نصيحة ذهبية: قم بنقل ملف الـ ZIP الناتج بشكل دوري إلى فلاش ميموري (USB) أو هارد ديسك خارجي واحتفظ به في مكان آمن بعيداً عن جهاز الكمبيوتر الرئيسي." FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
+                        </Border>
+
+                        <TextBlock Text="النسخ الاحتياطي التلقائي:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="يمكنك ضبط خيار الجدولة التلقائية في الإعدادات (يومي / أسبوعي / شهري)، وسيقوم البرنامج بعمل النسخة الاحتياطية تلقائياً في الخلفية عند استخدامه." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="استعادة نسخة احتياطية:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="في حال تلف البيانات، اضغط زر 'استعادة نسخة احتياطية' في الإعدادات، واختر ملف الـ ZIP المطلوب. سيحذرك النظام بأن البيانات الحالية سيتم استبدالها بالكامل، بمجرد موافقتك سيعيد البرنامج تشغيل نفسه بالبيانات الجديدة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 10: Audit Log -->
+                    <StackPanel x:Name="Panel10" Visibility="Collapsed">
+                        <TextBlock Text="تصفح سجل العمليات للمتابعة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="يقوم النظام بمراقبة وتسجيل الحركات التي تتم بداخله تلقائياً:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="طريقة العرض:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="يمكنك فتح تبويب 'سجل العمليات (Audit Log)' لمشاهدة جدول مرتب زمنياً يوضح كل إجراء تم في المنظومة (مثل تفاصيل إضافة أو تعديل أو حذف الأجهزة وسجلات المعايرة والنسخ الاحتياطي وتصدير التقارير)." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="الهدف منه:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="يُستخدم هذا التبويب كمرجع للتحقق الفوري من العمليات والتأكد من سير العمليات بشكل صحيح دون أخطاء." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                    </StackPanel>
+
+                    <!-- Panel 11: Troubleshooting Table -->
+                    <StackPanel x:Name="Panel11" Visibility="Collapsed">
+                        <TextBlock Text="حل المشاكل والأخطاء الشائعة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" />
+
+                        <!-- Troubleshooting DataGrid simulated using styled Grid/Borders for 100% control -->
+                        <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" UseLayoutRounding="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Header -->
+                                <Border Grid.Row="0" Grid.Column="0" Background="#F1F5F9" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="المشكلة" FontWeight="Bold" Foreground="#1A3A6B" />
+                                </Border>
+                                <Border Grid.Row="0" Grid.Column="1" Background="#F1F5F9" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="السبب المحتمل" FontWeight="Bold" Foreground="#1A3A6B" />
+                                </Border>
+                                <Border Grid.Row="0" Grid.Column="2" Background="#F1F5F9" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="الحل المقترح" FontWeight="Bold" Foreground="#1A3A6B" />
+                                </Border>
+
+                                <!-- Row 1 -->
+                                <Border Grid.Row="1" Grid.Column="0" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="البرنامج يرفض تسجيل الدخول" TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="1" Grid.Column="1" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="إدخال كلمة مرور خاطئة." TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="1" Grid.Column="2" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="تأكد من لغة الكتابة وحالة الحروف (Capital/Small)، أو استخدم رابط 'نسيت كلمة المرور' للإجابة على السؤال السري." TextWrapping="Wrap" />
+                                </Border>
+
+                                <!-- Row 2 -->
+                                <Border Grid.Row="2" Grid.Column="0" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="تم قفل شاشة تسجيل الدخول" TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="2" Grid.Column="1" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="محاولة إدخال كلمة مرور خاطئة 3 مرات متتالية." TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="2" Grid.Column="2" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="انتظر 30 ثانية فقط دون الضغط على أي زر حتى ينتهي مؤقت الحظر التلقائي وتعود الواجهة للعمل." TextWrapping="Wrap" />
+                                </Border>
+
+                                <!-- Row 3 -->
+                                <Border Grid.Row="3" Grid.Column="0" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="أيقونة الطابعة لا تظهر أو لا تطبع" TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="3" Grid.Column="1" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="الطابعة غير متصلة بالكمبيوتر أو غير معرفة." TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="3" Grid.Column="2" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="تأكد من توصيل كابل الطابعة، وتشغيلها، وتأكد من ظهورها في قائمة الطابعات التابعة لنظام Windows قبل محاولة الطباعة من البرنامج." TextWrapping="Wrap" />
+                                </Border>
+
+                                <!-- Row 4 -->
+                                <Border Grid.Row="4" Grid.Column="0" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="تعذر رفع شهادة المعايرة كملف مرفق" TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="4" Grid.Column="1" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="صيغة الملف غير مدعومة." TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="4" Grid.Column="2" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="تأكد من أن صيغة الملف هي PDF أو صورة (JPG, PNG)، ثم أعد المحاولة." TextWrapping="Wrap" />
+                                </Border>
+
+                                <!-- Row 5 -->
+                                <Border Grid.Row="5" Grid.Column="0" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                                    <TextBlock Text="رسالة خطأ في مسار قاعدة البيانات" TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="5" Grid.Column="1" Padding="10" BorderBrush="#E2E8F0" BorderThickness="0,0,1,0">
+                                    <TextBlock Text="القرص أو المجلد المختار محمي أو محذوف." TextWrapping="Wrap" />
+                                </Border>
+                                <Border Grid.Row="5" Grid.Column="2" Padding="10">
+                                    <TextBlock Text="اذهب إلى إعدادات النظام وتأكد من اختيار مسار متاح وقابل للكتابة والقراءة على جهازك (مثل مجلد المستندات Documents أو القرص D)." TextWrapping="Wrap" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Panel 12: Daily Tasks -->
+                    <StackPanel x:Name="Panel12" Visibility="Collapsed">
+                        <TextBlock Text="دورة العمل اليومية والمختصرة للمشغّل" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="لتسهيل عملك اليومي، يمكنك اتباع هذا المخطط السريع كدليل مهام يومي:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="كل صباح (عند بدء العمل):" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. افتح البرنامج وسجّل الدخول.&#x0a;2. تفقد لوحة التحكم (Dashboard) مباشرة لإلقاء نظرة على عدد الأجهزة قريبة الانتهاء (إن وجدت).&#x0a;3. أبلغ القسم المعني بالأجهزة التي اقترب موعد انتهاء معايرتها لاتخاذ اللازم." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="عند ورود جهاز قياس جديد للمؤسسة:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. ادخل إلى قائمة الأجهزة وتأكد من أن 'الجهة المالكة' مسجلة مسبقاً، وإلا أضفها أولاً.&#x0a;2. اضغط 'إضافة جهاز جديد' وأدخل بيانات الموديل والرقم التسلسلي وقم بربطه بالجهة.&#x0a;3. افتح تفاصيل الجهاز واضغط 'إضافة معايرة جديدة' وأدخل بيانات شهادة المعايرة الحالية وارفع نسختها الإلكترونية.&#x0a;4. اضغط على 'طباعة ملصق QR' لطباعة الملصق الخاص بالجهاز ولصقه عليه فوراً." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 13: QR Care -->
+                    <StackPanel x:Name="Panel13" Visibility="Collapsed">
+                        <TextBlock Text="إرشادات العناية بملصق كود الـ QR المطبوع" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="الملصق المطبوع هو وسيلتك السريعة لقراءة حالة الجهاز بالهاتف المحمول. لضمان بقائه صالحاً ومقروءاً لأطول فترة ممكنة، اتبع الآتي:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="قبل اللصق:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="تأكد تماماً من تنظيف سطح الجهاز الإشعاعي وإزالة الأتربة أو الزيوت وتجفيفه تماماً قبل لصق الملصق لضمان قوة الالتصاق." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="مكان اللصق:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="اختر مكاناً مستوياً وواضحاً على جسم الجهاز (مثلاً: الجزء الخلفي أو الجانبي الذي لا يتعرض للمس المتكرر أثناء القياس أو التلامس المباشر مع الأسطح)." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+
+                        <TextBlock Text="الحماية الإضافية:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="يُنصح بشدة بلصق طبقة من الشريط اللاصق العريض الشفاف فوق الملصق بعد طباعته. هذا يحمي الحبر الورقي من التلف والبهتان نتيجة عمليات التطهير أو المسح بمواد التنظيف." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Panel 14: Mobile Scan -->
+                    <StackPanel x:Name="Panel14" Visibility="Collapsed">
+                        <TextBlock Text="كيفية مسح كود الـ QR بالهاتف للتحقق السريع" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                        <TextBlock Text="يمكن لأي شخص (مفتش، فني، أو مهندس) التحقق من حالة معايرة الجهاز في الميدان دون الحاجة لفتح نظام الكمبيوتر، وذلك باتباع الخطوات التالية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+
+                        <TextBlock Text="خطوات المسح والتحقق:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock Text="1. افتح تطبيق كاميرا الهاتف الذكي (أو أي تطبيق مخصص لمسح أكواد QR).&#x0a;2. وجّه الكاميرا نحو كود الـ QR المطبوع على الملصق الخاص بالجهاز.&#x0a;3. انقر على الرابط أو النص الذي سيظهر لك على الشاشة.&#x0a;4. ستظهر لك البيانات الأساسية للجهاز مباشرة للتأكد من مطابقتها للجهاز الفعلي:&#x0a;   * رقم الشهادة&#x0a;   * الموديل والرقم التسلسلي&#x0a;   * الجهة المالكة&#x0a;   * تاريخ انتهاء المعايرة&#x0a;   * التوقيع الإلكتروني (Signature): وهو رمز أمان يؤكد لك أن هذا الملصق تم توليده وتوقيعه من قبل نظام CAL-QR الرسمي ولم يتم التلاعب ببياناته." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,191 @@
+<Window x:Class="CAL_QR.Views.FirstRunWizard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="CAL-QR — معالج الإعداد الأول"
+        Width="650" Height="660" MinHeight="660"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        FlowDirection="RightToLeft"
+        FontFamily="{StaticResource CairoFont}"
+        Background="#F0F4F8">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1A3A6B" Padding="20,15">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Border Width="36" Height="36" CornerRadius="18" Background="White" Padding="4" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Image Source="/Assets/Logo/cal-qr-logo-removebg-preview.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                </Border>
+                <TextBlock Text="معالج الإعداد الأول" FontSize="18" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+            </StackPanel>
+        </Border>
+
+        <!-- Step Content Area -->
+        <Grid Grid.Row="1" Margin="30,20,30,10">
+
+            <!-- Step 1: Welcome -->
+            <StackPanel x:Name="Step1Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Image Source="/Assets/Logo/cal-qr-logo-removebg-preview.png" Width="140" Height="140" Margin="0,0,0,20" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="مرحباً بك في CAL-QR" FontSize="22" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" />
+                <TextBlock Text="نظام معايرة وفقا لمتطلبات  المواصفة الدولية ISO/IEC 17025:2017" FontSize="13" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,8,0,25" TextAlignment="Center" />
+                <TextBlock Text="سنقوم بإعداد النظام في بضع خطوات بسيطة." FontSize="12" Foreground="#718096" HorizontalAlignment="Center" TextAlignment="Center" />
+            </StackPanel>
+
+            <!-- Step 2: Database Path -->
+            <StackPanel x:Name="Step2Panel" Visibility="Collapsed" VerticalAlignment="Center">
+                <TextBlock Text="📂 مسار حفظ قاعدة البيانات" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                <TextBlock Text="اختر المجلد الذي سيتم حفظ قاعدة بيانات النظام فيه. المسار الافتراضي هو مجلد التطبيق الحالي." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
+                
+                <TextBlock Text="مسار قاعدة البيانات" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="TxtDatabasePath" Grid.Column="0" IsReadOnly="True"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Foreground="#1A3A6B"
+                             materialDesign:HintAssist.Foreground="#1A3A6B"
+                             CaretBrush="#1A3A6B"
+                             Height="50"
+                             Padding="10,8,10,8"
+                             FontSize="15" />
+                    <Button Grid.Column="1" Content="تصفح..." Click="BrowsePath_Click" Margin="10,0,0,0" Height="50"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" />
+                </Grid>
+
+                <Border Background="#FFFDE7" CornerRadius="6" Padding="12,8" Margin="0,5,0,0">
+                    <TextBlock Text="💡 يمكنك ترك المسار الافتراضي كما هو إذا لم تكن متأكداً." FontSize="11" Foreground="#F57F17" TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+
+            <!-- Step 3: Password & Security -->
+            <ScrollViewer x:Name="Step3Panel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
+                <StackPanel Margin="0,0,0,10">
+                    <TextBlock Text="🔐 إنشاء كلمة المرور والأمان" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                    <TextBlock Text="أنشئ كلمة مرور للنظام وسؤالاً سرياً لاسترداد كلمة المرور عند نسيانها." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
+                    
+                    <TextBlock Text="كلمة المرور (4 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <Grid Margin="0,0,0,10">
+                        <PasswordBox x:Name="TxtWizardPassword"
+                                     Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                     Foreground="#1A3A6B"
+                                     materialDesign:HintAssist.Foreground="#1A3A6B"
+                                     CaretBrush="#1A3A6B"
+                                     Height="50"
+                                     Padding="45,8,10,8"
+                                     FontSize="15"
+                                     FontFamily="Segoe UI" />
+                        <TextBox x:Name="TxtWizardPasswordReveal"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Foreground="#1A3A6B"
+                                 materialDesign:HintAssist.Foreground="#1A3A6B"
+                                 CaretBrush="#1A3A6B"
+                                 Height="50"
+                                 Padding="45,8,10,8"
+                                 FontSize="15"
+                                 Visibility="Collapsed" />
+                        <Button x:Name="BtnRevealPassword" Click="BtnRevealPassword_Click"
+                                Style="{StaticResource MaterialDesignToolButton}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                            <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="تأكيد كلمة المرور" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <Grid Margin="0,0,0,15">
+                        <PasswordBox x:Name="TxtWizardConfirmPassword"
+                                     Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                     Foreground="#1A3A6B"
+                                     materialDesign:HintAssist.Foreground="#1A3A6B"
+                                     CaretBrush="#1A3A6B"
+                                     Height="50"
+                                     Padding="45,8,10,8"
+                                     FontSize="15"
+                                     FontFamily="Segoe UI" />
+                        <TextBox x:Name="TxtWizardConfirmPasswordReveal"
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Foreground="#1A3A6B"
+                                 materialDesign:HintAssist.Foreground="#1A3A6B"
+                                 CaretBrush="#1A3A6B"
+                                 Height="50"
+                                 Padding="45,8,10,8"
+                                 FontSize="15"
+                                 Visibility="Collapsed" />
+                        <Button x:Name="BtnRevealConfirmPassword" Click="BtnRevealConfirmPassword_Click"
+                                Style="{StaticResource MaterialDesignToolButton}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"
+                                Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                            <materialDesign:PackIcon x:Name="IconRevealConfirmPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                        </Button>
+                    </Grid>
+
+                    <TextBlock Text="السؤال السري لاسترداد كلمة المرور" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBox x:Name="TxtSecurityQuestion" Margin="0,0,0,10"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Foreground="#1A3A6B"
+                             materialDesign:HintAssist.Foreground="#1A3A6B"
+                             CaretBrush="#1A3A6B"
+                             Height="50"
+                             Padding="10,8,10,8"
+                             FontSize="15"
+                             TextWrapping="Wrap"
+                             materialDesign:HintAssist.Hint="السؤال السري لاسترداد كلمة المرور" />
+
+                    <TextBlock Text="إجابة السؤال السري" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBox x:Name="TxtSecurityAnswer"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Foreground="#1A3A6B"
+                             materialDesign:HintAssist.Foreground="#1A3A6B"
+                             CaretBrush="#1A3A6B"
+                             Height="50"
+                             Padding="10,8,10,8"
+                             FontSize="15"
+                             materialDesign:HintAssist.Hint="الإجابة..." />
+
+                    <TextBlock x:Name="TxtStepError" Text="" FontSize="11" Foreground="#C62828" Margin="0,10,0,0" Visibility="Collapsed" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Step 4: Complete -->
+            <StackPanel x:Name="Step4Panel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="✅" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                <TextBlock Text="تم الإعداد بنجاح!" FontSize="22" FontWeight="Bold" Foreground="#2E7D32" HorizontalAlignment="Center" />
+                <TextBlock Text="النظام جاهز للاستخدام الآن." FontSize="14" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,8,0,5" />
+                <TextBlock Text="اضغط على 'بدء الاستخدام' لحفظ الإعدادات والدخول إلى شاشة تسجيل الدخول." FontSize="12" Foreground="#718096" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Footer Navigation -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0" Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Step Indicator -->
+                <TextBlock x:Name="TxtStepIndicator" Grid.Column="0" Text="الخطوة 1 من 4" FontSize="12" Foreground="#718096" VerticalAlignment="Center" />
+
+                <!-- Navigation Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="BtnPrevious" Content="→ السابق" Click="BtnPrevious_Click" Height="38" Margin="0,0,10,0"
+                            Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#718096" Foreground="#718096" Visibility="Collapsed" />
+                    <Button x:Name="BtnNext" Content="التالي ←" Click="BtnNext_Click" Height="38"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" />
+                    <Button x:Name="BtnFinish" Content="🚀 بدء الاستخدام" Click="BtnFinish_Click" Height="38"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

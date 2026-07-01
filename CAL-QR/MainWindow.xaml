@@ -1,0 +1,274 @@
+<Window x:Class="CAL_QR.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:CAL_QR"
+        xmlns:localTabs="clr-namespace:CAL_QR.Views.Tabs"
+        mc:Ignorable="d"
+        Title="نظام معايرة أجهزة المسح الإشعاعي (CAL-QR)" Height="720" Width="1080"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5"
+        FlowDirection="RightToLeft">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1A3A6B" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo & Titles -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="/Assets/Logo/cal-qr-logo.png" Height="45" Width="45" Margin="0,0,10,0" />
+                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Background="#C9A227" Width="1.5" Margin="0,0,10,0" />
+                    <Image Source="/Assets/Logo/nuclear-center-logo.png" Height="45" Width="45" Margin="0,0,10,0" />
+                    
+                    <StackPanel VerticalAlignment="Center" Margin="5,0,0,0">
+                        <TextBlock Text="مركز البحوث النووية | إدارة الوقاية من الإشعاع" Foreground="White" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة" Foreground="#C9A227" FontSize="11" FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Search Bar -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="350">
+                    <materialDesign:ColorZone Mode="Light" CornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp1" Height="38" Width="350">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" Grid.Column="0" Margin="5,0">
+                                <materialDesign:PackIcon Kind="Magnify" Foreground="#707070" />
+                            </Button>
+                            <TextBox Grid.Column="1" materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" BorderThickness="0" VerticalAlignment="Center" materialDesign:HintAssist.Hint="بحث سريع شامل... (Ctrl+F)" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" Height="30" VerticalContentAlignment="Center" />
+                        </Grid>
+                    </materialDesign:ColorZone>
+                </StackPanel>
+
+                <!-- Actions & User -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="White" BorderBrush="White" Height="32" Content="EN" Margin="0,0,10,0" Padding="10,0" FontFamily="{StaticResource CairoFont}" Click="LanguageButton_Click"/>
+                    
+                    <StackPanel Orientation="Horizontal" Margin="0,0,15,0" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="AccountCircle" Foreground="#C9A227" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="13" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
+
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Foreground="#C62828" Content="خروج" Height="32" Padding="8,0" FontFamily="{StaticResource CairoFont}" Click="LogoutButton_Click" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tabs Menu -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Visibility="{Binding IsTabHeaderVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ListBox Grid.Column="0" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.Resources>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Padding" Value="15,10" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="0,0,0,3" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="#1A3A6B" />
+                                                <Setter Property="Foreground" Value="#1A3A6B" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="False">
+                                                <Setter Property="Foreground" Value="#606060" />
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Border" Property="Background" Value="#F5F5F5" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.Resources>
+                    
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Home" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="الرئيسية" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" />
+                            <Border Background="#C62828" CornerRadius="8" MinWidth="16" Height="16" Margin="5,0,0,0" Padding="4,0" VerticalAlignment="Center"
+                                    Visibility="{Binding HasAlerts, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Text="{Binding TotalAlerts}" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ClipboardListOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="السجلات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="QrcodeScan" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="التحقق" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="OfficeBuilding" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="الجهات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Wrench" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="الأنواع" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ChartBar" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="التقارير" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="History" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="سجل العمليات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Cog" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="الإعدادات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="InformationOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="عن البرنامج" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="المساعدة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <Button Grid.Column="1" Command="{Binding ToggleTabHeaderCommand}" Style="{StaticResource MaterialDesignToolButton}" Height="40" Width="40" Padding="0" VerticalAlignment="Center" Margin="5,0" ToolTip="إخفاء التبويبات">
+                    <materialDesign:PackIcon Kind="ChevronUp" Width="20" Height="20" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Alert Banner -->
+        <Border Grid.Row="2" Background="#FFF9C4" BorderBrush="#FBC02D" BorderThickness="0,0,0,1" 
+                Visibility="{Binding IsBannerVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="15,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <materialDesign:PackIcon Kind="Alert" Foreground="#F9A825" Width="20" Height="20" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Grid.Column="1" Text="{Binding BannerMessage}" Foreground="#5D4037" FontSize="13" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                <Button Grid.Column="2" Command="{Binding DismissBannerCommand}" Style="{StaticResource MaterialDesignToolButton}" Width="24" Height="24" Padding="0">
+                    <materialDesign:PackIcon Kind="Close" Foreground="#707070" Width="16" Height="16" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <TabControl Grid.Row="3" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Margin="0" Padding="0" Background="Transparent">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Style>
+            </TabControl.ItemContainerStyle>
+
+            <TabItem>
+                <localTabs:DashboardView />
+            </TabItem>
+
+            <!-- 2. السجلات -->
+            <TabItem>
+                <localTabs:DevicesView />
+            </TabItem>
+
+            <!-- 3. التحقق -->
+            <TabItem>
+                <localTabs:QrVerifyView />
+            </TabItem>
+
+            <!-- 4. الجهات -->
+            <TabItem>
+                <localTabs:OwnersView />
+            </TabItem>
+
+            <!-- 5. الأنواع -->
+            <TabItem>
+                <localTabs:DeviceTypesView />
+            </TabItem>
+
+            <TabItem>
+                <localTabs:ReportsView />
+            </TabItem>
+
+            <TabItem>
+                <localTabs:AuditLogView />
+            </TabItem>
+
+            <TabItem>
+                <localTabs:SettingsView />
+            </TabItem>
+
+            <TabItem>
+                <localTabs:AboutView />
+            </TabItem>
+
+            <TabItem>
+                <localTabs:HelpView />
+            </TabItem>
+        </TabControl>
+
+        <!-- Floating action button when tabs are hidden -->
+        <Button Grid.Row="3" Command="{Binding ToggleTabHeaderCommand}" Background="#C9A227" BorderBrush="#C9A227" Width="36" Height="36" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15" ToolTip="إظهار التبويبات">
+            <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsTabHeaderVisible}" Value="False">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+            <materialDesign:PackIcon Kind="ChevronDown" Width="18" Height="18" Foreground="White" />
+        </Button>
+    </Grid>
+</Window>

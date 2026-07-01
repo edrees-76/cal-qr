@@ -1,0 +1,154 @@
+<UserControl x:Class="CAL_QR.Views.Tabs.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="900"
+             Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header Card -->
+            <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+                <StackPanel>
+                    <TextBlock Text="إعدادات النظام" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="تخصيص خيارات الأمان، تنبيهات صلاحية الأجهزة، إدارة قواعد البيانات وقوالب الطباعة والنسخ الاحتياطي" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Settings Content Panels -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Column -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <!-- Security Card -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="🔐 أمن وسلامة النظام" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Current Password -->
+                            <TextBlock Text="كلمة المرور الحالية" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <PasswordBox x:Name="TxtCurrentPassword" Height="40" Style="{StaticResource MaterialDesignFilledPasswordBox}"
+                                         PasswordChanged="TxtCurrentPassword_PasswordChanged" Margin="0,0,0,15" />
+
+                            <!-- New Password -->
+                            <TextBlock Text="كلمة المرور الجديدة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <PasswordBox x:Name="TxtNewPassword" Height="40" Style="{StaticResource MaterialDesignFilledPasswordBox}"
+                                         PasswordChanged="TxtNewPassword_PasswordChanged" Margin="0,0,0,15" />
+
+                            <!-- Confirm Password -->
+                            <TextBlock Text="تأكيد كلمة المرور الجديدة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <PasswordBox x:Name="TxtConfirmPassword" Height="40" Style="{StaticResource MaterialDesignFilledPasswordBox}"
+                                         PasswordChanged="TxtConfirmPassword_PasswordChanged" Margin="0,0,0,15" />
+
+                            <Button Command="{Binding ChangePasswordCommand}" Content="تحديث كلمة المرور" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Database Paths Card -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="📂 مسارات ملفات النظام" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Database Path -->
+                            <TextBlock Text="مسار قاعدة البيانات الفعلي (SQLite)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding DatabasePath, Mode=OneWay}" IsReadOnly="True" Height="40" Style="{StaticResource MaterialDesignFilledTextBox}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Attachments Path -->
+                            <TextBlock Text="مجلد المرفقات المرفوعة (Attachments)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding AttachmentsPath, Mode=OneWay}" IsReadOnly="True" Height="40" Style="{StaticResource MaterialDesignFilledTextBox}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- QrOutputPath -->
+                            <TextBlock Text="مجلد حفظ رموز الاستجابة السريعة (QR Output)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding QrOutputPath, Mode=OneWay}" IsReadOnly="True" Height="40" Style="{StaticResource MaterialDesignFilledTextBox}" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Right Column -->
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <!-- General Settings (Alerts & Auto-lock) Card -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15">
+                        <StackPanel>
+                            <TextBlock Text="⚙️ الإعدادات العامة وقفل التطبيق" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Alert Days Threshold -->
+                            <TextBlock Text="حد التنبيه قبل انتهاء صلاحية المعايرة (أيام)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding AlertDaysThreshold, UpdateSourceTrigger=PropertyChanged}" Height="40" 
+                                     Style="{StaticResource MaterialDesignFilledTextBox}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Auto Lock Minutes -->
+                            <TextBlock Text="مدة الإغلاق التلقائي عند خمول المستخدم (دقائق)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding AutoLockMinutes, UpdateSourceTrigger=PropertyChanged}" Height="40" 
+                                     Style="{StaticResource MaterialDesignFilledTextBox}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Default Printing Template -->
+                            <TextBlock Text="قالب الورق والملصقات الافتراضي للطباعة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedDefaultTemplate}" DisplayMemberPath="Name"
+                                          Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                                <Button Grid.Column="1" Command="{Binding OpenTemplatesDialogCommand}" Content="⚙️ إدارة القوالب" Margin="10,0,0,0" Height="40"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#1A3A6B" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                            </Grid>
+
+                            <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ إعدادات النظام" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Backup Card -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="💾 النسخ الاحتياطي والاستعادة" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Backup Folder Path -->
+                            <TextBlock Text="مجلد حفظ النسخ الاحتياطية" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding BackupPath}" Height="40" Style="{StaticResource MaterialDesignFilledTextBox}" IsReadOnly="True" FontFamily="{StaticResource CairoFont}" />
+                                <Button Grid.Column="1" Command="{Binding BrowseBackupPathCommand}" Content="تصفح..." Margin="10,0,0,0" Height="40"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                            </Grid>
+
+                            <!-- Backup Schedule -->
+                            <TextBlock Text="جدولة النسخ الاحتياطي التلقائي" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <ComboBox ItemsSource="{Binding BackupSchedules}" SelectedItem="{Binding SelectedBackupSchedule}"
+                                      Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" Margin="0,0,0,20" FontFamily="{StaticResource CairoFont}" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding BackupNowCommand}" Content="نسخ احتياطي الآن 📂" Margin="0,0,5,0" Height="40"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" FontFamily="{StaticResource CairoFont}" />
+                                <Button Grid.Column="1" Command="{Binding RestoreBackupCommand}" Content="استعادة نسخة احتياطية 🕒" Margin="5,0,0,0" Height="40"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Background="#C62828" BorderBrush="#C62828" FontFamily="{StaticResource CairoFont}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

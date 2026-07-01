@@ -1,0 +1,43 @@
+<Application x:Class="CAL_QR.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:CAL_QR">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="Indigo" SecondaryColor="Amber" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- App-wide Font Family -->
+            <FontFamily x:Key="CairoFont">/CAL-QR;component/Assets/Fonts/#Cairo</FontFamily>
+
+            <!-- Custom Brushes -->
+            <SolidColorBrush x:Key="PrimaryNavy" Color="#1A3A6B" />
+            <SolidColorBrush x:Key="GoldAccent" Color="#C9A227" />
+            <SolidColorBrush x:Key="SuccessGreen" Color="#2E7D32" />
+            <SolidColorBrush x:Key="WarningYellow" Color="#F9A825" />
+            <SolidColorBrush x:Key="ErrorRed" Color="#C62828" />
+
+            <!-- Material Design overrides using our colors -->
+            <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#2E5088" />
+            <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#1A3A6B" />
+            <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#0D2040" />
+            <SolidColorBrush x:Key="SecondaryAccentBrush" Color="#C9A227" />
+
+            <!-- Compatibility alias: MaterialDesignToolIconButton was removed in v5.0.0 -->
+            <Style x:Key="MaterialDesignToolIconButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}" />
+
+            <Style TargetType="{x:Type TextBlock}">
+                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            </Style>
+            <Style TargetType="{x:Type Window}">
+                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            </Style>
+            <Style TargetType="{x:Type Control}">
+                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

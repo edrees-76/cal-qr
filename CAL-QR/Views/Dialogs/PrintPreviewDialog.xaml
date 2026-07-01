@@ -1,0 +1,107 @@
+<Window x:Class="CAL_QR.Views.Dialogs.PrintPreviewDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="معاينة وطباعة ملصق المعايرة" Height="680" Width="950"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        FlowDirection="RightToLeft"
+        Background="#F5F5F5">
+
+    <Grid Margin="15">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,10,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="إعدادات الطباعة والمعاينة" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                    <Separator Margin="0,0,0,15" />
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="اختر الطابعة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <ComboBox ItemsSource="{Binding Printers}" SelectedItem="{Binding SelectedPrinter}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                        <TextBlock Text="قالب الملصقات" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <Grid Margin="0,0,0,15">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding Templates}" DisplayMemberPath="TemplateName" SelectedItem="{Binding SelectedTemplate}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <Button Grid.Column="1" Click="NewTemplate_Click" Content="قالب جديد" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1A3A6B" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
+                        </Grid>
+
+                        <TextBlock Text="حجم حفظ صورة QR" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <ComboBox SelectedValue="{Binding SelectedQrSaveSize}" SelectedValuePath="Tag" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" Margin="0,0,0,20" FontFamily="{StaticResource CairoFont}">
+                            <ComboBoxItem Content="صغير (200px)" Tag="Small" />
+                            <ComboBoxItem Content="متوسط (400px)" Tag="Medium" />
+                            <ComboBoxItem Content="كبير (600px)" Tag="Large" />
+                            <ComboBoxItem Content="دقة طباعة (1200px)" Tag="Print" />
+                        </ComboBox>
+
+                        <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="10">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="معاينة الملصق الفردي" FontSize="11" FontWeight="Bold" Foreground="#707070" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                <Image Source="{Binding QrImagePreview}" Width="140" Height="140" HorizontalAlignment="Center" Margin="0,0,0,10" />
+                                <TextBlock Text="{Binding CalibrationRecord.CertificateNumber}" FontWeight="Bold" FontSize="13" Foreground="#1A3A6B" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding CalibrationRecord.Device.SerialNumber}" FontSize="11" Foreground="#707070" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <StackPanel Grid.Row="2" Margin="0,15,0,0">
+                    <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="🖨️ طباعة الملصق" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Command="{Binding SaveQrImageCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#2E7D32" BorderBrush="#2E7D32" Height="40" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Image" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock Text="💾 حفظ QR كصورة" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Column="1" Background="#E0E0E0" CornerRadius="8" Padding="15">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="معاينة موضع الملصق على الورقة" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+
+                <Viewbox Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Background="White" CornerRadius="2" BorderBrush="#B0B0B0" BorderThickness="1" Padding="5">
+                        <Canvas x:Name="PaperCanvas" Width="350" Height="495" Background="White" />
+                    </Border>
+                </Viewbox>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

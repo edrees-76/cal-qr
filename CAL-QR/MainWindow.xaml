@@ -32,12 +32,12 @@
                 <!-- Logo & Titles -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <Image Source="/Assets/Logo/cal-qr-logo.png" Height="45" Width="45" Margin="0,0,10,0" />
-                    <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Background="#C9A227" Width="1.5" Margin="0,0,10,0" />
-                    <Image Source="/Assets/Logo/nuclear-center-logo.png" Height="45" Width="45" Margin="0,0,10,0" />
                     
                     <StackPanel VerticalAlignment="Center" Margin="5,0,0,0">
-                        <TextBlock Text="مركز البحوث النووية | إدارة الوقاية من الإشعاع" Foreground="White" FontSize="14" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة" Foreground="#C9A227" FontSize="11" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="مركز البحوث النووية" Foreground="White" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="إدارة الوقاية من الإشعاع" Foreground="White" FontSize="11.5" FontWeight="SemiBold" Opacity="0.9" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة" Foreground="#C9A227" FontSize="10.5" FontWeight="Medium" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="وحدة المعايرة" Foreground="#C9A227" FontSize="9.5" FontWeight="Normal" Opacity="0.85" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -59,8 +59,6 @@
 
                 <!-- Actions & User -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="White" BorderBrush="White" Height="32" Content="EN" Margin="0,0,10,0" Padding="10,0" FontFamily="{StaticResource CairoFont}" Click="LanguageButton_Click"/>
-                    
                     <StackPanel Orientation="Horizontal" Margin="0,0,15,0" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="AccountCircle" Foreground="#C9A227" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,5,0" />
                         <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="13" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />

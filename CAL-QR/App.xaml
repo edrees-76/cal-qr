@@ -38,6 +38,83 @@
             <Style TargetType="{x:Type Control}">
                 <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
             </Style>
+
+            <!-- Color for inputs foreground -->
+            <SolidColorBrush x:Key="PrimaryInputForeground" Color="#1A3A6B" />
+
+            <!-- 1. TextBox Styles -->
+            <Style x:Key="MaterialDesignOutlinedTextBox" TargetType="{x:Type TextBox}" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="MaterialDesignFilledTextBox" TargetType="{x:Type TextBox}" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- 2. PasswordBox Styles -->
+            <Style x:Key="MaterialDesignOutlinedPasswordBox" TargetType="{x:Type PasswordBox}" BasedOn="{StaticResource MaterialDesignOutlinedPasswordBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="MaterialDesignFilledPasswordBox" TargetType="{x:Type PasswordBox}" BasedOn="{StaticResource MaterialDesignFilledPasswordBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- 3. ComboBox Styles -->
+            <Style x:Key="MaterialDesignOutlinedComboBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="MaterialDesignFilledComboBox" TargetType="{x:Type ComboBox}" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- 4. DatePicker Styles -->
+            <Style x:Key="MaterialDesignOutlinedDatePicker" TargetType="{x:Type DatePicker}" BasedOn="{StaticResource MaterialDesignOutlinedDatePicker}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="MaterialDesignFilledDatePicker" TargetType="{x:Type DatePicker}" BasedOn="{StaticResource MaterialDesignFilledDatePicker}">
+                <Setter Property="Height" Value="45" />
+                <Setter Property="Padding" Value="12,8,12,8" />
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+            </Style>
+
+            <!-- 5. DatePickerTextBox Style -->
+            <Style TargetType="{x:Type DatePickerTextBox}" BasedOn="{StaticResource {x:Type DatePickerTextBox}}">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
+                <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

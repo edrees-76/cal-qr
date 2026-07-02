@@ -70,7 +70,6 @@ namespace CAL_QR.Data
                 new AppSetting { Key = "BackupSchedule", Value = "Daily" },
                 new AppSetting { Key = "AlertDaysThreshold", Value = "30" },
                 new AppSetting { Key = "AutoLockMinutes", Value = "10" },
-                new AppSetting { Key = "Language", Value = "ar-SA" },
                 new AppSetting { Key = "DefaultTemplateId", Value = "0" },
                 new AppSetting { Key = "PasswordHash", Value = "" },
                 new AppSetting { Key = "LastPrinterName", Value = "" },

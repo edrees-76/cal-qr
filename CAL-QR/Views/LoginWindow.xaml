@@ -65,7 +65,7 @@
                                          materialDesign:HintAssist.Hint="أدخل كلمة المرور" 
                                          materialDesign:HintAssist.IsFloating="False"
                                          Height="50"
-                                         Padding="45,8,10,8"
+                                         Padding="10,8,45,8"
                                          FontSize="15"
                                          FontFamily="Segoe UI"
                                          KeyDown="TxtPassword_KeyDown" />
@@ -74,15 +74,15 @@
                                      materialDesign:HintAssist.Hint="أدخل كلمة المرور" 
                                      materialDesign:HintAssist.IsFloating="False"
                                      Height="50"
-                                     Padding="45,8,10,8"
+                                     Padding="10,8,45,8"
                                      FontSize="15"
                                      FontFamily="{StaticResource CairoFont}"
                                      Visibility="Collapsed"
                                      KeyDown="TxtPassword_KeyDown" />
                             <Button x:Name="BtnRevealPassword" Click="BtnRevealPassword_Click"
                                     Style="{StaticResource MaterialDesignToolButton}"
-                                    HorizontalAlignment="Left" VerticalAlignment="Center"
-                                    Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                                    Margin="0,0,10,0" Width="30" Height="30" Padding="0">
                                 <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
                             </Button>
                         </Grid>
@@ -174,7 +174,7 @@
                                              materialDesign:HintAssist.Hint="أدخل كلمة المرور الجديدة"
                                              materialDesign:HintAssist.IsFloating="False"
                                              Height="45"
-                                             Padding="45,8,10,8"
+                                             Padding="10,8,45,8"
                                              FontSize="14"
                                              FontFamily="Segoe UI"/>
                                 <TextBox x:Name="TxtNewPasswordReveal" 
@@ -182,14 +182,14 @@
                                          materialDesign:HintAssist.Hint="أدخل كلمة المرور الجديدة"
                                          materialDesign:HintAssist.IsFloating="False"
                                          Height="45"
-                                         Padding="45,8,10,8"
+                                         Padding="10,8,45,8"
                                          FontSize="14"
                                          FontFamily="{StaticResource CairoFont}"
                                          Visibility="Collapsed"/>
                                 <Button x:Name="BtnRevealNewPassword" Click="BtnRevealNewPassword_Click"
                                         Style="{StaticResource MaterialDesignToolButton}"
-                                        HorizontalAlignment="Left" VerticalAlignment="Center"
-                                        Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                        Margin="0,0,10,0" Width="30" Height="30" Padding="0">
                                     <materialDesign:PackIcon x:Name="IconRevealNewPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
                                 </Button>
                             </Grid>
@@ -201,7 +201,7 @@
                                              materialDesign:HintAssist.Hint="أعد إدخال كلمة المرور لتأكيدها"
                                              materialDesign:HintAssist.IsFloating="False"
                                              Height="45"
-                                             Padding="45,8,10,8"
+                                             Padding="10,8,45,8"
                                              FontSize="14"
                                              FontFamily="Segoe UI"/>
                                 <TextBox x:Name="TxtConfirmNewPasswordReveal" 
@@ -209,14 +209,14 @@
                                          materialDesign:HintAssist.Hint="أعد إدخال كلمة المرور لتأكيدها"
                                          materialDesign:HintAssist.IsFloating="False"
                                          Height="45"
-                                         Padding="45,8,10,8"
+                                         Padding="10,8,45,8"
                                          FontSize="14"
                                          FontFamily="{StaticResource CairoFont}"
                                          Visibility="Collapsed"/>
                                 <Button x:Name="BtnRevealConfirmNewPassword" Click="BtnRevealConfirmNewPassword_Click"
                                         Style="{StaticResource MaterialDesignToolButton}"
-                                        HorizontalAlignment="Left" VerticalAlignment="Center"
-                                        Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                        Margin="0,0,10,0" Width="30" Height="30" Padding="0">
                                     <materialDesign:PackIcon x:Name="IconRevealConfirmNewPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
                                 </Button>
                             </Grid>

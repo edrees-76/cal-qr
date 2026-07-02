@@ -87,17 +87,6 @@ namespace CAL_QR
             }
         }
 
-        private void LanguageButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.FlowDirection == FlowDirection.RightToLeft)
-            {
-                this.FlowDirection = FlowDirection.LeftToRight;
-            }
-            else
-            {
-                this.FlowDirection = FlowDirection.RightToLeft;
-            }
-        }
 
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {

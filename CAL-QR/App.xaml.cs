@@ -60,7 +60,7 @@ namespace CAL_QR
 
         private void ConfigureServices(IServiceCollection services)
         {
-            string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr.db");
+            string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr-simulation.db");
 
             services.AddDbContextFactory<CalQrDbContext>(options =>
                 options.UseSqlite($"Data Source={dbPath}"));

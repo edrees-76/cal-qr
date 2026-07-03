@@ -28,9 +28,7 @@ namespace CAL_QR.ViewModels
         private int _alertThresholdDays = 30;
 
         private ObservableCollection<ExpiringDeviceDisplayItem> _expiringDevices = new();
-        private ISeries[] _pieSeriesCollection = Array.Empty<ISeries>();
-        private ISeries[] _barSeriesCollection = Array.Empty<ISeries>();
-        private Axis[] _xAxes = Array.Empty<Axis>();
+        private ObservableCollection<OwnerDeviceStat> _ownerDeviceStats = new();
 
         public DashboardViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
@@ -59,22 +57,10 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _expiringDevices, value);
         }
 
-        public ISeries[] PieSeriesCollection
+        public ObservableCollection<OwnerDeviceStat> OwnerDeviceStats
         {
-            get => _pieSeriesCollection;
-            set => SetProperty(ref _pieSeriesCollection, value);
-        }
-
-        public ISeries[] BarSeriesCollection
-        {
-            get => _barSeriesCollection;
-            set => SetProperty(ref _barSeriesCollection, value);
-        }
-
-        public Axis[] XAxes
-        {
-            get => _xAxes;
-            set => SetProperty(ref _xAxes, value);
+            get => _ownerDeviceStats;
+            set => SetProperty(ref _ownerDeviceStats, value);
         }
         #endregion
 
@@ -163,43 +149,27 @@ namespace CAL_QR.ViewModels
                 ExpiringSoonDevices = expiring;
                 ExpiredDevices = expired;
 
-                // Sort expiring list by days remaining ascending
-                ExpiringDevices = new ObservableCollection<ExpiringDeviceDisplayItem>(
-                    expiringSoonList.OrderBy(x => x.DaysRemaining)
-                );
-
-                // Setup Donut chart values
-                PieSeriesCollection = ownerCounts.Select(pair => new PieSeries<int>
+                // Sort expiring list by days remaining ascending and calculate Rank
+                var sortedExpiring = expiringSoonList.OrderBy(x => x.DaysRemaining).ToList();
+                for (int i = 0; i < sortedExpiring.Count; i++)
                 {
-                    Values = new[] { pair.Value },
-                    Name = pair.Key,
-                    InnerRadius = 45
-                }).Cast<ISeries>().ToArray();
+                    sortedExpiring[i].Rank = i + 1;
+                }
+                ExpiringDevices = new ObservableCollection<ExpiringDeviceDisplayItem>(sortedExpiring);
 
-                // Setup Bar/Column chart values
-                BarSeriesCollection = new ISeries[]
-                {
-                    new ColumnSeries<int>
-                    {
-                        Name = "سارية",
-                        Values = new[] { valid }
-                    },
-                    new ColumnSeries<int>
-                    {
-                        Name = "قريبة الانتهاء",
-                        Values = new[] { expiring }
-                    },
-                    new ColumnSeries<int>
-                    {
-                        Name = "منتهية",
-                        Values = new[] { expired }
-                    }
-                };
+                // Sort ownerCounts descending and calculate percentage for custom bar chart
+                var sortedOwners = ownerCounts.OrderByDescending(p => p.Value).ToList();
+                int maxCount = sortedOwners.Any() ? sortedOwners.Max(p => p.Value) : 1;
 
-                XAxes = new Axis[]
+                var stats = sortedOwners.Select((p, idx) => new OwnerDeviceStat
                 {
-                    new Axis { Labels = new[] { "توزيع حالة الأجهزة" } }
-                };
+                    Rank = idx + 1,
+                    OwnerName = p.Key,
+                    Count = p.Value,
+                    BarWidthPercentage = maxCount > 0 ? ((double)p.Value / maxCount) * 100 : 0
+                }).ToList();
+
+                OwnerDeviceStats = new ObservableCollection<OwnerDeviceStat>(stats);
             }
             catch (Exception ex)
             {
@@ -221,6 +191,7 @@ namespace CAL_QR.ViewModels
 
     public class ExpiringDeviceDisplayItem
     {
+        public int Rank { get; set; }
         public string DeviceModel { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
         public string OwnerName { get; set; } = string.Empty;
@@ -228,5 +199,13 @@ namespace CAL_QR.ViewModels
         public int DaysRemaining { get; set; }
 
         public string ExpiryDateString => ExpiryDate.ToString("yyyy-MM-dd");
+    }
+
+    public class OwnerDeviceStat
+    {
+        public int Rank { get; set; }
+        public string OwnerName { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public double BarWidthPercentage { get; set; }
     }
 }

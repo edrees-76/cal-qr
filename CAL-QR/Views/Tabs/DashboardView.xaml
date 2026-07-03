@@ -47,94 +47,121 @@
             </Grid.ColumnDefinitions>
 
             <!-- Card 1: Total Devices (Navy) -->
-            <materialDesign:Card Grid.Column="0" Margin="0,0,5,0" Background="#1A3A6B" materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8" Height="75" Padding="12">
+            <Border Grid.Column="0" Margin="0,0,5,0" Background="#1A3A6B" CornerRadius="8" Padding="12" Height="85">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="إجمالي الأجهزة" FontSize="11" Foreground="#E0E0E0" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="إجمالي الأجهزة" FontSize="12" Foreground="#E0E0E0" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding TotalDevices}" FontSize="24" FontWeight="Bold" Foreground="White" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                     <materialDesign:PackIcon Grid.Column="1" Kind="Database" Foreground="#80FFFFFF" Width="28" Height="28" VerticalAlignment="Center" />
                 </Grid>
-            </materialDesign:Card>
+            </Border>
 
             <!-- Card 2: Valid Devices (Green) -->
-            <materialDesign:Card Grid.Column="1" Margin="5,0,5,0" Background="#2E7D32" materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8" Height="75" Padding="12">
+            <Border Grid.Column="1" Margin="5,0,5,0" Background="#2E7D32" CornerRadius="8" Padding="12" Height="85">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="سارية المفعول" FontSize="11" Foreground="#E8F5E9" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="سارية المفعول" FontSize="12" Foreground="#E8F5E9" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ValidDevices}" FontSize="24" FontWeight="Bold" Foreground="White" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                     <materialDesign:PackIcon Grid.Column="1" Kind="CheckCircle" Foreground="#80FFFFFF" Width="28" Height="28" VerticalAlignment="Center" />
                 </Grid>
-            </materialDesign:Card>
+            </Border>
 
             <!-- Card 3: Expiring Soon (Yellow) -->
-            <materialDesign:Card Grid.Column="2" Margin="5,0,5,0" Background="#F9A825" materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8" Height="75" Padding="12">
+            <Border Grid.Column="2" Margin="5,0,5,0" Background="#F9A825" CornerRadius="8" Padding="12" Height="85">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="تنتهي قريباً" FontSize="11" Foreground="#FFFDE7" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تنتهي قريباً" FontSize="12" Foreground="#FFFDE7" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ExpiringSoonDevices}" FontSize="24" FontWeight="Bold" Foreground="White" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                     <materialDesign:PackIcon Grid.Column="1" Kind="AlertCircle" Foreground="#80FFFFFF" Width="28" Height="28" VerticalAlignment="Center" />
                 </Grid>
-            </materialDesign:Card>
+            </Border>
 
             <!-- Card 4: Expired (Red) -->
-            <materialDesign:Card Grid.Column="3" Margin="5,0,0,0" Background="#C62828" materialDesign:ElevationAssist.Elevation="Dp1" UniformCornerRadius="8" Height="75" Padding="12">
+            <Border Grid.Column="3" Margin="5,0,0,0" Background="#C62828" CornerRadius="8" Padding="12" Height="85">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="منتهية الصلاحية" FontSize="11" Foreground="#FFEBEE" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="منتهية الصلاحية" FontSize="12" Foreground="#FFEBEE" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ExpiredDevices}" FontSize="24" FontWeight="Bold" Foreground="White" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                     <materialDesign:PackIcon Grid.Column="1" Kind="AlertDecagram" Foreground="#80FFFFFF" Width="28" Height="28" VerticalAlignment="Center" />
                 </Grid>
-            </materialDesign:Card>
+            </Border>
         </Grid>
 
         <!-- Row 2: Charts -->
         <Grid Grid.Row="2" Margin="0,0,0,10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Left: Donut Chart -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,5,0">
+            <!-- Left: Owner Distribution Flat Bar Chart (Expanded to full width) -->
+            <Border Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0" FlowDirection="RightToLeft">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="توزيع الأجهزة حسب الجهات المالكة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                    <lvc:PieChart Grid.Row="1" Series="{Binding PieSeriesCollection}" LegendPosition="Right" />
-                </Grid>
-            </Border>
-
-            <!-- Right: Column Chart -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="5,0,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="مقارنة حالات الصلاحية" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                    <lvc:CartesianChart Grid.Row="1" Series="{Binding BarSeriesCollection}" XAxes="{Binding XAxes}" />
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="220">
+                        <ItemsControl ItemsSource="{Binding OwnerDeviceStats}" VerticalAlignment="Top">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2,0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="200" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="35" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Rank & Owner Name -->
+                                        <TextBlock Grid.Column="0" FontSize="10.5" Foreground="#424242" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Right" TextAlignment="Right">
+                                            <TextBlock.Inlines>
+                                                <Run Text="{Binding Rank, StringFormat={}{0}.}" FontWeight="Bold" Foreground="#1A3A6B" />
+                                                <Run Text=" " />
+                                                <Run Text="{Binding OwnerName}" />
+                                            </TextBlock.Inlines>
+                                        </TextBlock>
+                                        
+                                        <!-- Bar -->
+                                        <ProgressBar Grid.Column="1" Value="{Binding BarWidthPercentage}" Height="10" Minimum="0" Maximum="100" Background="#EEEEEE" Foreground="#1A3A6B" BorderThickness="0" VerticalAlignment="Center" Margin="10,0,10,0">
+                                            <ProgressBar.Style>
+                                                <Style TargetType="ProgressBar">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ProgressBar">
+                                                                <Grid x:Name="TemplateRoot">
+                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="5" />
+                                                                    <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="5" HorizontalAlignment="Left" />
+                                                                </Grid>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ProgressBar.Style>
+                                        </ProgressBar>
+                                        
+                                        <!-- Count -->
+                                        <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="10.5" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Grid>
             </Border>
         </Grid>
@@ -150,6 +177,12 @@
 
                 <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiringDevices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
                     <DataGrid.Columns>
+                        <DataGridTextColumn Header="ت." Binding="{Binding Rank}" Width="50" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="ت." FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
                         <DataGridTextColumn Header="الموديل / الجهاز" Binding="{Binding DeviceModel}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="الموديل / الجهاز" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>

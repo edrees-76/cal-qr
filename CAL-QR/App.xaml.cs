@@ -71,6 +71,7 @@ namespace CAL_QR
             services.AddSingleton<IPrintService, PrintService>();
             services.AddSingleton<IExportService, ExportService>();
             services.AddSingleton<IBackupService, BackupService>();
+            services.AddSingleton<ISearchService, SearchService>();
 
             // Register Repositories
             services.AddSingleton<IOwnerRepository, OwnerRepository>();
@@ -106,6 +107,9 @@ namespace CAL_QR
             services.AddTransient<Views.Dialogs.PrintPreviewDialog>();
             services.AddTransient<Views.Dialogs.AlertPopupDialog>();
             services.AddTransient<Views.FirstRunWizard>();
+            // Register Dialog Factories to support Constructor Injection
+            services.AddTransient<Func<Views.Dialogs.DeviceDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceDetailDialog>());
+            services.AddTransient<Func<Views.Dialogs.CalibrationFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>());
         }
     }
 }

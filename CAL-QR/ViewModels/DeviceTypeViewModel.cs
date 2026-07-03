@@ -9,10 +9,11 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
+using CAL_QR.Helpers;
 
 namespace CAL_QR.ViewModels
 {
-    public class DeviceTypeViewModel : BaseViewModel
+    public class DeviceTypeViewModel : BaseViewModel, IDisposable
     {
         private readonly IDeviceTypeRepository _deviceTypeRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
@@ -33,6 +34,9 @@ namespace CAL_QR.ViewModels
             SaveCommand = new RelayCommand(async () => await SaveDeviceTypeAsync(), CanSave);
             DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p));
             ClearFormCommand = new RelayCommand(ClearForm);
+
+            // Subscribe to search navigation
+            SearchEvents.NavigateToDeviceType += OnNavigateToDeviceType;
         }
 
         public ObservableCollection<DeviceTypeDisplayItem> DeviceTypes
@@ -191,6 +195,42 @@ namespace CAL_QR.ViewModels
             FormName = string.Empty;
             SelectedDeviceType = null;
             IsEditMode = false;
+        }
+
+        private void OnNavigateToDeviceType(int deviceTypeId)
+        {
+            var matchedType = DeviceTypes.FirstOrDefault(t => t.Id == deviceTypeId);
+            if (matchedType == null)
+            {
+                try
+                {
+                    using var context = _contextFactory.CreateDbContext();
+                    var t = context.DeviceTypes.AsNoTracking().FirstOrDefault(x => x.Id == deviceTypeId && !x.IsDeleted);
+                    if (t != null)
+                    {
+                        var displayItem = new DeviceTypeDisplayItem
+                        {
+                            Id = t.Id,
+                            Name = t.Name,
+                            DeviceCount = context.Devices.AsNoTracking().Count(d => d.DeviceTypeId == t.Id && !d.IsDeleted)
+                        };
+                        SelectedDeviceType = displayItem;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"خطأ في تحميل بيانات نوع الجهاز: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                SelectedDeviceType = matchedType;
+            }
+        }
+
+        public void Dispose()
+        {
+            SearchEvents.NavigateToDeviceType -= OnNavigateToDeviceType;
         }
     }
 

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using CAL_QR.Data;
 using CAL_QR.ViewModels;
 using CAL_QR.Views;
+using CAL_QR.Models;
 
 namespace CAL_QR
 {
@@ -31,6 +32,14 @@ namespace CAL_QR
             _viewModel.LockRequested += ViewModel_LockRequested;
             this.PreviewMouseMove += (s, e) => _viewModel.ResetInactivity();
             this.PreviewKeyDown += (s, e) => _viewModel.ResetInactivity();
+
+            // Search event handlers
+            _viewModel.SearchFocusRequested += ViewModel_SearchFocusRequested;
+        }
+
+        private void ViewModel_SearchFocusRequested(object? sender, EventArgs e)
+        {
+            SearchTextBox.Focus();
         }
 
         private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -66,6 +75,7 @@ namespace CAL_QR
         {
             // Clean up to prevent leaks
             _viewModel.LockRequested -= ViewModel_LockRequested;
+            _viewModel.SearchFocusRequested -= ViewModel_SearchFocusRequested;
             _viewModel.StopInactivityTimer();
 
             // If no other windows are open (user closed via X), shut down app
@@ -87,7 +97,6 @@ namespace CAL_QR
             }
         }
 
-
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show(this, "هل تريد الخروج من المنظومة؟", "تأكيد الخروج", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
@@ -97,6 +106,15 @@ namespace CAL_QR
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
                 loginWindow.Show();
                 this.Close();
+            }
+        }
+
+        private void SearchResultItem_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.DataContext is SearchResultItem item)
+            {
+                _viewModel.SelectSearchResultCommand.Execute(item);
+                e.Handled = true;
             }
         }
     }

@@ -9,10 +9,11 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
+using CAL_QR.Helpers;
 
 namespace CAL_QR.ViewModels
 {
-    public class OwnerViewModel : BaseViewModel
+    public class OwnerViewModel : BaseViewModel, IDisposable
     {
         private readonly IOwnerRepository _ownerRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
@@ -36,6 +37,9 @@ namespace CAL_QR.ViewModels
             SaveCommand = new RelayCommand(async () => await SaveOwnerAsync(), CanSave);
             DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p));
             ClearFormCommand = new RelayCommand(ClearForm);
+
+            // Subscribe to search navigation
+            SearchEvents.NavigateToOwner += OnNavigateToOwner;
         }
 
         public ObservableCollection<OwnerDisplayItem> Owners
@@ -232,6 +236,45 @@ namespace CAL_QR.ViewModels
             FormContactPerson = string.Empty;
             SelectedOwner = null;
             IsEditMode = false;
+        }
+
+        private void OnNavigateToOwner(int ownerId)
+        {
+            var matchedOwner = Owners.FirstOrDefault(o => o.Id == ownerId);
+            if (matchedOwner == null)
+            {
+                try
+                {
+                    using var context = _contextFactory.CreateDbContext();
+                    var o = context.Owners.AsNoTracking().FirstOrDefault(x => x.Id == ownerId && !x.IsDeleted);
+                    if (o != null)
+                    {
+                        var displayItem = new OwnerDisplayItem
+                        {
+                            Id = o.Id,
+                            Name = o.Name,
+                            Address = o.Address,
+                            ContactPhone = o.ContactPhone,
+                            ContactPerson = o.ContactPerson,
+                            DeviceCount = context.Devices.AsNoTracking().Count(d => d.OwnerId == o.Id && !d.IsDeleted)
+                        };
+                        SelectedOwner = displayItem;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"خطأ في تحميل بيانات الجهة المالكة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else
+            {
+                SelectedOwner = matchedOwner;
+            }
+        }
+
+        public void Dispose()
+        {
+            SearchEvents.NavigateToOwner -= OnNavigateToOwner;
         }
     }
 

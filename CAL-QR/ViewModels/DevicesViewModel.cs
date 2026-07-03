@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Services;
+using CAL_QR.Helpers;
 
 namespace CAL_QR.ViewModels
 {
-    public class DevicesViewModel : BaseViewModel
+    public class DevicesViewModel : BaseViewModel, IDisposable
     {
         private readonly IDeviceRepository _deviceRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
@@ -25,6 +25,8 @@ namespace CAL_QR.ViewModels
         private readonly IQrService _qrService;
         private readonly IPrintService _printService;
         private readonly IPaperTemplateRepository _templateRepository;
+        private readonly Func<Views.Dialogs.DeviceDetailDialog> _deviceDetailDialogFactory;
+        private readonly Func<Views.Dialogs.CalibrationFormDialog> _calibrationFormDialogFactory;
 
         private ObservableCollection<DeviceDisplayItem> _devices = new();
         private ObservableCollection<Owner> _ownersFilter = new();
@@ -59,7 +61,9 @@ namespace CAL_QR.ViewModels
             IAuditLogRepository auditLogRepository,
             IQrService qrService,
             IPrintService printService,
-            IPaperTemplateRepository templateRepository)
+            IPaperTemplateRepository templateRepository,
+            Func<Views.Dialogs.DeviceDetailDialog> deviceDetailDialogFactory,
+            Func<Views.Dialogs.CalibrationFormDialog> calibrationFormDialogFactory)
         {
             _deviceRepository = deviceRepository;
             _contextFactory = contextFactory;
@@ -69,6 +73,8 @@ namespace CAL_QR.ViewModels
             _qrService = qrService;
             _printService = printService;
             _templateRepository = templateRepository;
+            _deviceDetailDialogFactory = deviceDetailDialogFactory;
+            _calibrationFormDialogFactory = calibrationFormDialogFactory;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             SearchCommand = new RelayCommand(async () => { CurrentPage = 1; await LoadDataAsync(); });
@@ -87,6 +93,10 @@ namespace CAL_QR.ViewModels
             DeleteDeviceCommand = new RelayCommand(async (p) => await DeleteDeviceAsync(p));
             PrintDeviceCommand = new RelayCommand(OpenPrintPreviewDialog);
             PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
+
+            // Search Events Subscription
+            SearchEvents.NavigateToDevice += OnNavigateToDevice;
+            SearchEvents.NavigateToCalibrationRecord += OnNavigateToCalibrationRecord;
         }
 
         public ICommand PrintDeviceCommand { get; }
@@ -422,7 +432,7 @@ namespace CAL_QR.ViewModels
 
         private void OpenAddDeviceDialog()
         {
-            var dialog = App.ServiceProvider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>();
+            var dialog = _calibrationFormDialogFactory();
             var vm = (CalibrationFormViewModel)dialog.DataContext;
             vm.Saved += async (s, e) => await LoadDataAsync();
             dialog.ShowDialog();
@@ -432,7 +442,7 @@ namespace CAL_QR.ViewModels
         {
             if (parameter is not DeviceDisplayItem item) return;
 
-            var dialog = App.ServiceProvider.GetRequiredService<Views.Dialogs.DeviceDetailDialog>();
+            var dialog = _deviceDetailDialogFactory();
             var vm = (DeviceDetailViewModel)dialog.DataContext;
             vm.LoadDeviceDetails(item.Id);
             dialog.ShowDialog();
@@ -442,7 +452,7 @@ namespace CAL_QR.ViewModels
         {
             if (parameter is not DeviceDisplayItem item) return;
 
-            var dialog = App.ServiceProvider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>();
+            var dialog = _calibrationFormDialogFactory();
             var vm = (CalibrationFormViewModel)dialog.DataContext;
             
             using (var context = _contextFactory.CreateDbContext())
@@ -676,7 +686,85 @@ namespace CAL_QR.ViewModels
                     MessageBoxResult.OK,
                     MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
                 );
+        }
+        }
+
+        private void OnNavigateToDevice(int deviceId)
+        {
+            ShowDeviceDetailsById(deviceId);
+        }
+
+        private void OnNavigateToCalibrationRecord(int recordId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                var record = context.CalibrationRecords
+                    .AsNoTracking()
+                    .FirstOrDefault(r => r.Id == recordId && !r.IsDeleted);
+                if (record != null)
+                {
+                    ShowDeviceDetailsById(record.DeviceId);
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في تحديد الجهاز المرتبط بالشهادة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShowDeviceDetailsById(int deviceId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+                var d = context.Devices
+                    .AsNoTracking()
+                    .Include(x => x.Owner)
+                    .Include(x => x.DeviceType)
+                    .Include(x => x.CalibrationRecords)
+                    .FirstOrDefault(x => x.Id == deviceId && !x.IsDeleted);
+
+                if (d == null) return;
+
+                var latestCal = d.CalibrationRecords?
+                    .Where(r => !r.IsDeleted)
+                    .OrderByDescending(r => r.CalibrationDate)
+                    .FirstOrDefault();
+
+                var item = new DeviceDisplayItem
+                {
+                    Device = d,
+                    Id = d.Id,
+                    Model = d.Model,
+                    SerialNumber = d.SerialNumber,
+                    OwnerName = d.Owner?.Name ?? "غير محدد",
+                    DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
+                    CertificateNumber = latestCal?.CertificateNumber ?? "لا توجد شهادة",
+                    CalibrationDate = latestCal?.CalibrationDate,
+                    ExpiryDate = latestCal?.ExpiryDate,
+                    Result = latestCal?.Result ?? "غير معاير",
+                    LatestCalibrationRecordId = latestCal?.Id ?? 0
+                };
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var dialog = _deviceDetailDialogFactory();
+                    var vm = (DeviceDetailViewModel)dialog.DataContext;
+                    vm.LoadDeviceDetails(item.Id);
+                    dialog.ShowDialog();
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في فتح تفاصيل الجهاز: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        public void Dispose()
+        {
+            SearchEvents.NavigateToDevice -= OnNavigateToDevice;
+            SearchEvents.NavigateToCalibrationRecord -= OnNavigateToCalibrationRecord;
         }
     }
 

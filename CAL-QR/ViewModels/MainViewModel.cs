@@ -1,5 +1,7 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Threading.Tasks;
@@ -8,12 +10,26 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Models;
+using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
     public class MainViewModel : BaseViewModel, IDisposable
     {
+        // Tab index constants
+        public const int TabIndexDashboard = 0;
+        public const int TabIndexDevices = 1;
+        public const int TabIndexQrVerify = 2;
+        public const int TabIndexOwners = 3;
+        public const int TabIndexDeviceTypes = 4;
+        public const int TabIndexReports = 5;
+        public const int TabIndexAuditLog = 6;
+        public const int TabIndexSettings = 7;
+        public const int TabIndexAbout = 8;
+        public const int TabIndexHelp = 9;
+
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly ISearchService _searchService;
         private int _selectedTabIndex;
         private string _userName = "مهندس المعايرة";
         private bool _isTabHeaderVisible = true;
@@ -22,22 +38,40 @@ namespace CAL_QR.ViewModels
         private string _bannerMessage = string.Empty;
         private bool _hasAlerts;
         private bool _isBannerDismissed;
-        
+
+        // Search Fields
+        private string _searchText = string.Empty;
+        private ObservableCollection<SearchResultItem> _searchResults = new();
+        private bool _isSearchResultsOpen;
+        private DispatcherTimer? _searchDebounceTimer;
+        private CancellationTokenSource? _searchCancellationTokenSource;
+
         // Inactivity Timer
         private DispatcherTimer? _inactivityTimer;
         private DateTime _lastActivityTime;
         private int _autoLockMinutes = 10;
 
         public event EventHandler? LockRequested;
+        public event EventHandler? SearchFocusRequested;
 
-        public MainViewModel(IDbContextFactory<CalQrDbContext> contextFactory)
+        public MainViewModel(IDbContextFactory<CalQrDbContext> contextFactory, ISearchService searchService)
         {
             _contextFactory = contextFactory;
+            _searchService = searchService;
             ToggleTabHeaderCommand = new RelayCommand(ToggleTabHeader);
             ChangeTabCommand = new RelayCommand(ChangeTab);
             DismissBannerCommand = new RelayCommand(DismissBanner);
+            SelectSearchResultCommand = new RelayCommand(async (p) => await SelectSearchResultAsync(p));
+            FocusSearchCommand = new RelayCommand(FocusSearch);
 
             CalibrationEvents.CalibrationChanged += OnCalibrationChanged;
+
+            // Setup search debounce timer
+            _searchDebounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(350)
+            };
+            _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
 
             LoadSettingsAndStartInactivityTimer();
         }
@@ -127,9 +161,36 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        // Search Properties
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                if (SetProperty(ref _searchText, value))
+                {
+                    OnSearchTextChanged();
+                }
+            }
+        }
+
+        public ObservableCollection<SearchResultItem> SearchResults
+        {
+            get => _searchResults;
+            set => SetProperty(ref _searchResults, value);
+        }
+
+        public bool IsSearchResultsOpen
+        {
+            get => _isSearchResultsOpen;
+            set => SetProperty(ref _isSearchResultsOpen, value);
+        }
+
         public ICommand ToggleTabHeaderCommand { get; }
         public ICommand ChangeTabCommand { get; }
         public ICommand DismissBannerCommand { get; }
+        public ICommand SelectSearchResultCommand { get; }
+        public ICommand FocusSearchCommand { get; }
 
         private void ToggleTabHeader()
         {
@@ -147,6 +208,106 @@ namespace CAL_QR.ViewModels
             {
                 SelectedTabIndex = index;
             }
+        }
+
+        private void OnSearchTextChanged()
+        {
+            _searchDebounceTimer?.Stop();
+
+            if (string.IsNullOrWhiteSpace(SearchText) || SearchText.Trim().Length < 2)
+            {
+                SearchResults.Clear();
+                IsSearchResultsOpen = false;
+                
+                // Cancel pending search
+                _searchCancellationTokenSource?.Cancel();
+                _searchCancellationTokenSource?.Dispose();
+                _searchCancellationTokenSource = null;
+                return;
+            }
+
+            _searchDebounceTimer?.Start();
+        }
+
+        private void SearchDebounceTimer_Tick(object? sender, EventArgs e)
+        {
+            _searchDebounceTimer?.Stop();
+            _ = PerformSearchAsync();
+        }
+
+        private async Task PerformSearchAsync()
+        {
+            var query = SearchText;
+            if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+            {
+                SearchResults.Clear();
+                IsSearchResultsOpen = false;
+                return;
+            }
+
+            // Cancel any previous search task
+            _searchCancellationTokenSource?.Cancel();
+            _searchCancellationTokenSource?.Dispose();
+            _searchCancellationTokenSource = new CancellationTokenSource();
+
+            var token = _searchCancellationTokenSource.Token;
+
+            try
+            {
+                var results = await _searchService.SearchAsync(query, token);
+                
+                if (!token.IsCancellationRequested)
+                {
+                    SearchResults = new ObservableCollection<SearchResultItem>(results);
+                    IsSearchResultsOpen = SearchResults.Count > 0;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Silent ignore for expected cancellation
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Search error: {ex}");
+                SearchResults.Clear();
+                IsSearchResultsOpen = false;
+            }
+        }
+
+        private async Task SelectSearchResultAsync(object? parameter)
+        {
+            if (parameter is not SearchResultItem item) return;
+
+            // Reset search state
+            IsSearchResultsOpen = false;
+            SearchText = string.Empty;
+            SearchResults.Clear();
+
+            switch (item.EntityType)
+            {
+                case SearchEntityType.Device:
+                    SelectedTabIndex = TabIndexDevices;
+                    SearchEvents.RaiseNavigateToDevice(item.Id);
+                    break;
+                case SearchEntityType.Owner:
+                    SelectedTabIndex = TabIndexOwners;
+                    SearchEvents.RaiseNavigateToOwner(item.Id);
+                    break;
+                case SearchEntityType.DeviceType:
+                    SelectedTabIndex = TabIndexDeviceTypes;
+                    SearchEvents.RaiseNavigateToDeviceType(item.Id);
+                    break;
+                case SearchEntityType.CalibrationRecord:
+                    SelectedTabIndex = TabIndexDevices;
+                    SearchEvents.RaiseNavigateToCalibrationRecord(item.Id);
+                    break;
+            }
+            await Task.CompletedTask;
+        }
+
+        private void FocusSearch()
+        {
+            SearchFocusRequested?.Invoke(this, EventArgs.Empty);
         }
 
         // Inactivity Timer Logic
@@ -291,6 +452,16 @@ namespace CAL_QR.ViewModels
         public void Dispose()
         {
             CalibrationEvents.CalibrationChanged -= OnCalibrationChanged;
+            
+            if (_searchDebounceTimer != null)
+            {
+                _searchDebounceTimer.Stop();
+                _searchDebounceTimer = null;
+            }
+
+            _searchCancellationTokenSource?.Cancel();
+            _searchCancellationTokenSource?.Dispose();
+            _searchCancellationTokenSource = null;
         }
     }
 }

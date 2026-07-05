@@ -124,6 +124,34 @@ namespace CAL_QR.ViewModels
         {
             try
             {
+                // Validate if labels fit within paper size
+                double totalRequiredWidth = MarginLeft + (Columns * LabelWidth) + ((Columns - 1) * GapHorizontal);
+                double totalRequiredHeight = MarginTop + (Rows * LabelHeight) + ((Rows - 1) * GapVertical);
+
+                if (totalRequiredWidth > PaperWidth)
+                {
+                    MessageBox.Show(
+                        $"تنبيه: العرض الإجمالي المطلوب للملصقات ({totalRequiredWidth} مم) يتجاوز عرض الورقة المحدد ({PaperWidth} مم).\n\n" +
+                        "يرجى تقليل عدد الأعمدة، أو تصغير عرض الملصق أو الفجوات الأفقية.",
+                        "تنبيه أبعاد القالب",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+
+                if (totalRequiredHeight > PaperHeight)
+                {
+                    MessageBox.Show(
+                        $"تنبيه: الارتفاع الإجمالي المطلوب للملصقات ({totalRequiredHeight} مم) يتجاوز ارتفاع الورقة المحدد ({PaperHeight} مم).\n\n" +
+                        "يرجى تقليل عدد الصفوف، أو تصغير ارتفاع الملصق أو الفجوات العمودية.",
+                        "تنبيه أبعاد القالب",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning
+                    );
+                    return;
+                }
+
                 var template = new PaperTemplate
                 {
                     Id = _templateId,

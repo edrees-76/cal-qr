@@ -92,6 +92,10 @@ namespace CAL_QR.ViewModels
                 Device = Task.Run(async () => await _deviceRepository.GetByIdAsync(deviceId)).Result;
 
                 var records = Task.Run(async () => await _calibrationRepository.GetByDeviceIdAsync(deviceId)).Result.ToList();
+                for (int i = 0; i < records.Count; i++)
+                {
+                    records[i].SequenceNumber = i + 1;
+                }
                 Calibrations = new ObservableCollection<CalibrationRecord>(records);
 
                 SelectedRecord = records.FirstOrDefault();

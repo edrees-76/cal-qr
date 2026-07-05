@@ -36,6 +36,11 @@ namespace CAL_QR.ViewModels
         private int _calibrationRecordId;
         private bool _isEditMode;
 
+        private bool _isSyncingOwnerSelection;
+        private bool _isSyncingDeviceTypeSelection;
+        private string _ownerText = string.Empty;
+        private string _deviceTypeText = string.Empty;
+
         private Owner? _selectedOwner;
         private DeviceType? _selectedDeviceType;
         private string _model = string.Empty;
@@ -88,16 +93,98 @@ namespace CAL_QR.ViewModels
         }
 
         #region Properties
+        public string OwnerText
+        {
+            get => _ownerText;
+            set
+            {
+                if (SetProperty(ref _ownerText, value))
+                {
+                    if (!_isSyncingOwnerSelection)
+                    {
+                        _isSyncingOwnerSelection = true;
+                        try
+                        {
+                            var matched = Owners.FirstOrDefault(o => o.Name.Trim().Equals(value.Trim(), StringComparison.OrdinalIgnoreCase));
+                            SelectedOwner = matched;
+                        }
+                        finally
+                        {
+                            _isSyncingOwnerSelection = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        public string DeviceTypeText
+        {
+            get => _deviceTypeText;
+            set
+            {
+                if (SetProperty(ref _deviceTypeText, value))
+                {
+                    if (!_isSyncingDeviceTypeSelection)
+                    {
+                        _isSyncingDeviceTypeSelection = true;
+                        try
+                        {
+                            var matched = DeviceTypes.FirstOrDefault(t => t.Name.Trim().Equals(value.Trim(), StringComparison.OrdinalIgnoreCase));
+                            SelectedDeviceType = matched;
+                        }
+                        finally
+                        {
+                            _isSyncingDeviceTypeSelection = false;
+                        }
+                    }
+                }
+            }
+        }
+
         public Owner? SelectedOwner
         {
             get => _selectedOwner;
-            set => SetProperty(ref _selectedOwner, value);
+            set
+            {
+                if (SetProperty(ref _selectedOwner, value))
+                {
+                    if (!_isSyncingOwnerSelection)
+                    {
+                        _isSyncingOwnerSelection = true;
+                        try
+                        {
+                            OwnerText = value?.Name ?? string.Empty;
+                        }
+                        finally
+                        {
+                            _isSyncingOwnerSelection = false;
+                        }
+                    }
+                }
+            }
         }
 
         public DeviceType? SelectedDeviceType
         {
             get => _selectedDeviceType;
-            set => SetProperty(ref _selectedDeviceType, value);
+            set
+            {
+                if (SetProperty(ref _selectedDeviceType, value))
+                {
+                    if (!_isSyncingDeviceTypeSelection)
+                    {
+                        _isSyncingDeviceTypeSelection = true;
+                        try
+                        {
+                            DeviceTypeText = value?.Name ?? string.Empty;
+                        }
+                        finally
+                        {
+                            _isSyncingDeviceTypeSelection = false;
+                        }
+                    }
+                }
+            }
         }
 
         public string Model
@@ -352,8 +439,8 @@ namespace CAL_QR.ViewModels
 
         private bool CanSave()
         {
-            return SelectedOwner != null &&
-                   SelectedDeviceType != null &&
+            return (!string.IsNullOrWhiteSpace(OwnerText) || SelectedOwner != null) &&
+                   (!string.IsNullOrWhiteSpace(DeviceTypeText) || SelectedDeviceType != null) &&
                    !string.IsNullOrWhiteSpace(Model) &&
                    !string.IsNullOrWhiteSpace(SerialNumber) &&
                    !string.IsNullOrWhiteSpace(CertificateNumber) &&
@@ -370,6 +457,18 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(OwnerText) && SelectedOwner == null)
+            {
+                ValidationErrors = "تنبيه: يجب إدخال اسم الجهة المالكة.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(DeviceTypeText) && SelectedDeviceType == null)
+            {
+                ValidationErrors = "تنبيه: يجب إدخال نوع الجهاز.";
+                return;
+            }
+
             using (var context = await _contextFactory.CreateDbContextAsync())
             {
                 var dupCert = await context.CalibrationRecords
@@ -383,87 +482,217 @@ namespace CAL_QR.ViewModels
 
             try
             {
-                Device device;
-
-                if (_deviceId > 0)
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                using (var transaction = await context.Database.BeginTransactionAsync())
                 {
-                    device = await _deviceRepository.GetByIdAsync(_deviceId) ?? new Device();
-                    device.OwnerId = SelectedOwner!.Id;
-                    device.DeviceTypeId = SelectedDeviceType!.Id;
-                    device.Model = Model.Trim();
-                    device.SerialNumber = SerialNumber.Trim();
-                    await _deviceRepository.UpdateAsync(device);
-                }
-                else
-                {
-                    device = new Device
+                    try
                     {
-                        OwnerId = SelectedOwner!.Id,
-                        DeviceTypeId = SelectedDeviceType!.Id,
-                        Model = Model.Trim(),
-                        SerialNumber = SerialNumber.Trim()
-                    };
-                    await _deviceRepository.AddAsync(device);
-                    _deviceId = device.Id;
+                        // 1. Process Owner
+                        Owner finalOwner;
+                        bool ownerAdded = false;
+                        if (SelectedOwner != null)
+                        {
+                            finalOwner = await context.Owners.FindAsync(SelectedOwner.Id) 
+                                         ?? throw new InvalidOperationException("الجهة المالكة المحددة غير موجودة.");
+                        }
+                        else
+                        {
+                            string ownerNameTrim = OwnerText.Trim();
+                            var existing = await context.Owners.FirstOrDefaultAsync(o => o.Name.ToLower() == ownerNameTrim.ToLower());
+                            if (existing != null)
+                            {
+                                if (existing.IsDeleted)
+                                {
+                                    // Reincarnate
+                                    existing.IsDeleted = false;
+                                    context.Owners.Update(existing);
+                                    await context.SaveChangesAsync();
+                                    ownerAdded = true;
+                                }
+                                finalOwner = existing;
+                            }
+                            else
+                            {
+                                finalOwner = new Owner
+                                {
+                                    Name = ownerNameTrim,
+                                    CreatedAt = DateTime.UtcNow,
+                                    IsDeleted = false
+                                };
+                                context.Owners.Add(finalOwner);
+                                await context.SaveChangesAsync();
+                                ownerAdded = true;
+                            }
+                        }
+
+                        // 2. Process DeviceType
+                        DeviceType finalType;
+                        bool typeAdded = false;
+                        if (SelectedDeviceType != null)
+                        {
+                            finalType = await context.DeviceTypes.FindAsync(SelectedDeviceType.Id)
+                                        ?? throw new InvalidOperationException("نوع الجهاز المحدد غير موجود.");
+                        }
+                        else
+                        {
+                            string typeNameTrim = DeviceTypeText.Trim();
+                            var existing = await context.DeviceTypes.FirstOrDefaultAsync(t => t.Name.ToLower() == typeNameTrim.ToLower());
+                            if (existing != null)
+                            {
+                                if (existing.IsDeleted)
+                                {
+                                    // Reincarnate
+                                    existing.IsDeleted = false;
+                                    existing.CreatedAt = DateTime.UtcNow;
+                                    context.DeviceTypes.Update(existing);
+                                    await context.SaveChangesAsync();
+                                    typeAdded = true;
+                                }
+                                finalType = existing;
+                            }
+                            else
+                            {
+                                finalType = new DeviceType
+                                {
+                                    Name = typeNameTrim,
+                                    CreatedAt = DateTime.UtcNow,
+                                    IsDeleted = false
+                                };
+                                context.DeviceTypes.Add(finalType);
+                                await context.SaveChangesAsync();
+                                typeAdded = true;
+                            }
+                        }
+
+                        // 3. Process Device
+                        Device device;
+                        if (_deviceId > 0)
+                        {
+                            device = await context.Devices.FirstOrDefaultAsync(d => d.Id == _deviceId && !d.IsDeleted)
+                                     ?? throw new InvalidOperationException("الجهاز المحدد غير موجود.");
+                            device.OwnerId = finalOwner.Id;
+                            device.DeviceTypeId = finalType.Id;
+                            device.Model = Model.Trim();
+                            device.SerialNumber = SerialNumber.Trim();
+                            context.Devices.Update(device);
+                        }
+                        else
+                        {
+                            var existingDevice = await context.Devices.FirstOrDefaultAsync(d => d.SerialNumber.ToLower() == SerialNumber.Trim().ToLower() && !d.IsDeleted);
+                            if (existingDevice != null)
+                            {
+                                device = existingDevice;
+                                device.OwnerId = finalOwner.Id;
+                                device.DeviceTypeId = finalType.Id;
+                                device.Model = Model.Trim();
+                                context.Devices.Update(device);
+                            }
+                            else
+                            {
+                                device = new Device
+                                {
+                                    OwnerId = finalOwner.Id,
+                                    DeviceTypeId = finalType.Id,
+                                    Model = Model.Trim(),
+                                    SerialNumber = SerialNumber.Trim(),
+                                    CreatedAt = DateTime.UtcNow,
+                                    IsDeleted = false
+                                };
+                                context.Devices.Add(device);
+                            }
+                        }
+                        await context.SaveChangesAsync();
+                        _deviceId = device.Id;
+
+                        // 4. Process Calibration Record
+                        string realSignature = _hmacService.ComputeSignature(
+                            certNo: CertificateNumber.Trim(),
+                            model: Model.Trim(),
+                            serial: SerialNumber.Trim(),
+                            ownerName: finalOwner.Name.Trim(),
+                            calDate: CalibrationDate.ToString("yyyy-MM-dd"),
+                            expDate: ExpiryDate.ToString("yyyy-MM-dd"),
+                            result: SelectedResult,
+                            engineerName: EngineerName.Trim()
+                        );
+
+                        CalibrationRecord record;
+                        if (IsEditMode)
+                        {
+                            record = await context.CalibrationRecords.FindAsync(_calibrationRecordId)
+                                     ?? throw new InvalidOperationException("سجل المعايرة غير موجود.");
+                            record.DeviceId = _deviceId;
+                            record.CertificateNumber = CertificateNumber.Trim();
+                            record.CalibrationDate = CalibrationDate;
+                            record.ExpiryDate = ExpiryDate;
+                            record.EngineerName = EngineerName.Trim();
+                            record.CalibrationDescription = Description.Trim();
+                            record.Result = SelectedResult;
+                            record.HmacSignature = realSignature;
+                            record.UpdatedAt = DateTime.UtcNow;
+                            context.CalibrationRecords.Update(record);
+                            await context.SaveChangesAsync();
+                            await _auditLogRepository.LogAsync("تعديل معايرة", "CalibrationRecord", record.Id.ToString(), $"تعديل سجل المعايرة ذو الشهادة {record.CertificateNumber}");
+                        }
+                        else
+                        {
+                            record = new CalibrationRecord
+                            {
+                                DeviceId = _deviceId,
+                                CertificateNumber = CertificateNumber.Trim(),
+                                CalibrationDate = CalibrationDate,
+                                ExpiryDate = ExpiryDate,
+                                EngineerName = EngineerName.Trim(),
+                                CalibrationDescription = Description.Trim(),
+                                Result = SelectedResult,
+                                HmacSignature = realSignature,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow,
+                                IsDeleted = false
+                            };
+                            context.CalibrationRecords.Add(record);
+                            await context.SaveChangesAsync();
+                            _calibrationRecordId = record.Id;
+                            await _auditLogRepository.LogAsync("إضافة معايرة", "CalibrationRecord", record.Id.ToString(), $"إضافة سجل معايرة جديد ذو الشهادة {record.CertificateNumber}");
+                        }
+
+                        // Commit transaction
+                        await transaction.CommitAsync();
+
+                        // Generate and Save QR Code
+                        _qrService.GenerateAndSaveQrForRecord(
+                            ownerName: finalOwner.Name.Trim(),
+                            deviceType: finalType.Name.Trim(),
+                            model: Model.Trim(),
+                            serial: SerialNumber.Trim(),
+                            certNo: CertificateNumber.Trim(),
+                            calDate: CalibrationDate.ToString("yyyy-MM-dd"),
+                            expDate: ExpiryDate.ToString("yyyy-MM-dd"),
+                            engineerName: EngineerName.Trim(),
+                            description: Description.Trim(),
+                            result: SelectedResult,
+                            verifyCode: realSignature
+                        );
+
+                        // Save attachments
+                        await SaveAttachmentsAsync();
+
+                        // Fire master data events if new entities were added
+                        if (ownerAdded) MasterDataEvents.RaiseOwnerAdded();
+                        if (typeAdded) MasterDataEvents.RaiseDeviceTypeAdded();
+
+                        Saved?.Invoke(this, EventArgs.Empty);
+                        CalibrationEvents.RaiseCalibrationChanged();
+
+                        MessageBox.Show("تم حفظ سجل المعايرة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
+                        CloseWindowAction?.Invoke();
+                    }
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
                 }
-
-                string realSignature = _hmacService.ComputeSignature(
-                    certNo: CertificateNumber.Trim(),
-                    model: Model.Trim(),
-                    serial: SerialNumber.Trim(),
-                    ownerName: SelectedOwner!.Name.Trim(),
-                    calDate: CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: ExpiryDate.ToString("yyyy-MM-dd"),
-                    result: SelectedResult,
-                    engineerName: EngineerName.Trim()
-                );
-
-                var record = new CalibrationRecord
-                {
-                    Id = _calibrationRecordId,
-                    DeviceId = _deviceId,
-                    CertificateNumber = CertificateNumber.Trim(),
-                    CalibrationDate = CalibrationDate,
-                    ExpiryDate = ExpiryDate,
-                    EngineerName = EngineerName.Trim(),
-                    CalibrationDescription = Description.Trim(),
-                    Result = SelectedResult,
-                    HmacSignature = realSignature
-                };
-
-                if (IsEditMode)
-                {
-                    await _calibrationRepository.UpdateAsync(record);
-                    await _auditLogRepository.LogAsync("تعديل معايرة", "CalibrationRecord", record.Id.ToString(), $"تعديل سجل المعايرة ذو الشهادة {record.CertificateNumber}");
-                }
-                else
-                {
-                    await _calibrationRepository.AddAsync(record);
-                    _calibrationRecordId = record.Id;
-                    await _auditLogRepository.LogAsync("إضافة معايرة", "CalibrationRecord", record.Id.ToString(), $"إضافة سجل معايرة جديد ذو الشهادة {record.CertificateNumber}");
-                }
-
-                _qrService.GenerateAndSaveQrForRecord(
-                    ownerName: SelectedOwner.Name.Trim(),
-                    deviceType: SelectedDeviceType!.Name.Trim(),
-                    model: Model.Trim(),
-                    serial: SerialNumber.Trim(),
-                    certNo: CertificateNumber.Trim(),
-                    calDate: CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: EngineerName.Trim(),
-                    description: Description.Trim(),
-                    result: SelectedResult,
-                    verifyCode: realSignature
-                );
-
-                await SaveAttachmentsAsync();
-
-                Saved?.Invoke(this, EventArgs.Empty);
-                CalibrationEvents.RaiseCalibrationChanged();
-
-                MessageBox.Show("تم حفظ سجل المعايرة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
-                CloseWindowAction?.Invoke();
             }
             catch (Exception ex)
             {

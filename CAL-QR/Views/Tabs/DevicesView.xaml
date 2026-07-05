@@ -163,6 +163,16 @@
             <!-- 1. Table View -->
             <Border Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="10" Visibility="{Binding IsTableView, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DataGrid ItemsSource="{Binding Devices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <DataGrid.Resources>
+                        <Style x:Key="DynamicTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                        </Style>
+                        <Style x:Key="WrapTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                            <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+                            <Setter Property="TextWrapping" Value="Wrap" />
+                        </Style>
+                    </DataGrid.Resources>
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
                             <Setter Property="Background" Value="{Binding RowBackground}" />
@@ -183,49 +193,56 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="120" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <!-- عمود التسلسل -->
+                        <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="50" MinWidth="40" ElementStyle="{StaticResource DynamicTextColumnStyle}">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="ت" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center" /></DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="1.2*" MinWidth="100" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="2*" MinWidth="140" ElementStyle="{StaticResource WrapTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="الجهة المالكة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="نوع الجهاز" Binding="{Binding DeviceTypeName}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="نوع الجهاز" Binding="{Binding DeviceTypeName}" Width="1.5*" MinWidth="120" ElementStyle="{StaticResource WrapTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="نوع الجهاز" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="الموديل" Binding="{Binding Model}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="الموديل" Binding="{Binding Model}" Width="1.2*" MinWidth="100" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="الموديل" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="الرقم التسلسلي" Binding="{Binding SerialNumber}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="الرقم التسلسلي" Binding="{Binding SerialNumber}" Width="1.2*" MinWidth="100" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="الرقم التسلسلي" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="تاريخ المعايرة" Binding="{Binding CalibrationDateString}" Width="110" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="تاريخ المعايرة" Binding="{Binding CalibrationDateString}" Width="1.1*" MinWidth="95" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="تاريخ المعايرة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="تاريخ الانتهاء" Binding="{Binding ExpiryDateString}" Width="110" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="تاريخ الانتهاء" Binding="{Binding ExpiryDateString}" Width="1.1*" MinWidth="95" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="تاريخ الانتهاء" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
-                        <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultAr}" Width="90" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                        <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultAr}" Width="1*" MinWidth="85" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="النتيجة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
                         
                         <!-- Actions -->
-                        <DataGridTemplateColumn Width="150">
+                        <DataGridTemplateColumn Width="140">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

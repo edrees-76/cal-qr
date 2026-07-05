@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CAL_QR.Models
 {
@@ -17,6 +18,12 @@ namespace CAL_QR.Models
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        [NotMapped]
+        public int SequenceNumber { get; set; }
+
+        [NotMapped]
+        public string ResultAr => Result == "Passed" ? "✅ ناجح" : Result == "Failed" ? "❌ راسب" : Result == "Conditional" ? "⚠️ مشروط" : Result;
 
         public virtual Device? Device { get; set; }
         public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();

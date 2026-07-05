@@ -66,12 +66,12 @@
                         
                         <StackPanel Grid.Column="0" Margin="5">
                             <TextBlock Text="الجهة المالكة *" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                            <ComboBox ItemsSource="{Binding Owners}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedOwner}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <ComboBox IsEditable="True" ItemsSource="{Binding Owners}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedOwner}" Text="{Binding OwnerText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="5">
                             <TextBlock Text="نوع الجهاز *" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                            <ComboBox ItemsSource="{Binding DeviceTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDeviceType}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <ComboBox IsEditable="True" ItemsSource="{Binding DeviceTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDeviceType}" Text="{Binding DeviceTypeText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="5">

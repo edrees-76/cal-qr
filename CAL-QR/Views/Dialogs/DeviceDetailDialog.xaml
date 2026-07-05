@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="تفاصيل الجهاز والمعايرات | Device Details" Height="600" Width="850"
+        Title="تفاصيل الجهاز والمعايرات | Device Details" Height="750" Width="1200"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="Transparent"
@@ -37,14 +37,18 @@
                 </Button>
             </Grid>
 
-            <!-- Content Area -->
+            <!-- Content Area (Three-Column Layout) -->
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="280" />
-                    <ColumnDefinition Width="*" />
+                    <!-- العمود 1: بيانات الجهاز (اليمين) -->
+                    <ColumnDefinition Width="300" />
+                    <!-- العمود 2: مخطط الجدول وتاريخ المعايرات (الوسط) -->
+                    <ColumnDefinition Width="2.5*" />
+                    <!-- العمود 3: تفاصيل المعايرة والمرفقات (اليسار) -->
+                    <ColumnDefinition Width="2*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Left Panel -->
+                <!-- Right Column (Device Info) -->
                 <Border Grid.Column="0" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,15,0">
                     <Grid>
                         <StackPanel>
@@ -52,16 +56,16 @@
                                 <TextBlock Text="{Binding Device.DeviceType.Name}" Foreground="White" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                             </Border>
 
-                            <TextBlock Text="الموديل / الطراز" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="الموديل / الطراز" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Device.Model}" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
-                            <TextBlock Text="الرقم التسلسلي (S/N)" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="الرقم التسلسلي (S/N)" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Device.SerialNumber}" FontSize="15" FontWeight="SemiBold" Foreground="#2D3748" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
-                            <TextBlock Text="الجهة المالكة" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="الجهة المالكة" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Device.Owner.Name}" FontSize="14" FontWeight="Medium" Foreground="#2D3748" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
-                            <TextBlock Text="تاريخ تسجيل الجهاز" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="تاريخ تسجيل الجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Device.CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}" FontSize="12" Foreground="#4A5568" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                             <Separator Margin="0,5,0,15" />
@@ -72,7 +76,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="عدد المعايرات" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                                    <TextBlock Text="إجمالي عدد المعايرات" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
                                     <TextBlock Text="{Binding Calibrations.Count}" FontSize="24" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
                                 </StackPanel>
                             </Grid>
@@ -80,15 +84,15 @@
                     </Grid>
                 </Border>
 
-                <!-- Right Panel -->
-                <Grid Grid.Column="1">
+                <!-- Center Column (Timeline & DataGrid) -->
+                <Grid Grid.Column="1" Margin="0,0,15,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
                     <!-- Visual Timeline -->
-                    <Border Grid.Row="0" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,0,15">
+                    <Border Grid.Row="0" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="المخطط الزمني للمعايرة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                             
@@ -122,107 +126,118 @@
                         </StackPanel>
                     </Border>
 
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2.2*" />
-                            <ColumnDefinition Width="1.5*" />
-                        </Grid.ColumnDefinitions>
+                    <!-- Calibrations Table -->
+                    <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="سجل تاريخ المعايرات السابقة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                            
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Calibrations}" SelectedItem="{Binding SelectedRecord}"
+                                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                                      Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
+                                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                                <DataGrid.Resources>
+                                    <Style x:Key="DetailTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                        <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+                                        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                    </Style>
+                                </DataGrid.Resources>
+                                <DataGrid.Columns>
+                                    <!-- عمود التسلسل -->
+                                    <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="45" MinWidth="35" ElementStyle="{StaticResource DetailTextColumnStyle}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate><TextBlock Text="ت" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center" /></DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
 
-                        <!-- Calibrations Table -->
-                        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10" Margin="0,0,10,0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="تاريخ المعايرات" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                                
-                                <DataGrid Grid.Row="1" ItemsSource="{Binding Calibrations}" SelectedItem="{Binding SelectedRecord}"
-                                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                                          Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Header="التاريخ" Binding="{Binding CalibrationDate, StringFormat='yyyy-MM-dd'}" Width="100" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="التاريخ" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                        <DataGridTextColumn Header="النتيجة" Binding="{Binding Result}" Width="80" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                                            <DataGridTextColumn.HeaderTemplate>
-                                                <DataTemplate><TextBlock Text="النتيجة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                                            </DataGridTextColumn.HeaderTemplate>
-                                        </DataGridTextColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
-                        </Border>
-
-                        <!-- Selected Record Details -->
-                        <Border Grid.Column="1" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Margin="0,0,0,10">
-                                    <TextBlock Text="تفاصيل المعايرة المحددة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                                    
-                                    <TextBlock Text="المهندس المعايِر:" FontSize="10" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                    <TextBlock Text="{Binding SelectedRecord.EngineerName}" FontSize="12" FontWeight="SemiBold" Foreground="#2D3748" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
-
-                                    <TextBlock Text="تاريخ الانتهاء:" FontSize="10" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                    <TextBlock Text="{Binding SelectedRecord.ExpiryDate, StringFormat='yyyy-MM-dd'}" FontSize="12" FontWeight="SemiBold" Foreground="#2D3748" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
-
-                                    <TextBlock Text="التوقيع الرقمي (Signature):" FontSize="10" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                    <TextBlock Text="{Binding SelectedRecord.HmacSignature}" FontSize="12" FontWeight="Bold" Foreground="#C62828" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
-                                    
-                                    <TextBlock Text="الملاحظات:" FontSize="10" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                    <TextBlock Text="{Binding SelectedRecord.CalibrationDescription}" FontSize="11" TextWrapping="Wrap" Foreground="#4A5568" Height="45" FontFamily="{StaticResource CairoFont}" />
-
-                                    <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="36" Margin="0,10,0,0" FontFamily="{StaticResource CairoFont}">
-                                        <StackPanel Orientation="Horizontal">
-                                            <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                            <TextBlock Text="🖨️ طباعة ملصق المعايرة" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-
-                                <Grid Grid.Row="1">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="*" />
-                                    </Grid.RowDefinitions>
-                                    <TextBlock Grid.Row="0" Text="المرفقات والملفات" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
-                                    
-                                    <ListBox Grid.Row="1" ItemsSource="{Binding SelectedRecordAttachments}" Background="Transparent" BorderThickness="0" Padding="0">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Width="200">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <materialDesign:PackIcon Kind="FilePdfBox" Foreground="#C62828" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource CairoFont}" />
-                                                    
-                                                    <Button Grid.Column="2" Command="{Binding DataContext.OpenAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0" ToolTip="عرض الملف">
-                                                        <materialDesign:PackIcon Kind="OpenInNew" Foreground="#1A3A6B" Width="14" Height="14" />
-                                                    </Button>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Grid>
-                            </Grid>
-                        </Border>
-                    </Grid>
+                                    <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="1.8*" MinWidth="110" ElementStyle="{StaticResource DetailTextColumnStyle}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="التاريخ" Binding="{Binding CalibrationDate, StringFormat='yyyy-MM-dd'}" Width="1.2*" MinWidth="90" ElementStyle="{StaticResource DetailTextColumnStyle}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate><TextBlock Text="التاريخ" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="النتيجة" Binding="{Binding ResultAr}" Width="1*" MinWidth="75" ElementStyle="{StaticResource DetailTextColumnStyle}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate><TextBlock Text="النتيجة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
                 </Grid>
+
+                <!-- Left Column (Selected Record Details & Attachments) -->
+                <Border Grid.Column="2" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Selected Record Details Details -->
+                        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="0,0,0,10">
+                                <TextBlock Text="تفاصيل المعايرة النشطة" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                
+                                <TextBlock Text="المهندس المعايِر:" FontSize="10" Foreground="#718096" Margin="0,0,0,2" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="{Binding SelectedRecord.EngineerName}" FontSize="12" FontWeight="SemiBold" Foreground="#2D3748" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                <TextBlock Text="تاريخ الانتهاء:" FontSize="10" Foreground="#718096" Margin="0,0,0,2" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="{Binding SelectedRecord.ExpiryDate, StringFormat='yyyy-MM-dd'}" FontSize="12" FontWeight="SemiBold" Foreground="#2D3748" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                <TextBlock Text="التوقيع الرقمي (Signature):" FontSize="10" Foreground="#718096" Margin="0,0,0,2" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="{Binding SelectedRecord.HmacSignature}" FontSize="11" FontWeight="Bold" Foreground="#C62828" TextWrapping="Wrap" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                
+                                <TextBlock Text="الملاحظات:" FontSize="10" Foreground="#718096" Margin="0,0,0,2" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="{Binding SelectedRecord.CalibrationDescription}" FontSize="11" TextWrapping="Wrap" Foreground="#4A5568" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                                <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="36" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="🖨️ طباعة ملصق المعايرة" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Attachments Section at Bottom of Column 2 -->
+                        <Grid Grid.Row="1" Margin="0,15,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="120" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="المرفقات والملفات الشهادة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            
+                            <ListBox Grid.Row="1" ItemsSource="{Binding SelectedRecordAttachments}" Background="Transparent" BorderThickness="0" Padding="0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Width="220" Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <materialDesign:PackIcon Kind="FilePdfBox" Foreground="#C62828" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0" />
+                                            <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource CairoFont}" />
+                                            
+                                            <Button Grid.Column="2" Command="{Binding DataContext.OpenAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0" ToolTip="عرض الملف">
+                                                <materialDesign:PackIcon Kind="OpenInNew" Foreground="#1A3A6B" Width="14" Height="14" />
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+                    </Grid>
+                </Border>
             </Grid>
 
             <!-- Footer Close button -->

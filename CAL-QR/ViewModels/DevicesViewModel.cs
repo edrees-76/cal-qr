@@ -403,6 +403,12 @@ namespace CAL_QR.ViewModels
                         .Take(PageSize)
                         .ToList();
 
+                    int startIndex = (CurrentPage - 1) * PageSize;
+                    for (int i = 0; i < paginated.Count; i++)
+                    {
+                        paginated[i].SequenceNumber = startIndex + i + 1;
+                    }
+
                     Devices = new ObservableCollection<DeviceDisplayItem>(paginated);
 
                     _isAllSelected = false;
@@ -544,149 +550,21 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
-            try
+            var recordIds = printableItems.Select(item => item.LatestCalibrationRecordId).ToList();
+
+            Window dialog;
+            if (recordIds.Count == 1)
             {
-                PaperTemplate? template = null;
-                string printer = string.Empty;
-
-                using (var context = await _contextFactory.CreateDbContextAsync())
-                {
-                    // الحل الثاني: استعلام مباشر داخل نفس سياق الاتصال المفتوح
-                    var templates = await context.PaperTemplates.AsNoTracking().ToListAsync();
-                    var lastTemplateIdSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastTemplateId");
-                    if (lastTemplateIdSetting != null && int.TryParse(lastTemplateIdSetting.Value, out int tid) && tid > 0)
-                    {
-                        template = templates.FirstOrDefault(t => t.Id == tid);
-                    }
-                    template ??= templates.FirstOrDefault(t => t.IsDefault) ?? templates.FirstOrDefault();
-
-                    if (template == null)
-                    {
-                        MessageBox.Show(
-                            Application.Current.MainWindow,
-                            "لا يوجد قالب طباعة معرف بالمنظومة.",
-                            "تنبيه",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning,
-                            MessageBoxResult.OK,
-                            MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
-                        );
-                        return;
-                    }
-
-                    var printers = _printService.GetAvailablePrinters().ToList();
-                    var lastPrinter = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastPrinterName");
-                    if (lastPrinter != null && !string.IsNullOrWhiteSpace(lastPrinter.Value) && printers.Contains(lastPrinter.Value))
-                    {
-                        printer = lastPrinter.Value;
-                    }
-                    else if (printers.Count > 0)
-                    {
-                        printer = printers[0];
-                    }
-                }
-
-                var recordIds = printableItems.Select(item => item.LatestCalibrationRecordId).ToList();
-                List<CalibrationRecord> records;
-                using (var context = await _contextFactory.CreateDbContextAsync())
-                {
-                    records = await context.CalibrationRecords
-                        .AsNoTracking()
-                        .Include(r => r.Device!)
-                            .ThenInclude(d => d.Owner)
-                        .Include(r => r.Device!)
-                            .ThenInclude(d => d.DeviceType)
-                        .Where(r => recordIds.Contains(r.Id) && !r.IsDeleted)
-                        .ToListAsync();
-                }
-
-                if (records.Count == 0)
-                {
-                    MessageBox.Show(
-                        Application.Current.MainWindow,
-                        "لم يتم العثور على سجلات معايرة صالحة للأجهزة المحددة.",
-                        "تنبيه",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning,
-                        MessageBoxResult.OK,
-                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
-                    );
-                    return;
-                }
-
-                var jobs = new List<QrPrintJob>();
-                int currentColumn = 1;
-                int currentRow = 1;
-
-                foreach (var record in records)
-                {
-                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
-
-                    string qrContent = _qrService.GenerateVerificationText(
-                        ownerName: record.Device?.Owner?.Name ?? "",
-                        deviceType: record.Device?.DeviceType?.Name ?? "",
-                        model: record.Device?.Model ?? "",
-                        serial: record.Device?.SerialNumber ?? "",
-                        certNo: record.CertificateNumber,
-                        calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
-                        expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
-                        engineerName: record.EngineerName,
-                        description: record.CalibrationDescription ?? "",
-                        result: record.Result,
-                        verifyCode: record.HmacSignature
-                    );
-
-                    var qrPrintImage = _qrService.GenerateQrCodeImage(qrContent, 600);
-
-                    jobs.Add(new QrPrintJob
-                    {
-                        QrImage = qrPrintImage,
-                        Template = template,
-                        PrinterName = printer,
-                        StartColumn = currentColumn,
-                        StartRow = currentRow,
-                        CertificateNumber = record.CertificateNumber,
-                        DeviceInfoText = infoText
-                    });
-
-                    if (template.PaperType != "Roll")
-                    {
-                        currentColumn++;
-                        if (currentColumn > template.Columns)
-                        {
-                            currentColumn = 1;
-                            currentRow++;
-                        }
-                    }
-                }
-
-                _printService.PrintMultipleQrLabels(jobs);
-
-                string certNumbers = string.Join(", ", records.Select(r => r.CertificateNumber));
-                await _auditLogRepository.LogAsync("طباعة متعددة ملصقات QR", "Devices", "", $"طباعة رمز الاستجابة السريعة للشهادات: {certNumbers}");
-
-                MessageBox.Show(
-                    Application.Current.MainWindow,
-                    "تم إرسال دفعة الطباعة بنجاح.",
-                    "تمت الطباعة الدفيعة",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information,
-                    MessageBoxResult.OK,
-                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
-                );
+                dialog = new Views.Dialogs.PrintPreviewDialog(recordIds[0]);
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show(
-                    Application.Current.MainWindow,
-                    $"خطأ أثناء طباعة الدفعة: {ex.Message}",
-                    "خطأ",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error,
-                    MessageBoxResult.OK,
-                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
-                );
-        }
+                dialog = new Views.Dialogs.BatchPrintPreviewDialog(recordIds);
+            }
+            dialog.Owner = Application.Current.MainWindow;
+            dialog.ShowDialog();
+            
+            await Task.CompletedTask;
         }
 
         private void OnNavigateToDevice(int deviceId)
@@ -772,6 +650,14 @@ namespace CAL_QR.ViewModels
     {
         public Device? Device { get; set; }
         public int Id { get; set; }
+        
+        private int _sequenceNumber;
+        public int SequenceNumber
+        {
+            get => _sequenceNumber;
+            set => SetProperty(ref _sequenceNumber, value);
+        }
+
         public string Model { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
         public string OwnerName { get; set; } = string.Empty;

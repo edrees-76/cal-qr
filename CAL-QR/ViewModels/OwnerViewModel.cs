@@ -40,6 +40,12 @@ namespace CAL_QR.ViewModels
 
             // Subscribe to search navigation
             SearchEvents.NavigateToOwner += OnNavigateToOwner;
+            MasterDataEvents.OwnerAdded += OnOwnerAdded;
+        }
+
+        private void OnOwnerAdded(object? sender, EventArgs e)
+        {
+            _ = LoadDataAsync();
         }
 
         public ObservableCollection<OwnerDisplayItem> Owners
@@ -275,6 +281,7 @@ namespace CAL_QR.ViewModels
         public void Dispose()
         {
             SearchEvents.NavigateToOwner -= OnNavigateToOwner;
+            MasterDataEvents.OwnerAdded -= OnOwnerAdded;
         }
     }
 

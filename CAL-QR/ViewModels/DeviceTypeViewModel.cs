@@ -37,6 +37,12 @@ namespace CAL_QR.ViewModels
 
             // Subscribe to search navigation
             SearchEvents.NavigateToDeviceType += OnNavigateToDeviceType;
+            MasterDataEvents.DeviceTypeAdded += OnDeviceTypeAdded;
+        }
+
+        private void OnDeviceTypeAdded(object? sender, EventArgs e)
+        {
+            _ = LoadDataAsync();
         }
 
         public ObservableCollection<DeviceTypeDisplayItem> DeviceTypes
@@ -231,6 +237,7 @@ namespace CAL_QR.ViewModels
         public void Dispose()
         {
             SearchEvents.NavigateToDeviceType -= OnNavigateToDeviceType;
+            MasterDataEvents.DeviceTypeAdded -= OnDeviceTypeAdded;
         }
     }
 

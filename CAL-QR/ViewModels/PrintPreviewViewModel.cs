@@ -106,6 +106,15 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _qrImagePreview, value);
         }
 
+        private ObservableCollection<BatchPrintItem> _batchItems = new();
+        public ObservableCollection<BatchPrintItem> BatchItems
+        {
+            get => _batchItems;
+            set => SetProperty(ref _batchItems, value);
+        }
+
+        public string BatchPrintingStatus => $"سيتم طباعة {CalibrationRecords.Count} ملصقات ابتداءً من الصف {StartRow} العمود {StartColumn} بالتسلسل";
+
         public int StartColumn
         {
             get => _startColumn;
@@ -114,6 +123,7 @@ namespace CAL_QR.ViewModels
                 if (SetProperty(ref _startColumn, value))
                 {
                     RedrawGridRequested?.Invoke(this, EventArgs.Empty);
+                    OnPropertyChanged(nameof(BatchPrintingStatus));
                 }
             }
         }
@@ -126,6 +136,7 @@ namespace CAL_QR.ViewModels
                 if (SetProperty(ref _startRow, value))
                 {
                     RedrawGridRequested?.Invoke(this, EventArgs.Empty);
+                    OnPropertyChanged(nameof(BatchPrintingStatus));
                 }
             }
         }
@@ -134,21 +145,66 @@ namespace CAL_QR.ViewModels
         public ICommand PrintCommand { get; }
         public ICommand SaveQrImageCommand { get; }
 
+        public List<CalibrationRecord> CalibrationRecords { get; private set; } = new();
+
+        public bool IsBatchMode => CalibrationRecords.Count > 1;
+
+        public string BatchStatusText => IsBatchMode ? $"معاينة دفعة طباعة: {CalibrationRecords.Count} ملصقات" : "معاينة ملصق فردي";
+
         public async Task LoadDataAsync(int calibrationRecordId)
+        {
+            await LoadDataAsync(new List<int> { calibrationRecordId });
+        }
+
+        public async Task LoadDataAsync(List<int> calibrationRecordIds)
         {
             using (var context = await _contextFactory.CreateDbContextAsync())
             {
-                CalibrationRecord = await context.CalibrationRecords
+                CalibrationRecords = await context.CalibrationRecords
                     .AsNoTracking()
                     .Include(r => r.Device!)
                         .ThenInclude(d => d.Owner)
                     .Include(r => r.Device!)
                         .ThenInclude(d => d.DeviceType)
-                    .FirstOrDefaultAsync(r => r.Id == calibrationRecordId && !r.IsDeleted);
+                    .Where(r => calibrationRecordIds.Contains(r.Id) && !r.IsDeleted)
+                    .ToListAsync();
             }
 
-            if (CalibrationRecord != null)
+            OnPropertyChanged(nameof(IsBatchMode));
+            OnPropertyChanged(nameof(BatchStatusText));
+
+            BatchItems.Clear();
+            int idx = 1;
+            foreach (var record in CalibrationRecords)
             {
+                string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
+                string qrContent = _qrService.GenerateVerificationText(
+                    ownerName: record.Device?.Owner?.Name ?? "",
+                    deviceType: record.Device?.DeviceType?.Name ?? "",
+                    model: record.Device?.Model ?? "",
+                    serial: record.Device?.SerialNumber ?? "",
+                    certNo: record.CertificateNumber,
+                    calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
+                    expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
+                    engineerName: record.EngineerName,
+                    description: record.CalibrationDescription ?? "",
+                    result: record.Result,
+                    verifyCode: record.HmacSignature
+                );
+                var qrImg = _qrService.GenerateQrCodeImage(qrContent, 200);
+                BatchItems.Add(new BatchPrintItem
+                {
+                    Index = idx++,
+                    CertificateNumber = record.CertificateNumber,
+                    DeviceInfo = infoText,
+                    QrImage = qrImg
+                });
+            }
+
+            if (CalibrationRecords.Count > 0)
+            {
+                CalibrationRecord = CalibrationRecords[0];
+
                 string qrContent = _qrService.GenerateVerificationText(
                     ownerName: CalibrationRecord.Device?.Owner?.Name ?? "",
                     deviceType: CalibrationRecord.Device?.DeviceType?.Name ?? "",
@@ -165,6 +221,8 @@ namespace CAL_QR.ViewModels
 
                 QrImagePreview = _qrService.GenerateQrCodeImage(qrContent, 200);
             }
+
+            OnPropertyChanged(nameof(BatchPrintingStatus));
 
             var list = await _templateRepository.GetAllAsync();
             Templates = new ObservableCollection<PaperTemplate>(list);
@@ -196,41 +254,66 @@ namespace CAL_QR.ViewModels
 
         private async void Print()
         {
-            if (CalibrationRecord == null || SelectedTemplate == null) return;
+            if (CalibrationRecords.Count == 0 || SelectedTemplate == null) return;
 
             try
             {
-                string infoText = $"{CalibrationRecord.Device?.DeviceType?.Name}\nModel: {CalibrationRecord.Device?.Model}\nS/N: {CalibrationRecord.Device?.SerialNumber}";
-                
-                string qrContent = _qrService.GenerateVerificationText(
-                    ownerName: CalibrationRecord.Device?.Owner?.Name ?? "",
-                    deviceType: CalibrationRecord.Device?.DeviceType?.Name ?? "",
-                    model: CalibrationRecord.Device?.Model ?? "",
-                    serial: CalibrationRecord.Device?.SerialNumber ?? "",
-                    certNo: CalibrationRecord.CertificateNumber,
-                    calDate: CalibrationRecord.CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: CalibrationRecord.ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: CalibrationRecord.EngineerName,
-                    description: CalibrationRecord.CalibrationDescription ?? "",
-                    result: CalibrationRecord.Result,
-                    verifyCode: CalibrationRecord.HmacSignature
-                );
+                int currentColumn = StartColumn;
+                int currentRow = StartRow;
 
-                var qrPrintImage = _qrService.GenerateQrCodeImage(qrContent, 600);
-
-                var job = new QrPrintJob
+                var jobs = new List<QrPrintJob>();
+                foreach (var record in CalibrationRecords)
                 {
-                    QrImage = qrPrintImage,
-                    Template = SelectedTemplate,
-                    PrinterName = SelectedPrinter,
-                    StartColumn = StartColumn,
-                    StartRow = StartRow,
-                    CertificateNumber = CalibrationRecord.CertificateNumber,
-                    DeviceInfoText = infoText
-                };
+                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
+                    string qrContent = _qrService.GenerateVerificationText(
+                        ownerName: record.Device?.Owner?.Name ?? "",
+                        deviceType: record.Device?.DeviceType?.Name ?? "",
+                        model: record.Device?.Model ?? "",
+                        serial: record.Device?.SerialNumber ?? "",
+                        certNo: record.CertificateNumber,
+                        calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
+                        expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
+                        engineerName: record.EngineerName,
+                        description: record.CalibrationDescription ?? "",
+                        result: record.Result,
+                        verifyCode: record.HmacSignature
+                    );
 
-                _printService.PrintQrLabel(job);
-                await _auditLogRepository.LogAsync("طباعة ملصق QR", "CalibrationRecord", CalibrationRecord.Id.ToString(), $"طباعة رمز الاستجابة السريعة للشهادة رقم {CalibrationRecord.CertificateNumber}");
+                    var qrPrintImage = _qrService.GenerateQrCodeImage(qrContent, 600);
+
+                    jobs.Add(new QrPrintJob
+                    {
+                        QrImage = qrPrintImage,
+                        Template = SelectedTemplate,
+                        PrinterName = SelectedPrinter,
+                        StartColumn = currentColumn,
+                        StartRow = currentRow,
+                        CertificateNumber = record.CertificateNumber,
+                        DeviceInfoText = infoText
+                    });
+
+                    if (SelectedTemplate.PaperType != "Roll")
+                    {
+                        currentColumn++;
+                        if (currentColumn > SelectedTemplate.Columns)
+                        {
+                            currentColumn = 1;
+                            currentRow++;
+                        }
+                    }
+                }
+
+                if (jobs.Count == 1)
+                {
+                    _printService.PrintQrLabel(jobs[0]);
+                    await _auditLogRepository.LogAsync("طباعة ملصق QR", "CalibrationRecord", CalibrationRecords[0].Id.ToString(), $"طباعة رمز الاستجابة السريعة للشهادة رقم {CalibrationRecords[0].CertificateNumber}");
+                }
+                else
+                {
+                    _printService.PrintMultipleQrLabels(jobs);
+                    string certNumbers = string.Join(", ", CalibrationRecords.Select(r => r.CertificateNumber));
+                    await _auditLogRepository.LogAsync("طباعة متعددة ملصقات QR", "Devices", "", $"طباعة رمز الاستجابة السريعة للشهادات: {certNumbers}");
+                }
 
                 SaveSettings();
 
@@ -291,5 +374,13 @@ namespace CAL_QR.ViewModels
         }
 
         public Action? CloseWindowAction { get; set; }
+    }
+
+    public class BatchPrintItem
+    {
+        public int Index { get; set; }
+        public string CertificateNumber { get; set; } = string.Empty;
+        public string DeviceInfo { get; set; } = string.Empty;
+        public BitmapSource? QrImage { get; set; }
     }
 }

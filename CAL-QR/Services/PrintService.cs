@@ -137,7 +137,7 @@ namespace CAL_QR.Services
                             System.Globalization.CultureInfo.CurrentCulture,
                             FlowDirection.LeftToRight,
                             typefaceRegular,
-                            8,
+                            7.5,
                             Brushes.DarkSlateGray,
                             96.0
                         );

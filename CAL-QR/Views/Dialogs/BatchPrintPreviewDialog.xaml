@@ -79,7 +79,7 @@
                                                 <!-- Certificate details -->
                                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding CertificateNumber}" FontWeight="Bold" FontSize="12" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
-                                                    <TextBlock Text="{Binding DeviceInfo}" FontSize="10.5" Foreground="#64748B" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
+                                                    <TextBlock Text="{Binding DeviceInfo}" FontSize="9.5" Foreground="#64748B" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                                                 </StackPanel>
                                             </Grid>
                                         </Border>

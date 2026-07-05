@@ -177,7 +177,7 @@ namespace CAL_QR.ViewModels
             int idx = 1;
             foreach (var record in CalibrationRecords)
             {
-                string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
+                string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}\nتاريخ المعايرة: {record.CalibrationDate:yyyy-MM-dd}\nتاريخ الانتهاء: {record.ExpiryDate:yyyy-MM-dd}";
                 string qrContent = _qrService.GenerateVerificationText(
                     ownerName: record.Device?.Owner?.Name ?? "",
                     deviceType: record.Device?.DeviceType?.Name ?? "",
@@ -264,7 +264,7 @@ namespace CAL_QR.ViewModels
                 var jobs = new List<QrPrintJob>();
                 foreach (var record in CalibrationRecords)
                 {
-                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}";
+                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}\nتاريخ المعايرة: {record.CalibrationDate:yyyy-MM-dd}\nتاريخ الانتهاء: {record.ExpiryDate:yyyy-MM-dd}";
                     string qrContent = _qrService.GenerateVerificationText(
                         ownerName: record.Device?.Owner?.Name ?? "",
                         deviceType: record.Device?.DeviceType?.Name ?? "",

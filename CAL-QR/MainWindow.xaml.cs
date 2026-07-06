@@ -64,10 +64,16 @@ namespace CAL_QR
 
         private void ViewModel_LockRequested(object? sender, EventArgs e)
         {
+            var screensaverWindow = App.ServiceProvider.GetRequiredService<Views.ScreensaverWindow>();
+            screensaverWindow.Dismissed += (s, args) =>
+            {
+                screensaverWindow.Close();
+                var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
+                loginWindow.Show();
+            };
+            screensaverWindow.Show();
+
             _isLoggingOut = true;
-            // Auto lock trigger: show LoginWindow, close MainWindow
-            var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
-            loginWindow.Show();
             this.Close();
         }
 

@@ -101,6 +101,7 @@ namespace CAL_QR
             services.AddTransient<SplashWindow>();
             services.AddTransient<LoginWindow>();
             services.AddTransient<MainWindow>();
+            services.AddTransient<Views.ScreensaverWindow>();
             services.AddTransient<Views.Dialogs.CalibrationFormDialog>();
             services.AddTransient<Views.Dialogs.DeviceDetailDialog>();
             services.AddTransient<Views.Dialogs.PaperTemplateDialog>();

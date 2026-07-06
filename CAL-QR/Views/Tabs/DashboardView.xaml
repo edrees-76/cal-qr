@@ -6,9 +6,14 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
+             xmlns:helpers="clr-namespace:CAL_QR.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="900"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <helpers:DoubleToGridLengthConverter x:Key="DoubleToGridLengthConverter" />
+    </UserControl.Resources>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -123,37 +128,45 @@
                                 <DataTemplate>
                                     <Grid Margin="0,2,0,2">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="200" />
-                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="1.1*" />
+                                            <ColumnDefinition Width="2.4*" />
                                             <ColumnDefinition Width="35" />
                                         </Grid.ColumnDefinitions>
+
+                                        <Grid Grid.Column="0" VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="6" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Rank -->
+                                            <TextBlock Grid.Column="0" Text="{Binding Rank, StringFormat={}{0}.}" FontWeight="Bold" Foreground="#1A3A6B" FontSize="10.5" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Top" />
+                                            
+                                            <!-- Owner Name -->
+                                            <TextBlock Grid.Column="2" Text="{Binding OwnerName}" FontSize="10.5" Foreground="#424242" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Top" />
+                                        </Grid>
                                         
-                                        <!-- Rank & Owner Name -->
-                                        <TextBlock Grid.Column="0" FontSize="10.5" Foreground="#424242" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Right" TextAlignment="Right">
-                                            <TextBlock.Inlines>
-                                                <Run Text="{Binding Rank, StringFormat={}{0}.}" FontWeight="Bold" Foreground="#1A3A6B" />
-                                                <Run Text=" " />
-                                                <Run Text="{Binding OwnerName}" />
-                                            </TextBlock.Inlines>
-                                        </TextBlock>
-                                        
-                                        <!-- Bar -->
-                                        <ProgressBar Grid.Column="1" Value="{Binding BarWidthPercentage}" Height="10" Minimum="0" Maximum="100" Background="#EEEEEE" Foreground="#1A3A6B" BorderThickness="0" VerticalAlignment="Center" Margin="10,0,10,0">
-                                            <ProgressBar.Style>
-                                                <Style TargetType="ProgressBar">
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="ProgressBar">
-                                                                <Grid x:Name="TemplateRoot">
-                                                                    <Border Background="{TemplateBinding Background}" CornerRadius="5" />
-                                                                    <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}" CornerRadius="5" HorizontalAlignment="Left" />
-                                                                </Grid>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </ProgressBar.Style>
-                                        </ProgressBar>
+                                        <!-- Proportional Horizontal Bar -->
+                                        <Grid Grid.Column="1" Height="10" Margin="10,0,10,0" VerticalAlignment="Center">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="{Binding BarWidthPercentage, Converter={StaticResource DoubleToGridLengthConverter}}" />
+                                                <ColumnDefinition Width="{Binding BarWidthPercentage, Converter={StaticResource DoubleToGridLengthConverter}, ConverterParameter=Remaining}" />
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Gray Background Bar -->
+                                            <Border Grid.ColumnSpan="2" Background="#EEEEEE" CornerRadius="5" />
+                                            
+                                            <!-- Proportional Colored Bar with Gradient -->
+                                            <Border Grid.Column="0" CornerRadius="5">
+                                                <Border.Background>
+                                                    <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                                                        <GradientStop Color="#1A3A6B" Offset="0.0" />
+                                                        <GradientStop Color="#C9A227" Offset="1.0" />
+                                                    </LinearGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+                                        </Grid>
                                         
                                         <!-- Count -->
                                         <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="10.5" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Left" VerticalAlignment="Center" />

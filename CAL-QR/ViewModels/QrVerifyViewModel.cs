@@ -1,6 +1,9 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.EntityFrameworkCore;
+using CAL_QR.Data;
 using CAL_QR.ViewModels.Base;
 using CAL_QR.Services;
 
@@ -9,8 +12,10 @@ namespace CAL_QR.ViewModels
     public class QrVerifyViewModel : BaseViewModel
     {
         private readonly IHmacService _hmacService;
+        private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
 
         private string _concatenatedText = string.Empty;
+        private string _quickVerifyCode = string.Empty;
         
         private string _owner = string.Empty;
         private string _deviceType = string.Empty;
@@ -39,14 +44,17 @@ namespace CAL_QR.ViewModels
         private bool _isSuccess;
         private string _message = string.Empty;
         private string _computedVerifyCode = string.Empty;
+        private string _verificationSource = "لم يتم التحقق بعد";
 
-        public QrVerifyViewModel(IHmacService hmacService)
+        public QrVerifyViewModel(IHmacService hmacService, IDbContextFactory<CalQrDbContext> contextFactory)
         {
             _hmacService = hmacService;
+            _contextFactory = contextFactory;
 
             VerifyPastedTextCommand = new RelayCommand(VerifyPastedText);
             VerifyManualCommand = new RelayCommand(VerifyManual);
             ClearCommand = new RelayCommand(Clear);
+            QuickVerifyCommand = new RelayCommand(async () => await QuickVerifyByCodeAsync());
         }
 
         #region Properties
@@ -79,6 +87,18 @@ namespace CAL_QR.ViewModels
         public string ManualResult { get => _manualResult; set => SetProperty(ref _manualResult, value); }
         public string ManualVerifyCode { get => _manualVerifyCode; set => SetProperty(ref _manualVerifyCode, value); }
 
+        public string QuickVerifyCode
+        {
+            get => _quickVerifyCode;
+            set => SetProperty(ref _quickVerifyCode, value);
+        }
+
+        public string VerificationSource
+        {
+            get => _verificationSource;
+            set => SetProperty(ref _verificationSource, value);
+        }
+
         public bool IsValidated { get => _isValidated; set => SetProperty(ref _isValidated, value); }
         public bool IsSuccess { get => _isSuccess; set => SetProperty(ref _isSuccess, value); }
         public string Message { get => _message; set => SetProperty(ref _message, value); }
@@ -89,12 +109,14 @@ namespace CAL_QR.ViewModels
         public ICommand VerifyPastedTextCommand { get; }
         public ICommand VerifyManualCommand { get; }
         public ICommand ClearCommand { get; }
+        public ICommand QuickVerifyCommand { get; }
         #endregion
 
         private void VerifyPastedText()
         {
             IsValidated = false;
             Message = string.Empty;
+            VerificationSource = "عبر لصق نص QR";
 
             if (string.IsNullOrWhiteSpace(ConcatenatedText))
             {
@@ -175,6 +197,7 @@ namespace CAL_QR.ViewModels
         {
             IsValidated = false;
             Message = string.Empty;
+            VerificationSource = "عبر الإدخال اليدوي";
 
             if (string.IsNullOrWhiteSpace(ManualCertNo) ||
                 string.IsNullOrWhiteSpace(ManualModel) ||
@@ -241,6 +264,7 @@ namespace CAL_QR.ViewModels
         private void Clear()
         {
             ConcatenatedText = string.Empty;
+            QuickVerifyCode = string.Empty;
             Owner = string.Empty;
             DeviceType = string.Empty;
             Model = string.Empty;
@@ -268,6 +292,90 @@ namespace CAL_QR.ViewModels
             IsSuccess = false;
             Message = string.Empty;
             ComputedVerifyCode = string.Empty;
+            VerificationSource = "لم يتم التحقق بعد";
+        }
+
+        private async Task QuickVerifyByCodeAsync()
+        {
+            IsValidated = false;
+            Message = string.Empty;
+            VerificationSource = "عبر الكود السريع";
+
+            if (string.IsNullOrWhiteSpace(QuickVerifyCode))
+            {
+                Message = "تنبيه: يرجى إدخال كود التحقق أولاً.";
+                IsSuccess = false;
+                IsValidated = true;
+                return;
+            }
+
+            try
+            {
+                string searchCode = QuickVerifyCode.Trim().ToUpper();
+
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var record = await context.CalibrationRecords
+                    .AsNoTracking()
+                    .Include(r => r.Device)
+                        .ThenInclude(d => d!.Owner)
+                    .Include(r => r.Device)
+                        .ThenInclude(d => d!.DeviceType)
+                    .FirstOrDefaultAsync(r => r.HmacSignature == searchCode && !r.IsDeleted);
+
+                if (record != null)
+                {
+                    Owner = record.Device?.Owner?.Name ?? "غير محدد";
+                    DeviceType = record.Device?.DeviceType?.Name ?? "غير محدد";
+                    Model = record.Device?.Model ?? "غير محدد";
+                    Serial = record.Device?.SerialNumber ?? "غير محدد";
+                    CertNo = record.CertificateNumber ?? "غير محدد";
+                    CalDate = record.CalibrationDate.ToString("yyyy-MM-dd");
+                    ExpDate = record.ExpiryDate.ToString("yyyy-MM-dd");
+                    Engineer = record.EngineerName ?? "غير محدد";
+                    CalType = record.CalibrationDescription ?? "غير محدد";
+                    
+                    Result = record.Result switch
+                    {
+                        "Passed" => "Passed",
+                        "Failed" => "Failed",
+                        "Conditional" => "Conditional",
+                        _ => record.Result
+                    };
+
+                    ReadVerifyCode = record.HmacSignature ?? string.Empty;
+                    ComputedVerifyCode = record.HmacSignature ?? string.Empty;
+                    
+                    IsSuccess = true;
+                    Message = "✅ شهادة أصلية ومطابقة لمركز البحوث النووية.";
+                }
+                else
+                {
+                    Owner = string.Empty;
+                    DeviceType = string.Empty;
+                    Model = string.Empty;
+                    Serial = string.Empty;
+                    CertNo = string.Empty;
+                    CalDate = string.Empty;
+                    ExpDate = string.Empty;
+                    Engineer = string.Empty;
+                    CalType = string.Empty;
+                    Result = string.Empty;
+                    ReadVerifyCode = string.Empty;
+                    ComputedVerifyCode = string.Empty;
+
+                    IsSuccess = false;
+                    Message = "❌ كود التحقق غير موجود في قاعدة البيانات - الشهادة قد تكون مزوّرة أو الكود مُدخل بشكل خاطئ.";
+                }
+
+                IsValidated = true;
+            }
+            catch (Exception ex)
+            {
+                Message = $"خطأ أثناء التحقق السريع: {ex.Message}";
+                IsSuccess = false;
+                IsValidated = true;
+            }
         }
     }
 }

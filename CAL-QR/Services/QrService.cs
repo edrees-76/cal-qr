@@ -64,8 +64,6 @@ namespace CAL_QR.Services
             string result,
             string verifyCode)
         {
-            string calType = string.IsNullOrWhiteSpace(description) ? "غير حدد" : description.Trim();
-            
             string resultStr = result switch
             {
                 "Passed" => "✅ ناجح Passed",
@@ -74,22 +72,23 @@ namespace CAL_QR.Services
                 _ => result
             };
 
-            return "=== شهادة معايرة | Calibration Certificate ===\n" +
-                   $"الجهة / Owner: {ownerName?.Trim()}\n" +
+            return "=== شهادة معايرة ===\n" +
+                   $"الجهة: {ownerName?.Trim()}\n" +
                    $"النوع / Type: {deviceType?.Trim()}\n" +
                    $"الموديل / Model: {model?.Trim()}\n" +
                    $"الرقم التسلسلي / S/N: {serial?.Trim()}\n" +
-                   $"رقم الشهادة / Cert No: {certNo?.Trim()}\n" +
-                   $"تاريخ المعايرة / Cal. Date: {calDate?.Trim()}\n" +
-                   $"تاريخ الانتهاء / Exp. Date: {expDate?.Trim()}\n" +
-                   $"المهندس / Engineer: {engineerName?.Trim()}\n" +
-                   $"نوع المعايرة / Cal. Type: {calType}\n" +
+                   $"رقم الشهادة: {certNo?.Trim()}\n" +
+                   $"تاريخ المعايرة: {calDate?.Trim()}\n" +
+                   $"تاريخ انتهاء المعايرة / Exp. Date: {expDate?.Trim()}\n" +
+                   $"المهندس: {engineerName?.Trim()}\n" +
                    $"النتيجة / Result: {resultStr}\n" +
                    $"كود التحقق / Verify Code: {verifyCode?.Trim()}\n" +
                    "─────────────────────────────────\n" +
                    "الجهة المعايِرة / Calibrated by:\n" +
-                   "مركز البحوث النووية | Nuclear Research Center\n" +
-                   "وحدة المعايرة | Calibration Unit";
+                   "مركز البحوث النووية\n" +
+                   "إدارة الوقاية من الاشعاع\n" +
+                   "قسم قياس وتقدير الجرعات الشخصية والمعايرة\n" +
+                   "وحدة المعايرة";
         }
 
         public void SaveQrCodeImage(string content, string certificateNumber)

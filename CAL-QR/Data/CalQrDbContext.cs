@@ -17,6 +17,7 @@ namespace CAL_QR.Data
         public DbSet<PaperTemplate> PaperTemplates { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<AppSetting> AppSettings { get; set; } = null!;
+        public DbSet<AcknowledgedExpiredDevice> AcknowledgedExpiredDevices { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

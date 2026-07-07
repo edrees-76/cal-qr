@@ -179,64 +179,175 @@
             </Border>
         </Grid>
 
-        <!-- Row 3: Expiring Soon List -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="الأجهزة التي ستنتهي صلاحية معايرتها قريباً" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+        <!-- Row 3: Lists Section -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiringDevices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="ت." Binding="{Binding Rank}" Width="50" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="ت." FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+            <!-- Card 1: Expiring Soon List (Right in RTL) -->
+            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="10,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="الأجهزة التي ستنتهي صلاحية معايرتها قريباً" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
-                        <DataGridTextColumn Header="الموديل / الجهاز" Binding="{Binding DeviceModel}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="الموديل / الجهاز" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiringDevices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
+                        <DataGrid.Resources>
+                            <Style x:Key="WrapTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+                                <Setter Property="TextWrapping" Value="Wrap" />
+                            </Style>
+                            <Style x:Key="CenterTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لعرض تفاصيل الجهاز الكاملة" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ت" Binding="{Binding Rank}" Width="45" CanUserSort="False" ElementStyle="{StaticResource CenterTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="ت" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="الرقم التسلسلي" Binding="{Binding SerialNumber}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="الرقم التسلسلي" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="الجهاز / الرقم التسلسلي" Width="1.4*" MinWidth="110">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الجهاز / الرقم التسلسلي" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical" Margin="0,3">
+                                            <TextBlock Text="{Binding DeviceModel}" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" ToolTip="{Binding DeviceModel}" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="الرقم: " Foreground="#888888" FontSize="10" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="{Binding SerialNumber}" Foreground="#555555" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="*" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="الجهة المالكة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                            <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="1.3*" MinWidth="100" ElementStyle="{StaticResource WrapTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الجهة المالكة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="تاريخ الانتهاء" Binding="{Binding ExpiryDateString}" Width="120" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="تاريخ الانتهاء" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
+                            <DataGridTextColumn Header="تاريخ الانتهاء" Binding="{Binding ExpiryDateString}" Width="1*" MinWidth="85" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="تاريخ الانتهاء" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
 
-                        <DataGridTemplateColumn Header="الأيام المتبقية" Width="120">
-                            <DataGridTemplateColumn.HeaderTemplate>
-                                <DataTemplate><TextBlock Text="الأيام المتبقية" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
-                            </DataGridTemplateColumn.HeaderTemplate>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <materialDesign:PackIcon Kind="ClockAlert" Foreground="#F9A825" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding DaysRemaining}" FontWeight="Bold" Foreground="#F9A825" VerticalAlignment="Center" />
-                                        <TextBlock Text=" يوم متبقي" Foreground="#707070" FontSize="11" Margin="3,0,0,0" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
-        </Border>
+                            <DataGridTemplateColumn Header="الأيام المتبقية" Width="1.1*" MinWidth="95">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الأيام المتبقية" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="ClockAlert" Foreground="#F9A825" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding DaysRemaining}" FontWeight="Bold" Foreground="#F9A825" VerticalAlignment="Center" />
+                                            <TextBlock Text=" يوم" Foreground="#707070" FontSize="11" Margin="3,0,0,0" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Card 2: Expired List (Left in RTL) -->
+            <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="الأجهزة منتهية الصلاحية فعلياً" FontSize="12" FontWeight="Bold" Foreground="#C62828" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiredDevicesList}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
+                        <DataGrid.Resources>
+                            <Style x:Key="WrapTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
+                                <Setter Property="TextWrapping" Value="Wrap" />
+                            </Style>
+                            <Style x:Key="CenterTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لعرض تفاصيل الجهاز الكاملة" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ت" Binding="{Binding Rank}" Width="45" CanUserSort="False" ElementStyle="{StaticResource CenterTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="ت" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+
+                            <DataGridTemplateColumn Header="الجهاز / الرقم التسلسلي" Width="1.4*" MinWidth="110">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الجهاز / الرقم التسلسلي" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical" Margin="0,3">
+                                            <TextBlock Text="{Binding DeviceModel}" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" ToolTip="{Binding DeviceModel}" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                <TextBlock Text="الرقم: " Foreground="#888888" FontSize="10" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="{Binding SerialNumber}" Foreground="#555555" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="1.3*" MinWidth="100" ElementStyle="{StaticResource WrapTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الجهة المالكة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+
+                            <DataGridTextColumn Header="تاريخ الانتهاء" Binding="{Binding ExpiryDateString}" Width="1*" MinWidth="85" ElementStyle="{StaticResource MaterialDesignDataGridTextColumnStyle}">
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="تاريخ الانتهاء" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+
+                            <DataGridTemplateColumn Header="الحالة" Width="1.1*" MinWidth="95">
+                                <DataGridTemplateColumn.HeaderTemplate>
+                                    <DataTemplate><TextBlock Text="الحالة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                                </DataGridTemplateColumn.HeaderTemplate>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="AlertDecagram" Foreground="#C62828" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding DaysExpiredText}" FontWeight="Bold" Foreground="#C62828" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

@@ -10,10 +10,11 @@ namespace CAL_QR.Views.Dialogs
             InitializeComponent();
         }
 
-        private void ShowDetailsButton_Click(object sender, RoutedEventArgs e)
+        private async void ShowDetailsButton_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is MainViewModel vm)
             {
+                await vm.AcknowledgeAllExpiredDevicesAsync();
                 vm.SelectedTabIndex = 0;
             }
             Close();

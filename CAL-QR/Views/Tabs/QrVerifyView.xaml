@@ -34,24 +34,32 @@
         <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" /> <!-- TextBox (Right) -->
+                    <ColumnDefinition Width="Auto" /> <!-- Button (Left of TextBox) -->
+                    <ColumnDefinition Width="*" />    <!-- Empty Spacer (Rest of row) -->
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="تحقق سريع بالكود" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="تحقق سريع بالكود" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                 
-                <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding QuickVerifyCode, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="أدخل كود التحقق المكتوب على الملصق (8 أحرف، مثال: A3B8C9D2)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40" VerticalContentAlignment="Center" FontFamily="{StaticResource CairoFont}" Margin="0,0,10,0" />
+                <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding QuickVerifyCode, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="أدخل كود التحقق المكتوب على الملصق (8 أحرف، مثال: A3B8C9D2)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Width="350" Height="40" VerticalContentAlignment="Center" FontFamily="{StaticResource CairoFont}" Margin="10,0,0,0" />
                 
                 <Button Grid.Row="1" Grid.Column="1" Command="{Binding QuickVerifyCommand}" Content="تحقق سريع" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
             </Grid>
         </Border>
 
-        <!-- Advanced Header Label -->
-        <TextBlock Grid.Row="2" Text="طرق تحقق متقدمة" FontSize="13" FontWeight="Bold" Foreground="#707070" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+        <!-- Advanced Section Header -->
+        <Grid Grid.Row="2" Margin="0,15,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="طرق تحقق متقدمة" FontSize="15" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" Margin="15,0,0,0" />
+            <Border Grid.Column="1" Height="1" Background="#E0E0E0" VerticalAlignment="Center" />
+        </Grid>
 
         <!-- Main Content -->
         <TabControl Grid.Row="3" Background="Transparent" BorderThickness="0">
@@ -184,13 +192,29 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="أدخل الحقول المكتوبة على الشهادة لمطابقتها:" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Grid.Row="0" Text="أدخل الحقول المكتوبة على الشهادة لمطابقتها:" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <!-- Warning Banner -->
+                        <Border Grid.Row="1" Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1.5" CornerRadius="6" Padding="10" Margin="0,0,0,15">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AlertCircleOutline" Foreground="#D97706" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Top" />
+                                
+                                <TextBlock Grid.Column="1" Text="&#9888; يجب إدخال جميع الحقول بدقة حرفية تامة كما هي مطبوعة على الملصق (بما في ذلك حالة الأحرف الإنجليزية والمسافات)، لأن المقارنة حساسة تماماً لأي اختلاف بسيط. يُفضّل نسخ البيانات من الملصق مباشرة بدلاً من كتابتها من الذاكرة، لتفادي ظهور تحذير خاطئ بعدم تطابق التوقيع رغم أن الشهادة أصلية فعلاً." 
+                                           Foreground="#B45309" FontSize="13" FontWeight="SemiBold" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" VerticalAlignment="Center" LineHeight="20" />
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -258,7 +282,7 @@
                             </Grid>
                         </ScrollViewer>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
                             <Button Command="{Binding VerifyManualCommand}" Content="تحقق يدوياً" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
                             <Button Command="{Binding ClearCommand}" Content="مسح" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="36" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>

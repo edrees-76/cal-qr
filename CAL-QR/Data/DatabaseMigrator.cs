@@ -13,6 +13,16 @@ namespace CAL_QR.Data
             // First, make sure the database is created
             context.Database.EnsureCreated();
 
+            // Create AcknowledgedExpiredDevices table if it doesn't exist
+            context.Database.ExecuteSqlRaw(@"
+                CREATE TABLE IF NOT EXISTS AcknowledgedExpiredDevices (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    DeviceId INTEGER NOT NULL,
+                    CalibrationRecordId INTEGER NOT NULL,
+                    AcknowledgedDate TEXT NOT NULL
+                );
+            ");
+
             // Perform any safe check/migration of columns if they are missing
             // e.g. ExecuteSqlIfColumnMissing(context, "TableName", "ColumnName", "ALTER TABLE TableName ADD COLUMN ColumnName TYPE;");
             

@@ -38,6 +38,8 @@ namespace CAL_QR.ViewModels
         private string _bannerMessage = string.Empty;
         private bool _hasAlerts;
         private bool _isBannerDismissed;
+        private bool _shouldShowAlertPopup;
+        private readonly System.Collections.Generic.List<(int DeviceId, int CalibrationRecordId)> _currentExpiredDeviceCalIds = new();
 
         // Search Fields
         private string _searchText = string.Empty;
@@ -65,6 +67,10 @@ namespace CAL_QR.ViewModels
             FocusSearchCommand = new RelayCommand(FocusSearch);
 
             CalibrationEvents.CalibrationChanged += OnCalibrationChanged;
+            SearchEvents.NavigateToDevice += OnNavigateToDevice;
+            SearchEvents.NavigateToCalibrationRecord += OnNavigateToCalibrationRecord;
+            
+            AcknowledgeAllExpiredDevicesCommand = new RelayCommand(async () => await AcknowledgeAllExpiredDevicesAsync());
 
             // Setup search debounce timer
             _searchDebounceTimer = new DispatcherTimer
@@ -123,6 +129,14 @@ namespace CAL_QR.ViewModels
                 }
             }
         }
+
+        public bool ShouldShowAlertPopup
+        {
+            get => _shouldShowAlertPopup;
+            set => SetProperty(ref _shouldShowAlertPopup, value);
+        }
+
+        public ICommand AcknowledgeAllExpiredDevicesCommand { get; }
 
         public bool IsBannerVisible => HasAlerts && !IsBannerDismissed;
 
@@ -383,8 +397,15 @@ namespace CAL_QR.ViewModels
                     .Where(d => !d.IsDeleted)
                     .ToListAsync();
 
+                var acknowledged = await context.AcknowledgedExpiredDevices
+                    .AsNoTracking()
+                    .ToListAsync();
+
                 int expiringCount = 0;
                 int expiredCount = 0;
+                int unacknowledgedExpiredCount = 0;
+
+                _currentExpiredDeviceCalIds.Clear();
 
                 foreach (var device in allDevices)
                 {
@@ -393,11 +414,20 @@ namespace CAL_QR.ViewModels
                         .OrderByDescending(r => r.CalibrationDate)
                         .FirstOrDefault();
 
+                    int latestCalId = latestCal?.Id ?? 0;
+
                     if (latestCal != null)
                     {
                         if (latestCal.ExpiryDate < today)
                         {
                             expiredCount++;
+                            _currentExpiredDeviceCalIds.Add((device.Id, latestCalId));
+
+                            bool isAck = acknowledged.Any(a => a.DeviceId == device.Id && a.CalibrationRecordId == latestCalId);
+                            if (!isAck)
+                            {
+                                unacknowledgedExpiredCount++;
+                            }
                         }
                         else if (latestCal.ExpiryDate <= alertLimit)
                         {
@@ -407,11 +437,19 @@ namespace CAL_QR.ViewModels
                     else
                     {
                         expiredCount++;
+                        _currentExpiredDeviceCalIds.Add((device.Id, 0));
+
+                        bool isAck = acknowledged.Any(a => a.DeviceId == device.Id && a.CalibrationRecordId == 0);
+                        if (!isAck)
+                        {
+                            unacknowledgedExpiredCount++;
+                        }
                     }
                 }
 
                 TotalAlerts = expiringCount + expiredCount;
                 HasAlerts = TotalAlerts > 0;
+                ShouldShowAlertPopup = unacknowledgedExpiredCount > 0;
                 BannerMessage = $"يوجد {expiringCount} جهاز سينتهي خلال {alertDays} يوم | {expiredCount} جهاز منتهي الصلاحية";
                 OnPropertyChanged(nameof(IsBannerVisible));
             }
@@ -449,9 +487,57 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        public async Task AcknowledgeAllExpiredDevicesAsync()
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var acknowledged = await context.AcknowledgedExpiredDevices.ToListAsync();
+
+                bool changed = false;
+                foreach (var item in _currentExpiredDeviceCalIds)
+                {
+                    bool exists = acknowledged.Any(a => a.DeviceId == item.DeviceId && a.CalibrationRecordId == item.CalibrationRecordId);
+                    if (!exists)
+                    {
+                        context.AcknowledgedExpiredDevices.Add(new AcknowledgedExpiredDevice
+                        {
+                            DeviceId = item.DeviceId,
+                            CalibrationRecordId = item.CalibrationRecordId,
+                            AcknowledgedDate = DateTime.Now
+                        });
+                        changed = true;
+                    }
+                }
+
+                if (changed)
+                {
+                    await context.SaveChangesAsync();
+                }
+
+                ShouldShowAlertPopup = false;
+            }
+            catch
+            {
+                // Suppress
+            }
+        }
+
+        private void OnNavigateToDevice(int deviceId)
+        {
+            SelectedTabIndex = TabIndexDevices;
+        }
+
+        private void OnNavigateToCalibrationRecord(int recordId)
+        {
+            SelectedTabIndex = TabIndexDevices;
+        }
+
         public void Dispose()
         {
             CalibrationEvents.CalibrationChanged -= OnCalibrationChanged;
+            SearchEvents.NavigateToDevice -= OnNavigateToDevice;
+            SearchEvents.NavigateToCalibrationRecord -= OnNavigateToCalibrationRecord;
             
             if (_searchDebounceTimer != null)
             {

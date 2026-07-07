@@ -94,7 +94,7 @@ namespace CAL_QR
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await _viewModel.CheckAlertsAsync();
-            if (_viewModel.TotalAlerts > 0)
+            if (_viewModel.ShouldShowAlertPopup)
             {
                 var popup = App.ServiceProvider.GetRequiredService<Views.Dialogs.AlertPopupDialog>();
                 popup.Owner = this;

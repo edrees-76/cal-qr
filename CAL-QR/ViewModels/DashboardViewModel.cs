@@ -28,6 +28,7 @@ namespace CAL_QR.ViewModels
         private int _alertThresholdDays = 30;
 
         private ObservableCollection<ExpiringDeviceDisplayItem> _expiringDevices = new();
+        private ObservableCollection<ExpiredDeviceDisplayItem> _expiredDevicesList = new();
         private ObservableCollection<OwnerDeviceStat> _ownerDeviceStats = new();
 
         public DashboardViewModel(
@@ -40,6 +41,14 @@ namespace CAL_QR.ViewModels
             _calibrationRepository = calibrationRepository;
 
             CalibrationEvents.CalibrationChanged += OnCalibrationChanged;
+
+            NavigateToDeviceCommand = new RelayCommand(p =>
+            {
+                if (p is int id)
+                {
+                    SearchEvents.RaiseNavigateToDevice(id);
+                }
+            });
 
             _ = LoadDataAsync();
         }
@@ -57,11 +66,19 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _expiringDevices, value);
         }
 
+        public ObservableCollection<ExpiredDeviceDisplayItem> ExpiredDevicesList
+        {
+            get => _expiredDevicesList;
+            set => SetProperty(ref _expiredDevicesList, value);
+        }
+
         public ObservableCollection<OwnerDeviceStat> OwnerDeviceStats
         {
             get => _ownerDeviceStats;
             set => SetProperty(ref _ownerDeviceStats, value);
         }
+
+        public System.Windows.Input.ICommand NavigateToDeviceCommand { get; }
         #endregion
 
         public async Task LoadDataAsync()
@@ -99,6 +116,7 @@ namespace CAL_QR.ViewModels
                 int expired = 0;
 
                 var expiringSoonList = new List<ExpiringDeviceDisplayItem>();
+                var expiredList = new List<ExpiredDeviceDisplayItem>();
                 var ownerCounts = new Dictionary<string, int>();
 
                 foreach (var device in allDevices)
@@ -113,6 +131,16 @@ namespace CAL_QR.ViewModels
                         if (latestCal.ExpiryDate < today)
                         {
                             expired++;
+                            int daysExpired = (today - latestCal.ExpiryDate).Days;
+                            expiredList.Add(new ExpiredDeviceDisplayItem
+                            {
+                                DeviceId = device.Id,
+                                DeviceModel = device.Model ?? "",
+                                SerialNumber = device.SerialNumber ?? "",
+                                OwnerName = device.Owner?.Name ?? "غير محدد",
+                                ExpiryDate = latestCal.ExpiryDate,
+                                DaysExpired = daysExpired
+                            });
                         }
                         else if (latestCal.ExpiryDate <= alertLimit)
                         {
@@ -120,6 +148,7 @@ namespace CAL_QR.ViewModels
                             int remainingDays = (latestCal.ExpiryDate - today).Days;
                             expiringSoonList.Add(new ExpiringDeviceDisplayItem
                             {
+                                DeviceId = device.Id,
                                 DeviceModel = device.Model ?? "",
                                 SerialNumber = device.SerialNumber ?? "",
                                 OwnerName = device.Owner?.Name ?? "غير محدد",
@@ -135,6 +164,15 @@ namespace CAL_QR.ViewModels
                     else
                     {
                         expired++;
+                        expiredList.Add(new ExpiredDeviceDisplayItem
+                        {
+                            DeviceId = device.Id,
+                            DeviceModel = device.Model ?? "",
+                            SerialNumber = device.SerialNumber ?? "",
+                            OwnerName = device.Owner?.Name ?? "غير محدد",
+                            ExpiryDate = DateTime.MinValue,
+                            DaysExpired = 0
+                        });
                     }
 
                     string ownerName = device.Owner?.Name ?? "غير محدد";
@@ -156,6 +194,14 @@ namespace CAL_QR.ViewModels
                     sortedExpiring[i].Rank = i + 1;
                 }
                 ExpiringDevices = new ObservableCollection<ExpiringDeviceDisplayItem>(sortedExpiring);
+ 
+                // Sort expired list by expiry date ascending (oldest/never calibrated first) and calculate Rank
+                var sortedExpired = expiredList.OrderBy(x => x.ExpiryDate).ToList();
+                for (int i = 0; i < sortedExpired.Count; i++)
+                {
+                    sortedExpired[i].Rank = i + 1;
+                }
+                ExpiredDevicesList = new ObservableCollection<ExpiredDeviceDisplayItem>(sortedExpired);
 
                 // Sort ownerCounts descending and calculate percentage for custom bar chart
                 var sortedOwners = ownerCounts.OrderByDescending(p => p.Value).ToList();
@@ -191,6 +237,7 @@ namespace CAL_QR.ViewModels
 
     public class ExpiringDeviceDisplayItem
     {
+        public int DeviceId { get; set; }
         public int Rank { get; set; }
         public string DeviceModel { get; set; } = string.Empty;
         public string SerialNumber { get; set; } = string.Empty;
@@ -199,6 +246,20 @@ namespace CAL_QR.ViewModels
         public int DaysRemaining { get; set; }
 
         public string ExpiryDateString => ExpiryDate.ToString("yyyy-MM-dd");
+    }
+
+    public class ExpiredDeviceDisplayItem
+    {
+        public int DeviceId { get; set; }
+        public int Rank { get; set; }
+        public string DeviceModel { get; set; } = string.Empty;
+        public string SerialNumber { get; set; } = string.Empty;
+        public string OwnerName { get; set; } = string.Empty;
+        public DateTime ExpiryDate { get; set; }
+        public int DaysExpired { get; set; }
+ 
+        public string ExpiryDateString => ExpiryDate == DateTime.MinValue ? "بدون شهادة" : ExpiryDate.ToString("yyyy-MM-dd");
+        public string DaysExpiredText => ExpiryDate == DateTime.MinValue ? "غير معاير" : (DaysExpired == 0 ? "منتهي اليوم" : $"{DaysExpired} يوم مضت");
     }
 
     public class OwnerDeviceStat

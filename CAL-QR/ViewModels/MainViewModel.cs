@@ -35,9 +35,7 @@ namespace CAL_QR.ViewModels
         private bool _isTabHeaderVisible = true;
 
         private int _totalAlerts;
-        private string _bannerMessage = string.Empty;
         private bool _hasAlerts;
-        private bool _isBannerDismissed;
         private bool _shouldShowAlertPopup;
         private readonly System.Collections.Generic.List<(int DeviceId, int CalibrationRecordId)> _currentExpiredDeviceCalIds = new();
 
@@ -62,7 +60,6 @@ namespace CAL_QR.ViewModels
             _searchService = searchService;
             ToggleTabHeaderCommand = new RelayCommand(ToggleTabHeader);
             ChangeTabCommand = new RelayCommand(ChangeTab);
-            DismissBannerCommand = new RelayCommand(DismissBanner);
             SelectSearchResultCommand = new RelayCommand(async (p) => await SelectSearchResultAsync(p));
             FocusSearchCommand = new RelayCommand(FocusSearch);
 
@@ -106,28 +103,10 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _totalAlerts, value);
         }
 
-        public string BannerMessage
-        {
-            get => _bannerMessage;
-            set => SetProperty(ref _bannerMessage, value);
-        }
-
         public bool HasAlerts
         {
             get => _hasAlerts;
             set => SetProperty(ref _hasAlerts, value);
-        }
-
-        public bool IsBannerDismissed
-        {
-            get => _isBannerDismissed;
-            set
-            {
-                if (SetProperty(ref _isBannerDismissed, value))
-                {
-                    OnPropertyChanged(nameof(IsBannerVisible));
-                }
-            }
         }
 
         public bool ShouldShowAlertPopup
@@ -137,8 +116,6 @@ namespace CAL_QR.ViewModels
         }
 
         public ICommand AcknowledgeAllExpiredDevicesCommand { get; }
-
-        public bool IsBannerVisible => HasAlerts && !IsBannerDismissed;
 
         public int AutoLockMinutes
         {
@@ -202,18 +179,12 @@ namespace CAL_QR.ViewModels
 
         public ICommand ToggleTabHeaderCommand { get; }
         public ICommand ChangeTabCommand { get; }
-        public ICommand DismissBannerCommand { get; }
         public ICommand SelectSearchResultCommand { get; }
         public ICommand FocusSearchCommand { get; }
 
         private void ToggleTabHeader()
         {
             IsTabHeaderVisible = !IsTabHeaderVisible;
-        }
-
-        private void DismissBanner()
-        {
-            IsBannerDismissed = true;
         }
 
         private void ChangeTab(object? parameter)
@@ -450,8 +421,6 @@ namespace CAL_QR.ViewModels
                 TotalAlerts = expiringCount + expiredCount;
                 HasAlerts = TotalAlerts > 0;
                 ShouldShowAlertPopup = unacknowledgedExpiredCount > 0;
-                BannerMessage = $"يوجد {expiringCount} جهاز سينتهي خلال {alertDays} يوم | {expiredCount} جهاز منتهي الصلاحية";
-                OnPropertyChanged(nameof(IsBannerVisible));
             }
             catch
             {

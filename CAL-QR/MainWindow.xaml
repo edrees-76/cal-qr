@@ -20,7 +20,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -245,25 +244,8 @@
             </Grid>
         </Border>
 
-        <!-- Alert Banner -->
-        <Border Grid.Row="2" Background="#FFF9C4" BorderBrush="#FBC02D" BorderThickness="0,0,0,1" 
-                Visibility="{Binding IsBannerVisible, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="15,8">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <materialDesign:PackIcon Kind="Alert" Foreground="#F9A825" Width="20" Height="20" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0" />
-                <TextBlock Grid.Column="1" Text="{Binding BannerMessage}" Foreground="#5D4037" FontSize="13" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-                <Button Grid.Column="2" Command="{Binding DismissBannerCommand}" Style="{StaticResource MaterialDesignToolButton}" Width="24" Height="24" Padding="0">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#707070" Width="16" Height="16" />
-                </Button>
-            </Grid>
-        </Border>
-
         <!-- Main Content -->
-        <TabControl Grid.Row="3" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Margin="0" Padding="0" Background="Transparent">
+        <TabControl Grid.Row="2" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Margin="0" Padding="0" Background="Transparent">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -316,7 +298,7 @@
         </TabControl>
 
         <!-- Floating action button when tabs are hidden -->
-        <Button Grid.Row="3" Command="{Binding ToggleTabHeaderCommand}" Background="#C9A227" BorderBrush="#C9A227" Width="36" Height="36" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15" ToolTip="إظهار التبويبات">
+        <Button Grid.Row="2" Command="{Binding ToggleTabHeaderCommand}" Background="#C9A227" BorderBrush="#C9A227" Width="36" Height="36" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15" ToolTip="إظهار التبويبات">
             <Button.Style>
                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
                     <Setter Property="Visibility" Value="Collapsed" />

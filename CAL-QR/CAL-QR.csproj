@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\Logo\cal-qr-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,12 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\Logo\cal-qr-logo.png" />
     <Resource Include="Assets\Logo\nuclear-center-logo.png" />
-    <Resource Include="Assets\Logo\cal-qr-logo-removebg-preview.png" />
     <Resource Include="Assets\Logo\nuclear-center-logo-removebg-preview.png" />
     <Resource Include="Assets\Logo\magic_eraser1782906686524.png" />
     <Resource Include="Assets\Fonts\Cairo.ttf" />
+    <Resource Include="Assets\Logo\cal-qr-3d-icon.png" />
+    <Resource Include="Assets\Logo\cal-qr-3d-logo-new.png" />
   </ItemGroup>
 
 </Project>

@@ -53,7 +53,7 @@
                     </Ellipse.Effect>
                 </Ellipse>
                 
-                <Image Source="/Assets/Logo/cal-qr-logo-removebg-preview.png"
+                <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png"
                        Width="175" Height="175"
                        RenderOptions.BitmapScalingMode="HighQuality"
                        HorizontalAlignment="Center"

@@ -18,7 +18,7 @@
 
             <!-- App Logo Badge -->
             <Border Grid.Row="0" Width="130" Height="130" CornerRadius="65" Background="White" Padding="12" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
-                <Image Source="/Assets/Logo/cal-qr-logo-removebg-preview.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" RenderOptions.BitmapScalingMode="HighQuality" />
             </Border>
 
             <!-- App Title -->

@@ -35,7 +35,9 @@
 
                 <!-- Logo & Titles -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Image Source="/Assets/Logo/cal-qr-logo.png" Height="45" Width="45" Margin="0,0,10,0" />
+                    <Border Background="White" Width="44" Height="44" CornerRadius="22" Padding="4" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
                     
                     <StackPanel VerticalAlignment="Center" Margin="5,0,0,0">
                         <TextBlock Text="مركز البحوث النووية" Foreground="White" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />

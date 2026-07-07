@@ -51,7 +51,7 @@
  
                     <!-- Logo -->
                     <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,10,0,15">
-                        <Image Source="/Assets/Logo/cal-qr-logo-removebg-preview.png" Height="110" Width="110" Margin="5" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Height="110" Width="110" Margin="5" RenderOptions.BitmapScalingMode="HighQuality" />
                         <TextBlock Text="CAL-QR" FontSize="24" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="14" Foreground="#707070" HorizontalAlignment="Center" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>

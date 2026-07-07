@@ -48,6 +48,30 @@ namespace CAL_QR.Repositories
                 .FirstOrDefaultAsync(d => d.SerialNumber == serialNumber && !d.IsDeleted);
         }
 
+        public async Task<IEnumerable<Device>> GetByOwnerIdAsync(int ownerId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Devices
+                .AsNoTracking()
+                .Include(d => d.Owner)
+                .Include(d => d.DeviceType)
+                .Include(d => d.CalibrationRecords)
+                .Where(d => d.OwnerId == ownerId && !d.IsDeleted)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Device>> GetByDeviceTypeIdAsync(int deviceTypeId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Devices
+                .AsNoTracking()
+                .Include(d => d.Owner)
+                .Include(d => d.DeviceType)
+                .Include(d => d.CalibrationRecords)
+                .Where(d => d.DeviceTypeId == deviceTypeId && !d.IsDeleted)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(Device device)
         {
             using var context = await _contextFactory.CreateDbContextAsync();

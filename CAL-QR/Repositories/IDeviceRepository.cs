@@ -9,6 +9,8 @@ namespace CAL_QR.Repositories
         Task<IEnumerable<Device>> GetAllAsync();
         Task<Device?> GetByIdAsync(int id);
         Task<Device?> GetBySerialNumberAsync(string serialNumber);
+        Task<IEnumerable<Device>> GetByOwnerIdAsync(int ownerId);
+        Task<IEnumerable<Device>> GetByDeviceTypeIdAsync(int deviceTypeId);
         Task AddAsync(Device device);
         Task UpdateAsync(Device device);
         Task SoftDeleteAsync(int id);

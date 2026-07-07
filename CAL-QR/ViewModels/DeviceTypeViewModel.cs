@@ -17,23 +17,29 @@ namespace CAL_QR.ViewModels
     {
         private readonly IDeviceTypeRepository _deviceTypeRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly Func<Views.Dialogs.DeviceTypeFormDialog> _deviceTypeFormDialogFactory;
+        private readonly Func<Views.Dialogs.DeviceTypeDetailDialog> _deviceTypeDetailDialogFactory;
+
         private ObservableCollection<DeviceTypeDisplayItem> _deviceTypes = new();
         private string _searchText = string.Empty;
-
-        // Form Fields
-        private string _formName = string.Empty;
         private DeviceTypeDisplayItem? _selectedDeviceType;
-        private bool _isEditMode;
 
-        public DeviceTypeViewModel(IDeviceTypeRepository deviceTypeRepository, IDbContextFactory<CalQrDbContext> contextFactory)
+        public DeviceTypeViewModel(
+            IDeviceTypeRepository deviceTypeRepository, 
+            IDbContextFactory<CalQrDbContext> contextFactory,
+            Func<Views.Dialogs.DeviceTypeFormDialog> deviceTypeFormDialogFactory,
+            Func<Views.Dialogs.DeviceTypeDetailDialog> deviceTypeDetailDialogFactory)
         {
             _deviceTypeRepository = deviceTypeRepository;
             _contextFactory = contextFactory;
+            _deviceTypeFormDialogFactory = deviceTypeFormDialogFactory;
+            _deviceTypeDetailDialogFactory = deviceTypeDetailDialogFactory;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            SaveCommand = new RelayCommand(async () => await SaveDeviceTypeAsync(), CanSave);
+            AddTypeCommand = new RelayCommand(async () => await OpenAddTypeAsync());
+            EditTypeCommand = new RelayCommand(async (p) => await OpenEditTypeAsync(p));
+            ViewDetailsCommand = new RelayCommand(OpenTypeDetails);
             DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p));
-            ClearFormCommand = new RelayCommand(ClearForm);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToDeviceType += OnNavigateToDeviceType;
@@ -63,34 +69,17 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        public string FormName
-        {
-            get => _formName;
-            set => SetProperty(ref _formName, value);
-        }
-
         public DeviceTypeDisplayItem? SelectedDeviceType
         {
             get => _selectedDeviceType;
-            set
-            {
-                if (SetProperty(ref _selectedDeviceType, value) && value != null)
-                {
-                    PopulateForm(value);
-                }
-            }
-        }
-
-        public bool IsEditMode
-        {
-            get => _isEditMode;
-            set => SetProperty(ref _isEditMode, value);
+            set => SetProperty(ref _selectedDeviceType, value);
         }
 
         public ICommand LoadDataCommand { get; }
-        public ICommand SaveCommand { get; }
+        public ICommand AddTypeCommand { get; }
+        public ICommand EditTypeCommand { get; }
+        public ICommand ViewDetailsCommand { get; }
         public ICommand DeleteCommand { get; }
-        public ICommand ClearFormCommand { get; }
 
         public async Task LoadDataAsync()
         {
@@ -100,9 +89,10 @@ namespace CAL_QR.ViewModels
                 
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    var displayItems = list.Select(t => new DeviceTypeDisplayItem
+                    var displayItems = list.Select((t, index) => new DeviceTypeDisplayItem
                     {
                         Id = t.Id,
+                        SequenceNumber = index + 1,
                         Name = t.Name,
                         DeviceCount = context.Devices.AsNoTracking().Count(d => d.DeviceTypeId == t.Id && !d.IsDeleted)
                     }).ToList();
@@ -126,43 +116,50 @@ namespace CAL_QR.ViewModels
 
             var query = SearchText.ToLower();
             var filtered = DeviceTypes.Where(t => t.Name.ToLower().Contains(query)).ToList();
+            
+            for (int i = 0; i < filtered.Count; i++)
+            {
+                filtered[i].SequenceNumber = i + 1;
+            }
+
             DeviceTypes = new ObservableCollection<DeviceTypeDisplayItem>(filtered);
         }
 
-        private bool CanSave()
+        private async Task OpenAddTypeAsync()
         {
-            return !string.IsNullOrWhiteSpace(FormName);
-        }
-
-        private async Task SaveDeviceTypeAsync()
-        {
-            try
+            var dialog = _deviceTypeFormDialogFactory();
+            if (dialog.ShowDialog() == true)
             {
-                if (IsEditMode && SelectedDeviceType != null)
-                {
-                    var type = new DeviceType
-                    {
-                        Id = SelectedDeviceType.Id,
-                        Name = FormName
-                    };
-                    await _deviceTypeRepository.UpdateAsync(type);
-                }
-                else
-                {
-                    var type = new DeviceType
-                    {
-                        Name = FormName
-                    };
-                    await _deviceTypeRepository.AddAsync(type);
-                }
-
-                ClearForm();
                 await LoadDataAsync();
             }
-            catch (Exception ex)
+        }
+
+        private async Task OpenEditTypeAsync(object? parameter)
+        {
+            if (parameter is not DeviceTypeDisplayItem item) return;
+
+            var dialog = _deviceTypeFormDialogFactory();
+            if (dialog.DataContext is DeviceTypeFormViewModel vm)
             {
-                MessageBox.Show($"خطأ في حفظ البيانات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                vm.LoadForEdit(item);
             }
+
+            if (dialog.ShowDialog() == true)
+            {
+                await LoadDataAsync();
+            }
+        }
+
+        private void OpenTypeDetails(object? parameter)
+        {
+            if (parameter is not DeviceTypeDisplayItem item) return;
+
+            var dialog = _deviceTypeDetailDialogFactory();
+            if (dialog.DataContext is DeviceTypeDetailViewModel vm)
+            {
+                vm.LoadDetails(item.Id);
+            }
+            dialog.ShowDialog();
         }
 
         private async Task DeleteDeviceTypeAsync(object? parameter)
@@ -188,19 +185,6 @@ namespace CAL_QR.ViewModels
                     MessageBox.Show($"خطأ في حذف نوع الجهاز: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        private void PopulateForm(DeviceTypeDisplayItem item)
-        {
-            FormName = item.Name;
-            IsEditMode = true;
-        }
-
-        private void ClearForm()
-        {
-            FormName = string.Empty;
-            SelectedDeviceType = null;
-            IsEditMode = false;
         }
 
         private void OnNavigateToDeviceType(int deviceTypeId)
@@ -244,6 +228,7 @@ namespace CAL_QR.ViewModels
     public class DeviceTypeDisplayItem
     {
         public int Id { get; set; }
+        public int SequenceNumber { get; set; }
         public string Name { get; set; } = string.Empty;
         public int DeviceCount { get; set; }
     }

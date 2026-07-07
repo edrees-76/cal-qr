@@ -312,3 +312,40 @@
 ## القسم 11: كيفية استخدام هذا الملف
 > [!IMPORTANT]
 > عند بدء جلسة عمل أو محادثة جديدة مع Claude (المهندس المعماري) أو Antigravity IDE، يرجى إرسال محتوى هذا الملف بالكامل كرسالة أولى. سيقرأه النموذج البرمجي ويفهم معمارية المشروع، توزيع الملفات، هيكلية قاعدة البيانات، والقواعد المعمارية الصارمة فوراً، مما يضمن المتابعة الدقيقة والتنفيذ السليم دون الحاجة لإعادة شرح التفاصيل أو استهلاك وقت الجلسة.
+
+---
+
+## القسم 12: تحديثات وتعديلات اليوم (7-7-2026 و 8-7-2026)
+
+توثيق التغييرات والتعديلات الهيكلية والبصرية التي تمت بتبويبات الجهات المالكة أنواع الأجهزة:
+
+1. **تحويل إدارة الجهات المالكة لنوافذ منبثقة تفاعلية وإنشاء شاشة التفاصيل:**
+   * **الهدف:** إلغاء البطاقة الجانبية الثابتة، وتوسيع الجدول لعرض الشاشة الكامل، مع إتاحة إضافة وتعديل الجهات عبر حوار منبثق `OwnerFormDialog` واستعراض الأجهزة التابعة عبر `OwnerDetailDialog` بمقاس `1150x680` لحماية النصوص من الاقتصاص.
+   * **الملفات:**
+     - [IDeviceRepository.cs](file:///d:/cal-qr/CAL-QR/Repositories/IDeviceRepository.cs)
+     - [DeviceRepository.cs](file:///d:/cal-qr/CAL-QR/Repositories/DeviceRepository.cs)
+     - [OwnerDeviceDisplayItem.cs](file:///d:/cal-qr/CAL-QR/Models/DisplayItems/OwnerDeviceDisplayItem.cs)
+     - [OwnerFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/OwnerFormViewModel.cs)
+     - [OwnerDetailViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/OwnerDetailViewModel.cs)
+     - [OwnerViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/OwnerViewModel.cs)
+     - [OwnerFormDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/OwnerFormDialog.xaml)
+     - [OwnerDetailDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/OwnerDetailDialog.xaml)
+     - [OwnersView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/OwnersView.xaml)
+     - [App.xaml.cs](file:///d:/cal-qr/CAL-QR/App.xaml.cs)
+
+2. **تحويل تبويب أنواع الأجهزة (الأنواع) إلى نوافذ منبثقة تفاعلية وبناء شاشة التفاصيل:**
+   * **الهدف:** تطبيق نفس البنية الهيكلية لتبويب الجهات حرفياً. إلغاء النموذج الجانبي، توسيع الجدول، إدراج عمود تسلسل "ت"، وحقن النوافذ الجديدة عبر `Func<T>`. كما تم تطبيق ستايل `WrapTextColumnStyle` لمنع اقتصاص نوع الجهاز واسم الجهة المالكة وعرضهما كتلميح `ToolTip`.
+   * **الملفات:**
+     - [DeviceTypeDeviceDisplayItem.cs](file:///d:/cal-qr/CAL-QR/Models/DisplayItems/DeviceTypeDeviceDisplayItem.cs)
+     - [DeviceTypeFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DeviceTypeFormViewModel.cs)
+     - [DeviceTypeDetailViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DeviceTypeDetailViewModel.cs)
+     - [DeviceTypeViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DeviceTypeViewModel.cs)
+     - [DeviceTypeFormDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/DeviceTypeFormDialog.xaml)
+     - [DeviceTypeDetailDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/DeviceTypeDetailDialog.xaml)
+     - [DeviceTypesView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/DeviceTypesView.xaml)
+
+3. **إضافة أيقونة وكلمة البحث بجانب حقول التصفية:**
+   * **الهدف:** تعزيز الاتساق البصري عبر إدراج أيقونة العدسة `Magnify` وكلمة "بحث" بجانب حقلي البحث في واجهتي `OwnersView` و `DeviceTypesView` باتجاه RTL.
+   * **الملفات:**
+     - [OwnersView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/OwnersView.xaml)
+     - [DeviceTypesView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/DeviceTypesView.xaml)

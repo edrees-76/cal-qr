@@ -38,8 +38,18 @@
 
             <!-- Developer Section -->
             <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="12" Foreground="#C9A227" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
-            <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-            <TextBlock Text="م . رضا المريمى" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}" />
+            
+            <StackPanel HorizontalAlignment="Center" Margin="0,5,0,0">
+                <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="م . رضا المريمى" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" Margin="0,6,0,15" FontFamily="{StaticResource CairoFont}" />
+                
+                <!-- Designer Logo Under Names -->
+                <Image Source="/Assets/Logo/logo_original_4k.png" 
+                       Width="110" Height="110" 
+                       HorizontalAlignment="Center" 
+                       VerticalAlignment="Center" 
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+            </StackPanel>
 
             <!-- Separator -->
             <Border Height="2" Background="#C9A227" Margin="0,20,0,15" CornerRadius="1" />

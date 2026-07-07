@@ -28,6 +28,7 @@
     <Resource Include="Assets\Fonts\Cairo.ttf" />
     <Resource Include="Assets\Logo\cal-qr-3d-icon.png" />
     <Resource Include="Assets\Logo\cal-qr-3d-logo-new.png" />
+    <Resource Include="Assets\Logo\logo_original_4k.png" />
   </ItemGroup>
 
 </Project>

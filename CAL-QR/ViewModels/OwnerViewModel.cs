@@ -17,26 +17,29 @@ namespace CAL_QR.ViewModels
     {
         private readonly IOwnerRepository _ownerRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly Func<Views.Dialogs.OwnerFormDialog> _ownerFormDialogFactory;
+        private readonly Func<Views.Dialogs.OwnerDetailDialog> _ownerDetailDialogFactory;
+
         private ObservableCollection<OwnerDisplayItem> _owners = new();
         private string _searchText = string.Empty;
-
-        // Form Fields for Add/Edit Dialog
-        private string _formName = string.Empty;
-        private string _formAddress = string.Empty;
-        private string _formPhone = string.Empty;
-        private string _formContactPerson = string.Empty;
         private OwnerDisplayItem? _selectedOwner;
-        private bool _isEditMode;
 
-        public OwnerViewModel(IOwnerRepository ownerRepository, IDbContextFactory<CalQrDbContext> contextFactory)
+        public OwnerViewModel(
+            IOwnerRepository ownerRepository, 
+            IDbContextFactory<CalQrDbContext> contextFactory,
+            Func<Views.Dialogs.OwnerFormDialog> ownerFormDialogFactory,
+            Func<Views.Dialogs.OwnerDetailDialog> ownerDetailDialogFactory)
         {
             _ownerRepository = ownerRepository;
             _contextFactory = contextFactory;
+            _ownerFormDialogFactory = ownerFormDialogFactory;
+            _ownerDetailDialogFactory = ownerDetailDialogFactory;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            SaveCommand = new RelayCommand(async () => await SaveOwnerAsync(), CanSave);
+            AddOwnerCommand = new RelayCommand(async () => await OpenAddOwnerAsync());
+            EditOwnerCommand = new RelayCommand(async (p) => await OpenEditOwnerAsync(p));
+            ViewDetailsCommand = new RelayCommand(OpenOwnerDetails);
             DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p));
-            ClearFormCommand = new RelayCommand(ClearForm);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToOwner += OnNavigateToOwner;
@@ -66,52 +69,17 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        public string FormName
-        {
-            get => _formName;
-            set => SetProperty(ref _formName, value);
-        }
-
-        public string FormAddress
-        {
-            get => _formAddress;
-            set => SetProperty(ref _formAddress, value);
-        }
-
-        public string FormPhone
-        {
-            get => _formPhone;
-            set => SetProperty(ref _formPhone, value);
-        }
-
-        public string FormContactPerson
-        {
-            get => _formContactPerson;
-            set => SetProperty(ref _formContactPerson, value);
-        }
-
         public OwnerDisplayItem? SelectedOwner
         {
             get => _selectedOwner;
-            set
-            {
-                if (SetProperty(ref _selectedOwner, value) && value != null)
-                {
-                    PopulateForm(value);
-                }
-            }
-        }
-
-        public bool IsEditMode
-        {
-            get => _isEditMode;
-            set => SetProperty(ref _isEditMode, value);
+            set => SetProperty(ref _selectedOwner, value);
         }
 
         public ICommand LoadDataCommand { get; }
-        public ICommand SaveCommand { get; }
+        public ICommand AddOwnerCommand { get; }
+        public ICommand EditOwnerCommand { get; }
+        public ICommand ViewDetailsCommand { get; }
         public ICommand DeleteCommand { get; }
-        public ICommand ClearFormCommand { get; }
 
         public async Task LoadDataAsync()
         {
@@ -121,9 +89,10 @@ namespace CAL_QR.ViewModels
                 
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    var displayItems = ownersList.Select(o => new OwnerDisplayItem
+                    var displayItems = ownersList.Select((o, index) => new OwnerDisplayItem
                     {
                         Id = o.Id,
+                        SequenceNumber = index + 1,
                         Name = o.Name,
                         Address = o.Address,
                         ContactPhone = o.ContactPhone,
@@ -155,49 +124,49 @@ namespace CAL_QR.ViewModels
                 (o.ContactPerson?.ToLower().Contains(query) ?? false)
             ).ToList();
 
+            for (int i = 0; i < filtered.Count; i++)
+            {
+                filtered[i].SequenceNumber = i + 1;
+            }
+
             Owners = new ObservableCollection<OwnerDisplayItem>(filtered);
         }
 
-        private bool CanSave()
+        private async Task OpenAddOwnerAsync()
         {
-            return !string.IsNullOrWhiteSpace(FormName);
-        }
-
-        private async Task SaveOwnerAsync()
-        {
-            try
+            var dialog = _ownerFormDialogFactory();
+            if (dialog.ShowDialog() == true)
             {
-                if (IsEditMode && SelectedOwner != null)
-                {
-                    var owner = new Owner
-                    {
-                        Id = SelectedOwner.Id,
-                        Name = FormName,
-                        Address = FormAddress,
-                        ContactPhone = FormPhone,
-                        ContactPerson = FormContactPerson
-                    };
-                    await _ownerRepository.UpdateAsync(owner);
-                }
-                else
-                {
-                    var owner = new Owner
-                    {
-                        Name = FormName,
-                        Address = FormAddress,
-                        ContactPhone = FormPhone,
-                        ContactPerson = FormContactPerson
-                    };
-                    await _ownerRepository.AddAsync(owner);
-                }
-
-                ClearForm();
                 await LoadDataAsync();
             }
-            catch (Exception ex)
+        }
+
+        private async Task OpenEditOwnerAsync(object? parameter)
+        {
+            if (parameter is not OwnerDisplayItem item) return;
+
+            var dialog = _ownerFormDialogFactory();
+            if (dialog.DataContext is OwnerFormViewModel vm)
             {
-                MessageBox.Show($"خطأ في حفظ البيانات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                vm.LoadForEdit(item);
             }
+
+            if (dialog.ShowDialog() == true)
+            {
+                await LoadDataAsync();
+            }
+        }
+
+        private void OpenOwnerDetails(object? parameter)
+        {
+            if (parameter is not OwnerDisplayItem item) return;
+
+            var dialog = _ownerDetailDialogFactory();
+            if (dialog.DataContext is OwnerDetailViewModel vm)
+            {
+                vm.LoadDetails(item.Id);
+            }
+            dialog.ShowDialog();
         }
 
         private async Task DeleteOwnerAsync(object? parameter)
@@ -223,25 +192,6 @@ namespace CAL_QR.ViewModels
                     MessageBox.Show($"خطأ في حذف الجهة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        private void PopulateForm(OwnerDisplayItem item)
-        {
-            FormName = item.Name;
-            FormAddress = item.Address ?? string.Empty;
-            FormPhone = item.ContactPhone ?? string.Empty;
-            FormContactPerson = item.ContactPerson ?? string.Empty;
-            IsEditMode = true;
-        }
-
-        private void ClearForm()
-        {
-            FormName = string.Empty;
-            FormAddress = string.Empty;
-            FormPhone = string.Empty;
-            FormContactPerson = string.Empty;
-            SelectedOwner = null;
-            IsEditMode = false;
         }
 
         private void OnNavigateToOwner(int ownerId)
@@ -288,6 +238,7 @@ namespace CAL_QR.ViewModels
     public class OwnerDisplayItem
     {
         public int Id { get; set; }
+        public int SequenceNumber { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Address { get; set; }
         public string? ContactPhone { get; set; }

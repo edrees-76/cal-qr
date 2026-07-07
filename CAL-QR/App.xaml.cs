@@ -96,6 +96,10 @@ namespace CAL_QR
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<SettingsViewModel>();
             services.AddTransient<AuditLogViewModel>();
+            services.AddTransient<OwnerFormViewModel>();
+            services.AddTransient<OwnerDetailViewModel>();
+            //services.AddTransient<DeviceTypeFormViewModel>();
+            //services.AddTransient<DeviceTypeDetailViewModel>();
 
             // Register Windows
             services.AddTransient<SplashWindow>();
@@ -108,9 +112,17 @@ namespace CAL_QR
             services.AddTransient<Views.Dialogs.PrintPreviewDialog>();
             services.AddTransient<Views.Dialogs.AlertPopupDialog>();
             services.AddTransient<Views.FirstRunWizard>();
+            services.AddTransient<Views.Dialogs.OwnerFormDialog>();
+            services.AddTransient<Views.Dialogs.OwnerDetailDialog>();
+            //services.AddTransient<Views.Dialogs.DeviceTypeFormDialog>();
+            //services.AddTransient<Views.Dialogs.DeviceTypeDetailDialog>();
             // Register Dialog Factories to support Constructor Injection
             services.AddTransient<Func<Views.Dialogs.DeviceDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceDetailDialog>());
             services.AddTransient<Func<Views.Dialogs.CalibrationFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>());
+            services.AddTransient<Func<Views.Dialogs.OwnerFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.OwnerFormDialog>());
+            services.AddTransient<Func<Views.Dialogs.OwnerDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.OwnerDetailDialog>());
+            //services.AddTransient<Func<Views.Dialogs.DeviceTypeFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceTypeFormDialog>());
+            //services.AddTransient<Func<Views.Dialogs.DeviceTypeDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceTypeDetailDialog>());
         }
     }
 }

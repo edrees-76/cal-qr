@@ -5,9 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
+             xmlns:helpers="clr-namespace:CAL_QR.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="550" d:DesignWidth="800"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <helpers:NullToBoolConverter x:Key="NullToBoolConverter" />
+    </UserControl.Resources>
 
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -24,121 +29,244 @@
         </Border>
 
         <!-- Main Workspace -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.5*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Style="{StaticResource MaterialDesignTabControl}">
+            <!-- Tab 1: تقارير الجهات والأجهزة -->
+            <TabItem Header="تقارير الجهات والأجهزة" FontFamily="{StaticResource CairoFont}">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-            <!-- Left Panel: Filters -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,10,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="تصفية البيانات وفلترة السجلات" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
-
-                    <!-- Filter Fields -->
-                    <StackPanel Grid.Row="1">
-                        <!-- Owner: AutoComplete Searchable ComboBox -->
-                        <TextBlock Text="الجهة المالكة للجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox ItemsSource="{Binding Owners}" SelectedItem="{Binding SelectedOwner}" DisplayMemberPath="Name"
-                                  IsEditable="True" IsReadOnly="False" TextSearch.TextPath="Name"
-                                  materialDesign:HintAssist.Hint="ابحث عن الجهة المالكة..." 
-                                  Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
-
-                        <!-- Device Type -->
-                        <TextBlock Text="تصنيف ونوع الجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox ItemsSource="{Binding DeviceTypes}" SelectedItem="{Binding SelectedDeviceType}" DisplayMemberPath="Name"
-                                  materialDesign:HintAssist.Hint="الكل" 
-                                  Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
-
-                        <!-- Status -->
-                        <TextBlock Text="حالة صلاحية المعايرة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}"
-                                  Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
-
-                        <!-- Date Pickers -->
+                    <!-- Left Panel: Filters -->
+                    <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,10,0">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            
-                            <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                <TextBlock Text="تاريخ المعايرة من" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                                <DatePicker SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
-                                            Style="{StaticResource MaterialDesignFilledDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
-                            </StackPanel>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                                <DatePicker SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
-                                            Style="{StaticResource MaterialDesignFilledDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
-                            </StackPanel>
+                            <TextBlock Grid.Row="0" Text="تصفية البيانات وفلترة السجلات" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Filter Fields -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="0,0,5,0">
+                                    <!-- Owner and Device side-by-side -->
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="الجهة المالكة للجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <ComboBox ItemsSource="{Binding Owners}" SelectedItem="{Binding SelectedOwner}" DisplayMemberPath="Name"
+                                                      IsEditable="True" IsReadOnly="False" TextSearch.TextPath="Name"
+                                                      materialDesign:HintAssist.Hint="ابحث عن الجهة المالكة..." 
+                                                      Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="الجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <ComboBox ItemsSource="{Binding FilteredDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="Model"
+                                                      IsEnabled="{Binding SelectedOwner, Converter={StaticResource NullToBoolConverter}}"
+                                                      Height="40" FontFamily="{StaticResource CairoFont}">
+                                                <ComboBox.Style>
+                                                    <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignFilledComboBox}">
+                                                        <Setter Property="materialDesign:HintAssist.Hint" Value="الكل" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding SelectedOwner}" Value="{x:Null}">
+                                                                <Setter Property="materialDesign:HintAssist.Hint" Value="اختر جهة مالكة أولاً" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ComboBox.Style>
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Status and Spacer side-by-side -->
+                                    <Grid Margin="0,0,0,15">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="حالة صلاحية المعايرة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}"
+                                                      Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Date Pickers -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="تاريخ المعايرة من" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <DatePicker SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
+                                                        Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <DatePicker SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
+                                                        Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Matching Count Indicator -->
+                            <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12" Margin="0,15,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                        <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                                        <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                    <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="#C9A227" Width="26" Height="26" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
                         </Grid>
-                    </StackPanel>
+                    </Border>
 
-                    <!-- Matching Count Indicator -->
-                    <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12" Margin="0,15,0,0">
+                    <!-- Right Panel: Export Options -->
+                    <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="10,0,0,0">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="خيارات ونوع التقرير" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- Options -->
+                            <StackPanel Grid.Row="1">
+                                <!-- Report Type -->
+                                <GroupBox Header="نوع التقرير" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
+                                    <StackPanel Margin="10">
+                                        <RadioButton Content="تقرير مفصل (كل الحقول وسجل المعايِر)" IsChecked="{Binding IsDetailedReport}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                        <RadioButton Content="تقرير مختصر (البيانات الرئيسية فقط)" IsChecked="{Binding IsSummaryReport}" FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                </GroupBox>
+
+                                <!-- Format Type -->
+                                <GroupBox Header="صيغة التصدير" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
+                                    <StackPanel Margin="10">
+                                        <RadioButton Content="تصدير كملف PDF" IsChecked="{Binding IsPdfFormat}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                        <RadioButton Content="تصدير كجدول Excel" IsChecked="{Binding IsExcelFormat}" FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                </GroupBox>
                             </StackPanel>
-                            <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="#C9A227" Width="26" Height="26" VerticalAlignment="Center" />
+
+                            <!-- Export Actions & Progress indicator -->
+                            <StackPanel Grid.Row="2">
+                                <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,10"
+                                             Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                
+                                <Button Command="{Binding ExportCommand}" Content="تصدير وحفظ التقرير 💾" Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
                 </Grid>
-            </Border>
+            </TabItem>
 
-            <!-- Right Panel: Export Options -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="10,0,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+            <!-- Tab 2: تقرير أداء وحدة المعايرة -->
+            <TabItem Header="تقرير أداء وحدة المعايرة" FontFamily="{StaticResource CairoFont}">
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="خيارات ونوع التقرير" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                    <!-- Left Panel: Filters/Inputs -->
+                    <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                    <!-- Options -->
-                    <StackPanel Grid.Row="1">
-                        <!-- Report Type -->
-                        <GroupBox Header="نوع التقرير" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
-                            <StackPanel Margin="10">
-                                <RadioButton Content="تقرير مفصل (كل الحقول وسجل المعايِر)" IsChecked="{Binding IsDetailedReport}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                                <RadioButton Content="تقرير مختصر (البيانات الرئيسية فقط)" IsChecked="{Binding IsSummaryReport}" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Grid.Row="0" Text="تحديد فترة ونطاق تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="0,0,5,0">
+                                    <!-- Date Pickers -->
+                                    <Grid Margin="0,0,0,20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                                            <TextBlock Text="تاريخ البداية من" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <DatePicker SelectedDate="{Binding PerfStartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
+                                                        Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="5,0,0,0">
+                                            <TextBlock Text="إلى تاريخ النهاية" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <DatePicker SelectedDate="{Binding PerfEndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
+                                                        Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Report Type -->
+                                    <GroupBox Header="نوع تقرير الأداء" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
+                                        <StackPanel Margin="10">
+                                            <RadioButton Content="تقرير مفصل (الإحصائيات الإجمالية + جدول بكافة السجلات)" IsChecked="{Binding IsPerfDetailed}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                            <RadioButton Content="تقرير مختصر (الإحصائيات الإجمالية والمجمعة فقط)" IsChecked="{Binding IsPerfSummary}" FontFamily="{StaticResource CairoFont}" />
+                                        </StackPanel>
+                                    </GroupBox>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <!-- Right Panel: Export Options & Actions -->
+                    <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="10,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="خيارات حفظ وتصدير تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+
+                            <StackPanel Grid.Row="1">
+                                <!-- Format Type -->
+                                <GroupBox Header="صيغة تصدير تقرير الأداء" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
+                                    <StackPanel Margin="10">
+                                        <RadioButton Content="تصدير كملف PDF" IsChecked="{Binding IsPerfPdf}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                        <RadioButton Content="تصدير كجدول Excel" IsChecked="{Binding IsPerfExcel}" FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                </GroupBox>
                             </StackPanel>
-                        </GroupBox>
 
-                        <!-- Format Type -->
-                        <GroupBox Header="صيغة التصدير" Style="{StaticResource MaterialDesignCardGroupBox}" materialDesign:ColorZoneAssist.Mode="PrimaryLight" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}">
-                            <StackPanel Margin="10">
-                                <RadioButton Content="تصدير كملف PDF" IsChecked="{Binding IsPdfFormat}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                                <RadioButton Content="تصدير كجدول Excel" IsChecked="{Binding IsExcelFormat}" FontFamily="{StaticResource CairoFont}" />
+                            <!-- Export Actions -->
+                            <StackPanel Grid.Row="2">
+                                <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,10"
+                                             Visibility="{Binding IsPerfLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                
+                                <Button Command="{Binding ExportPerformanceCommand}" Content="توليد وتصدير تقرير الأداء 📊" Style="{StaticResource MaterialDesignRaisedButton}"
+                                        Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
-                        </GroupBox>
-                    </StackPanel>
-
-                    <!-- Export Actions & Progress indicator -->
-                    <StackPanel Grid.Row="2">
-                        <ProgressBar IsIndeterminate="True" Height="4" Margin="0,0,0,10"
-                                     Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        
-                        <Button Command="{Binding ExportCommand}" Content="تصدير وحفظ التقرير 💾" Style="{StaticResource MaterialDesignRaisedButton}"
-                                Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
-                    </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
-            </Border>
-        </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>

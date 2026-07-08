@@ -56,7 +56,8 @@
                              CaretBrush="#1A3A6B"
                              Height="50"
                              Padding="10,8,10,8"
-                             FontSize="15" />
+                             FontSize="15"
+                             VerticalContentAlignment="Center" />
                     <Button Grid.Column="1" Content="تصفح..." Click="BrowsePath_Click" Margin="10,0,0,0" Height="50"
                             Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" />
                 </Grid>
@@ -80,22 +81,24 @@
                                      materialDesign:HintAssist.Foreground="#1A3A6B"
                                      CaretBrush="#1A3A6B"
                                      Height="50"
-                                     Padding="45,8,10,8"
+                                     Padding="10,8,45,8"
                                      FontSize="15"
-                                     FontFamily="Segoe UI" />
+                                     FontFamily="Segoe UI"
+                                     VerticalContentAlignment="Center" />
                         <TextBox x:Name="TxtWizardPasswordReveal"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  Foreground="#1A3A6B"
                                  materialDesign:HintAssist.Foreground="#1A3A6B"
                                  CaretBrush="#1A3A6B"
                                  Height="50"
-                                 Padding="45,8,10,8"
+                                 Padding="10,8,45,8"
                                  FontSize="15"
-                                 Visibility="Collapsed" />
+                                 Visibility="Collapsed"
+                                 VerticalContentAlignment="Center" />
                         <Button x:Name="BtnRevealPassword" Click="BtnRevealPassword_Click"
                                 Style="{StaticResource MaterialDesignToolButton}"
-                                HorizontalAlignment="Left" VerticalAlignment="Center"
-                                Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,10,0" Width="30" Height="30" Padding="0">
                             <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
                         </Button>
                     </Grid>
@@ -108,22 +111,24 @@
                                      materialDesign:HintAssist.Foreground="#1A3A6B"
                                      CaretBrush="#1A3A6B"
                                      Height="50"
-                                     Padding="45,8,10,8"
+                                     Padding="10,8,45,8"
                                      FontSize="15"
-                                     FontFamily="Segoe UI" />
+                                     FontFamily="Segoe UI"
+                                     VerticalContentAlignment="Center" />
                         <TextBox x:Name="TxtWizardConfirmPasswordReveal"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  Foreground="#1A3A6B"
                                  materialDesign:HintAssist.Foreground="#1A3A6B"
                                  CaretBrush="#1A3A6B"
                                  Height="50"
-                                 Padding="45,8,10,8"
+                                 Padding="10,8,45,8"
                                  FontSize="15"
-                                 Visibility="Collapsed" />
+                                 Visibility="Collapsed"
+                                 VerticalContentAlignment="Center" />
                         <Button x:Name="BtnRevealConfirmPassword" Click="BtnRevealConfirmPassword_Click"
                                 Style="{StaticResource MaterialDesignToolButton}"
-                                HorizontalAlignment="Left" VerticalAlignment="Center"
-                                Margin="10,0,0,0" Width="30" Height="30" Padding="0">
+                                HorizontalAlignment="Right" VerticalAlignment="Center"
+                                Margin="0,0,10,0" Width="30" Height="30" Padding="0">
                             <materialDesign:PackIcon x:Name="IconRevealConfirmPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
                         </Button>
                     </Grid>
@@ -138,7 +143,8 @@
                              Padding="10,8,10,8"
                              FontSize="15"
                              TextWrapping="Wrap"
-                             materialDesign:HintAssist.Hint="السؤال السري لاسترداد كلمة المرور" />
+                             materialDesign:HintAssist.Hint="السؤال السري لاسترداد كلمة المرور"
+                             VerticalContentAlignment="Center" />
 
                     <TextBlock Text="إجابة السؤال السري" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtSecurityAnswer"
@@ -149,7 +155,8 @@
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
-                             materialDesign:HintAssist.Hint="الإجابة..." />
+                             materialDesign:HintAssist.Hint="الإجابة..."
+                             VerticalContentAlignment="Center" />
 
                     <TextBlock x:Name="TxtStepError" Text="" FontSize="11" Foreground="#C62828" Margin="0,10,0,0" Visibility="Collapsed" />
                 </StackPanel>

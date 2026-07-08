@@ -59,6 +59,7 @@ namespace CAL_QR.ViewModels
         private ObservableCollection<AttachmentItem> _attachments = new();
 
         // Warning and validation
+        private bool _isSaving;
         private string _serialNumberWarning = string.Empty;
         private string _validationErrors = string.Empty;
 
@@ -439,6 +440,8 @@ namespace CAL_QR.ViewModels
 
         private bool CanSave()
         {
+            if (_isSaving) return false;
+
             return (!string.IsNullOrWhiteSpace(OwnerText) || SelectedOwner != null) &&
                    (!string.IsNullOrWhiteSpace(DeviceTypeText) || SelectedDeviceType != null) &&
                    !string.IsNullOrWhiteSpace(Model) &&
@@ -449,7 +452,13 @@ namespace CAL_QR.ViewModels
 
         private async Task SaveAsync()
         {
-            ValidationErrors = string.Empty;
+            if (_isSaving) return;
+            _isSaving = true;
+            CommandManager.InvalidateRequerySuggested();
+
+            try
+            {
+                ValidationErrors = string.Empty;
 
             if (ExpiryDate <= CalibrationDate)
             {
@@ -482,14 +491,18 @@ namespace CAL_QR.ViewModels
 
             try
             {
+                Owner finalOwner = null!;
+                DeviceType finalType = null!;
+                bool ownerAdded = false;
+                bool typeAdded = false;
+                string realSignature = string.Empty;
+
                 using (var context = await _contextFactory.CreateDbContextAsync())
                 using (var transaction = await context.Database.BeginTransactionAsync())
                 {
                     try
                     {
                         // 1. Process Owner
-                        Owner finalOwner;
-                        bool ownerAdded = false;
                         if (SelectedOwner != null)
                         {
                             finalOwner = await context.Owners.FindAsync(SelectedOwner.Id) 
@@ -526,8 +539,6 @@ namespace CAL_QR.ViewModels
                         }
 
                         // 2. Process DeviceType
-                        DeviceType finalType;
-                        bool typeAdded = false;
                         if (SelectedDeviceType != null)
                         {
                             finalType = await context.DeviceTypes.FindAsync(SelectedDeviceType.Id)
@@ -605,7 +616,7 @@ namespace CAL_QR.ViewModels
                         _deviceId = device.Id;
 
                         // 4. Process Calibration Record
-                        string realSignature = _hmacService.ComputeSignature(
+                        realSignature = _hmacService.ComputeSignature(
                             certNo: CertificateNumber.Trim(),
                             model: Model.Trim(),
                             serial: SerialNumber.Trim(),
@@ -632,7 +643,6 @@ namespace CAL_QR.ViewModels
                             record.UpdatedAt = DateTime.UtcNow;
                             context.CalibrationRecords.Update(record);
                             await context.SaveChangesAsync();
-                            await _auditLogRepository.LogAsync("تعديل معايرة", "CalibrationRecord", record.Id.ToString(), $"تعديل سجل المعايرة ذو الشهادة {record.CertificateNumber}");
                         }
                         else
                         {
@@ -653,39 +663,10 @@ namespace CAL_QR.ViewModels
                             context.CalibrationRecords.Add(record);
                             await context.SaveChangesAsync();
                             _calibrationRecordId = record.Id;
-                            await _auditLogRepository.LogAsync("إضافة معايرة", "CalibrationRecord", record.Id.ToString(), $"إضافة سجل معايرة جديد ذو الشهادة {record.CertificateNumber}");
                         }
 
                         // Commit transaction
                         await transaction.CommitAsync();
-
-                        // Generate and Save QR Code
-                        _qrService.GenerateAndSaveQrForRecord(
-                            ownerName: finalOwner.Name.Trim(),
-                            deviceType: finalType.Name.Trim(),
-                            model: Model.Trim(),
-                            serial: SerialNumber.Trim(),
-                            certNo: CertificateNumber.Trim(),
-                            calDate: CalibrationDate.ToString("yyyy-MM-dd"),
-                            expDate: ExpiryDate.ToString("yyyy-MM-dd"),
-                            engineerName: EngineerName.Trim(),
-                            description: Description.Trim(),
-                            result: SelectedResult,
-                            verifyCode: realSignature
-                        );
-
-                        // Save attachments
-                        await SaveAttachmentsAsync();
-
-                        // Fire master data events if new entities were added
-                        if (ownerAdded) MasterDataEvents.RaiseOwnerAdded();
-                        if (typeAdded) MasterDataEvents.RaiseDeviceTypeAdded();
-
-                        Saved?.Invoke(this, EventArgs.Empty);
-                        CalibrationEvents.RaiseCalibrationChanged();
-
-                        MessageBox.Show("تم حفظ سجل المعايرة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
-                        CloseWindowAction?.Invoke();
                     }
                     catch (Exception)
                     {
@@ -693,12 +674,97 @@ namespace CAL_QR.ViewModels
                         throw;
                     }
                 }
+
+            // 5. Post-Commit Phase
+            bool postCommitFailed = false;
+            string postCommitError = string.Empty;
+
+            // 1. Audit Log Logging (safe outside main DbContext)
+            try
+            {
+                if (IsEditMode)
+                {
+                    await _auditLogRepository.LogAsync("تعديل معايرة", "CalibrationRecord", _calibrationRecordId.ToString(), $"تعديل سجل المعايرة ذو الشهادة {CertificateNumber.Trim()}");
+                }
+                else
+                {
+                    await _auditLogRepository.LogAsync("إضافة معايرة", "CalibrationRecord", _calibrationRecordId.ToString(), $"إضافة سجل معايرة جديد ذو الشهادة {CertificateNumber.Trim()}");
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطأ أثناء حفظ البيانات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                postCommitFailed = true;
+                postCommitError += $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
             }
+
+            try
+            {
+                // Generate and Save QR Code (executed outside main DbContext to prevent locks)
+                _qrService.GenerateAndSaveQrForRecord(
+                    ownerName: finalOwner.Name.Trim(),
+                    deviceType: finalType.Name.Trim(),
+                    model: Model.Trim(),
+                    serial: SerialNumber.Trim(),
+                    certNo: CertificateNumber.Trim(),
+                    calDate: CalibrationDate.ToString("yyyy-MM-dd"),
+                    expDate: ExpiryDate.ToString("yyyy-MM-dd"),
+                    engineerName: EngineerName.Trim(),
+                    description: Description.Trim(),
+                    result: SelectedResult,
+                    verifyCode: realSignature
+                );
+            }
+            catch (Exception ex)
+            {
+                postCommitFailed = true;
+                postCommitError += $"\n- خطأ توليد رمز QR: {ex.Message}";
+            }
+
+            try
+            {
+                // Save attachments (executed outside main DbContext to prevent locks)
+                await SaveAttachmentsAsync();
+            }
+            catch (Exception ex)
+            {
+                postCommitFailed = true;
+                postCommitError += $"\n- خطأ حفظ المرفقات: {ex.Message}";
+            }
+
+            // Fire master data events if new entities were added (since the core record is successfully committed)
+            if (ownerAdded) MasterDataEvents.RaiseOwnerAdded();
+            if (typeAdded) MasterDataEvents.RaiseDeviceTypeAdded();
+
+            Saved?.Invoke(this, EventArgs.Empty);
+            CalibrationEvents.RaiseCalibrationChanged();
+
+            if (postCommitFailed)
+            {
+                MessageBox.Show($"تم حفظ سجل المعايرة بنجاح في قاعدة البيانات، ولكن حدث خطأ أثناء حفظ المرفقات أو توليد رمز الـ QR:{postCommitError}\n\n(لن تحتاج لإعادة حفظ السجل — السجل الرئيسي مسجل بنجاح).", 
+                    "تحذير - فشل جزئي في الحفظ", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else
+            {
+                MessageBox.Show("تم حفظ سجل المعايرة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            CloseWindowAction?.Invoke();
         }
+        catch (Exception ex)
+        {
+            string errorMsg = ex.Message;
+            if (ex.InnerException != null)
+            {
+                errorMsg += $"\nتفاصيل إضافية: {ex.InnerException.Message}";
+            }
+            MessageBox.Show($"خطأ أثناء حفظ البيانات: {errorMsg}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        }
+        finally
+        {
+            _isSaving = false;
+            CommandManager.InvalidateRequerySuggested();
+        }
+    }
 
         private void AddAttachment()
         {
@@ -739,7 +805,16 @@ namespace CAL_QR.ViewModels
 
         private async Task SaveAttachmentsAsync()
         {
-            string baseFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments", CertificateNumber.Trim());
+            string attachmentsRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            using (var context = await _contextFactory.CreateDbContextAsync())
+            {
+                var setting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "AttachmentsPath");
+                if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
+                {
+                    attachmentsRoot = setting.Value;
+                }
+            }
+            string baseFolder = Path.Combine(attachmentsRoot, CertificateNumber.Trim());
             FileHelper.EnsureDirectoryExists(baseFolder);
 
             foreach (var att in Attachments)

@@ -62,8 +62,22 @@ namespace CAL_QR
         {
             string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr-simulation.db");
 
+            string configPathFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db_path.txt");
+            if (File.Exists(configPathFile))
+            {
+                try
+                {
+                    string savedPath = File.ReadAllText(configPathFile).Trim();
+                    if (!string.IsNullOrWhiteSpace(savedPath))
+                    {
+                        dbPath = savedPath;
+                    }
+                }
+                catch { }
+            }
+
             services.AddDbContextFactory<CalQrDbContext>(options =>
-                options.UseSqlite($"Data Source={dbPath}"));
+                options.UseSqlite($"Data Source={dbPath};Default Timeout=5"));
 
             // Register Services
             services.AddSingleton<IHmacService, HmacService>();

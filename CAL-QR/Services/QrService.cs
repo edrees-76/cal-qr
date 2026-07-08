@@ -1,14 +1,23 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Media.Imaging;
+using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using CAL_QR.Helpers;
+using CAL_QR.Data;
 
 namespace CAL_QR.Services
 {
     public class QrService : IQrService
     {
+        private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+
+        public QrService(IDbContextFactory<CalQrDbContext> contextFactory)
+        {
+            _contextFactory = contextFactory;
+        }
         public BitmapSource GenerateQrCodeImage(string content, int sizePx)
         {
             string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Logo", "nuclear-center-logo.png");
@@ -94,6 +103,22 @@ namespace CAL_QR.Services
         public void SaveQrCodeImage(string content, string certificateNumber)
         {
             string folderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR");
+            try
+            {
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "QrOutputPath");
+                    if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
+                    {
+                        folderPath = setting.Value;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[QrService Error] Reading QrOutputPath failed: {ex.Message}");
+            }
+
             FileHelper.EnsureDirectoryExists(folderPath);
 
             string destPath = Path.Combine(folderPath, $"{certificateNumber.Trim()}.png");

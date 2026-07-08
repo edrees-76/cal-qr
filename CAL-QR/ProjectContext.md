@@ -349,3 +349,104 @@
    * **الملفات:**
      - [OwnersView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/OwnersView.xaml)
      - [DeviceTypesView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/DeviceTypesView.xaml)
+
+---
+
+## القسم 13: تحديثات وتعديلات اليوم (الدفعة الثانية — مسارات النظام، منطق أول تشغيل، وتحسينات واجهة المستخدم)
+
+توثيق التغييرات والتعديلات الهيكلية والبصرية والتشخيصية التي تمت بمسارات النظام، ومنطق كشف أول تشغيل، وتناسق واجهة المستخدم:
+
+1. **تفعيل تعديل مسارات ملفات النظام وإعادة التشغيل التلقائي:**
+   * **الهدف:** إتاحة تعديل مسارات حفظ قاعدة البيانات والمرفقات ومخرجات QR من تبويب الإعدادات مع أزرار استعراض تفاعلية. تطبيق عملية النقل الآمن عبر SQLite Backup API و`PRAGMA integrity_check` لقاعدة البيانات، ونسخ المرفقات والرموز مع بقاء النسخ القديمة للأمان. عند نجاح النقل والضغط على زر OK، يقوم التطبيق بإعادة تشغيل نفسه تلقائياً لتهيئة الاتصالات بالمسار الجديد.
+   * **الملفات:**
+     - [App.xaml.cs](file:///d:/cal-qr/CAL-QR/App.xaml.cs)
+     - [BackupService.cs](file:///d:/cal-qr/CAL-QR/Services/BackupService.cs)
+     - [CalibrationFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/CalibrationFormViewModel.cs)
+     - [SettingsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/SettingsViewModel.cs)
+     - [SettingsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/SettingsView.xaml)
+
+2. **تحسين وضوح خطوط تبويب الإعدادات:**
+   * **الهدف:** رفع جودة وسهولة القراءة في تبويب الإعدادات عبر زيادة حجم خط التسميات والمدخلات بنسبة 20-30% وتغميق اللون إلى `#333333` لزيادة التباين البصري مع استخدام ستايلات مركزية.
+   * **الملفات:**
+     - [SettingsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/SettingsView.xaml)
+
+3. **سلسلة تشخيص وإصلاح أعطال تعديل المسارات وتكامل SQLite:**
+   * **الهدف:**
+     - **اختفاء البيانات:** تصحيح `LoadSettingsAsync` وقراءة مسار النسخ من الاتصال النشط الفعلي المستخرج من Connection String بدلاً من القيمة القديمة الراكدة بجدول `AppSettings` مع مزامنة المسار تلقائياً عند الإقلاع في `DatabaseMigrator`.
+     - **مسار مخرجات QR:** معالجة القراءة الثابتة عبر حقن `IDbContextFactory` وقراءة `QrOutputPath` ديناميكياً من جدول الإعدادات.
+     - **SQLite Error 5 (database is locked):** حل قفل قاعدة البيانات عبر إخراج حفظ المرفقات وتوليد الـ QR خارج نطاق الـ Context/Transaction الرئيسي، وتفعيل وضع WAL وBusy Timeout لجميع الاتصالات، وإجراء checkpoint للـ WAL قبل ترحيل المسارات أو النسخ الاحتياطي.
+     - **الفشل الجزئي:** فصل try-catch مستقل لحفظ المرفقات والـ QR مع تنبيه للمستخدم بعدم تكرار الحفظ.
+     - **خطأ Keyword 'busy timeout' in connection string:** استبدالها بالكلمة المفتاحية المدعومة `Default Timeout=5` مع كتابة اختبار وحدوي للتأكد من فك السلسلة بشكل آمن.
+   * **الملفات:**
+     - [App.xaml.cs](file:///d:/cal-qr/CAL-QR/App.xaml.cs)
+     - [DatabaseMigrator.cs](file:///d:/cal-qr/CAL-QR/Data/DatabaseMigrator.cs)
+     - [SettingsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/SettingsViewModel.cs)
+     - [CalibrationFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/CalibrationFormViewModel.cs)
+     - [QrService.cs](file:///d:/cal-qr/CAL-QR/Services/QrService.cs)
+     - [BackupService.cs](file:///d:/cal-qr/CAL-QR/Services/BackupService.cs)
+     - [DatabaseTests.cs](file:///d:/cal-qr/CAL-QR.Tests/DatabaseTests.cs)
+
+4. **إصلاح منطق كشف "أول تشغيل" وتوحيد مصدر الحقيقة:**
+   * **الهدف:** منع ظهور معالج الإعداد الأول خطأً لتثبيت قائم تم نقل مساره. تم إدخال تابع موحد `DetermineFirstRun` يعتمد أولاً على وجود وصحة ملف `db_path.txt` كمصدر الحقيقة الأساسي، مع كتابة اختبارين وحدويين لتثبيت هذا السلوك وضمان عدم تراجعه.
+   * **الملفات:**
+     - [SplashWindow.xaml.cs](file:///d:/cal-qr/CAL-QR/Views/SplashWindow.xaml.cs)
+     - [DatabaseTests.cs](file:///d:/cal-qr/CAL-QR.Tests/DatabaseTests.cs)
+
+5. **معالجة الـ catch الصامت وتعديلات واجهة المستخدم النهائية:**
+   * **الهدف:** استبدال كتل `catch { }` الفارغة في `DatabaseMigrator` و`QrService` بتسجيل الاستثناء برمجياً للتشخيص. وفي واجهة المستخدم، تم حل مشكلة تداخل أيقونة العين مع منطقة الكتابة في معالج الإعداد الأول عن طريق تعديل الـ Padding ليناسب وضع RTL ومحاذاة العين لليمين، وضبط توسيط النصوص عمودياً (`VerticalContentAlignment="Center"`) لكافة حقول معالج الإعداد الأول وشاشة تسجيل الدخول.
+   * **الملفات:**
+     - [FirstRunWizard.xaml](file:///d:/cal-qr/CAL-QR/Views/FirstRunWizard.xaml)
+     - [LoginWindow.xaml](file:///d:/cal-qr/CAL-QR/Views/LoginWindow.xaml)
+     - [DatabaseMigrator.cs](file:///d:/cal-qr/CAL-QR/Data/DatabaseMigrator.cs)
+     - [QrService.cs](file:///d:/cal-qr/CAL-QR/Services/QrService.cs)
+
+6. **فتح المرفقات بالبرنامج الافتراضي المناسب عند النقر المزدوج:**
+   * **الهدف:** تمكين فتح أي ملف مرفق (PDF، Word، Excel، أو أي امتداد آخر) تلقائياً بالبرنامج الافتراضي المثبَّت على جهاز المستخدم عند النقر المزدوج عليه ضمن قائمة المرفقات بنافذة "سجل معايرة جهاز"، سواء كان مرفقاً جديداً لم يُحفظ بعد (باستخدام مساره الأصلي الكامل `FullPath`) أو مرفقاً محفوظاً مسبقاً من سجل قديم (باستخدام مساره داخل `AttachmentsPath`). التنفيذ اعتمد على `ProcessStartInfo` مع `UseShellExecute = true` صراحة (إلزامية في .NET الحديث)، مع تفادي تعارض النقر مع زر الحذف عبر تتبع `Visual Tree` من `e.OriginalSource`، ومعالجة متدرجة للأخطاء (مسار غير صالح / ملف غير موجود / لا برنامج مرتبط عبر `Win32Exception` / خطأ عام) برسائل عربية واضحة بدل انهيار التطبيق.
+   * **الملفات:**
+     - [CalibrationFormDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/CalibrationFormDialog.xaml)
+     - [CalibrationFormDialog.xaml.cs](file:///d:/cal-qr/CAL-QR/Views/Dialogs/CalibrationFormDialog.xaml.cs)
+
+7. **إنشاء مجلدات فرعية تلقائية عند اختيار مسار جديد لملفات النظام:**
+   * **الهدف:** توحيد آلية استعراض المسارات لتعتمد جميعها على `OpenFolderDialog` (Folder Picker). عند اختيار مجلد عام جديد، يقوم التطبيق ببناء وعرض المسار النهائي تلقائياً بإضافة المجلدات الفرعية المخصصة (`DB` لقاعدة البيانات، `attachments file` للمرفقات، و `QR` للرموز) لضمان عدم تداخل الملفات.
+   * **الملفات:**
+     - [SettingsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/SettingsViewModel.cs)
+
+8. **إضافة تقرير "أداء وحدة المعايرة" لفترة زمنية محددة (مفصل / مختصر):**
+   * **الهدف:** تمكين إدارة النظام من توليد تقرير أداء إداري شامل لوحدة المعايرة خلال فترة زمنية محددة بصيغتين: مختصرة (إحصائيات مجمعة وتوزيعات) ومفصلة (الملخص الإحصائي بالإضافة لجدول السجلات الفردية). تم تصميم التقرير بالهوية البصرية الرسمية، والاعتماد على `QuestPDF` للتصدير بصيغة PDF و `ClosedXML` للتصدير بصيغة Excel، مع دعم العربية والاتجاه من اليمين لليسار (RTL) بشكل كامل، واستخلاص إحصائيات المعايرات والنتائج، وتوزيعها حسب الجهة، والنوع، والمهندس، والكيانات الجديدة المضافة.
+   * **الملفات:**
+     - [ReportsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/ReportsView.xaml)
+     - [ReportsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/ReportsViewModel.cs)
+     - [IExportService.cs](file:///d:/cal-qr/CAL-QR/Services/IExportService.cs)
+     - [ExportService.cs](file:///d:/cal-qr/CAL-QR/Services/ExportService.cs)
+
+9. **إصلاح اقتصاص حقلي "تاريخ المعايرة من/إلى" في قسم تصفية وتصدير السجلات (التقارير):**
+   * **الهدف:** حل مشكلة اقتصاص حقول التاريخ الرأسية الناتجة عن محدودية المساحة الرأسية المتاحة (232 بكسل) مقابل الحجم المطلوب (274 بكسل) في صف الـ Grid المقيد بارتفاع `Height="*"`. تم إعادة تصميم التوزيع الرأسي بوضع قائمتي "النوع" و"الحالة" جنباً إلى جنب في صف أفقي واحد عبر `Grid` ثنائي الأعمدة لتوفير صف كامل (حوالي 71 بكسل)، مع تغليف حقول الفلترة بأكملها داخل `ScrollViewer` مخصص لحماية الواجهة ضد أي تغيرات في دقة الشاشة وتأكيد الارتفاع `Height="45"` المتوافق مع خط Cairo والحشوة الافتراضية.
+   * **الملفات:**
+     - [ReportsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/ReportsView.xaml)
+
+10. **تفعيل تصفية متتالية (Cascading Filter) لحقل "الجهاز" المدمج بناءً على "الجهة المالكة" في قسم التقارير:**
+    * **الهدف:** دمج حقل تصفية الأجهزة الديناميكي ليحل محل حقل "تصنيف ونوع الجهاز" الأصلي كحقل تصفية أحادي مدمج يتبع ديناميكياً للجهة المالكة المختارة. تم استخدام محول قيم `NullToBoolConverter` لربط حالة تفعيل الحقل بوجود اختيار للجهة، مع حماية التزامن ضد Race Conditions عبر `CancellationTokenSource` عند التغيير السريع بين الجهات، وإدراج AllDevicesSentinel كخيار افتراضي يمثل "الكل". وتم تنظيم الحقول بصرياً في 3 صفوف ثنائية الأعمدة (الجهة والجهاز بالصف الأول، حالة المعايرة وحيدة بالصف الثاني بالعمود الأيمن، وتاريخ من وإلى بالصف الثالث) للحفاظ على التناسق والترتيب البصري. وتطهيراً للكتلة البرمجية، تم حذف مستودع `IDeviceTypeRepository` من الـ constructor وحذف الخصائص القديمة غير المستخدمة (`DeviceTypes` و `SelectedDeviceType`) لضمان تجميع نظيف تماماً بدون تحذيرات.
+    * **الملفات:**
+      - [NullToBoolConverter.cs](file:///d:/cal-qr/CAL-QR/Helpers/NullToBoolConverter.cs)
+      - [ReportsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/ReportsViewModel.cs)
+      - [ReportsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/ReportsView.xaml)
+
+11. **إضافة حماية ضد النقر المزدوج (Double-Click Guard) لزر الحفظ:**
+    * **الهدف:** حل مشكلة انغلاق قاعدة البيانات `SQLite Error 5: database is locked` الناتجة عن إطلاق معاملات متوازية متنافسة عند نقر المستخدم المزدوج على زر حفظ المعايرة. تم إضافة راية القفل المنطقي `_isSaving` وحظر الدخول المكرر إلى `SaveAsync` مع تعطيل الزر بصرياً عبر `CommandManager.InvalidateRequerySuggested();` وربط الشرط بدالة `CanSave`. كما تم تغليف логиك الحفظ بالكامل بكتلة `try-finally` لضمان تحرير الراية وإعادة تشغيل الزر دائماً.
+    * **الملفات:**
+      - [CalibrationFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/CalibrationFormViewModel.cs)
+
+12. **حل تعارض أقفال قاعدة البيانات بنقل الـ Audit Log خارج نطاق المعاملة:**
+    * **الهدف:** حل مشكلة انغلاق قاعدة البيانات `SQLite Error 5: database is locked` الفعلية المكتشفة عن طريق نقل عملية تسجيل السجل الرقابي `Audit Log` من داخل نطاق المعاملة النشطة للـ `DbContext` الرئيسي إلى مرحلة ما بعد الالتزام (Post-Commit Phase) بعد إغلاق الـ DbContext الرئيسي بالكامل. كما تم تغليف логиك تسجيل العمليات بكتلة `try-catch` منعزلة تمنع أي فشل جزئي في الـ Audit Log من إحباط الحفظ الأساسي، مع دمج الأخطاء الجزئية بصورة متسقة داخل آلية التجميع الموحدة.
+    * **الملفات:**
+      - [CalibrationFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/CalibrationFormViewModel.cs)
+
+13. **تنظيف السجلات التشخيصية وتغيير عنوان بطاقة تقارير الجهات والأجهزة:**
+    * **الهدف:** تطهير الملفات البرمجية من أكواد التشخيص المؤقتة وتعديل النص التعريفي لتبويب التقارير ليصبح "تقارير الجهات والأجهزة" بدلاً من "تصفية وتصدير السجلات" للحفاظ على تناسق التسمية ومهنيتها.
+    * **الملفات:**
+      - [CalibrationFormViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/CalibrationFormViewModel.cs)
+      - [ReportsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/ReportsView.xaml)
+
+14. **التحقق والاختبارات:**
+    * **الهدف:** تم التحقق من سلامة كافة هذه التعديلات والحلول التراكمية عبر تشغيل مجموعة الاختبارات الوحدوية الآلية الشاملة (`dotnet test`) والتي اجتازت بنجاح كامل (22 اختباراً ناجحاً، 0 فشل)، والتأكد من خلو تجميع المشروع (`dotnet build`) من أي أخطاء أو تحذيرات (0 أخطاء، 0 تحذيرات).
+

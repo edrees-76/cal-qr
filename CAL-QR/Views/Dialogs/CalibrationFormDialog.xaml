@@ -176,7 +176,13 @@
 
                             <!-- Attachment List Box -->
                             <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Height="120" Background="#FAFAFA">
-                                <ListBox ItemsSource="{Binding Attachments}" BorderThickness="0" Background="Transparent" Padding="5">
+                                <ListBox ItemsSource="{Binding Attachments}" BorderThickness="0" Background="Transparent" Padding="5" MouseDoubleClick="AttachmentItem_MouseDoubleClick">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                            <Setter Property="Cursor" Value="Hand" />
+                                            <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لفتح الملف" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Width="290">

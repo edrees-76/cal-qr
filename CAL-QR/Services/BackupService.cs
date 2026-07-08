@@ -32,12 +32,23 @@ namespace CAL_QR.Services
             return Path.GetFullPath(builder.DataSource);
         }
 
+        private string GetAttachmentsPath()
+        {
+            using var context = _contextFactory.CreateDbContext();
+            var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AttachmentsPath");
+            if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
+            {
+                return setting.Value;
+            }
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+        }
+
         public async Task BackupNowAsync(string destinationFolder)
         {
             await Task.Run(async () =>
             {
                 string dbPath = GetDatabaseFilePath();
-                string attachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+                string attachmentsPath = GetAttachmentsPath();
 
                 if (!Directory.Exists(destinationFolder))
                 {
@@ -58,6 +69,14 @@ namespace CAL_QR.Services
                     using (var source = new SqliteConnection($"Data Source={dbPath}"))
                     {
                         source.Open();
+                        
+                        // Checkpoint WAL frames to db file
+                        using (var cmd = source.CreateCommand())
+                        {
+                            cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                            cmd.ExecuteNonQuery();
+                        }
+
                         using (var destination = new SqliteConnection($"Data Source={tempDbPath}"))
                         {
                             destination.Open();
@@ -125,7 +144,7 @@ namespace CAL_QR.Services
             await Task.Run(async () =>
             {
                 string dbPath = GetDatabaseFilePath();
-                string attachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+                string attachmentsPath = GetAttachmentsPath();
 
                 string tempDir = Path.Combine(Path.GetTempPath(), "CalQrRestore_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);

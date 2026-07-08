@@ -10,7 +10,7 @@ namespace CAL_QR.Tests
 
         public QrServiceTests()
         {
-            _qrService = new QrService();
+            _qrService = new QrService(null!);
         }
 
         [Fact]
@@ -42,16 +42,15 @@ namespace CAL_QR.Tests
                 verifyCode: verifyCode
             );
 
-            Assert.Contains("=== شهادة معايرة | Calibration Certificate ===", text);
-            Assert.Contains($"الجهة / Owner: {owner}", text);
+            Assert.Contains("=== شهادة معايرة ===", text);
+            Assert.Contains($"الجهة: {owner}", text);
             Assert.Contains($"النوع / Type: {type}", text);
             Assert.Contains($"الموديل / Model: {model}", text);
             Assert.Contains($"الرقم التسلسلي / S/N: {serial}", text);
-            Assert.Contains($"رقم الشهادة / Cert No: {cert}", text);
-            Assert.Contains($"تاريخ المعايرة / Cal. Date: {calDate}", text);
-            Assert.Contains($"تاريخ الانتهاء / Exp. Date: {expDate}", text);
-            Assert.Contains($"المهندس / Engineer: {engineer}", text);
-            Assert.Contains($"نوع المعايرة / Cal. Type: {desc}", text);
+            Assert.Contains($"رقم الشهادة: {cert}", text);
+            Assert.Contains($"تاريخ المعايرة: {calDate}", text);
+            Assert.Contains($"تاريخ انتهاء المعايرة / Exp. Date: {expDate}", text);
+            Assert.Contains($"المهندس: {engineer}", text);
             Assert.Contains("النتيجة / Result: ✅ ناجح Passed", text);
             Assert.Contains($"كود التحقق / Verify Code: {verifyCode}", text);
         }

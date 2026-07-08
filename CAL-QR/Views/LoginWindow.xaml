@@ -68,7 +68,8 @@
                                          Padding="10,8,45,8"
                                          FontSize="15"
                                          FontFamily="Segoe UI"
-                                         KeyDown="TxtPassword_KeyDown" />
+                                         KeyDown="TxtPassword_KeyDown"
+                                         VerticalContentAlignment="Center" />
                             <TextBox x:Name="TxtPasswordReveal" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="أدخل كلمة المرور" 
@@ -78,7 +79,8 @@
                                      FontSize="15"
                                      FontFamily="{StaticResource CairoFont}"
                                      Visibility="Collapsed"
-                                     KeyDown="TxtPassword_KeyDown" />
+                                     KeyDown="TxtPassword_KeyDown"
+                                     VerticalContentAlignment="Center" />
                             <Button x:Name="BtnRevealPassword" Click="BtnRevealPassword_Click"
                                     Style="{StaticResource MaterialDesignToolButton}"
                                     HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -159,7 +161,8 @@
                                      Padding="10,8"
                                      FontSize="14"
                                      FontFamily="{StaticResource CairoFont}"
-                                     KeyDown="TxtSecurityAnswerInput_KeyDown"/>
+                                     KeyDown="TxtSecurityAnswerInput_KeyDown"
+                                     VerticalContentAlignment="Center"/>
 
                             <Button x:Name="BtnVerifyAnswer" 
                                     Content="تحقق من الإجابة" 
@@ -183,7 +186,8 @@
                                              Height="45"
                                              Padding="10,8,45,8"
                                              FontSize="14"
-                                             FontFamily="Segoe UI"/>
+                                             FontFamily="Segoe UI"
+                                             VerticalContentAlignment="Center"/>
                                 <TextBox x:Name="TxtNewPasswordReveal" 
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="أدخل كلمة المرور الجديدة"
@@ -192,7 +196,8 @@
                                          Padding="10,8,45,8"
                                          FontSize="14"
                                          FontFamily="{StaticResource CairoFont}"
-                                         Visibility="Collapsed"/>
+                                         Visibility="Collapsed"
+                                         VerticalContentAlignment="Center"/>
                                 <Button x:Name="BtnRevealNewPassword" Click="BtnRevealNewPassword_Click"
                                         Style="{StaticResource MaterialDesignToolButton}"
                                         HorizontalAlignment="Right" VerticalAlignment="Center"
@@ -210,7 +215,8 @@
                                              Height="45"
                                              Padding="10,8,45,8"
                                              FontSize="14"
-                                             FontFamily="Segoe UI"/>
+                                             FontFamily="Segoe UI"
+                                             VerticalContentAlignment="Center"/>
                                 <TextBox x:Name="TxtConfirmNewPasswordReveal" 
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                          materialDesign:HintAssist.Hint="أعد إدخال كلمة المرور لتأكيدها"
@@ -219,7 +225,8 @@
                                          Padding="10,8,45,8"
                                          FontSize="14"
                                          FontFamily="{StaticResource CairoFont}"
-                                         Visibility="Collapsed"/>
+                                         Visibility="Collapsed"
+                                         VerticalContentAlignment="Center"/>
                                 <Button x:Name="BtnRevealConfirmNewPassword" Click="BtnRevealConfirmNewPassword_Click"
                                         Style="{StaticResource MaterialDesignToolButton}"
                                         HorizontalAlignment="Right" VerticalAlignment="Center"

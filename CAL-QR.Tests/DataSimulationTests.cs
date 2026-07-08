@@ -207,11 +207,11 @@ namespace CAL_QR.Tests
             }
         }
 
+        private static int _certCounter = 10000;
+
         private CalibrationRecord CreateRecord(Device device, DateTime calDate, DateTime expDate, string result, string engineer, HmacService hmacService)
         {
-            int seedId = device.SerialNumber.GetHashCode() ^ calDate.GetHashCode();
-            var rand = new Random(seedId);
-            string certNo = $"CERT-SIM-{rand.Next(10000, 99999)}";
+            string certNo = $"CERT-SIM-{System.Threading.Interlocked.Increment(ref _certCounter)}";
 
             string signature = hmacService.ComputeSignature(
                 certNo: certNo,

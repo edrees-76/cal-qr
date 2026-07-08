@@ -13,6 +13,7 @@ using CAL_QR.Data;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
+using System.Threading;
 
 namespace CAL_QR.ViewModels
 {
@@ -20,16 +21,18 @@ namespace CAL_QR.ViewModels
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IOwnerRepository _ownerRepository;
-        private readonly IDeviceTypeRepository _deviceTypeRepository;
         private readonly IExportService _exportService;
         private readonly IAuditLogRepository _auditLogRepository;
 
         private ObservableCollection<Owner> _owners = new();
-        private ObservableCollection<DeviceType> _deviceTypes = new();
         private List<string> _statuses = new() { "الكل", "سارية", "قريبة الانتهاء", "منتهية الصلاحية" };
 
+        private static readonly Device AllDevicesSentinel = new Device { Id = 0, Model = "-- الكل --" };
+        private CancellationTokenSource? _deviceLoadCts;
+        private ObservableCollection<Device> _filteredDevices = new();
+        private Device? _selectedDevice;
+
         private Owner? _selectedOwner;
-        private DeviceType? _selectedDeviceType;
         private DateTime? _startDate;
         private DateTime? _endDate;
         private string _selectedStatus = "الكل";
@@ -41,27 +44,32 @@ namespace CAL_QR.ViewModels
 
         private int _filterChangeCounter = 0;
 
+        // Performance Report Fields
+        private DateTime? _perfStartDate = DateTime.Today.AddMonths(-1);
+        private DateTime? _perfEndDate = DateTime.Today;
+        private bool _isPerfDetailed = true;
+        private bool _isPerfPdf = true;
+        private bool _isPerfLoading;
+
         public ReportsViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
             IOwnerRepository ownerRepository,
-            IDeviceTypeRepository deviceTypeRepository,
             IExportService exportService,
             IAuditLogRepository auditLogRepository)
         {
             _contextFactory = contextFactory;
             _ownerRepository = ownerRepository;
-            _deviceTypeRepository = deviceTypeRepository;
             _exportService = exportService;
             _auditLogRepository = auditLogRepository;
 
             ExportCommand = new RelayCommand(async () => await ExportAsync(), CanExport);
+            ExportPerformanceCommand = new RelayCommand(async () => await ExportPerformanceAsync(), CanExportPerformance);
 
             _ = InitializeDataAsync();
         }
 
         #region Properties
         public ObservableCollection<Owner> Owners { get => _owners; set => SetProperty(ref _owners, value); }
-        public ObservableCollection<DeviceType> DeviceTypes { get => _deviceTypes; set => SetProperty(ref _deviceTypes, value); }
         public List<string> Statuses { get => _statuses; }
 
         public Owner? SelectedOwner
@@ -70,19 +78,65 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _selectedOwner, value))
+                {
+                    _deviceLoadCts?.Cancel();
+                    _deviceLoadCts = new CancellationTokenSource();
+                    _ = UpdateFilteredDevicesAsync(_deviceLoadCts.Token);
+                    TriggerFilterChange();
+                }
+            }
+        }
+
+        public ObservableCollection<Device> FilteredDevices { get => _filteredDevices; set => SetProperty(ref _filteredDevices, value); }
+
+        public Device? SelectedDevice
+        {
+            get => _selectedDevice;
+            set
+            {
+                if (SetProperty(ref _selectedDevice, value))
                     TriggerFilterChange();
             }
         }
 
-        public DeviceType? SelectedDeviceType
+        private async Task UpdateFilteredDevicesAsync(CancellationToken cancellationToken)
         {
-            get => _selectedDeviceType;
-            set
+            if (_selectedOwner == null)
             {
-                if (SetProperty(ref _selectedDeviceType, value))
-                    TriggerFilterChange();
+                FilteredDevices.Clear();
+                SelectedDevice = null;
+                return;
+            }
+
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+                var devices = await context.Devices
+                    .AsNoTracking()
+                    .Where(d => d.OwnerId == _selectedOwner.Id && !d.IsDeleted)
+                    .ToListAsync(cancellationToken);
+
+                if (cancellationToken.IsCancellationRequested) return;
+
+                var list = new List<Device> { AllDevicesSentinel };
+                list.AddRange(devices);
+
+                FilteredDevices = new ObservableCollection<Device>(list);
+                SelectedDevice = AllDevicesSentinel;
+            }
+            catch (OperationCanceledException)
+            {
+                // تجاهل الإلغاء المتوقع عند تغيير الاختيار بسرعة
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading filtered devices: {ex.Message}");
+                MessageBox.Show("حدث خطأ أثناء تحميل أجهزة الجهة المالكة المحددة.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                FilteredDevices.Clear();
+                SelectedDevice = null;
             }
         }
+
 
         public DateTime? StartDate
         {
@@ -179,6 +233,61 @@ namespace CAL_QR.ViewModels
         }
 
         public ICommand ExportCommand { get; }
+
+        // Performance Report Properties
+        public DateTime? PerfStartDate { get => _perfStartDate; set => SetProperty(ref _perfStartDate, value); }
+        public DateTime? PerfEndDate { get => _perfEndDate; set => SetProperty(ref _perfEndDate, value); }
+        
+        public bool IsPerfDetailed
+        {
+            get => _isPerfDetailed;
+            set
+            {
+                if (SetProperty(ref _isPerfDetailed, value))
+                {
+                    OnPropertyChanged(nameof(IsPerfSummary));
+                }
+            }
+        }
+
+        public bool IsPerfSummary
+        {
+            get => !_isPerfDetailed;
+            set
+            {
+                if (value)
+                {
+                    IsPerfDetailed = false;
+                }
+            }
+        }
+
+        public bool IsPerfPdf
+        {
+            get => _isPerfPdf;
+            set
+            {
+                if (SetProperty(ref _isPerfPdf, value))
+                {
+                    OnPropertyChanged(nameof(IsPerfExcel));
+                }
+            }
+        }
+
+        public bool IsPerfExcel
+        {
+            get => !_isPerfPdf;
+            set
+            {
+                if (value)
+                {
+                    IsPerfPdf = false;
+                }
+            }
+        }
+
+        public bool IsPerfLoading { get => _isPerfLoading; set => SetProperty(ref _isPerfLoading, value); }
+        public ICommand ExportPerformanceCommand { get; }
         #endregion
 
         private async Task InitializeDataAsync()
@@ -187,9 +296,6 @@ namespace CAL_QR.ViewModels
             {
                 var ownersList = await _ownerRepository.GetAllAsync();
                 Owners = new ObservableCollection<Owner>(ownersList);
-
-                var typesList = await _deviceTypeRepository.GetAllAsync();
-                DeviceTypes = new ObservableCollection<DeviceType>(typesList);
 
                 await UpdateMatchingCountAsync();
             }
@@ -237,13 +343,17 @@ namespace CAL_QR.ViewModels
 
         private async Task<IQueryable<CalibrationRecord>> ApplyFiltersAsync(IQueryable<CalibrationRecord> query, CalQrDbContext context)
         {
-            if (SelectedOwner != null)
+            if (SelectedOwner == null)
+            {
+                // لا فلترة على الجهة أو الجهاز إطلاقاً
+            }
+            else if (SelectedDevice == null || SelectedDevice.Id == 0)
             {
                 query = query.Where(r => r.Device != null && r.Device.OwnerId == SelectedOwner.Id);
             }
-            if (SelectedDeviceType != null)
+            else
             {
-                query = query.Where(r => r.Device != null && r.Device.DeviceTypeId == SelectedDeviceType.Id);
+                query = query.Where(r => r.DeviceId == SelectedDevice.Id);
             }
             if (StartDate.HasValue)
             {
@@ -338,6 +448,123 @@ namespace CAL_QR.ViewModels
                 finally
                 {
                     IsLoading = false;
+                }
+            }
+        }
+
+        private bool CanExportPerformance()
+        {
+            return !IsPerfLoading;
+        }
+
+        private async Task ExportPerformanceAsync()
+        {
+            DateTime start = PerfStartDate ?? DateTime.Today.AddMonths(-1);
+            DateTime end = PerfEndDate ?? DateTime.Today;
+
+            var saveFileDialog = new SaveFileDialog
+            {
+                Filter = IsPerfPdf ? "PDF Files (*.pdf)|*.pdf" : "Excel Files (*.xlsx)|*.xlsx",
+                FileName = $"تقرير_أداء_وحدة_المعايرة_{DateTime.Now:yyyyMMdd_HHmmss}"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                IsPerfLoading = true;
+                string filePath = saveFileDialog.FileName;
+
+                try
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+
+                    // Get all calibration records in the period
+                    var records = await context.CalibrationRecords
+                        .AsNoTracking()
+                        .Include(r => r.Device!)
+                            .ThenInclude(d => d.Owner)
+                        .Include(r => r.Device!)
+                            .ThenInclude(d => d.DeviceType)
+                        .Where(r => !r.IsDeleted && r.CalibrationDate >= start && r.CalibrationDate <= end)
+                        .ToListAsync();
+
+                    int total = records.Count;
+
+                    // Results
+                    int passed = records.Count(r => r.Result == "Passed");
+                    int failed = records.Count(r => r.Result == "Failed");
+                    int conditional = records.Count(r => r.Result == "Conditional");
+
+                    // Distributions
+                    var byOwner = records
+                        .Where(r => r.Device?.Owner != null)
+                        .GroupBy(r => r.Device!.Owner!.Name)
+                        .Select(g => new DistributionItem { Name = g.Key, Count = g.Count() })
+                        .OrderByDescending(x => x.Count)
+                        .ToList();
+
+                    var byDeviceType = records
+                        .Where(r => r.Device?.DeviceType != null)
+                        .GroupBy(r => r.Device!.DeviceType!.Name)
+                        .Select(g => new DistributionItem { Name = g.Key, Count = g.Count() })
+                        .OrderByDescending(x => x.Count)
+                        .ToList();
+
+                    var byEngineer = records
+                        .Where(r => !string.IsNullOrEmpty(r.EngineerName))
+                        .GroupBy(r => r.EngineerName)
+                        .Select(g => new DistributionItem { Name = g.Key, Count = g.Count() })
+                        .OrderByDescending(x => x.Count)
+                        .ToList();
+
+                    // New entities
+                    DateTime endOfDay = end.Date.AddDays(1).AddTicks(-1);
+                    int newDevices = await context.Devices.AsNoTracking()
+                        .CountAsync(d => !d.IsDeleted && d.CreatedAt >= start && d.CreatedAt <= endOfDay);
+                    int newOwners = await context.Owners.AsNoTracking()
+                        .CountAsync(o => !o.IsDeleted && o.CreatedAt >= start && o.CreatedAt <= endOfDay);
+                    int newDeviceTypes = await context.DeviceTypes.AsNoTracking()
+                        .CountAsync(t => !t.IsDeleted && t.CreatedAt >= start && t.CreatedAt <= endOfDay);
+
+                    var reportData = new PerformanceReportData
+                    {
+                        StartDate = start,
+                        EndDate = end,
+                        TotalRecords = total,
+                        PassedCount = passed,
+                        FailedCount = failed,
+                        ConditionalCount = conditional,
+                        PassedPercent = total > 0 ? (double)passed / total * 100 : 0,
+                        FailedPercent = total > 0 ? (double)failed / total * 100 : 0,
+                        ConditionalPercent = total > 0 ? (double)conditional / total * 100 : 0,
+                        ByOwner = byOwner,
+                        ByDeviceType = byDeviceType,
+                        ByEngineer = byEngineer,
+                        NewDevices = newDevices,
+                        NewOwners = newOwners,
+                        NewDeviceTypes = newDeviceTypes,
+                        IsDetailed = IsPerfDetailed,
+                        Records = records
+                    };
+
+                    if (IsPerfPdf)
+                    {
+                        await _exportService.ExportPerformanceReportToPdfAsync(reportData, filePath);
+                    }
+                    else
+                    {
+                        await _exportService.ExportPerformanceReportToExcelAsync(reportData, filePath);
+                    }
+
+                    MessageBox.Show("تم تصدير تقرير الأداء بنجاح.", "تم التصدير", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await _auditLogRepository.LogAsync("تصدير تقرير أداء", "نظام", "Reports", $"تصدير تقرير أداء وحدة المعايرة ({ (IsPerfDetailed ? "مفصل" : "مختصر") }) للفترة من {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd} بصيغة {(IsPerfPdf ? "PDF" : "Excel")}");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"حدث خطأ أثناء تصدير تقرير الأداء: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    IsPerfLoading = false;
                 }
             }
         }

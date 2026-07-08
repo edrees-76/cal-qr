@@ -13,21 +13,55 @@ namespace CAL_QR.Data
             // First, make sure the database is created
             context.Database.EnsureCreated();
 
-            // Create AcknowledgedExpiredDevices table if it doesn't exist
-            context.Database.ExecuteSqlRaw(@"
-                CREATE TABLE IF NOT EXISTS AcknowledgedExpiredDevices (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    DeviceId INTEGER NOT NULL,
-                    CalibrationRecordId INTEGER NOT NULL,
-                    AcknowledgedDate TEXT NOT NULL
-                );
-            ");
+            if (context.Database.IsRelational())
+            {
+                // Enable Write-Ahead Logging (WAL) and set Busy Timeout
+                context.Database.ExecuteSqlRaw("PRAGMA journal_mode=WAL;");
+                context.Database.ExecuteSqlRaw("PRAGMA busy_timeout=5000;");
+
+                // Create AcknowledgedExpiredDevices table if it doesn't exist
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS AcknowledgedExpiredDevices (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        DeviceId INTEGER NOT NULL,
+                        CalibrationRecordId INTEGER NOT NULL,
+                        AcknowledgedDate TEXT NOT NULL
+                    );
+                ");
+            }
 
             // Perform any safe check/migration of columns if they are missing
             // e.g. ExecuteSqlIfColumnMissing(context, "TableName", "ColumnName", "ALTER TABLE TableName ADD COLUMN ColumnName TYPE;");
             
             // Seed default settings if they don't exist
             SeedDefaultSettings(context);
+
+            if (context.Database.IsRelational())
+            {
+                // Sync DatabasePath key in AppSettings with the active database connection DataSource
+                try
+                {
+                    var connectionString = context.Database.GetDbConnection().ConnectionString;
+                    var builder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(connectionString);
+                    var activeDbPath = System.IO.Path.GetFullPath(builder.DataSource);
+
+                    var dbPathSetting = context.AppSettings.FirstOrDefault(s => s.Key == "DatabasePath");
+                    if (dbPathSetting == null)
+                    {
+                        context.AppSettings.Add(new AppSetting { Key = "DatabasePath", Value = activeDbPath });
+                        context.SaveChanges();
+                    }
+                    else if (string.IsNullOrWhiteSpace(dbPathSetting.Value) || System.IO.Path.GetFullPath(dbPathSetting.Value) != activeDbPath)
+                    {
+                        dbPathSetting.Value = activeDbPath;
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Syncing database path failed: {ex.Message}");
+                }
+            }
         }
 
         public static void ExecuteSqlIfColumnMissing(CalQrDbContext context, string tableName, string columnName, string alterTableSql)
@@ -85,6 +119,7 @@ namespace CAL_QR.Data
                 new AppSetting { Key = "LastPrinterName", Value = "" },
                 new AppSetting { Key = "LastTemplateId", Value = "0" },
                 new AppSetting { Key = "DateFormat", Value = "YYYY-MM-DD" },
+                new AppSetting { Key = "Language", Value = "ar" },
                 new AppSetting { Key = "FirstRunCompleted", Value = "" },
                 new AppSetting { Key = "SecurityQuestion", Value = "" },
                 new AppSetting { Key = "SecurityAnswer", Value = "" }

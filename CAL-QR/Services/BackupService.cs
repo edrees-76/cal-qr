@@ -43,12 +43,29 @@ namespace CAL_QR.Services
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
         }
 
+        private async Task<string> GetQrOutputPathAsync()
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var setting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "QrOutputPath");
+            if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
+            {
+                return setting.Value;
+            }
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
+        }
+
         public async Task BackupNowAsync(string destinationFolder)
         {
             await Task.Run(async () =>
             {
+                if (string.IsNullOrWhiteSpace(destinationFolder) || !Path.IsPathRooted(destinationFolder))
+                {
+                    throw new ArgumentException("لم يتم تحديد مسار مطلق صالح لحفظ النسخة الاحتياطية.");
+                }
+
                 string dbPath = GetDatabaseFilePath();
                 string attachmentsPath = GetAttachmentsPath();
+                string qrOutputPath = await GetQrOutputPathAsync();
 
                 if (!Directory.Exists(destinationFolder))
                 {
@@ -102,6 +119,16 @@ namespace CAL_QR.Services
                                 archive.CreateEntryFromFile(file, "Attachments/" + relativePath);
                             }
                         }
+
+                        if (Directory.Exists(qrOutputPath))
+                        {
+                            var files = Directory.GetFiles(qrOutputPath, "*", SearchOption.AllDirectories);
+                            foreach (var file in files)
+                            {
+                                string relativePath = Path.GetRelativePath(qrOutputPath, file).Replace('\\', '/');
+                                archive.CreateEntryFromFile(file, "QR_Output/" + relativePath);
+                            }
+                        }
                     }
 
                     // 3. Keep last 10 backups
@@ -143,8 +170,14 @@ namespace CAL_QR.Services
         {
             await Task.Run(async () =>
             {
+                if (string.IsNullOrWhiteSpace(zipFilePath) || !File.Exists(zipFilePath))
+                {
+                    throw new FileNotFoundException("ملف النسخة الاحتياطية المحدد غير موجود أو غير صالح.");
+                }
+
                 string dbPath = GetDatabaseFilePath();
                 string attachmentsPath = GetAttachmentsPath();
+                string qrOutputPath = await GetQrOutputPathAsync();
 
                 string tempDir = Path.Combine(Path.GetTempPath(), "CalQrRestore_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
@@ -180,6 +213,17 @@ namespace CAL_QR.Services
                         }
                         Directory.CreateDirectory(attachmentsPath);
 
+                        // 3. Restore QR Output (Backward compatibility if zip does not contain QR_Output)
+                        bool hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
+                        if (hasQrFolderInZip)
+                        {
+                            if (Directory.Exists(qrOutputPath))
+                            {
+                                Directory.Delete(qrOutputPath, true);
+                            }
+                            Directory.CreateDirectory(qrOutputPath);
+                        }
+
                         foreach (var entry in archive.Entries)
                         {
                             if (entry.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase))
@@ -188,6 +232,20 @@ namespace CAL_QR.Services
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
                                     string destPath = Path.Combine(attachmentsPath, relativePath);
+                                    string destDir = Path.GetDirectoryName(destPath)!;
+                                    if (!Directory.Exists(destDir))
+                                    {
+                                        Directory.CreateDirectory(destDir);
+                                    }
+                                    entry.ExtractToFile(destPath, true);
+                                }
+                            }
+                            else if (entry.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string relativePath = entry.FullName.Substring("QR_Output/".Length);
+                                if (!string.IsNullOrEmpty(relativePath))
+                                {
+                                    string destPath = Path.Combine(qrOutputPath, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -239,7 +297,7 @@ namespace CAL_QR.Services
                 var lastSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastBackupDateTime");
 
                 if (scheduleSetting == null || string.IsNullOrEmpty(scheduleSetting.Value) || scheduleSetting.Value == "None" ||
-                    pathSetting == null || string.IsNullOrEmpty(pathSetting.Value))
+                    pathSetting == null || string.IsNullOrEmpty(pathSetting.Value) || !Path.IsPathRooted(pathSetting.Value))
                 {
                     return;
                 }
@@ -265,6 +323,8 @@ namespace CAL_QR.Services
                 {
                     shouldBackup = (today - lastBackup.Date).TotalDays >= 30;
                 }
+
+
 
                 if (shouldBackup)
                 {

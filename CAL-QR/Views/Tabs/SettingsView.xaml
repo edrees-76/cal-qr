@@ -199,6 +199,10 @@
                             <TextBlock Text="جدولة النسخ الاحتياطي التلقائي" Style="{StaticResource SettingsLabelStyle}" />
                             <ComboBox ItemsSource="{Binding BackupSchedules}" SelectedItem="{Binding SelectedBackupSchedule}" Height="40" Margin="0,0,0,20" />
 
+                            <!-- Save Backup Settings Button -->
+                            <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ إعدادات الجدولة والنسخ" Margin="0,0,0,15"
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

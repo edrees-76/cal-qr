@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ namespace CAL_QR.Services
     public class ExportService : IExportService
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private byte[]? _logoBytes;
 
         public ExportService(IDbContextFactory<CalQrDbContext> contextFactory)
         {
@@ -27,6 +29,27 @@ namespace CAL_QR.Services
             catch
             {
                 // Already registered
+            }
+
+            LoadLogoBytes();
+        }
+
+        private void LoadLogoBytes()
+        {
+            try
+            {
+                var uri = new Uri("pack://application:,,,/Assets/Logo/cal-qr-3d-logo-new.png");
+                var streamResourceInfo = System.Windows.Application.GetResourceStream(uri);
+                if (streamResourceInfo != null)
+                {
+                    using var ms = new MemoryStream();
+                    streamResourceInfo.Stream.CopyTo(ms);
+                    _logoBytes = ms.ToArray();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ExportService] Error loading logo resource: {ex.Message}");
             }
         }
 
@@ -86,11 +109,28 @@ namespace CAL_QR.Services
                     }
                     ws.Cell(1, 1).Style.Font.FontSize = 14;
 
-                    int startRow = 6;
                     bool isDetailed = reportType == "Detailed";
+
+                    // Add logo if available
+                    if (_logoBytes != null)
+                    {
+                        try
+                        {
+                            using (var ms = new MemoryStream(_logoBytes))
+                            {
+                                var picture = ws.Pictures.Add(ms);
+                                picture.MoveTo(ws.Cell(1, isDetailed ? 10 : 7));
+                                picture.Width = 60;
+                                picture.Height = 60;
+                            }
+                        }
+                        catch { }
+                    }
+
+                    int startRow = 6;
                     string[] headers = isDetailed 
-                        ? new[] { "رقم الشهادة", "الجهة المالكة", "نوع الجهاز", "الموديل", "الرقم التسلسلي", "تاريخ المعايرة", "تاريخ الانتهاء", "النتيجة", "التوقيع الرقمي", "المهندس المعايِر", "التفاصيل" }
-                        : new[] { "رقم الشهادة", "الجهة المالكة", "الموديل", "الرقم التسلسلي", "تاريخ الانتهاء", "النتيجة", "الحالة" };
+                        ? new[] { "ت", "رقم الشهادة", "الجهة المالكة", "نوع الجهاز", "الموديل", "الرقم التسلسلي", "تاريخ المعايرة", "تاريخ الانتهاء", "النتيجة", "المهندس المعايِر", "التفاصيل" }
+                        : new[] { "ت", "رقم الشهادة", "الجهة المالكة", "الموديل", "الرقم التسلسلي", "تاريخ الانتهاء", "النتيجة", "الحالة" };
 
                     for (int col = 0; col < headers.Length; col++)
                     {
@@ -104,32 +144,34 @@ namespace CAL_QR.Services
                     }
 
                     int row = startRow + 1;
+                    int idx = 1;
                     foreach (var record in records)
                     {
                         ws.Row(row).Style.Font.FontName = "Cairo";
                         if (isDetailed)
                         {
-                            ws.Cell(row, 1).Value = record.CertificateNumber;
-                            ws.Cell(row, 2).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 3).Value = record.Device?.DeviceType?.Name ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 6).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 7).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 8).Value = record.Result;
-                            ws.Cell(row, 9).Value = record.HmacSignature;
+                            ws.Cell(row, 1).Value = idx;
+                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
+                            ws.Cell(row, 4).Value = record.Device?.DeviceType?.Name ?? "";
+                            ws.Cell(row, 5).Value = record.Device?.Model ?? "";
+                            ws.Cell(row, 6).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 7).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 8).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 9).Value = record.Result;
                             ws.Cell(row, 10).Value = record.EngineerName;
                             ws.Cell(row, 11).Value = record.CalibrationDescription;
                         }
                         else
                         {
-                            ws.Cell(row, 1).Value = record.CertificateNumber;
-                            ws.Cell(row, 2).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 3).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 5).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 6).Value = record.Result;
-                            ws.Cell(row, 7).Value = GetStatusText(record, alertDays);
+                            ws.Cell(row, 1).Value = idx;
+                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
+                            ws.Cell(row, 4).Value = record.Device?.Model ?? "";
+                            ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 6).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 7).Value = record.Result;
+                            ws.Cell(row, 8).Value = GetStatusText(record, alertDays);
                         }
 
                         for (int col = 1; col <= headers.Length; col++)
@@ -137,10 +179,19 @@ namespace CAL_QR.Services
                             ws.Cell(row, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                         }
 
+                        idx++;
                         row++;
                     }
 
                     ws.Columns().AdjustToContents();
+
+                    // Apply text wrapping to prevent visual overflow
+                    ws.Column(3).Style.Alignment.WrapText = true; // الجهة المالكة
+                    if (isDetailed)
+                    {
+                        ws.Column(11).Style.Alignment.WrapText = true; // التفاصيل
+                    }
+
                     workbook.SaveAs(filePath);
                 }
             });
@@ -179,9 +230,17 @@ namespace CAL_QR.Services
                                     column.Item().Text($"تاريخ التقرير: {DateTime.Today:yyyy-MM-dd}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
                                 });
 
+                                if (_logoBytes != null)
+                                {
+                                    row.ConstantItem(55).AlignLeft().AlignMiddle().Image(_logoBytes);
+                                }
+                                else
+                                {
+                                    row.ConstantItem(120).AlignLeft().AlignMiddle().Background("#1A3A6B").Padding(4).AlignCenter().Text("نظام CAL-QR").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
+                                }
+
                                 row.ConstantItem(120).AlignLeft().AlignMiddle().Column(col =>
                                 {
-                                    col.Item().Background("#1A3A6B").Padding(4).AlignCenter().Text("نظام CAL-QR").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
                                     col.Item().PaddingTop(2).AlignCenter().Text($"تقرير: {(isDetailed ? "مفصل" : "مختصر")}").FontFamily("Cairo").FontSize(9).Bold().FontColor("#C9A227");
                                 });
                             });
@@ -196,28 +255,29 @@ namespace CAL_QR.Services
                                 {
                                     table.ColumnsDefinition(columns =>
                                     {
-                                        columns.ConstantColumn(50);
-                                        columns.RelativeColumn(1.2f);
-                                        columns.RelativeColumn(0.8f);
-                                        columns.RelativeColumn(0.8f);
-                                        columns.ConstantColumn(60);
-                                        columns.ConstantColumn(60);
-                                        columns.ConstantColumn(40);
-                                        columns.ConstantColumn(40);
-                                        columns.RelativeColumn(0.8f);
+                                        columns.ConstantColumn(25);   // ت
+                                        columns.ConstantColumn(65);   // الشهادة
+                                        columns.RelativeColumn(1.5f); // الجهة المالكة
+                                        columns.RelativeColumn(1f);   // الموديل
+                                        columns.RelativeColumn(1f);   // الرقم التسلسلي
+                                        columns.ConstantColumn(65);   // تاريخ المعايرة
+                                        columns.ConstantColumn(65);   // تاريخ الانتهاء
+                                        columns.ConstantColumn(45);   // النتيجة
+                                        columns.RelativeColumn(1f);   // المهندس
                                     });
                                 }
                                 else
                                 {
                                     table.ColumnsDefinition(columns =>
                                     {
-                                        columns.ConstantColumn(60);
-                                        columns.RelativeColumn(1.5f);
-                                        columns.RelativeColumn(1f);
-                                        columns.RelativeColumn(1f);
-                                        columns.ConstantColumn(70);
-                                        columns.ConstantColumn(50);
-                                        columns.RelativeColumn(1f);
+                                        columns.ConstantColumn(25);   // ت
+                                        columns.ConstantColumn(70);   // رقم الشهادة
+                                        columns.RelativeColumn(1.5f); // الجهة المالكة
+                                        columns.RelativeColumn(1f);   // الموديل
+                                        columns.RelativeColumn(1f);   // الرقم التسلسلي
+                                        columns.ConstantColumn(70);   // تاريخ الانتهاء
+                                        columns.ConstantColumn(50);   // النتيجة
+                                        columns.RelativeColumn(1f);   // الحالة
                                     });
                                 }
 
@@ -239,6 +299,7 @@ namespace CAL_QR.Services
 
                                     if (isDetailed)
                                     {
+                                        AddHeaderCell("ت");
                                         AddHeaderCell("الشهادة");
                                         AddHeaderCell("الجهة المالكة");
                                         AddHeaderCell("الموديل");
@@ -246,11 +307,11 @@ namespace CAL_QR.Services
                                         AddHeaderCell("تاريخ المعايرة");
                                         AddHeaderCell("تاريخ الانتهاء");
                                         AddHeaderCell("النتيجة");
-                                        AddHeaderCell("التوقيع");
                                         AddHeaderCell("المهندس");
                                     }
                                     else
                                     {
+                                        AddHeaderCell("ت");
                                         AddHeaderCell("رقم الشهادة");
                                         AddHeaderCell("الجهة المالكة");
                                         AddHeaderCell("الموديل");
@@ -261,6 +322,7 @@ namespace CAL_QR.Services
                                     }
                                 });
 
+                                int idx = 1;
                                 foreach (var record in records)
                                 {
                                     void AddCell(string text, bool isBold = false, string colorHex = "#000000")
@@ -279,6 +341,7 @@ namespace CAL_QR.Services
 
                                     if (isDetailed)
                                     {
+                                        AddCell(idx.ToString());
                                         AddCell(record.CertificateNumber ?? "");
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
@@ -286,11 +349,11 @@ namespace CAL_QR.Services
                                         AddCell(record.CalibrationDate.ToString("yyyy-MM-dd"));
                                         AddCell(record.ExpiryDate.ToString("yyyy-MM-dd"));
                                         AddCell(record.Result ?? "");
-                                        AddCell(record.HmacSignature ?? "", isBold: true, colorHex: "#C62828");
                                         AddCell(record.EngineerName ?? "");
                                     }
                                     else
                                     {
+                                        AddCell(idx.ToString());
                                         AddCell(record.CertificateNumber ?? "");
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
@@ -302,6 +365,7 @@ namespace CAL_QR.Services
                                         string color = status == "منتهية الصلاحية" ? "#C62828" : (status == "قريبة الانتهاء" ? "#F9A825" : "#2E7D32");
                                         AddCell(status, isBold: true, colorHex: color);
                                     }
+                                    idx++;
                                 }
                             });
 
@@ -352,10 +416,18 @@ namespace CAL_QR.Services
                                     column.Item().Text($"الفترة: من {data.StartDate:yyyy-MM-dd} إلى {data.EndDate:yyyy-MM-dd}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
                                 });
 
+                                if (_logoBytes != null)
+                                {
+                                    row.ConstantItem(55).AlignLeft().AlignMiddle().Image(_logoBytes);
+                                }
+                                else
+                                {
+                                    row.ConstantItem(120).AlignLeft().AlignMiddle().Background("#1A3A6B").Padding(4).AlignCenter().Text("نظام CAL-QR").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
+                                }
+
                                 row.ConstantItem(150).AlignLeft().AlignMiddle().Column(col =>
                                 {
-                                    col.Item().Background("#1A3A6B").Padding(4).AlignCenter().Text("نظام CAL-QR").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
-                                    col.Item().PaddingTop(2).AlignCenter().Text("تقرير أداء وحدة المعايرة").FontFamily("Cairo").FontSize(9).Bold().FontColor("#C9A227");
+                                    col.Item().AlignCenter().Text("تقرير أداء وحدة المعايرة").FontFamily("Cairo").FontSize(9).Bold().FontColor("#C9A227");
                                     col.Item().PaddingTop(2).AlignCenter().Text($"نوع التقرير: {(data.IsDetailed ? "مفصل" : "مختصر")}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
                                 });
                             });
@@ -484,14 +556,15 @@ namespace CAL_QR.Services
                                     {
                                         table.ColumnsDefinition(columns =>
                                         {
-                                            columns.ConstantColumn(50);
-                                            columns.RelativeColumn(1.2f);
-                                            columns.RelativeColumn(0.8f);
-                                            columns.RelativeColumn(0.8f);
-                                            columns.ConstantColumn(60);
-                                            columns.ConstantColumn(60);
-                                            columns.ConstantColumn(40);
-                                            columns.RelativeColumn(0.8f);
+                                            columns.ConstantColumn(25);   // ت
+                                            columns.ConstantColumn(65);   // الشهادة
+                                            columns.RelativeColumn(1.5f); // الجهة المالكة
+                                            columns.RelativeColumn(1f);   // الموديل
+                                            columns.RelativeColumn(1f);   // الرقم التسلسلي
+                                            columns.ConstantColumn(65);   // تاريخ المعايرة
+                                            columns.ConstantColumn(65);   // تاريخ الانتهاء
+                                            columns.ConstantColumn(45);   // النتيجة
+                                            columns.RelativeColumn(1f);   // المهندس
                                         });
 
                                         table.Header(header =>
@@ -510,6 +583,7 @@ namespace CAL_QR.Services
                                                     .FontColor(Colors.White);
                                             }
 
+                                            AddHeaderCell("ت");
                                             AddHeaderCell("الشهادة");
                                             AddHeaderCell("الجهة المالكة");
                                             AddHeaderCell("الموديل");
@@ -520,6 +594,7 @@ namespace CAL_QR.Services
                                             AddHeaderCell("المهندس");
                                         });
 
+                                        int pIdx = 1;
                                         foreach (var record in data.Records)
                                         {
                                             void AddCell(string text, string colorHex = "#000000")
@@ -536,6 +611,7 @@ namespace CAL_QR.Services
                                                     .FontColor(colorHex);
                                             }
 
+                                            AddCell(pIdx.ToString());
                                             AddCell(record.CertificateNumber ?? "");
                                             AddCell(record.Device?.Owner?.Name ?? "");
                                             AddCell(record.Device?.Model ?? "");
@@ -546,6 +622,7 @@ namespace CAL_QR.Services
                                             string resultColor = record.Result == "Passed" ? "#2E7D32" : (record.Result == "Failed" ? "#C62828" : "#F9A825");
                                             AddCell(record.Result ?? "", resultColor);
                                             AddCell(record.EngineerName ?? "");
+                                            pIdx++;
                                         }
                                     });
                                 }
@@ -589,6 +666,22 @@ namespace CAL_QR.Services
                         ws.Row(i).Style.Font.Bold = true;
                     }
                     ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+                    // Add logo if available
+                    if (_logoBytes != null)
+                    {
+                        try
+                        {
+                            using (var ms = new MemoryStream(_logoBytes))
+                            {
+                                var picture = ws.Pictures.Add(ms);
+                                picture.MoveTo(ws.Cell(1, 7)); // place at column G
+                                picture.Width = 60;
+                                picture.Height = 60;
+                            }
+                        }
+                        catch { }
+                    }
 
                     // Section 1: Summary Table
                     ws.Cell(6, 1).Value = "1. الخلاصة العامة للفترة";
@@ -727,7 +820,7 @@ namespace CAL_QR.Services
                         ws.Cell(dStartRow, 1).Style.Font.FontSize = 12;
                         ws.Cell(dStartRow, 1).Style.Font.FontColor = XLColor.FromHtml("#1A3A6B");
 
-                        string[] detailedHeaders = { "رقم الشهادة", "الجهة المالكة", "الموديل", "الرقم التسلسلي", "تاريخ المعايرة", "تاريخ الانتهاء", "النتيجة", "المهندس المعايِر" };
+                        string[] detailedHeaders = { "ت", "رقم الشهادة", "الجهة المالكة", "الموديل", "الرقم التسلسلي", "تاريخ المعايرة", "تاريخ الانتهاء", "النتيجة", "المهندس المعايِر" };
                         for (int col = 0; col < detailedHeaders.Length; col++)
                         {
                             var cell = ws.Cell(dStartRow + 1, col + 1);
@@ -740,27 +833,31 @@ namespace CAL_QR.Services
                         }
 
                         int row = dStartRow + 2;
+                        int idx = 1;
                         foreach (var record in data.Records)
                         {
                             ws.Row(row).Style.Font.FontName = "Cairo";
-                            ws.Cell(row, 1).Value = record.CertificateNumber;
-                            ws.Cell(row, 2).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 3).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 5).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 6).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 7).Value = record.Result;
-                            ws.Cell(row, 8).Value = record.EngineerName;
+                            ws.Cell(row, 1).Value = idx;
+                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
+                            ws.Cell(row, 4).Value = record.Device?.Model ?? "";
+                            ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 6).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 7).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 8).Value = record.Result;
+                            ws.Cell(row, 9).Value = record.EngineerName;
 
                             for (int col = 1; col <= detailedHeaders.Length; col++)
                             {
                                 ws.Cell(row, col).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                             }
+                            idx++;
                             row++;
                         }
                     }
 
                     ws.Columns().AdjustToContents();
+                    ws.Column(3).Style.Alignment.WrapText = true; // الجهة المالكة
                     workbook.SaveAs(filePath);
                 }
             });

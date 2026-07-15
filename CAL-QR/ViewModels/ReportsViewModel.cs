@@ -432,6 +432,7 @@ namespace CAL_QR.ViewModels
                     if (IsPdfFormat)
                     {
                         await _exportService.ExportToPdfAsync(records, reportType, filePath);
+                        OpenFileSafely(filePath);
                     }
                     else
                     {
@@ -549,6 +550,7 @@ namespace CAL_QR.ViewModels
                     if (IsPerfPdf)
                     {
                         await _exportService.ExportPerformanceReportToPdfAsync(reportData, filePath);
+                        OpenFileSafely(filePath);
                     }
                     else
                     {
@@ -566,6 +568,25 @@ namespace CAL_QR.ViewModels
                 {
                     IsPerfLoading = false;
                 }
+            }
+        }
+
+        private void OpenFileSafely(string filePath)
+        {
+            try
+            {
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = filePath,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"تعذر فتح التقرير تلقائياً: {ex.Message}", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }

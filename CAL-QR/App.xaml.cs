@@ -43,6 +43,10 @@ namespace CAL_QR
                     DatabaseMigrator.RunMigrations(context);
                 }
 
+                // Initialize HMAC key rotation service
+                var hmacService = ServiceProvider.GetRequiredService<IHmacService>();
+                hmacService.Initialize();
+
                 // Start scheduled backup checks
                 var backupService = ServiceProvider.GetRequiredService<IBackupService>();
                 backupService.StartScheduledBackupTimer();

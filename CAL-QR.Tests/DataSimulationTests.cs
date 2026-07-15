@@ -114,7 +114,9 @@ namespace CAL_QR.Tests
 
                 // 7. Generate Calibration Records
                 var records = new List<CalibrationRecord>();
-                var hmacService = new HmacService();
+                var factory = new TestDbContextFactory(options);
+                var hmacService = new HmacService(factory);
+                hmacService.Initialize();
                 var today = DateTime.Today;
 
                 // We distribute the 500 devices:
@@ -236,6 +238,21 @@ namespace CAL_QR.Tests
                 HmacSignature = signature,
                 IsDeleted = false
             };
+        }
+
+        private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
+        {
+            private readonly DbContextOptions<CalQrDbContext> _options;
+
+            public TestDbContextFactory(DbContextOptions<CalQrDbContext> options)
+            {
+                _options = options;
+            }
+
+            public CalQrDbContext CreateDbContext()
+            {
+                return new CalQrDbContext(_options);
+            }
         }
     }
 }

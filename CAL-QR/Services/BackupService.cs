@@ -179,7 +179,12 @@ namespace CAL_QR.Services
                 string attachmentsPath = GetAttachmentsPath();
                 string qrOutputPath = await GetQrOutputPathAsync();
 
-                string tempDir = Path.Combine(Path.GetTempPath(), "CalQrRestore_" + Guid.NewGuid().ToString("N"));
+                string? stagingParent = Path.GetDirectoryName(attachmentsPath);
+                if (string.IsNullOrWhiteSpace(stagingParent))
+                {
+                    stagingParent = AppDomain.CurrentDomain.BaseDirectory;
+                }
+                string tempDir = Path.Combine(stagingParent, "CalQrRestoreStaging_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
 
                 try
@@ -206,22 +211,15 @@ namespace CAL_QR.Services
                             }
                         }
 
-                        // 2. Restore attachments
-                        if (Directory.Exists(attachmentsPath))
-                        {
-                            Directory.Delete(attachmentsPath, true);
-                        }
-                        Directory.CreateDirectory(attachmentsPath);
+                        // 2. Staging extraction paths
+                        string tempAttachments = Path.Combine(tempDir, "StagedAttachments");
+                        Directory.CreateDirectory(tempAttachments);
 
-                        // 3. Restore QR Output (Backward compatibility if zip does not contain QR_Output)
+                        string tempQrOutput = Path.Combine(tempDir, "StagedQrOutput");
                         bool hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
                         if (hasQrFolderInZip)
                         {
-                            if (Directory.Exists(qrOutputPath))
-                            {
-                                Directory.Delete(qrOutputPath, true);
-                            }
-                            Directory.CreateDirectory(qrOutputPath);
+                            Directory.CreateDirectory(tempQrOutput);
                         }
 
                         foreach (var entry in archive.Entries)
@@ -231,7 +229,7 @@ namespace CAL_QR.Services
                                 string relativePath = entry.FullName.Substring("Attachments/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
-                                    string destPath = Path.Combine(attachmentsPath, relativePath);
+                                    string destPath = Path.Combine(tempAttachments, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -245,7 +243,7 @@ namespace CAL_QR.Services
                                 string relativePath = entry.FullName.Substring("QR_Output/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
-                                    string destPath = Path.Combine(qrOutputPath, relativePath);
+                                    string destPath = Path.Combine(tempQrOutput, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -254,6 +252,22 @@ namespace CAL_QR.Services
                                     entry.ExtractToFile(destPath, true);
                                 }
                             }
+                        }
+
+                        // 3. Swap staged directories with active directories (Atomic Swap)
+                        if (Directory.Exists(attachmentsPath))
+                        {
+                            Directory.Delete(attachmentsPath, true);
+                        }
+                        Directory.Move(tempAttachments, attachmentsPath);
+
+                        if (hasQrFolderInZip)
+                        {
+                            if (Directory.Exists(qrOutputPath))
+                            {
+                                Directory.Delete(qrOutputPath, true);
+                            }
+                            Directory.Move(tempQrOutput, qrOutputPath);
                         }
                     }
 

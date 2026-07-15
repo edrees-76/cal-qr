@@ -244,7 +244,6 @@ namespace CAL_QR.Tests
             {
                 context.Database.EnsureCreated();
             }
-
             var auditLogRepo = new AuditLogRepository(factory);
             var backupService = new BackupService(factory, auditLogRepo);
 
@@ -253,6 +252,63 @@ namespace CAL_QR.Tests
                 await backupService.BackupNowAsync(invalidPath)
             );
         }
+
+        [Fact]
+        public async Task Restore_InvalidArchive_DoesNotAlterActiveFolders()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test_RestoreFailure_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string originalAttachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
+            Directory.CreateDirectory(originalAttachmentsPath);
+            string attachmentFile = Path.Combine(originalAttachmentsPath, "keep_me.txt");
+            await File.WriteAllTextAsync(attachmentFile, "Do not delete this!");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory);
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            // Create a completely empty zip file (no db entry)
+            string corruptZipPath = Path.Combine(testBackupFolder, "corrupt.zip");
+            using (var fs = new FileStream(corruptZipPath, FileMode.Create))
+            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+            {
+                // No entries added
+            }
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => 
+                await backupService.RestoreAsync(corruptZipPath)
+            );
+
+            // Assert that the active attachments were NOT deleted
+            Assert.True(Directory.Exists(originalAttachmentsPath));
+            Assert.True(File.Exists(attachmentFile));
+            Assert.Equal("Do not delete this!", await File.ReadAllTextAsync(attachmentFile));
+
+            // Clean up
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
+        }
+
+
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

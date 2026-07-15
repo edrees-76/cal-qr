@@ -31,4 +31,8 @@
     <Resource Include="Assets\Logo\logo_original_4k.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CAL-QR.Tests" />
+  </ItemGroup>
+
 </Project>

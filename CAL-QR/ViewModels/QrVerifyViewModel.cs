@@ -51,8 +51,8 @@ namespace CAL_QR.ViewModels
             _hmacService = hmacService;
             _contextFactory = contextFactory;
 
-            VerifyPastedTextCommand = new RelayCommand(VerifyPastedText);
-            VerifyManualCommand = new RelayCommand(VerifyManual);
+            VerifyPastedTextCommand = new RelayCommand(async () => await VerifyPastedTextAsync());
+            VerifyManualCommand = new RelayCommand(async () => await VerifyManualAsync());
             ClearCommand = new RelayCommand(Clear);
             QuickVerifyCommand = new RelayCommand(async () => await QuickVerifyByCodeAsync());
         }
@@ -112,7 +112,7 @@ namespace CAL_QR.ViewModels
         public ICommand QuickVerifyCommand { get; }
         #endregion
 
-        private void VerifyPastedText()
+        internal async Task VerifyPastedTextAsync()
         {
             IsValidated = false;
             Message = string.Empty;
@@ -131,13 +131,18 @@ namespace CAL_QR.ViewModels
                 var lines = ConcatenatedText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
-                    if (line.StartsWith("الجهة / Owner: ")) Owner = line.Substring("الجهة / Owner: ".Length).Trim();
+                    if (line.StartsWith("الجهة: ")) Owner = line.Substring("الجهة: ".Length).Trim();
+                    else if (line.StartsWith("الجهة / Owner: ")) Owner = line.Substring("الجهة / Owner: ".Length).Trim();
                     else if (line.StartsWith("النوع / Type: ")) DeviceType = line.Substring("النوع / Type: ".Length).Trim();
                     else if (line.StartsWith("الموديل / Model: ")) Model = line.Substring("الموديل / Model: ".Length).Trim();
                     else if (line.StartsWith("الرقم التسلسلي / S/N: ")) Serial = line.Substring("الرقم التسلسلي / S/N: ".Length).Trim();
+                    else if (line.StartsWith("رقم الشهادة: ")) CertNo = line.Substring("رقم الشهادة: ".Length).Trim();
                     else if (line.StartsWith("رقم الشهادة / Cert No: ")) CertNo = line.Substring("رقم الشهادة / Cert No: ".Length).Trim();
+                    else if (line.StartsWith("تاريخ المعايرة: ")) CalDate = line.Substring("تاريخ المعايرة: ".Length).Trim();
                     else if (line.StartsWith("تاريخ المعايرة / Cal. Date: ")) CalDate = line.Substring("تاريخ المعايرة / Cal. Date: ".Length).Trim();
+                    else if (line.StartsWith("تاريخ انتهاء المعايرة / Exp. Date: ")) ExpDate = line.Substring("تاريخ انتهاء المعايرة / Exp. Date: ".Length).Trim();
                     else if (line.StartsWith("تاريخ الانتهاء / Exp. Date: ")) ExpDate = line.Substring("تاريخ الانتهاء / Exp. Date: ".Length).Trim();
+                    else if (line.StartsWith("المهندس: ")) Engineer = line.Substring("المهندس: ".Length).Trim();
                     else if (line.StartsWith("المهندس / Engineer: ")) Engineer = line.Substring("المهندس / Engineer: ".Length).Trim();
                     else if (line.StartsWith("نوع المعايرة / Cal. Type: ")) CalType = line.Substring("نوع المعايرة / Cal. Type: ".Length).Trim();
                     else if (line.StartsWith("النتيجة / Result: "))
@@ -162,6 +167,18 @@ namespace CAL_QR.ViewModels
                     engineerName: Engineer
                 );
 
+                DateTime? recordCreatedAt = null;
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                {
+                    var dbRecord = await context.CalibrationRecords
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.CertificateNumber == CertNo.Trim() && !r.IsDeleted);
+                    if (dbRecord != null)
+                    {
+                        recordCreatedAt = dbRecord.CreatedAt;
+                    }
+                }
+
                 IsSuccess = _hmacService.VerifySignature(
                     certNo: CertNo,
                     model: Model,
@@ -171,7 +188,8 @@ namespace CAL_QR.ViewModels
                     expDate: ExpDate,
                     result: Result,
                     engineerName: Engineer,
-                    signature: ReadVerifyCode
+                    signature: ReadVerifyCode,
+                    recordCreatedAt: recordCreatedAt
                 );
 
                 if (IsSuccess)
@@ -193,7 +211,7 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void VerifyManual()
+        internal async Task VerifyManualAsync()
         {
             IsValidated = false;
             Message = string.Empty;
@@ -230,6 +248,18 @@ namespace CAL_QR.ViewModels
                     engineerName: ManualEngineer.Trim()
                 );
 
+                DateTime? recordCreatedAt = null;
+                using (var context = await _contextFactory.CreateDbContextAsync())
+                {
+                    var dbRecord = await context.CalibrationRecords
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.CertificateNumber == ManualCertNo.Trim() && !r.IsDeleted);
+                    if (dbRecord != null)
+                    {
+                        recordCreatedAt = dbRecord.CreatedAt;
+                    }
+                }
+
                 IsSuccess = _hmacService.VerifySignature(
                     certNo: ManualCertNo.Trim(),
                     model: ManualModel.Trim(),
@@ -239,7 +269,8 @@ namespace CAL_QR.ViewModels
                     expDate: expDateStr,
                     result: ManualResult,
                     engineerName: ManualEngineer.Trim(),
-                    signature: ManualVerifyCode.Trim()
+                    signature: ManualVerifyCode.Trim(),
+                    recordCreatedAt: recordCreatedAt
                 );
 
                 if (IsSuccess)
@@ -295,7 +326,7 @@ namespace CAL_QR.ViewModels
             VerificationSource = "لم يتم التحقق بعد";
         }
 
-        private async Task QuickVerifyByCodeAsync()
+        internal async Task QuickVerifyByCodeAsync()
         {
             IsValidated = false;
             Message = string.Empty;

@@ -15,6 +15,8 @@ namespace CAL_QR.Models
         public decimal LabelHeightMm { get; set; }
         public decimal MarginTopMm { get; set; }
         public decimal MarginLeftMm { get; set; }
+        public decimal MarginRightMm { get; set; }
+        public decimal MarginBottomMm { get; set; }
         public decimal HorizontalGapMm { get; set; }
         public decimal VerticalGapMm { get; set; }
         public bool IsDefault { get; set; } = false;

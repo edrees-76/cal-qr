@@ -18,6 +18,7 @@ namespace CAL_QR.Data
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<AppSetting> AppSettings { get; set; } = null!;
         public DbSet<AcknowledgedExpiredDevice> AcknowledgedExpiredDevices { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,6 +102,24 @@ namespace CAL_QR.Data
             {
                 entity.HasIndex(e => e.Key).IsUnique();
                 entity.Property(e => e.Key).IsRequired();
+            });
+
+            // User configuration
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(e => e.Username).IsUnique();
+                entity.Property(e => e.Username).IsRequired();
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.FullName).IsRequired();
+            });
+
+            // AuditLog User relation
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

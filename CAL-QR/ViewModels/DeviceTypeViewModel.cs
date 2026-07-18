@@ -10,6 +10,7 @@ using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
@@ -19,6 +20,7 @@ namespace CAL_QR.ViewModels
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly Func<Views.Dialogs.DeviceTypeFormDialog> _deviceTypeFormDialogFactory;
         private readonly Func<Views.Dialogs.DeviceTypeDetailDialog> _deviceTypeDetailDialogFactory;
+        private readonly ICurrentUserService _currentUserService;
 
         private ObservableCollection<DeviceTypeDisplayItem> _deviceTypes = new();
         private string _searchText = string.Empty;
@@ -28,23 +30,28 @@ namespace CAL_QR.ViewModels
             IDeviceTypeRepository deviceTypeRepository, 
             IDbContextFactory<CalQrDbContext> contextFactory,
             Func<Views.Dialogs.DeviceTypeFormDialog> deviceTypeFormDialogFactory,
-            Func<Views.Dialogs.DeviceTypeDetailDialog> deviceTypeDetailDialogFactory)
+            Func<Views.Dialogs.DeviceTypeDetailDialog> deviceTypeDetailDialogFactory,
+            ICurrentUserService currentUserService)
         {
             _deviceTypeRepository = deviceTypeRepository;
             _contextFactory = contextFactory;
             _deviceTypeFormDialogFactory = deviceTypeFormDialogFactory;
             _deviceTypeDetailDialogFactory = deviceTypeDetailDialogFactory;
+            _currentUserService = currentUserService;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            AddTypeCommand = new RelayCommand(async () => await OpenAddTypeAsync());
-            EditTypeCommand = new RelayCommand(async (p) => await OpenEditTypeAsync(p));
+            AddTypeCommand = new RelayCommand(async () => await OpenAddTypeAsync(), () => CanEdit);
+            EditTypeCommand = new RelayCommand(async (p) => await OpenEditTypeAsync(p), (p) => CanEdit);
             ViewDetailsCommand = new RelayCommand(OpenTypeDetails);
-            DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p));
+            DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p), (p) => CanEdit);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToDeviceType += OnNavigateToDeviceType;
             MasterDataEvents.DeviceTypeAdded += OnDeviceTypeAdded;
         }
+
+        public bool CanEdit => _currentUserService.CurrentUser != null && 
+                               (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
         private void OnDeviceTypeAdded(object? sender, EventArgs e)
         {
@@ -127,6 +134,7 @@ namespace CAL_QR.ViewModels
 
         private async Task OpenAddTypeAsync()
         {
+            if (!CanEdit) return;
             var dialog = _deviceTypeFormDialogFactory();
             if (dialog.ShowDialog() == true)
             {
@@ -136,6 +144,7 @@ namespace CAL_QR.ViewModels
 
         private async Task OpenEditTypeAsync(object? parameter)
         {
+            if (!CanEdit) return;
             if (parameter is not DeviceTypeDisplayItem item) return;
 
             var dialog = _deviceTypeFormDialogFactory();
@@ -164,6 +173,7 @@ namespace CAL_QR.ViewModels
 
         private async Task DeleteDeviceTypeAsync(object? parameter)
         {
+            if (!CanEdit) return;
             if (parameter is not DeviceTypeDisplayItem item) return;
 
             if (item.DeviceCount > 0)

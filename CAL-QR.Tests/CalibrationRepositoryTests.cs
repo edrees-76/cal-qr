@@ -149,6 +149,86 @@ namespace CAL_QR.Tests
             }
         }
 
+        [Fact]
+        public async Task SoftDeleteAsync_SoftDeletesOnlyTargetRecordAndDoesNotAffectOtherRecordsForSameDevice()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_CalRepo_SoftDelete_" + Guid.NewGuid().ToString())
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+            var repo = new CalibrationRepository(factory);
+            int recordIdToDelete;
+            int recordIdToKeep;
+            int deviceId;
+
+            using (var context = new CalQrDbContext(options))
+            {
+                var owner = new Owner { Name = "Owner A" };
+                var type = new DeviceType { Name = "Type A" };
+                context.Owners.Add(owner);
+                context.DeviceTypes.Add(type);
+                await context.SaveChangesAsync();
+
+                var device = new Device { Model = "Model 1", SerialNumber = "SN1", OwnerId = owner.Id, DeviceTypeId = type.Id };
+                context.Devices.Add(device);
+                await context.SaveChangesAsync();
+                deviceId = device.Id;
+
+                var recordToDelete = new CalibrationRecord
+                {
+                    DeviceId = device.Id,
+                    CertificateNumber = "CERT-001",
+                    CalibrationDate = DateTime.Today.AddMonths(-1),
+                    ExpiryDate = DateTime.Today.AddMonths(11),
+                    EngineerName = "Edrees",
+                    Result = "Passed",
+                    HmacSignature = "HMAC1",
+                    IsDeleted = false
+                };
+                var recordToKeep = new CalibrationRecord
+                {
+                    DeviceId = device.Id,
+                    CertificateNumber = "CERT-002",
+                    CalibrationDate = DateTime.Today,
+                    ExpiryDate = DateTime.Today.AddYears(1),
+                    EngineerName = "Edrees",
+                    Result = "Passed",
+                    HmacSignature = "HMAC2",
+                    IsDeleted = false
+                };
+                context.CalibrationRecords.AddRange(recordToDelete, recordToKeep);
+                await context.SaveChangesAsync();
+
+                recordIdToDelete = recordToDelete.Id;
+                recordIdToKeep = recordToKeep.Id;
+            }
+
+            // Act
+            await repo.SoftDeleteAsync(recordIdToDelete);
+
+            // Assert
+            using (var context = new CalQrDbContext(options))
+            {
+                var deletedRecord = await context.CalibrationRecords.FindAsync(recordIdToDelete);
+                var keptRecord = await context.CalibrationRecords.FindAsync(recordIdToKeep);
+
+                Assert.NotNull(deletedRecord);
+                Assert.True(deletedRecord.IsDeleted);
+
+                Assert.NotNull(keptRecord);
+                Assert.False(keptRecord.IsDeleted);
+
+                var activeRecordsForDevice = await context.CalibrationRecords
+                    .Where(r => r.DeviceId == deviceId && !r.IsDeleted)
+                    .ToListAsync();
+
+                Assert.Single(activeRecordsForDevice);
+                Assert.Equal("CERT-002", activeRecordsForDevice[0].CertificateNumber);
+            }
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

@@ -103,7 +103,7 @@ namespace CAL_QR.Views
             {
                 using (var context = contextFactory.CreateDbContext())
                 {
-                    var firstRunSetting = context.AppSettings.FirstOrDefault(s => s.Key == "FirstRunCompleted");
+                    var firstRunSetting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "FirstRunCompleted");
                     return firstRunSetting == null || string.IsNullOrEmpty(firstRunSetting.Value);
                 }
             }

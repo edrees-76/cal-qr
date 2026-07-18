@@ -10,5 +10,9 @@ namespace CAL_QR.Models
         public string EntityId { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
         public DateTime ActionAt { get; set; } = DateTime.UtcNow;
+
+        public int? UserId { get; set; }
+        public User? User { get; set; }
+        public string? Username { get; set; }
     }
 }

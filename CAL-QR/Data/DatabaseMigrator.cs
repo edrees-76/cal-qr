@@ -28,6 +28,32 @@ namespace CAL_QR.Data
                         AcknowledgedDate TEXT NOT NULL
                     );
                 ");
+
+                // Create Users table if it doesn't exist
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS Users (
+                        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Username TEXT NOT NULL UNIQUE,
+                        PasswordHash TEXT NOT NULL,
+                        FullName TEXT NOT NULL,
+                        Role INTEGER NOT NULL,
+                        Permissions INTEGER NOT NULL,
+                        IsEditor INTEGER NOT NULL,
+                        IsActive INTEGER NOT NULL DEFAULT 1,
+                        CreatedAt TEXT NOT NULL,
+                        LastLoginAt TEXT,
+                        FailedLoginAttempts INTEGER NOT NULL DEFAULT 0,
+                        LockedUntil TEXT
+                    );
+                ");
+
+                // Execute defensive migrations for AuditLogs
+                ExecuteSqlIfColumnMissing(context, "AuditLogs", "UserId", "ALTER TABLE AuditLogs ADD COLUMN UserId INTEGER;");
+                ExecuteSqlIfColumnMissing(context, "AuditLogs", "Username", "ALTER TABLE AuditLogs ADD COLUMN Username TEXT;");
+
+                // Execute defensive migrations for PaperTemplates
+                ExecuteSqlIfColumnMissing(context, "PaperTemplates", "MarginRightMm", "ALTER TABLE PaperTemplates ADD COLUMN MarginRightMm TEXT DEFAULT '0' NOT NULL;");
+                ExecuteSqlIfColumnMissing(context, "PaperTemplates", "MarginBottomMm", "ALTER TABLE PaperTemplates ADD COLUMN MarginBottomMm TEXT DEFAULT '0' NOT NULL;");
             }
 
             // Perform any safe check/migration of columns if they are missing
@@ -35,6 +61,42 @@ namespace CAL_QR.Data
             
             // Seed default settings if they don't exist
             SeedDefaultSettings(context);
+
+            // Seed default admin user if no users exist (under upgrade condition)
+            SeedDefaultAdminUser(context);
+
+            // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
+            try
+            {
+                var migrationCompletedSetting = context.AppSettings.FirstOrDefault(s => s.Key == "PermissionsSplitMigrated_v1");
+                if (migrationCompletedSetting == null || migrationCompletedSetting.Value != "true")
+                {
+                    var users = context.Users.ToList();
+                    foreach (var user in users)
+                    {
+                        if (user.Permissions.HasFlag(SystemPermissions.Records))
+                        {
+                            user.Permissions |= SystemPermissions.Verification | 
+                                                SystemPermissions.Owners | 
+                                                SystemPermissions.DeviceTypes;
+                        }
+                    }
+
+                    if (migrationCompletedSetting == null)
+                    {
+                        context.AppSettings.Add(new AppSetting { Key = "PermissionsSplitMigrated_v1", Value = "true" });
+                    }
+                    else
+                    {
+                        migrationCompletedSetting.Value = "true";
+                    }
+                    context.SaveChanges();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Permissions split migration failed: {ex.Message}");
+            }
 
             if (context.Database.IsRelational())
             {
@@ -140,6 +202,59 @@ namespace CAL_QR.Data
             if (changed)
             {
                 context.SaveChanges();
+            }
+        }
+
+        private static void SeedDefaultAdminUser(CalQrDbContext context)
+        {
+            try
+            {
+                var firstRunSetting = context.AppSettings.FirstOrDefault(s => s.Key == "FirstRunCompleted");
+                bool isFirstRunCompleted = firstRunSetting != null && firstRunSetting.Value == "true";
+
+                if (isFirstRunCompleted && !context.Users.Any())
+                {
+                    // Generate a random temporary password
+                    string tempPassword = Guid.NewGuid().ToString("N").Substring(0, 10);
+                    string passwordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
+
+                    var adminUser = new User
+                    {
+                        Username = "admin",
+                        PasswordHash = passwordHash,
+                        FullName = "مدير النظام الافتراضي",
+                        Role = UserRole.Admin,
+                        Permissions = SystemPermissions.Records |
+                                      SystemPermissions.Verification |
+                                      SystemPermissions.Owners |
+                                      SystemPermissions.DeviceTypes |
+                                      SystemPermissions.Reports |
+                                      SystemPermissions.Settings |
+                                      SystemPermissions.BackupRestore |
+                                      SystemPermissions.UserManagement,
+                        IsEditor = true,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    context.Users.Add(adminUser);
+                    context.SaveChanges();
+
+                    string warningMsg = $@"
+========================================================================
+⚠️ [تحذير أمني] تم إنشاء حساب المسؤول الافتراضي بنجاح!
+اسم المستخدم: admin
+كلمة المرور المؤقتة: {tempPassword}
+يرجى تسجيل الدخول وتغيير كلمة المرور فوراً لأسباب أمنية.
+========================================================================
+";
+                    System.Diagnostics.Debug.WriteLine(warningMsg);
+                    Console.WriteLine(warningMsg);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Seeding admin user failed: {ex.Message}");
             }
         }
     }

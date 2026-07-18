@@ -10,6 +10,7 @@ using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
@@ -19,6 +20,7 @@ namespace CAL_QR.ViewModels
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly Func<Views.Dialogs.OwnerFormDialog> _ownerFormDialogFactory;
         private readonly Func<Views.Dialogs.OwnerDetailDialog> _ownerDetailDialogFactory;
+        private readonly ICurrentUserService _currentUserService;
 
         private ObservableCollection<OwnerDisplayItem> _owners = new();
         private string _searchText = string.Empty;
@@ -28,23 +30,28 @@ namespace CAL_QR.ViewModels
             IOwnerRepository ownerRepository, 
             IDbContextFactory<CalQrDbContext> contextFactory,
             Func<Views.Dialogs.OwnerFormDialog> ownerFormDialogFactory,
-            Func<Views.Dialogs.OwnerDetailDialog> ownerDetailDialogFactory)
+            Func<Views.Dialogs.OwnerDetailDialog> ownerDetailDialogFactory,
+            ICurrentUserService currentUserService)
         {
             _ownerRepository = ownerRepository;
             _contextFactory = contextFactory;
             _ownerFormDialogFactory = ownerFormDialogFactory;
             _ownerDetailDialogFactory = ownerDetailDialogFactory;
+            _currentUserService = currentUserService;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            AddOwnerCommand = new RelayCommand(async () => await OpenAddOwnerAsync());
-            EditOwnerCommand = new RelayCommand(async (p) => await OpenEditOwnerAsync(p));
+            AddOwnerCommand = new RelayCommand(async () => await OpenAddOwnerAsync(), () => CanEdit);
+            EditOwnerCommand = new RelayCommand(async (p) => await OpenEditOwnerAsync(p), (p) => CanEdit);
             ViewDetailsCommand = new RelayCommand(OpenOwnerDetails);
-            DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p));
+            DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p), (p) => CanEdit);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToOwner += OnNavigateToOwner;
             MasterDataEvents.OwnerAdded += OnOwnerAdded;
         }
+
+        public bool CanEdit => _currentUserService.CurrentUser != null && 
+                               (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
         private void OnOwnerAdded(object? sender, EventArgs e)
         {
@@ -134,6 +141,7 @@ namespace CAL_QR.ViewModels
 
         private async Task OpenAddOwnerAsync()
         {
+            if (!CanEdit) return;
             var dialog = _ownerFormDialogFactory();
             if (dialog.ShowDialog() == true)
             {
@@ -143,6 +151,7 @@ namespace CAL_QR.ViewModels
 
         private async Task OpenEditOwnerAsync(object? parameter)
         {
+            if (!CanEdit) return;
             if (parameter is not OwnerDisplayItem item) return;
 
             var dialog = _ownerFormDialogFactory();
@@ -171,6 +180,7 @@ namespace CAL_QR.ViewModels
 
         private async Task DeleteOwnerAsync(object? parameter)
         {
+            if (!CanEdit) return;
             if (parameter is not OwnerDisplayItem item) return;
 
             if (item.DeviceCount > 0)

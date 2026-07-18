@@ -23,6 +23,7 @@ namespace CAL_QR.ViewModels
         private readonly IOwnerRepository _ownerRepository;
         private readonly IExportService _exportService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly ICurrentUserService _currentUserService;
 
         private ObservableCollection<Owner> _owners = new();
         private List<string> _statuses = new() { "الكل", "سارية", "قريبة الانتهاء", "منتهية الصلاحية" };
@@ -55,18 +56,23 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             IOwnerRepository ownerRepository,
             IExportService exportService,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            ICurrentUserService currentUserService)
         {
             _contextFactory = contextFactory;
             _ownerRepository = ownerRepository;
             _exportService = exportService;
             _auditLogRepository = auditLogRepository;
+            _currentUserService = currentUserService;
 
             ExportCommand = new RelayCommand(async () => await ExportAsync(), CanExport);
             ExportPerformanceCommand = new RelayCommand(async () => await ExportPerformanceAsync(), CanExportPerformance);
 
             _ = InitializeDataAsync();
         }
+
+        public bool CanEdit => _currentUserService.CurrentUser != null && 
+                               (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
         #region Properties
         public ObservableCollection<Owner> Owners { get => _owners; set => SetProperty(ref _owners, value); }

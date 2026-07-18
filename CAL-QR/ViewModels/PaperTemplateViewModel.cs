@@ -11,6 +11,8 @@ namespace CAL_QR.ViewModels
     public class PaperTemplateViewModel : BaseViewModel
     {
         private readonly IPaperTemplateRepository _templateRepository;
+        
+        public static Action<string, string, MessageBoxButton, MessageBoxImage>? MessageBoxShowMock { get; set; }
 
         private int _templateId;
         private string _templateName = string.Empty;
@@ -23,6 +25,8 @@ namespace CAL_QR.ViewModels
         private double _labelHeight = 35;
         private double _marginLeft = 0;
         private double _marginTop = 0;
+        private double _marginRight = 0;
+        private double _marginBottom = 0;
         private double _gapHorizontal = 0;
         private double _gapVertical = 0;
         private bool _isDefault;
@@ -57,6 +61,8 @@ namespace CAL_QR.ViewModels
         public double LabelHeight { get => _labelHeight; set => SetProperty(ref _labelHeight, value); }
         public double MarginLeft { get => _marginLeft; set => SetProperty(ref _marginLeft, value); }
         public double MarginTop { get => _marginTop; set => SetProperty(ref _marginTop, value); }
+        public double MarginRight { get => _marginRight; set => SetProperty(ref _marginRight, value); }
+        public double MarginBottom { get => _marginBottom; set => SetProperty(ref _marginBottom, value); }
         public double GapHorizontal { get => _gapHorizontal; set => SetProperty(ref _gapHorizontal, value); }
         public double GapVertical { get => _gapVertical; set => SetProperty(ref _gapVertical, value); }
         public bool IsDefault { get => _isDefault; set => SetProperty(ref _isDefault, value); }
@@ -85,6 +91,8 @@ namespace CAL_QR.ViewModels
                 LabelHeight = 40;
                 MarginLeft = 0;
                 MarginTop = 0;
+                MarginRight = 0;
+                MarginBottom = 0;
                 GapHorizontal = 0;
                 GapVertical = 0;
             }
@@ -106,6 +114,8 @@ namespace CAL_QR.ViewModels
                 LabelHeight = (double)t.LabelHeightMm;
                 MarginLeft = (double)t.MarginLeftMm;
                 MarginTop = (double)t.MarginTopMm;
+                MarginRight = (double)t.MarginRightMm;
+                MarginBottom = (double)t.MarginBottomMm;
                 GapHorizontal = (double)t.HorizontalGapMm;
                 GapVertical = (double)t.VerticalGapMm;
                 IsDefault = t.IsDefault;
@@ -120,19 +130,20 @@ namespace CAL_QR.ViewModels
                    LabelWidth > 0 && LabelHeight > 0;
         }
 
-        private async Task SaveAsync()
+        public async Task SaveAsync()
         {
             try
             {
                 // Validate if labels fit within paper size
-                double totalRequiredWidth = MarginLeft + (Columns * LabelWidth) + ((Columns - 1) * GapHorizontal);
-                double totalRequiredHeight = MarginTop + (Rows * LabelHeight) + ((Rows - 1) * GapVertical);
+                double totalRequiredWidth = MarginLeft + (Columns * LabelWidth) + ((Columns - 1) * GapHorizontal) + MarginRight;
+                double totalRequiredHeight = MarginTop + (Rows * LabelHeight) + ((Rows - 1) * GapVertical) + MarginBottom;
 
                 if (totalRequiredWidth > PaperWidth)
                 {
-                    MessageBox.Show(
-                        $"تنبيه: العرض الإجمالي المطلوب للملصقات ({totalRequiredWidth} مم) يتجاوز عرض الورقة المحدد ({PaperWidth} مم).\n\n" +
-                        "يرجى تقليل عدد الأعمدة، أو تصغير عرض الملصق أو الفجوات الأفقية.",
+                    double excess = totalRequiredWidth - PaperWidth;
+                    ShowMessageBox(
+                        $"تنبيه: العرض الإجمالي المطلوب للملصقات شامل الهوامش الفراغية ({totalRequiredWidth} مم) يتجاوز عرض الورقة المحدد ({PaperWidth} مم) بمقدار {excess:F1} مم.\n\n" +
+                        "يرجى تقليل عدد الأعمدة، أو تصغير عرض الملصق أو الفجوات أو الهوامش الأفقية.",
                         "تنبيه أبعاد القالب",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning
@@ -142,9 +153,10 @@ namespace CAL_QR.ViewModels
 
                 if (totalRequiredHeight > PaperHeight)
                 {
-                    MessageBox.Show(
-                        $"تنبيه: الارتفاع الإجمالي المطلوب للملصقات ({totalRequiredHeight} مم) يتجاوز ارتفاع الورقة المحدد ({PaperHeight} مم).\n\n" +
-                        "يرجى تقليل عدد الصفوف، أو تصغير ارتفاع الملصق أو الفجوات العمودية.",
+                    double excess = totalRequiredHeight - PaperHeight;
+                    ShowMessageBox(
+                        $"تنبيه: الارتفاع الإجمالي المطلوب للملصقات شامل الهوامش الفراغية ({totalRequiredHeight} مم) يتجاوز ارتفاع الورقة المحدد ({PaperHeight} مم) بمقدار {excess:F1} مم.\n\n" +
+                        "يرجى تقليل عدد الصفوف، أو تصغير ارتفاع الملصق أو الفجوات أو الهوامش العمودية.",
                         "تنبيه أبعاد القالب",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning
@@ -165,6 +177,8 @@ namespace CAL_QR.ViewModels
                     LabelHeightMm = (decimal)LabelHeight,
                     MarginLeftMm = (decimal)MarginLeft,
                     MarginTopMm = (decimal)MarginTop,
+                    MarginRightMm = (decimal)MarginRight,
+                    MarginBottomMm = (decimal)MarginBottom,
                     HorizontalGapMm = (decimal)GapHorizontal,
                     VerticalGapMm = (decimal)GapVertical,
                     IsDefault = IsDefault
@@ -184,13 +198,25 @@ namespace CAL_QR.ViewModels
                     await _templateRepository.SetDefaultAsync(template.Id);
                 }
 
-                MessageBox.Show("تم حفظ قالب الطباعة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowMessageBox("تم حفظ قالب الطباعة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
                 Saved?.Invoke(this, EventArgs.Empty);
                 CloseWindowAction?.Invoke();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطأ أثناء حفظ القالب: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowMessageBox($"خطأ أثناء حفظ القالب: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShowMessageBox(string message, string caption, MessageBoxButton button, MessageBoxImage image)
+        {
+            if (MessageBoxShowMock != null)
+            {
+                MessageBoxShowMock(message, caption, button, image);
+            }
+            else
+            {
+                MessageBox.Show(message, caption, button, image);
             }
         }
 

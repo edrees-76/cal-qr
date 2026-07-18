@@ -13,7 +13,7 @@ using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
 using CAL_QR.Helpers;
-using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Data.Sqlite;
 
 namespace CAL_QR.ViewModels
@@ -52,30 +52,44 @@ namespace CAL_QR.ViewModels
         private PaperTemplate? _selectedDefaultTemplate;
         private ObservableCollection<PaperTemplate> _templates = new();
 
+        private readonly ICurrentUserService _currentUserService;
+        private readonly Func<Views.Dialogs.PaperTemplateDialog> _paperTemplateDialogFactory;
+
         public SettingsViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
             IPaperTemplateRepository templateRepository,
             IBackupService backupService,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            ICurrentUserService currentUserService,
+            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
             _backupService = backupService;
             _auditLogRepository = auditLogRepository;
+            _currentUserService = currentUserService;
+            _paperTemplateDialogFactory = paperTemplateDialogFactory;
 
             ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
-            SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync());
-            SavePathsCommand = new RelayCommand(async () => await SavePathsAsync(), CanSavePaths);
-            BrowseBackupPathCommand = new RelayCommand(BrowseBackupPath);
-            BrowseDatabasePathCommand = new RelayCommand(BrowseDatabasePath);
-            BrowseAttachmentsPathCommand = new RelayCommand(BrowseAttachmentsPath);
-            BrowseQrOutputPathCommand = new RelayCommand(BrowseQrOutputPath);
-            BackupNowCommand = new RelayCommand(async () => await BackupNowAsync());
-            RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync());
-            OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog);
+            SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit);
+            SavePrintTemplateCommand = new RelayCommand(async () => await SavePrintTemplateAsync(), () => CanEdit);
+            SavePathsCommand = new RelayCommand(async () => await SavePathsAsync(), () => CanEdit && CanSavePaths());
+            BrowseBackupPathCommand = new RelayCommand(BrowseBackupPath, () => CanEdit);
+            BrowseDatabasePathCommand = new RelayCommand(BrowseDatabasePath, () => CanEdit);
+            BrowseAttachmentsPathCommand = new RelayCommand(BrowseAttachmentsPath, () => CanEdit);
+            BrowseQrOutputPathCommand = new RelayCommand(BrowseQrOutputPath, () => CanEdit);
+            BackupNowCommand = new RelayCommand(async () => await BackupNowAsync(), () => IsBackupRestoreVisible);
+            RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync(), () => IsBackupRestoreVisible);
+            OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
+            EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
+            NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
 
             _ = LoadSettingsAsync();
         }
+
+        public bool IsBackupRestoreVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Settings) ?? false;
+        public bool CanEdit => _currentUserService.CurrentUser != null && 
+                               (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
         #region Properties
         // Password Properties
@@ -125,11 +139,22 @@ namespace CAL_QR.ViewModels
 
         // Print Properties
         public ObservableCollection<PaperTemplate> Templates { get => _templates; set => SetProperty(ref _templates, value); }
-        public PaperTemplate? SelectedDefaultTemplate { get => _selectedDefaultTemplate; set => SetProperty(ref _selectedDefaultTemplate, value); }
+        public PaperTemplate? SelectedDefaultTemplate
+        {
+            get => _selectedDefaultTemplate;
+            set
+            {
+                if (SetProperty(ref _selectedDefaultTemplate, value))
+                {
+                    (EditTemplateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                }
+            }
+        }
 
         // Commands
         public ICommand ChangePasswordCommand { get; }
         public ICommand SaveGeneralSettingsCommand { get; }
+        public ICommand SavePrintTemplateCommand { get; }
         public ICommand SavePathsCommand { get; }
         public ICommand BrowseBackupPathCommand { get; }
         public ICommand BrowseDatabasePathCommand { get; }
@@ -138,6 +163,8 @@ namespace CAL_QR.ViewModels
         public ICommand BackupNowCommand { get; }
         public ICommand RestoreBackupCommand { get; }
         public ICommand OpenTemplatesDialogCommand { get; }
+        public ICommand EditTemplateCommand { get; }
+        public ICommand NewTemplateCommand { get; }
         #endregion
 
         private async Task LoadSettingsAsync()
@@ -211,7 +238,8 @@ namespace CAL_QR.ViewModels
 
         private bool CanChangePassword()
         {
-            return !string.IsNullOrWhiteSpace(CurrentPassword) &&
+            return CanEdit &&
+                   !string.IsNullOrWhiteSpace(CurrentPassword) &&
                    !string.IsNullOrWhiteSpace(NewPassword) &&
                    NewPassword == ConfirmPassword &&
                    NewPassword.Length >= 4;
@@ -308,7 +336,23 @@ namespace CAL_QR.ViewModels
 
                 await context.SaveChangesAsync();
 
-                // 4. Update default printer template
+                // Re-trigger global refresh
+                CalibrationEvents.RaiseCalibrationChanged();
+
+                await _auditLogRepository.LogAsync("تغيير إعدادات", "نظام", "Settings", "تحديث الإعدادات العامة للنظام.");
+                MessageBox.Show("تم حفظ الإعدادات العامة بنجاح وتحديث النظام تلقائياً.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ أثناء حفظ الإعدادات العامة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task SavePrintTemplateAsync()
+        {
+            try
+            {
+                // Update default printer template
                 if (SelectedDefaultTemplate != null)
                 {
                     await _templateRepository.SetDefaultAsync(SelectedDefaultTemplate.Id);
@@ -317,12 +361,12 @@ namespace CAL_QR.ViewModels
                 // Re-trigger global refresh
                 CalibrationEvents.RaiseCalibrationChanged();
 
-                await _auditLogRepository.LogAsync("تغيير إعدادات", "نظام", "Settings", "تحديث الإعدادات العامة للنظام.");
-                MessageBox.Show("تم حفظ الإعدادات بنجاح وتحديث النظام تلقائياً.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
+                await _auditLogRepository.LogAsync("تغيير إعدادات", "نظام", "Settings", "تحديث قالب الطباعة الافتراضي.");
+                MessageBox.Show("تم حفظ قالب الطباعة الافتراضي بنجاح وتحديث النظام تلقائياً.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطأ أثناء حفظ الإعدادات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"خطأ أثناء حفظ قالب الطباعة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -673,7 +717,28 @@ namespace CAL_QR.ViewModels
 
         private void OpenTemplatesDialog()
         {
-            var dialog = App.ServiceProvider.GetRequiredService<Views.Dialogs.PaperTemplateDialog>();
+            var dialog = _paperTemplateDialogFactory();
+            dialog.ShowDialog();
+            _ = LoadSettingsAsync(); // Reload templates after dialog closes
+        }
+
+        private void EditTemplate()
+        {
+            if (SelectedDefaultTemplate != null)
+            {
+                var dialog = _paperTemplateDialogFactory();
+                if (dialog.DataContext is PaperTemplateViewModel vm)
+                {
+                    vm.LoadTemplate(SelectedDefaultTemplate.Id);
+                }
+                dialog.ShowDialog();
+                _ = LoadSettingsAsync(); // Reload templates after dialog closes
+            }
+        }
+
+        private void NewTemplate()
+        {
+            var dialog = _paperTemplateDialogFactory();
             dialog.ShowDialog();
             _ = LoadSettingsAsync(); // Reload templates after dialog closes
         }

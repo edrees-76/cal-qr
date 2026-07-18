@@ -223,6 +223,144 @@ namespace CAL_QR.Tests
             Assert.True(viewModel.IsSuccess);
         }
 
+        [Fact]
+        public async Task VerifyPastedText_And_QuickVerify_ProduceIdenticalParsedResults()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Verify_Comparison_" + Guid.NewGuid().ToString())
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+            var hmacService = new HmacService(factory);
+            hmacService.Initialize();
+
+            string ownerName = "Research Center";
+            string deviceTypeName = "Gamma Sensor";
+            string model = "GS-100";
+            string serial = "SN-54321";
+            string certNo = "CERT-2026-COMP";
+            string calDate = "2026-07-16";
+            string expDate = "2027-07-16";
+            string engineer = "Edrees";
+            string description = "Standard Calibration";
+            string result = "Passed";
+
+            string verifyCode = hmacService.ComputeSignature(
+                certNo: certNo,
+                model: model,
+                serial: serial,
+                ownerName: ownerName,
+                calDate: calDate,
+                expDate: expDate,
+                result: result,
+                engineerName: engineer
+            );
+
+            using (var context = new CalQrDbContext(options))
+            {
+                var owner = new Owner { Name = ownerName };
+                context.Owners.Add(owner);
+
+                var deviceType = new DeviceType { Name = deviceTypeName };
+                context.DeviceTypes.Add(deviceType);
+                await context.SaveChangesAsync();
+
+                var device = new Device
+                {
+                    Model = model,
+                    SerialNumber = serial,
+                    OwnerId = owner.Id,
+                    DeviceTypeId = deviceType.Id,
+                    IsDeleted = false
+                };
+                context.Devices.Add(device);
+                await context.SaveChangesAsync();
+
+                var record = new CalibrationRecord
+                {
+                    DeviceId = device.Id,
+                    CertificateNumber = certNo,
+                    CalibrationDate = DateTime.Parse(calDate),
+                    ExpiryDate = DateTime.Parse(expDate),
+                    Result = result,
+                    EngineerName = engineer,
+                    CalibrationDescription = description,
+                    HmacSignature = verifyCode,
+                    CreatedAt = DateTime.UtcNow,
+                    IsDeleted = false
+                };
+                context.CalibrationRecords.Add(record);
+                await context.SaveChangesAsync();
+            }
+
+            var qrService = new QrService(factory);
+            string qrText = qrService.GenerateVerificationText(
+                ownerName: ownerName,
+                deviceType: deviceTypeName,
+                model: model,
+                serial: serial,
+                certNo: certNo,
+                calDate: calDate,
+                expDate: expDate,
+                engineerName: engineer,
+                description: description,
+                result: result,
+                verifyCode: verifyCode
+            );
+
+            var viewModel = new QrVerifyViewModel(hmacService, factory);
+            
+            // Act: Run Paste-based Verification
+            viewModel.ConcatenatedText = qrText;
+            await viewModel.VerifyPastedTextAsync();
+
+            // Store results from Paste Verification
+            string pasteOwner = viewModel.Owner;
+            string pasteDeviceType = viewModel.DeviceType;
+            string pasteModel = viewModel.Model;
+            string pasteSerial = viewModel.Serial;
+            string pasteCertNo = viewModel.CertNo;
+            string pasteCalDate = viewModel.CalDate;
+            string pasteExpDate = viewModel.ExpDate;
+            string pasteEngineer = viewModel.Engineer;
+            string pasteCalType = viewModel.CalType;
+            string pasteResult = viewModel.Result;
+            string pasteVerifyCode = viewModel.ReadVerifyCode;
+            bool pasteSuccess = viewModel.IsSuccess;
+
+            // Clear viewModel and run Quick-Code Verification
+            viewModel.QuickVerifyCode = verifyCode;
+            await viewModel.QuickVerifyByCodeAsync();
+
+            // Assert: Verify results are identical between the two flows
+            Assert.True(pasteSuccess);
+            Assert.True(viewModel.IsSuccess);
+
+            Assert.Equal(pasteOwner, viewModel.Owner);
+            Assert.Equal(pasteDeviceType, viewModel.DeviceType);
+            Assert.Equal(pasteModel, viewModel.Model);
+            Assert.Equal(pasteSerial, viewModel.Serial);
+            Assert.Equal(pasteCertNo, viewModel.CertNo);
+            Assert.Equal(pasteCalDate, viewModel.CalDate);
+            Assert.Equal(pasteExpDate, viewModel.ExpDate);
+            Assert.Equal(pasteEngineer, viewModel.Engineer);
+            Assert.Equal(pasteResult, viewModel.Result);
+            Assert.Equal(pasteVerifyCode, viewModel.ReadVerifyCode);
+            
+            // Also assert the parsed values match original record values
+            Assert.Equal(ownerName, viewModel.Owner);
+            Assert.Equal(deviceTypeName, viewModel.DeviceType);
+            Assert.Equal(model, viewModel.Model);
+            Assert.Equal(serial, viewModel.Serial);
+            Assert.Equal(certNo, viewModel.CertNo);
+            Assert.Equal(calDate, viewModel.CalDate);
+            Assert.Equal(expDate, viewModel.ExpDate);
+            Assert.Equal(engineer, viewModel.Engineer);
+            Assert.Equal(result, viewModel.Result);
+            Assert.Equal(verifyCode, viewModel.ReadVerifyCode);
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

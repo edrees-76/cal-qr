@@ -8,6 +8,10 @@
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="900"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -27,7 +31,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Button Command="{Binding AddDeviceCommand}" Content="سجل جديد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding AddDeviceCommand}" Content="سجل جديد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}"
+                            Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -242,21 +247,19 @@
                         </DataGridTextColumn>
                         
                         <!-- Actions -->
-                        <DataGridTemplateColumn Width="140">
+                        <DataGridTemplateColumn Width="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تفاصيل تاريخ الجهاز">
                                             <materialDesign:PackIcon Kind="Eye" Foreground="#1A3A6B" Width="18" Height="18" />
                                         </Button>
-                                        <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل">
+
+                                        <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <materialDesign:PackIcon Kind="Pencil" Foreground="#C9A227" Width="18" Height="18" />
                                         </Button>
                                         <Button Command="{Binding DataContext.PrintDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="طباعة ملصق QR">
                                             <materialDesign:PackIcon Kind="Printer" Foreground="#2E7D32" Width="18" Height="18" />
-                                        </Button>
-                                        <Button Command="{Binding DataContext.DeleteDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="حذف">
-                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="18" Height="18" />
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>
@@ -360,19 +363,16 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-
                                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                 <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تفاصيل">
                                                     <materialDesign:PackIcon Kind="Eye" Foreground="#1A3A6B" Width="16" Height="16" />
                                                 </Button>
-                                                <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل">
+
+                                                <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <materialDesign:PackIcon Kind="Pencil" Foreground="#C9A227" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Command="{Binding DataContext.PrintDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="طباعة">
                                                     <materialDesign:PackIcon Kind="Printer" Foreground="#2E7D32" Width="16" Height="16" />
-                                                </Button>
-                                                <Button Command="{Binding DataContext.DeleteDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="حذف">
-                                                    <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="16" Height="16" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>

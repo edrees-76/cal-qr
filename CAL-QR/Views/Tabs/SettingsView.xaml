@@ -10,6 +10,7 @@
              Background="Transparent">
 
     <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <!-- Implicit style for TextBoxes -->
         <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
             <Setter Property="FontSize" Value="14" />
@@ -75,7 +76,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Left Column -->
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                <StackPanel Grid.Column="0" Margin="0,0,10,0" IsEnabled="{Binding CanEdit}">
                     <!-- Security Card -->
                     <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15">
                         <StackPanel>
@@ -149,7 +150,7 @@
                 <!-- Right Column -->
                 <StackPanel Grid.Column="1" Margin="10,0,0,0">
                     <!-- General Settings (Alerts & Auto-lock) Card -->
-                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15">
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15" IsEnabled="{Binding CanEdit}">
                         <StackPanel>
                             <TextBlock Text="⚙️ الإعدادات العامة وقفل التطبيق" Style="{StaticResource SettingsSectionTitleStyle}" />
 
@@ -161,25 +162,42 @@
                             <TextBlock Text="مدة الإغلاق التلقائي عند خمول المستخدم (دقائق)" Style="{StaticResource SettingsLabelStyle}" />
                             <TextBox Text="{Binding AutoLockMinutes, UpdateSourceTrigger=PropertyChanged}" Height="40" Margin="0,0,0,15" />
 
+                            <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ الإعدادات العامة" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Printing Paper Settings Card -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,15" IsEnabled="{Binding CanEdit}">
+                        <StackPanel>
+                            <TextBlock Text="🖨️ إعدادات ورق الطباعة" Style="{StaticResource SettingsSectionTitleStyle}" />
+
                             <!-- Default Printing Template -->
                             <TextBlock Text="قالب الورق والملصقات الافتراضي للطباعة" Style="{StaticResource SettingsLabelStyle}" />
-                            <Grid Margin="0,0,0,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <ComboBox Grid.Column="0" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedDefaultTemplate}" DisplayMemberPath="Name" Height="40" />
-                                <Button Grid.Column="1" Command="{Binding OpenTemplatesDialogCommand}" Content="⚙️ إدارة القوالب" Margin="10,0,0,0" Height="40"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#1A3A6B" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
-                            </Grid>
+                             <Grid Margin="0,0,0,10">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*" />
+                                     <ColumnDefinition Width="Auto" />
+                                     <ColumnDefinition Width="Auto" />
+                                 </Grid.ColumnDefinitions>
+                                 <ComboBox Grid.Column="0" ItemsSource="{Binding Templates}" SelectedItem="{Binding SelectedDefaultTemplate}" DisplayMemberPath="TemplateName" Height="40" />
+                                 <Button Grid.Column="1" Command="{Binding EditTemplateCommand}" Content="✏️ تعديل" Margin="10,0,0,0" Height="40"
+                                         Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#1A3A6B" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                                 <Button Grid.Column="2" Command="{Binding NewTemplateCommand}" Content="➕ جديد" Margin="10,0,0,0" Height="40"
+                                         Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#1A3A6B" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                             </Grid>
 
-                            <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ إعدادات النظام" 
-                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+                             <Button Command="{Binding OpenTemplatesDialogCommand}" Content="⚙️ إدارة كافة القوالب" Margin="0,0,0,15" Height="40"
+                                     Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#1A3A6B" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+
+                             <Button Command="{Binding SavePrintTemplateCommand}" Content="حفظ قالب الطباعة الافتراضي" 
+                                     Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </Border>
 
                     <!-- Backup Card -->
-                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20">
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20"
+                            Visibility="{Binding IsBackupRestoreVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
                             <TextBlock Text="💾 النسخ الاحتياطي والاستعادة" Style="{StaticResource SettingsSectionTitleStyle}" />
 

@@ -23,13 +23,14 @@ namespace CAL_QR.ViewModels
         public const int TabIndexOwners = 3;
         public const int TabIndexDeviceTypes = 4;
         public const int TabIndexReports = 5;
-        public const int TabIndexAuditLog = 6;
+        public const int TabIndexUsers = 6;
         public const int TabIndexSettings = 7;
-        public const int TabIndexAbout = 8;
-        public const int TabIndexHelp = 9;
+        public const int TabIndexHelp = 8;
+        public const int TabIndexAbout = 9;
 
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ISearchService _searchService;
+        private readonly ICurrentUserService _currentUserService;
         private int _selectedTabIndex;
         private string _userName = "مهندس المعايرة";
         private bool _isTabHeaderVisible = true;
@@ -54,10 +55,12 @@ namespace CAL_QR.ViewModels
         public event EventHandler? LockRequested;
         public event EventHandler? SearchFocusRequested;
 
-        public MainViewModel(IDbContextFactory<CalQrDbContext> contextFactory, ISearchService searchService)
+        public MainViewModel(IDbContextFactory<CalQrDbContext> contextFactory, ISearchService searchService, ICurrentUserService currentUserService)
         {
             _contextFactory = contextFactory;
             _searchService = searchService;
+            _currentUserService = currentUserService;
+
             ToggleTabHeaderCommand = new RelayCommand(ToggleTabHeader);
             ChangeTabCommand = new RelayCommand(ChangeTab);
             SelectSearchResultCommand = new RelayCommand(async (p) => await SelectSearchResultAsync(p));
@@ -76,7 +79,62 @@ namespace CAL_QR.ViewModels
             };
             _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
 
+            _userName = _currentUserService.CurrentUser?.FullName ?? "مهندس المعايرة";
+
             LoadSettingsAndStartInactivityTimer();
+            SelectFirstAllowedTab();
+        }
+
+        public bool IsRecordsVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Records) ?? false;
+        public bool IsVerificationVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Verification) ?? false;
+        public bool IsOwnersVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Owners) ?? false;
+        public bool IsDeviceTypesVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.DeviceTypes) ?? false;
+        public bool IsReportsVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Reports) ?? false;
+        public bool IsSettingsVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Settings) ?? false;
+        public bool IsUserManagementVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.UserManagement) ?? false;
+
+        private void SelectFirstAllowedTab()
+        {
+            if (IsTabAllowed(TabIndexDashboard)) SelectedTabIndex = TabIndexDashboard;
+            else if (IsTabAllowed(TabIndexDevices)) SelectedTabIndex = TabIndexDevices;
+            else if (IsTabAllowed(TabIndexQrVerify)) SelectedTabIndex = TabIndexQrVerify;
+            else if (IsTabAllowed(TabIndexOwners)) SelectedTabIndex = TabIndexOwners;
+            else if (IsTabAllowed(TabIndexDeviceTypes)) SelectedTabIndex = TabIndexDeviceTypes;
+            else if (IsTabAllowed(TabIndexReports)) SelectedTabIndex = TabIndexReports;
+            else if (IsTabAllowed(TabIndexUsers)) SelectedTabIndex = TabIndexUsers;
+            else if (IsTabAllowed(TabIndexSettings)) SelectedTabIndex = TabIndexSettings;
+            else if (IsTabAllowed(TabIndexHelp)) SelectedTabIndex = TabIndexHelp;
+            else if (IsTabAllowed(TabIndexAbout)) SelectedTabIndex = TabIndexAbout;
+        }
+
+        private bool IsTabAllowed(int tabIndex)
+        {
+            var user = _currentUserService.CurrentUser;
+            if (user == null) return false;
+
+            switch (tabIndex)
+            {
+                case TabIndexDashboard:
+                case TabIndexAbout:
+                case TabIndexHelp:
+                    return true;
+                case TabIndexDevices:
+                    return user.HasPermission(SystemPermissions.Records);
+                case TabIndexQrVerify:
+                    return user.HasPermission(SystemPermissions.Verification);
+                case TabIndexOwners:
+                    return user.HasPermission(SystemPermissions.Owners);
+                case TabIndexDeviceTypes:
+                    return user.HasPermission(SystemPermissions.DeviceTypes);
+                case TabIndexReports:
+                    return user.HasPermission(SystemPermissions.Reports);
+                case TabIndexSettings:
+                    return user.HasPermission(SystemPermissions.Settings);
+                case TabIndexUsers:
+                    return user.HasPermission(SystemPermissions.UserManagement);
+                default:
+                    return false;
+            }
         }
 
         public int SelectedTabIndex
@@ -302,7 +360,7 @@ namespace CAL_QR.ViewModels
             {
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    var setting = context.AppSettings.FirstOrDefault(s => s.Key == "AutoLockMinutes");
+                    var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AutoLockMinutes");
                     if (setting != null && int.TryParse(setting.Value, out var minutes))
                     {
                         _autoLockMinutes = minutes;
@@ -443,7 +501,7 @@ namespace CAL_QR.ViewModels
             {
                 using (var context = _contextFactory.CreateDbContext())
                 {
-                    var setting = context.AppSettings.FirstOrDefault(s => s.Key == "AutoLockMinutes");
+                    var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AutoLockMinutes");
                     if (setting != null && int.TryParse(setting.Value, out var minutes))
                     {
                         _autoLockMinutes = minutes;

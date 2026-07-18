@@ -7,6 +7,7 @@ using CAL_QR.Data;
 using CAL_QR.ViewModels;
 using CAL_QR.Views;
 using CAL_QR.Models;
+using CAL_QR.Services;
 
 namespace CAL_QR
 {
@@ -14,14 +15,16 @@ namespace CAL_QR
     {
         private readonly MainViewModel _viewModel;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly ICurrentUserService _currentUserService;
 
         private bool _isLoggingOut = false;
 
-        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory)
+        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService)
         {
             InitializeComponent();
             _viewModel = viewModel;
             _contextFactory = contextFactory;
+            _currentUserService = currentUserService;
             DataContext = _viewModel;
 
             Loaded += MainWindow_Loaded;
@@ -56,6 +59,7 @@ namespace CAL_QR
             }
             else
             {
+                _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
                 loginWindow.Show();
@@ -64,6 +68,7 @@ namespace CAL_QR
 
         private void ViewModel_LockRequested(object? sender, EventArgs e)
         {
+            _currentUserService.ClearCurrentUser();
             var screensaverWindow = App.ServiceProvider.GetRequiredService<Views.ScreensaverWindow>();
             screensaverWindow.Dismissed += (s, args) =>
             {
@@ -108,6 +113,7 @@ namespace CAL_QR
             var result = MessageBox.Show(this, "هل تريد الخروج من المنظومة؟", "تأكيد الخروج", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             if (result == MessageBoxResult.Yes)
             {
+                _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
                 loginWindow.Show();

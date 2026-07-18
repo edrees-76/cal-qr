@@ -34,7 +34,12 @@ namespace CAL_QR.Tests
                 File.Copy(sourceDb, destDb, overwrite: true);
             }
 
-            // 2. Configure DbContext targeting simulation DB exclusively
+            // Run standard simulation with 500 devices and 2000 records
+            await RunSimulationAsync(destDb, 500, 2000);
+        }
+
+        internal async Task RunSimulationAsync(string destDb, int numDevices = 500, int numRecords = 2000)
+        {
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
                 .UseSqlite($"Data Source={destDb}")
                 .Options;
@@ -44,14 +49,14 @@ namespace CAL_QR.Tests
                 // Verify schema is initialized
                 DatabaseMigrator.RunMigrations(context);
 
-                // 3. Clear existing simulation data (except Templates, AppSettings, Users)
+                // Clear existing simulation data (except Templates, AppSettings, Users)
                 context.CalibrationRecords.RemoveRange(context.CalibrationRecords);
                 context.Devices.RemoveRange(context.Devices);
                 context.Owners.RemoveRange(context.Owners);
                 context.AuditLogs.RemoveRange(context.AuditLogs);
                 await context.SaveChangesAsync();
 
-                // 4. Seeding 10 Owners with varying name lengths
+                // Seed 10 Owners with varying name lengths
                 var owners = new List<Owner>
                 {
                     new Owner { Name = "وزارة الصحة", ContactPerson = "د. أحمد علي", ContactPhone = "0911234567", IsDeleted = false },
@@ -69,11 +74,10 @@ namespace CAL_QR.Tests
                 await context.Owners.AddRangeAsync(owners);
                 await context.SaveChangesAsync();
 
-                // 5. Query device types to associate randomly
+                // Query device types to associate randomly
                 var deviceTypes = await context.DeviceTypes.Where(t => !t.IsDeleted).ToListAsync();
                 if (deviceTypes.Count == 0)
                 {
-                    // Add default types if missing
                     deviceTypes = new List<DeviceType>
                     {
                         new DeviceType { Name = "عداد غايغر - Geiger Counter", IsDeleted = false },
@@ -86,13 +90,13 @@ namespace CAL_QR.Tests
                     await context.SaveChangesAsync();
                 }
 
-                // 6. Generate 500 Devices
+                // Generate numDevices Devices
                 var devices = new List<Device>();
-                var rand = new Random(42); // Seeded random for deterministic output
+                var rand = new Random(42);
 
                 string[] models = { "GeigerPro-100", "RadMonitor-250", "DoseRate-5X", "PocketRad-99", "SurveyMaster-3000", "IonChamber-A1", "RadGuard-S1", "GammaFinder-X" };
 
-                for (int i = 1; i <= 500; i++)
+                for (int i = 1; i <= numDevices; i++)
                 {
                     var owner = owners[rand.Next(owners.Count)];
                     var type = deviceTypes[rand.Next(deviceTypes.Count)];
@@ -112,86 +116,86 @@ namespace CAL_QR.Tests
                 await context.Devices.AddRangeAsync(devices);
                 await context.SaveChangesAsync();
 
-                // 7. Generate Calibration Records
+                // Generate Calibration Records
                 var records = new List<CalibrationRecord>();
                 var factory = new TestDbContextFactory(options);
                 var hmacService = new HmacService(factory);
                 hmacService.Initialize();
                 var today = DateTime.Today;
 
-                // We distribute the 500 devices:
-                // Group 1: 300 devices (Active, ~60%)
-                // Group 2: 75 devices (Near Expiry, ~15%)
-                // Group 3: 75 devices (Expired, ~15%)
-                // Group 4: 25 devices (No Calibration Record, ~5%)
-                // Group 5: 25 devices (Multiple Consecutive Records, ~5%)
+                // We reserve 25 devices to have NO calibration records
+                int activeDevicesCount = numDevices - 25;
+                if (activeDevicesCount <= 0) activeDevicesCount = numDevices;
 
-                for (int i = 0; i < devices.Count; i++)
+                // Distribute numRecords among active devices
+                int[] recordsPerDevice = new int[activeDevicesCount];
+                for (int i = 0; i < activeDevicesCount; i++)
+                {
+                    recordsPerDevice[i] = 1;
+                }
+
+                int remaining = numRecords - activeDevicesCount;
+                while (remaining > 0)
+                {
+                    int idx = rand.Next(activeDevicesCount);
+                    if (recordsPerDevice[idx] < 8)
+                    {
+                        recordsPerDevice[idx]++;
+                        remaining--;
+                    }
+                }
+
+                for (int i = 0; i < activeDevicesCount; i++)
                 {
                     var device = devices[i];
-                    int groupIndex = i / 25; // 0 to 19
+                    int totalRecs = recordsPerDevice[i];
 
-                    // Group 4: No calibration record (25 devices)
-                    if (groupIndex == 18)
-                    {
-                        continue;
-                    }
+                    // Determine the state of the latest record
+                    // 60% Active, 15% Near Expiry, 25% Expired
+                    DateTime latestCalDate;
+                    DateTime latestExpDate;
+                    string latestResult = "Passed";
 
-                    // Group 5: Multiple consecutive records (25 devices)
-                    if (groupIndex == 19)
-                    {
-                        // Record 1 (Old, expired)
-                        var dateOld = today.AddYears(-2).AddDays(rand.Next(1, 30));
-                        var expOld = dateOld.AddYears(1);
-                        var recOld = CreateRecord(device, dateOld, expOld, "Failed", "مهندس المعايرة الأول", hmacService);
-                        records.Add(recOld);
-
-                        // Record 2 (Current, active)
-                        var dateNew = today.AddMonths(-rand.Next(2, 6));
-                        var expNew = dateNew.AddYears(1);
-                        var recNew = CreateRecord(device, dateNew, expNew, "Passed", "مهندس المعايرة الثاني", hmacService);
-                        records.Add(recNew);
-
-                        continue;
-                    }
-
-                    // Standard Groups (0 to 17)
-                    DateTime calDate;
-                    DateTime expDate;
-                    string resultState = "Passed";
-
-                    // Randomize result: 80% Passed, 10% Failed, 10% Conditional
                     int resRand = rand.Next(10);
-                    if (resRand == 8) resultState = "Failed";
-                    else if (resRand == 9) resultState = "Conditional";
+                    if (resRand == 8) latestResult = "Failed";
+                    else if (resRand == 9) latestResult = "Conditional";
 
-                    if (groupIndex < 12)
+                    int stateRand = rand.Next(100);
+                    if (stateRand < 60)
                     {
-                        // Group 1: Active (300 devices) - CalibrationDate from 2 to 10 months ago
-                        calDate = today.AddMonths(-rand.Next(2, 10)).AddDays(rand.Next(1, 28));
-                        expDate = calDate.AddYears(1);
+                        // Active
+                        latestCalDate = today.AddMonths(-rand.Next(2, 10)).AddDays(rand.Next(1, 28));
+                        latestExpDate = latestCalDate.AddYears(1);
                     }
-                    else if (groupIndex < 15)
+                    else if (stateRand < 75)
                     {
-                        // Group 2: Near Expiry (75 devices) - ExpiryDate within 30 days
-                        // ExpiryDate from today + 2 days to today + 28 days. So CalibrationDate is 1 year before that.
-                        expDate = today.AddDays(rand.Next(2, 28));
-                        calDate = expDate.AddYears(-1);
+                        // Near Expiry
+                        latestExpDate = today.AddDays(rand.Next(2, 28));
+                        latestCalDate = latestExpDate.AddYears(-1);
                     }
                     else
                     {
-                        // Group 3: Expired (75 devices) - CalibrationDate from 13 to 24 months ago
-                        calDate = today.AddMonths(-rand.Next(13, 24)).AddDays(rand.Next(1, 28));
-                        expDate = calDate.AddYears(1);
+                        // Expired
+                        latestCalDate = today.AddMonths(-rand.Next(13, 24)).AddDays(rand.Next(1, 28));
+                        latestExpDate = latestCalDate.AddYears(1);
                     }
 
-                    records.Add(CreateRecord(device, calDate, expDate, resultState, "مهندس المعايرة الرئيسي", hmacService));
+                    // Create records
+                    for (int j = 0; j < totalRecs; j++)
+                    {
+                        DateTime calDate = latestCalDate.AddYears(-j);
+                        DateTime expDate = latestExpDate.AddYears(-j);
+                        string resultState = j == 0 ? latestResult : (rand.Next(10) == 0 ? "Failed" : "Passed");
+                        string engineer = j == 0 ? "مهندس المعايرة الرئيسي" : "مهندس المعايرة السابق";
+
+                        records.Add(CreateRecord(device, calDate, expDate, resultState, engineer, hmacService));
+                    }
                 }
 
                 await context.CalibrationRecords.AddRangeAsync(records);
                 await context.SaveChangesAsync();
 
-                // 8. Generate some mock Audit Logs for realism
+                // Generate some mock Audit Logs for realism
                 var logs = new List<AuditLog>();
                 for (int i = 1; i <= 50; i++)
                 {

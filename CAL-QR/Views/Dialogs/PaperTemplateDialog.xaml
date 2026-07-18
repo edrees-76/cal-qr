@@ -5,11 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="قالب طباعة جديد" Height="480" Width="450"
+        Title="قالب طباعة جديد" 
+        SizeToContent="Height"
+        Width="800"
+        MinHeight="420"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         FlowDirection="RightToLeft"
         Background="#F5F5F5">
+
+    <Window.Resources>
+        <!-- Style for Field Labels -->
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,5" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+    </Window.Resources>
 
     <Grid Margin="15">
         <Grid.RowDefinitions>
@@ -21,77 +35,141 @@
         <TextBlock Grid.Row="0" Text="إعدادات قالب الورق والملصقات" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <TextBox Text="{Binding TemplateName, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="اسم القالب (مثال: ملصقات A4 3x8)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <!-- Right Column (Column 0 in RTL, showing first on the right) -->
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="اسم القالب" Style="{StaticResource FieldLabelStyle}" />
+                    <TextBox Text="{Binding TemplateName, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: ملصقات A4 3x8" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
-                    <StackPanel Grid.Column="0" Margin="0,0,5,10">
-                        <TextBlock Text="نوع الورق" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox SelectedValue="{Binding PaperType}" SelectedValuePath="Tag" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}">
-                            <ComboBoxItem Content="A4 ورق ملصقات" Tag="A4" />
-                            <ComboBoxItem Content="رول مستمر (Roll)" Tag="Roll" />
-                            <ComboBoxItem Content="ورق مخصص" Tag="Custom" />
-                        </ComboBox>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox Grid.Column="1" IsChecked="{Binding IsDefault}" Content="تعيين كقالب افتراضي" VerticalAlignment="Center" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
+                        <StackPanel Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="نوع الورق" Style="{StaticResource FieldLabelStyle}" />
+                            <ComboBox SelectedValue="{Binding PaperType}" SelectedValuePath="Tag" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}">
+                                <ComboBoxItem Content="A4 ورق ملصقات" Tag="A4" />
+                                <ComboBoxItem Content="رول مستمر (Roll)" Tag="Roll" />
+                                <ComboBoxItem Content="ورق مخصص" Tag="Custom" />
+                            </ComboBox>
+                        </StackPanel>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding IsDefault}" Content="تعيين كقالب افتراضي" VerticalAlignment="Center" Margin="5,20,0,0" FontFamily="{StaticResource CairoFont}" />
+                    </Grid>
 
-                    <TextBox Grid.Column="0" Text="{Binding PaperWidth, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="عرض الورقة (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,5,10" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Grid.Column="1" Text="{Binding PaperHeight, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="ارتفاع الورقة (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="عرض الورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding PaperWidth, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 210" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
 
-                    <TextBox Grid.Column="0" Text="{Binding Columns, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="عدد الأعمدة" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,5,10" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Grid.Column="1" Text="{Binding Rows, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="عدد الصفوف" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="ارتفاع الورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding PaperHeight, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 297" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <TextBox Grid.Column="0" Text="{Binding LabelWidth, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="عرض الملصق الواحد (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,5,10" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Grid.Column="1" Text="{Binding LabelHeight, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="ارتفاع الملصق الواحد (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
+                        <StackPanel Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="عدد الأعمدة" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding Columns, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 3" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="عدد الصفوف" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding Rows, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 8" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
 
-                    <TextBox Grid.Column="0" Text="{Binding MarginLeft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="الهامش الأيسر للورقة (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,5,10" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Grid.Column="1" Text="{Binding MarginTop, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="الهامش الأعلى للورقة (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
+                <!-- Left Column (Column 1 in RTL, showing on the left) -->
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="عرض الملصق الواحد (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding LabelWidth, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 70" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
 
-                    <TextBox Grid.Column="0" Text="{Binding GapHorizontal, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="الفراغ الأفقي بين الملصقات (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="0,0,5,10" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Grid.Column="1" Text="{Binding GapVertical, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="الفراغ الرأسي بين الملصقات (مم)" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                </Grid>
-            </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="ارتفاع الملصق الواحد (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding LabelHeight, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 35" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 2x2 grid for margins -->
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Row 0: Left and Top Margins -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="الهامش الأيسر للورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding MarginLeft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="الهامش الأعلى للورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding MarginTop, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+
+                        <!-- Row 1: Right and Bottom Margins -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="الهامش الأيمن للورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding MarginRight, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="الهامش الأسفل للورقة (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding MarginBottom, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,5,10">
+                            <TextBlock Text="الفراغ الأفقي بين الملصقات (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding GapHorizontal, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="5,0,0,10">
+                            <TextBlock Text="الفراغ الرأسي بين الملصقات (مم)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding GapVertical, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="مثال: 0" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">

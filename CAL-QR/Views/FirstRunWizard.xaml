@@ -71,9 +71,33 @@
             <ScrollViewer x:Name="Step3Panel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
                 <StackPanel Margin="0,0,0,10">
                     <TextBlock Text="🔐 إنشاء كلمة المرور والأمان" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
-                    <TextBlock Text="أنشئ كلمة مرور للنظام وسؤالاً سرياً لاسترداد كلمة المرور عند نسيانها." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
-                    
-                    <TextBlock Text="كلمة المرور (4 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="أنشئ حساب المسؤول وكلمة مرور النظام وسؤالاً سرياً للاسترداد." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
+
+                    <TextBlock Text="الاسم الكامل للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBox x:Name="TxtAdminFullName" Margin="0,0,0,10"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Foreground="#1A3A6B"
+                             materialDesign:HintAssist.Foreground="#1A3A6B"
+                             CaretBrush="#1A3A6B"
+                             Height="50"
+                             Padding="10,8,10,8"
+                             FontSize="15"
+                             materialDesign:HintAssist.Hint="مثال: م. إدريس فتح الله"
+                             VerticalContentAlignment="Center" />
+
+                    <TextBlock Text="اسم المستخدم للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBox x:Name="TxtAdminUsername" Margin="0,0,0,10"
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Foreground="#1A3A6B"
+                             materialDesign:HintAssist.Foreground="#1A3A6B"
+                             CaretBrush="#1A3A6B"
+                             Height="50"
+                             Padding="10,8,10,8"
+                             FontSize="15"
+                             materialDesign:HintAssist.Hint="مثال: admin"
+                             VerticalContentAlignment="Center" />
+
+                    <TextBlock Text="كلمة المرور * (4 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <Grid Margin="0,0,0,10">
                         <PasswordBox x:Name="TxtWizardPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"

@@ -65,7 +65,7 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var auditLogRepo = new AuditLogRepository(factory);
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
             var backupService = new BackupService(factory, auditLogRepo);
 
             try
@@ -172,7 +172,7 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var auditLogRepo = new AuditLogRepository(factory);
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
             var backupService = new BackupService(factory, auditLogRepo);
 
             try
@@ -244,7 +244,7 @@ namespace CAL_QR.Tests
             {
                 context.Database.EnsureCreated();
             }
-            var auditLogRepo = new AuditLogRepository(factory);
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
             var backupService = new BackupService(factory, auditLogRepo);
 
             // Act & Assert
@@ -280,7 +280,7 @@ namespace CAL_QR.Tests
                 context.Database.EnsureCreated();
             }
 
-            var auditLogRepo = new AuditLogRepository(factory);
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
             var backupService = new BackupService(factory, auditLogRepo);
 
             // Create a completely empty zip file (no db entry)

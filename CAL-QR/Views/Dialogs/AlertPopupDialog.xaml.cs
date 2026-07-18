@@ -15,7 +15,7 @@ namespace CAL_QR.Views.Dialogs
             if (DataContext is MainViewModel vm)
             {
                 await vm.AcknowledgeAllExpiredDevicesAsync();
-                vm.SelectedTabIndex = 0;
+                vm.SelectedTabIndex = MainViewModel.TabIndexDashboard;
             }
             Close();
         }

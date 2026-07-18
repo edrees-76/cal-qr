@@ -16,6 +16,8 @@ namespace CAL_QR.Views
 
         // In-memory fields (no DB writes until Step 4 finish)
         private string _databasePath = string.Empty;
+        private string _adminFullName = string.Empty;
+        private string _adminUsername = string.Empty;
         private string _password = string.Empty;
         private string _confirmPassword = string.Empty;
         private string _securityQuestion = string.Empty;
@@ -48,6 +50,9 @@ namespace CAL_QR.Views
             if (_currentStep == 3)
             {
                 // Validate Step 3 inputs only — no DB writes
+                _adminFullName = TxtAdminFullName.Text.Trim();
+                _adminUsername = TxtAdminUsername.Text.Trim();
+
                 _password = TxtWizardPassword.Visibility == Visibility.Visible 
                     ? TxtWizardPassword.Password 
                     : TxtWizardPasswordReveal.Text;
@@ -58,6 +63,18 @@ namespace CAL_QR.Views
 
                 _securityQuestion = TxtSecurityQuestion.Text.Trim();
                 _securityAnswer = TxtSecurityAnswer.Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(_adminFullName))
+                {
+                    ShowStepError("يرجى إدخال الاسم الكامل للمسؤول.");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(_adminUsername))
+                {
+                    ShowStepError("يرجى إدخال اسم المستخدم للمسؤول.");
+                    return;
+                }
 
                 if (string.IsNullOrWhiteSpace(_password) || _password.Length < 4)
                 {
@@ -150,15 +167,34 @@ namespace CAL_QR.Views
         {
             try
             {
-                // Atomic Save: Write ALL settings to DB in one transaction
+                // Atomic Save: Write settings and User to DB in one transaction
                 using var context = _contextFactory.CreateDbContext();
 
-                SetAppSetting(context, "PasswordHash", PasswordHelper.HashPassword(_password));
                 SetAppSetting(context, "DatabasePath", _databasePath);
                 SetAppSetting(context, "SecurityQuestion", _securityQuestion);
-                SetAppSetting(context, "SecurityAnswer", PasswordHelper.HashPassword(_securityAnswer));
                 SetAppSetting(context, "FirstRunCompleted", "true");
 
+                // Create the admin user
+                var adminUser = new Models.User
+                {
+                    FullName = _adminFullName.Trim(),
+                    Username = _adminUsername.Trim().ToLowerInvariant(),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(_password),
+                    Role = Models.UserRole.Admin,
+                    Permissions = Models.SystemPermissions.Records |
+                                  Models.SystemPermissions.Verification |
+                                  Models.SystemPermissions.Owners |
+                                  Models.SystemPermissions.DeviceTypes |
+                                  Models.SystemPermissions.Reports |
+                                  Models.SystemPermissions.Settings |
+                                  Models.SystemPermissions.BackupRestore |
+                                  Models.SystemPermissions.UserManagement,
+                    IsEditor = true,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.Users.Add(adminUser);
                 context.SaveChanges();
 
                 // Open LoginWindow and close wizard

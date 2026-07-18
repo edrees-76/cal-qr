@@ -8,6 +8,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="800"
              Background="Transparent">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
     
     <Grid Margin="10">
         <Grid.ColumnDefinitions>
@@ -31,7 +34,8 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Add Button -->
-                    <Button Grid.Column="0" Command="{Binding AddOwnerCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}">
+                    <Button Grid.Column="0" Command="{Binding AddOwnerCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}"
+                            Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -108,7 +112,8 @@
                                         <!-- 1. تعديل -->
                                         <Button Command="{Binding DataContext.EditOwnerCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                 CommandParameter="{Binding}"
-                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل">
+                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل"
+                                                Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <materialDesign:PackIcon Kind="Pencil" Foreground="#1A3A6B" Width="18" Height="18" />
                                         </Button>
 
@@ -122,7 +127,8 @@
                                         <!-- 3. حذف -->
                                         <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                 CommandParameter="{Binding}"
-                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="حذف">
+                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="حذف"
+                                                Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="18" Height="18" />
                                         </Button>
                                     </StackPanel>

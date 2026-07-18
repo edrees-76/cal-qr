@@ -12,6 +12,7 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
+using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
@@ -20,6 +21,8 @@ namespace CAL_QR.ViewModels
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ICalibrationRepository _calibrationRepository;
         private readonly IDeviceRepository _deviceRepository;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IAuditLogRepository _auditLogRepository;
 
         private Device? _device;
         private ObservableCollection<CalibrationRecord> _calibrations = new();
@@ -27,20 +30,29 @@ namespace CAL_QR.ViewModels
         private ObservableCollection<Attachment> _selectedRecordAttachments = new();
         private CalibrationRecord? _selectedRecord;
 
+        public event EventHandler? Saved;
+        public static Func<string, string, MessageBoxButton, MessageBoxImage, MessageBoxResult>? MessageBoxShowMock { get; set; }
+
         public DeviceDetailViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
             ICalibrationRepository calibrationRepository,
-            IDeviceRepository deviceRepository)
+            IDeviceRepository deviceRepository,
+            ICurrentUserService currentUserService,
+            IAuditLogRepository auditLogRepository)
         {
             _contextFactory = contextFactory;
             _calibrationRepository = calibrationRepository;
             _deviceRepository = deviceRepository;
+            _currentUserService = currentUserService;
+            _auditLogRepository = auditLogRepository;
 
             OpenAttachmentCommand = new RelayCommand(OpenAttachment);
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
+            DeleteRecordCommand = new RelayCommand(DeleteRecord, CanDeleteRecord);
         }
 
         public ICommand PrintRecordCommand { get; }
+        public ICommand DeleteRecordCommand { get; }
 
         #region Properties
         public Device? Device
@@ -79,6 +91,8 @@ namespace CAL_QR.ViewModels
                 }
             }
         }
+
+        public bool IsUserAdmin => _currentUserService.CurrentUser?.Role == UserRole.Admin;
         #endregion
 
         #region Commands
@@ -178,6 +192,74 @@ namespace CAL_QR.ViewModels
         private bool CanPrintRecord()
         {
             return SelectedRecord != null;
+        }
+
+        private MessageBoxResult ShowMessageBox(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon)
+        {
+            if (MessageBoxShowMock != null)
+            {
+                return MessageBoxShowMock(messageBoxText, caption, button, icon);
+            }
+            return MessageBox.Show(messageBoxText, caption, button, icon);
+        }
+
+        private bool CanDeleteRecord(object? parameter)
+        {
+            return _currentUserService.CurrentUser?.Role == UserRole.Admin;
+        }
+
+        private async void DeleteRecord(object? parameter)
+        {
+            if (parameter is not CalibrationRecord record) return;
+
+            // Check how many non-deleted calibration records exist for this device
+            using (var context = await _contextFactory.CreateDbContextAsync())
+            {
+                var dbCount = await context.CalibrationRecords.CountAsync(r => r.DeviceId == record.DeviceId && !r.IsDeleted);
+                if (dbCount <= 1)
+                {
+                    ShowMessageBox(
+                        "لا يمكن حذف شهادة المعايرة هذه لأنها الشهادة الوحيدة المتبقية للجهاز.\nيجب أن يحتفظ كل جهاز بسجل معايرة واحد على الأقل.\n\nتنويه: لحذف هذا السجل بالكامل، يجب حذف الجهاز نفسه (خيار حذف الجهاز غير متوفر حالياً بالواجهة الرئيسية).",
+                        "تنبيه الحماية",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            var confirmResult = ShowMessageBox(
+                $"هل أنت متأكد من رغبتك في حذف شهادة المعايرة ذات الرقم ({record.CertificateNumber})؟\nهذا الإجراء سيقوم بحذف الشهادة ومرفقاتها نهائياً من النظام.",
+                "تأكيد الحذف",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirmResult != MessageBoxResult.Yes) return;
+
+            try
+            {
+                // Soft delete Calibration Record
+                await _calibrationRepository.SoftDeleteAsync(record.Id);
+
+                // Audit Log
+                await _auditLogRepository.LogAsync(
+                    "حذف شهادة معايرة",
+                    "CalibrationRecord",
+                    record.Id.ToString(),
+                    $"حذف ناعم لشهادة المعايرة رقم {record.CertificateNumber} للجهاز موديل {Device?.Model} رقم تسلسلي {Device?.SerialNumber}");
+
+                // Raise calibration changed event
+                CAL_QR.Helpers.CalibrationEvents.RaiseCalibrationChanged();
+
+                // Trigger Saved event to tell DevicesViewModel to reload
+                Saved?.Invoke(this, EventArgs.Empty);
+
+                // Reload local dialog data
+                LoadDeviceDetails(record.DeviceId);
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBox($"خطأ أثناء حذف الشهادة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 

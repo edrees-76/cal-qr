@@ -90,6 +90,7 @@ namespace CAL_QR
             services.AddSingleton<IExportService, ExportService>();
             services.AddSingleton<IBackupService, BackupService>();
             services.AddSingleton<ISearchService, SearchService>();
+            services.AddSingleton<ICurrentUserService, CurrentUserService>();
 
             // Register Repositories
             services.AddSingleton<IOwnerRepository, OwnerRepository>();
@@ -99,6 +100,7 @@ namespace CAL_QR
             services.AddSingleton<IAttachmentRepository, AttachmentRepository>();
             services.AddSingleton<IPaperTemplateRepository, PaperTemplateRepository>();
             services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
 
             // Register ViewModels
             services.AddTransient<MainViewModel>();
@@ -113,11 +115,12 @@ namespace CAL_QR
             services.AddTransient<PrintPreviewViewModel>();
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<SettingsViewModel>();
-            services.AddTransient<AuditLogViewModel>();
             services.AddTransient<OwnerFormViewModel>();
             services.AddTransient<OwnerDetailViewModel>();
             services.AddTransient<DeviceTypeFormViewModel>();
             services.AddTransient<DeviceTypeDetailViewModel>();
+            services.AddTransient<UsersViewModel>();
+            services.AddTransient<UserFormViewModel>();
 
             // Register Windows
             services.AddTransient<SplashWindow>();
@@ -134,6 +137,7 @@ namespace CAL_QR
             services.AddTransient<Views.Dialogs.OwnerDetailDialog>();
             services.AddTransient<Views.Dialogs.DeviceTypeFormDialog>();
             services.AddTransient<Views.Dialogs.DeviceTypeDetailDialog>();
+            services.AddTransient<Views.Dialogs.UserFormDialog>();
             // Register Dialog Factories to support Constructor Injection
             services.AddTransient<Func<Views.Dialogs.DeviceDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceDetailDialog>());
             services.AddTransient<Func<Views.Dialogs.CalibrationFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>());
@@ -141,6 +145,8 @@ namespace CAL_QR
             services.AddTransient<Func<Views.Dialogs.OwnerDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.OwnerDetailDialog>());
             services.AddTransient<Func<Views.Dialogs.DeviceTypeFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceTypeFormDialog>());
             services.AddTransient<Func<Views.Dialogs.DeviceTypeDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceTypeDetailDialog>());
+            services.AddTransient<Func<Views.Dialogs.UserFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.UserFormDialog>());
+            services.AddTransient<Func<Views.Dialogs.PaperTemplateDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.PaperTemplateDialog>());
         }
     }
 }

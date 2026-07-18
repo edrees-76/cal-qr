@@ -7,21 +7,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
+using CAL_QR.Repositories;
 
 namespace CAL_QR.Views
 {
     public partial class LoginWindow : Window
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IUserRepository _userRepository;
         private int _failedAttempts = 0;
         private DispatcherTimer? _lockoutTimer;
         private int _lockoutSecondsRemaining = 0;
 
-        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory)
+        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository)
         {
             InitializeComponent();
             _contextFactory = contextFactory;
-            TxtPassword.Focus();
+            _currentUserService = currentUserService;
+            _userRepository = userRepository;
+            TxtUsername.Focus();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -52,6 +58,8 @@ namespace CAL_QR.Views
             }
         }
 
+
+
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
@@ -60,8 +68,20 @@ namespace CAL_QR.Views
             }
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        private void TxtUsername_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Enter)
+            {
+                if (TxtPassword.Visibility == Visibility.Visible)
+                    TxtPassword.Focus();
+                else
+                    TxtPasswordReveal.Focus();
+            }
+        }
+
+        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
+        {
+            string username = TxtUsername.Text.Trim();
             string password = TxtPassword.Visibility == Visibility.Visible 
                 ? TxtPassword.Password 
                 : TxtPasswordReveal.Text;
@@ -73,29 +93,99 @@ namespace CAL_QR.Views
             }
 
             BtnLogin.IsEnabled = false;
+            TxtUsername.IsEnabled = false;
             TxtPassword.IsEnabled = false;
             TxtPasswordReveal.IsEnabled = false;
             BtnRevealPassword.IsEnabled = false;
 
-            bool isPasswordCorrect = false;
+            bool loginSuccess = false;
+            bool isBridgeLogin = false;
+            Models.User? targetUser = null;
 
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                // Primary path: login using Username and Password with BCrypt
+                if (!string.IsNullOrEmpty(username))
                 {
-                    var hashSetting = context.AppSettings.FirstOrDefault(s => s.Key == "PasswordHash");
-                    string storedHash = hashSetting?.Value ?? string.Empty;
+                    var user = await _userRepository.GetByUsernameAsync(username);
+                    if (user != null)
+                    {
+                        if (BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                        {
+                            if (user.IsActive)
+                            {
+                                targetUser = user;
+                                loginSuccess = true;
+                            }
+                            else
+                            {
+                                ShowError("هذا الحساب موقوف حالياً. يرجى مراجعة مدير النظام.");
+                                BtnLogin.IsEnabled = true;
+                                TxtUsername.IsEnabled = true;
+                                TxtPassword.IsEnabled = true;
+                                TxtPasswordReveal.IsEnabled = true;
+                                BtnRevealPassword.IsEnabled = true;
+                                return;
+                            }
+                        }
+                    }
+                }
 
-                    isPasswordCorrect = PasswordHelper.VerifyPassword(password, storedHash);
+                // Bridge path: check legacy AppSettings PasswordHash (SHA256)
+                if (!loginSuccess)
+                {
+                    using (var context = _contextFactory.CreateDbContext())
+                    {
+                        var hashSetting = context.AppSettings.FirstOrDefault(s => s.Key == "PasswordHash");
+                        string storedHash = hashSetting?.Value ?? string.Empty;
+
+                        if (!string.IsNullOrEmpty(storedHash) && PasswordHelper.VerifyPassword(password, storedHash))
+                        {
+                            // Retrieve the seeded admin user
+                            var seededAdmin = context.Users.FirstOrDefault(u => u.Username == "admin");
+                            if (seededAdmin != null)
+                            {
+                                if (seededAdmin.IsActive)
+                                {
+                                    targetUser = seededAdmin;
+                                    loginSuccess = true;
+                                    isBridgeLogin = true;
+                                }
+                                else
+                                {
+                                    ShowError("هذا الحساب موقوف حالياً. يرجى مراجعة مدير النظام.");
+                                    BtnLogin.IsEnabled = true;
+                                    TxtUsername.IsEnabled = true;
+                                    TxtPassword.IsEnabled = true;
+                                    TxtPasswordReveal.IsEnabled = true;
+                                    BtnRevealPassword.IsEnabled = true;
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception)
             {
-                isPasswordCorrect = PasswordHelper.VerifyPassword(password, string.Empty);
+                // Fallback / ignore to show generic error
             }
 
-            if (isPasswordCorrect)
+            if (loginSuccess && targetUser != null)
             {
+                _currentUserService.SetCurrentUser(targetUser);
+
+                if (isBridgeLogin)
+                {
+                    MessageBox.Show(this, 
+                        "تم تسجيل دخولك بحساب المدير المؤقت. يرجى تغيير كلمة المرور فوراً من تبويب المستخدمين.",
+                        "تنبيه أمني", 
+                        MessageBoxButton.OK, 
+                        MessageBoxImage.Warning, 
+                        MessageBoxResult.OK, 
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                }
+
                 var mainWindow = App.ServiceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
                 this.Close();
@@ -104,6 +194,7 @@ namespace CAL_QR.Views
             {
                 _failedAttempts++;
                 BtnLogin.IsEnabled = true;
+                TxtUsername.IsEnabled = true;
                 TxtPassword.IsEnabled = true;
                 TxtPasswordReveal.IsEnabled = true;
                 BtnRevealPassword.IsEnabled = true;
@@ -114,7 +205,7 @@ namespace CAL_QR.Views
                 }
                 else
                 {
-                    ShowError($"كلمة المرور غير صحيحة! محاولات متبقية: {3 - _failedAttempts}");
+                    ShowError($"اسم المستخدم أو كلمة المرور غير صحيحة! محاولات متبقية: {3 - _failedAttempts}");
                     TxtPassword.Password = string.Empty;
                     TxtPasswordReveal.Text = string.Empty;
                     if (TxtPassword.Visibility == Visibility.Visible)

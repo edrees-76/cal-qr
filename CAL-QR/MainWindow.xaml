@@ -182,43 +182,43 @@
                             </Border>
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsRecordsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ClipboardListOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="السجلات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsVerificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="QrcodeScan" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="التحقق" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsOwnersVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="OfficeBuilding" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="الجهات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsDeviceTypesVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Wrench" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="الأنواع" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsReportsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="ChartBar" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="التقارير" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsUserManagementVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="History" Margin="0,0,5,0" VerticalAlignment="Center" />
-                            <TextBlock Text="سجل العمليات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                            <materialDesign:PackIcon Kind="ShieldAccount" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="المستخدمين" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
-                    <ListBoxItem>
+                    <ListBoxItem Visibility="{Binding IsSettingsVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Cog" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="الإعدادات" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
@@ -226,14 +226,14 @@
                     </ListBoxItem>
                     <ListBoxItem>
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="InformationOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
-                            <TextBlock Text="عن البرنامج" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                            <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="المساعدة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
                     <ListBoxItem>
                         <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="HelpCircleOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
-                            <TextBlock Text="المساعدة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
+                            <materialDesign:PackIcon Kind="InformationOutline" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="عن البرنامج" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </ListBoxItem>
                 </ListBox>
@@ -281,7 +281,7 @@
             </TabItem>
 
             <TabItem>
-                <localTabs:AuditLogView />
+                <localTabs:UsersView />
             </TabItem>
 
             <TabItem>
@@ -289,11 +289,11 @@
             </TabItem>
 
             <TabItem>
-                <localTabs:AboutView />
+                <localTabs:HelpView />
             </TabItem>
 
             <TabItem>
-                <localTabs:HelpView />
+                <localTabs:AboutView />
             </TabItem>
         </TabControl>
 

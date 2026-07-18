@@ -20,7 +20,7 @@ namespace CAL_QR.Tests
                 .Options;
 
             var factory = new TestDbContextFactory(options);
-            var repo = new AuditLogRepository(factory);
+            var repo = new AuditLogRepository(factory, new TestCurrentUserService());
 
             // Act - Write logs
             await repo.LogAsync("إضافة معايرة", "CalibrationRecord", "1", "تمت إضافة سجل 1");

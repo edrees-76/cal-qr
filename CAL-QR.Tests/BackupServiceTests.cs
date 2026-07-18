@@ -26,18 +26,10 @@ namespace CAL_QR.Tests
             string testBackupFolder = Path.Combine(testDir, "Backups");
             Directory.CreateDirectory(testBackupFolder);
 
-            string originalAttachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
-            if (Directory.Exists(originalAttachmentsPath))
-            {
-                Directory.Delete(originalAttachmentsPath, true);
-            }
+            string originalAttachmentsPath = Path.Combine(testDir, "Attachments");
             Directory.CreateDirectory(originalAttachmentsPath);
 
-            string originalQrOutputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
-            if (Directory.Exists(originalQrOutputPath))
-            {
-                Directory.Delete(originalQrOutputPath, true);
-            }
+            string originalQrOutputPath = Path.Combine(testDir, "QR_Output");
             Directory.CreateDirectory(originalQrOutputPath);
 
             // Create a mock attachment file
@@ -62,6 +54,7 @@ namespace CAL_QR.Tests
                 context.AppSettings.Add(new AppSetting { Key = "BackupPath", Value = testBackupFolder });
                 context.AppSettings.Add(new AppSetting { Key = "BackupSchedule", Value = "None" });
                 context.AppSettings.Add(new AppSetting { Key = "QrOutputPath", Value = originalQrOutputPath });
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = originalAttachmentsPath });
                 await context.SaveChangesAsync();
             }
 
@@ -94,12 +87,15 @@ namespace CAL_QR.Tests
 
                 using (var context = new CalQrDbContext(options))
                 {
-                    var settings = await context.AppSettings.ToListAsync();
-                    context.AppSettings.RemoveRange(settings);
-                    await context.SaveChangesAsync();
+                    var alertSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "AlertDaysThreshold");
+                    if (alertSetting != null)
+                    {
+                        context.AppSettings.Remove(alertSetting);
+                        await context.SaveChangesAsync();
+                    }
 
                     // Check cleared
-                    Assert.Empty(await context.AppSettings.ToListAsync());
+                    Assert.Null(await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "AlertDaysThreshold"));
                 }
 
                 // 4. Act - Run Restore
@@ -131,10 +127,126 @@ namespace CAL_QR.Tests
                 
                 // Clean up test directories
                 if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
-                if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
-                if (Directory.Exists(originalQrOutputPath)) Directory.Delete(originalQrOutputPath, true);
             }
         }
+
+        [Fact]
+        public async Task BackupAndRestore_RevertsUserTableToBackupTimestamp_IncludingPasswordAndNewUserRemoval()
+        {
+            // 1. Arrange - Setup paths in test execution folder
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupRestoreUserTests_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active-user.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            // Ensure DB created and seed original user
+            string initialPasswordHash = BCrypt.Net.BCrypt.HashPassword("InitialAdminPassword");
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                
+                // Add Admin user
+                var admin = new User
+                {
+                    Username = "admin_test",
+                    PasswordHash = initialPasswordHash,
+                    FullName = "Administrator Test",
+                    Role = UserRole.Admin,
+                    Permissions = (SystemPermissions)255,
+                    IsEditor = true,
+                    IsActive = true
+                };
+                context.Users.Add(admin);
+
+                context.AppSettings.Add(new AppSetting { Key = "BackupPath", Value = testBackupFolder });
+                context.AppSettings.Add(new AppSetting { Key = "BackupSchedule", Value = "None" });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            try
+            {
+                // 2. Act 1 - Run Backup
+                await backupService.BackupNowAsync(testBackupFolder);
+
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                string zipFilePath = zipFiles[0];
+                Assert.True(File.Exists(zipFilePath));
+
+                // 3. Act 2 - Simulate subsequent changes (After Backup)
+                string postBackupPasswordHash = BCrypt.Net.BCrypt.HashPassword("PostBackupPassword");
+                using (var context = new CalQrDbContext(options))
+                {
+                    // Modify PasswordHash of User 1 (Admin)
+                    var adminUser = await context.Users.FirstAsync(u => u.Username == "admin_test");
+                    adminUser.PasswordHash = postBackupPasswordHash;
+
+                    // Add a second new user
+                    var newUser = new User
+                    {
+                        Username = "new_user_post_backup",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("NewUserPassword"),
+                        FullName = "Post Backup Added User",
+                        Role = UserRole.User,
+                        Permissions = SystemPermissions.None,
+                        IsEditor = false,
+                        IsActive = true
+                    };
+                    context.Users.Add(newUser);
+                    await context.SaveChangesAsync();
+                }
+
+                // Verify the changes actually exist in the active database before restoring
+                using (var context = new CalQrDbContext(options))
+                {
+                    var adminUser = await context.Users.FirstAsync(u => u.Username == "admin_test");
+                    Assert.Equal(postBackupPasswordHash, adminUser.PasswordHash);
+
+                    var hasNewUser = await context.Users.AnyAsync(u => u.Username == "new_user_post_backup");
+                    Assert.True(hasNewUser);
+                }
+
+                // 4. Act 3 - Run Restore
+                await backupService.RestoreAsync(zipFilePath);
+
+                // 5. Assert - Reverts to the backup timestamp state
+                using (var context = new CalQrDbContext(options))
+                {
+                    // Assert User 1 (Admin) password hash reverted to initial state
+                    var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "admin_test");
+                    Assert.NotNull(adminUser);
+                    Assert.Equal(initialPasswordHash, adminUser.PasswordHash);
+
+                    // Assert User 2 (added after backup) is completely deleted/removed
+                    var postBackupUser = await context.Users.FirstOrDefaultAsync(u => u.Username == "new_user_post_backup");
+                    Assert.Null(postBackupUser);
+
+                    // Total users count should be 1
+                    var totalUsers = await context.Users.CountAsync();
+                    Assert.Equal(1, totalUsers);
+                }
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir))
+                {
+                    Directory.Delete(testDir, true);
+                }
+            }
+        }
+
 
         [Fact]
         public async Task Restore_OldBackupWithoutQrOutput_RestoresSuccessfully()
@@ -147,12 +259,10 @@ namespace CAL_QR.Tests
             string testBackupFolder = Path.Combine(testDir, "Backups");
             Directory.CreateDirectory(testBackupFolder);
 
-            string originalAttachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
-            if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
+            string originalAttachmentsPath = Path.Combine(testDir, "Attachments");
             Directory.CreateDirectory(originalAttachmentsPath);
 
-            string originalQrOutputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
-            if (Directory.Exists(originalQrOutputPath)) Directory.Delete(originalQrOutputPath, true);
+            string originalQrOutputPath = Path.Combine(testDir, "QR_Output");
 
             string mockAttachmentFile = Path.Combine(originalAttachmentsPath, "test_file.txt");
             await File.WriteAllTextAsync(mockAttachmentFile, "Attachment content.");
@@ -169,6 +279,7 @@ namespace CAL_QR.Tests
                 context.AppSettings.Add(new AppSetting { Key = "BackupPath", Value = testBackupFolder });
                 context.AppSettings.Add(new AppSetting { Key = "BackupSchedule", Value = "None" });
                 context.AppSettings.Add(new AppSetting { Key = "QrOutputPath", Value = originalQrOutputPath });
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = originalAttachmentsPath });
                 await context.SaveChangesAsync();
             }
 
@@ -200,8 +311,12 @@ namespace CAL_QR.Tests
                 // Clear active db settings to verify restore
                 using (var context = new CalQrDbContext(options))
                 {
-                    context.AppSettings.RemoveRange(await context.AppSettings.ToListAsync());
-                    await context.SaveChangesAsync();
+                    var backupPathSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "BackupPath");
+                    if (backupPathSetting != null)
+                    {
+                        context.AppSettings.Remove(backupPathSetting);
+                        await context.SaveChangesAsync();
+                    }
                 }
 
                 // Act - Restore from the old backup
@@ -221,8 +336,6 @@ namespace CAL_QR.Tests
             {
                 SqliteConnection.ClearAllPools();
                 if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
-                if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
-                if (Directory.Exists(originalQrOutputPath)) Directory.Delete(originalQrOutputPath, true);
             }
         }
 
@@ -264,8 +377,7 @@ namespace CAL_QR.Tests
             string testBackupFolder = Path.Combine(testDir, "Backups");
             Directory.CreateDirectory(testBackupFolder);
 
-            string originalAttachmentsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
-            if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
+            string originalAttachmentsPath = Path.Combine(testDir, "Attachments");
             Directory.CreateDirectory(originalAttachmentsPath);
             string attachmentFile = Path.Combine(originalAttachmentsPath, "keep_me.txt");
             await File.WriteAllTextAsync(attachmentFile, "Do not delete this!");
@@ -278,6 +390,8 @@ namespace CAL_QR.Tests
             using (var context = new CalQrDbContext(options))
             {
                 context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = originalAttachmentsPath });
+                await context.SaveChangesAsync();
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
@@ -304,7 +418,6 @@ namespace CAL_QR.Tests
             // Clean up
             SqliteConnection.ClearAllPools();
             if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
-            if (Directory.Exists(originalAttachmentsPath)) Directory.Delete(originalAttachmentsPath, true);
         }
 
 

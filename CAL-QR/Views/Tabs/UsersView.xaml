@@ -110,7 +110,9 @@
                                     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                 </Style>
                             </DataGrid.Resources>
-
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}" />
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="الاسم الكامل" Binding="{Binding FullName}" Width="2*" />
                                 <DataGridTextColumn Header="اسم المستخدم" Binding="{Binding Username}" Width="1.5*" />
@@ -174,7 +176,7 @@
                                                 <Button Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource MaterialDesignFlatButton}" Width="32" Height="32" Padding="0" Margin="0,0,5,0" ToolTip="تعديل الحساب">
-                                                    <materialDesign:PackIcon Kind="Pencil" Foreground="#1A3A6B" Width="16" Height="16" />
+                                                     <materialDesign:PackIcon Kind="Pencil" Style="{StaticResource UnifiedNavyDataGridIconStyle}" Width="16" Height="16" />
                                                 </Button>
 
                                                 <!-- Freeze/Activate Toggle -->
@@ -285,8 +287,11 @@
                                     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                                 </Style>
                             </DataGrid.Resources>
-
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}" />
+                            </DataGrid.RowStyle>
                             <DataGrid.Columns>
+                                <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="45" CanUserSort="False" />
                                 <DataGridTextColumn Header="التاريخ والوقت" Binding="{Binding ActionAt, StringFormat=\{0:yyyy-MM-dd HH:mm:ss\}}" Width="1.2*" />
                                 <DataGridTextColumn Header="العملية المنفذة" Binding="{Binding Action}" Width="1*" />
                                 <DataGridTextColumn Header="الكيان المتأثر" Binding="{Binding EntityName}" Width="1*" />

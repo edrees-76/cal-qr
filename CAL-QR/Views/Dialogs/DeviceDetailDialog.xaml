@@ -4,7 +4,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="تفاصيل الجهاز والمعايرات | Device Details" Height="750" Width="1200"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="Transparent"
         FlowDirection="RightToLeft"
         WindowStyle="None"
@@ -14,7 +14,19 @@
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="White" BorderBrush="#1A3A6B">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="BorderThickness" Value="1.5" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WindowState}" Value="Maximized">
+                        <Setter Property="CornerRadius" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -23,7 +35,7 @@
             </Grid.RowDefinitions>
 
             <!-- Top Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,15">
+            <Grid Grid.Row="0" Margin="0,0,0,15" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -32,9 +44,14 @@
                     <TextBlock Text="تفاصيل الجهاز وسجل المعايرات" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="سجل تاريخ المعايرات السابقة، التواقيع الرقمية والمرفقات" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
+                        <materialDesign:PackIcon x:Name="IconMaximize" Kind="WindowMaximize" Foreground="#1A3A6B" Width="20" Height="20" />
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" ToolTip="إغلاق">
+                        <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    </Button>
+                </StackPanel>
             </Grid>
 
             <!-- Content Area (Three-Column Layout) -->
@@ -143,8 +160,11 @@
                                     <Style x:Key="DetailTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
                                         <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text}" />
                                         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
-                                    </Style>
+                                </Style>
                                 </DataGrid.Resources>
+                                <DataGrid.RowStyle>
+                                    <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}" />
+                                </DataGrid.RowStyle>
                                 <DataGrid.Columns>
                                     <!-- عمود التسلسل -->
                                     <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="45" MinWidth="35" ElementStyle="{StaticResource DetailTextColumnStyle}">
@@ -169,16 +189,7 @@
                                         </DataGridTextColumn.HeaderTemplate>
                                     </DataGridTextColumn>
 
-                                    <!-- عمود الحذف (خاص بالمسؤول فقط) -->
-                                    <DataGridTemplateColumn Width="50" Visibility="{Binding DataContext.IsUserAdmin, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Button Command="{Binding DataContext.DeleteRecordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0" ToolTip="حذف الشهادة">
-                                                    <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
-                                                </Button>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
+
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>

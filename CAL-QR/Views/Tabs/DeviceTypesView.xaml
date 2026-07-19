@@ -71,6 +71,9 @@
                             <Setter Property="TextAlignment" Value="Center" />
                         </Style>
                     </DataGrid.Resources>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}" />
+                    </DataGrid.RowStyle>
                     <DataGrid.Columns>
                         <!-- عمود التسلسل -->
                         <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="45" CanUserSort="False" ElementStyle="{StaticResource CenterTextColumnStyle}">
@@ -103,7 +106,7 @@
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل"
                                                 Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <materialDesign:PackIcon Kind="Pencil" Foreground="#1A3A6B" Width="18" Height="18" />
+                                            <materialDesign:PackIcon Kind="Pencil" Style="{StaticResource UnifiedNavyDataGridIconStyle}" Width="18" Height="18" />
                                         </Button>
 
                                         <!-- 2. مشاهدة التفاصيل -->

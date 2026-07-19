@@ -14,5 +14,8 @@ namespace CAL_QR.Models
         public int? UserId { get; set; }
         public User? User { get; set; }
         public string? Username { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public int SequenceNumber { get; set; }
     }
 }

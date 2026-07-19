@@ -158,6 +158,10 @@ namespace CAL_QR.ViewModels
             {
                 int? filterUserId = (SelectedFilterUser != null && SelectedFilterUser.Id > 0) ? SelectedFilterUser.Id : null;
                 var list = await _auditLogRepository.GetFilteredAsync(StartDate, EndDate, filterUserId);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].SequenceNumber = i + 1;
+                }
                 Logs = new ObservableCollection<AuditLog>(list);
             }
             catch (Exception ex)

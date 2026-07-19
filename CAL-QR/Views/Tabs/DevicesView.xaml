@@ -179,7 +179,7 @@
                         </Style>
                     </DataGrid.Resources>
                     <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}">
                             <Setter Property="Background" Value="{Binding RowBackground}" />
                         </Style>
                     </DataGrid.RowStyle>
@@ -252,7 +252,7 @@
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                         <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تفاصيل تاريخ الجهاز">
-                                            <materialDesign:PackIcon Kind="Eye" Foreground="#1A3A6B" Width="18" Height="18" />
+                                            <materialDesign:PackIcon Kind="Eye" Style="{StaticResource UnifiedNavyDataGridIconStyle}" Width="18" Height="18" />
                                         </Button>
 
                                         <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -290,7 +290,19 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <materialDesign:Card Width="265" Margin="8" Background="White" materialDesign:ElevationAssist.Elevation="Dp2" ClipToBounds="True">
+                            <materialDesign:Card Width="265" Margin="8" ClipToBounds="True">
+                                <materialDesign:Card.Style>
+                                    <Style TargetType="materialDesign:Card">
+                                        <Setter Property="Background" Value="White" />
+                                        <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp2" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#F8FAFC" />
+                                                <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp6" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:Card.Style>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto" />

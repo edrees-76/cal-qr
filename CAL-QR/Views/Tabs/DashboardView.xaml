@@ -207,7 +207,7 @@
                             </Style>
                         </DataGrid.Resources>
                         <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}">
                                 <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لعرض تفاصيل الجهاز الكاملة" />
                                 <Setter Property="Cursor" Value="Hand" />
                                 <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
@@ -289,7 +289,7 @@
                             </Style>
                         </DataGrid.Resources>
                         <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}">
                                 <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لعرض تفاصيل الجهاز الكاملة" />
                                 <Setter Property="Cursor" Value="Hand" />
                                 <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />

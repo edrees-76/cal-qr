@@ -103,7 +103,7 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource UnifiedDataGridRowHoverStyle}">
                                     <Setter Property="Background" Value="{Binding RowBackground}" />
                                     <Setter Property="ToolTip" Value="انقر نقراً مزدوجاً لعرض تفاصيل الجهاز الكاملة" />
                                     <Setter Property="Cursor" Value="Hand" />

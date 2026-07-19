@@ -116,6 +116,34 @@
                 <Setter Property="Foreground" Value="{StaticResource PrimaryInputForeground}" />
                 <Setter Property="CaretBrush" Value="{StaticResource PrimaryInputForeground}" />
             </Style>
+
+            <!-- 6. Unified DataGrid Row Hover Style -->
+            <Style x:Key="UnifiedDataGridRowHoverStyle" TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                <Style.Triggers>
+                    <!-- Hover Trigger when NOT Selected -->
+                    <MultiTrigger>
+                        <MultiTrigger.Conditions>
+                            <Condition Property="IsMouseOver" Value="True" />
+                            <Condition Property="IsSelected" Value="False" />
+                        </MultiTrigger.Conditions>
+                        <Setter Property="Background" Value="{StaticResource PrimaryNavy}" />
+                        <Setter Property="Foreground" Value="White" />
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- 7. Unified Navy DataGrid Icon Style -->
+            <Style x:Key="UnifiedNavyDataGridIconStyle" TargetType="materialDesign:PackIcon">
+                <Setter Property="Foreground" Value="#1A3A6B" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

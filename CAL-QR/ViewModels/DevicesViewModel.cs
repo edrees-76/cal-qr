@@ -323,7 +323,52 @@ namespace CAL_QR.ViewModels
                         }
                     }
 
-                    var rawList = await query.OrderByDescending(r => r.CalibrationDate).ToListAsync();
+                    if (IsAdvancedSearchVisible)
+                    {
+                        if (FilterResult != "الكل")
+                        {
+                            string mappedResult = FilterResult == "ناجح" ? "Passed" : FilterResult == "راسب" ? "Failed" : FilterResult == "مشروط" ? "Conditional" : "غير معاير";
+                            query = query.Where(r => r.Result == mappedResult);
+                        }
+
+                        if (FilterStatus != "الكل")
+                        {
+                            if (FilterStatus == "منتهية")
+                            {
+                                query = query.Where(r => r.ExpiryDate < today);
+                            }
+                            else if (FilterStatus == "قريبة الانتهاء")
+                            {
+                                query = query.Where(r => r.ExpiryDate >= today && r.ExpiryDate <= alertLimit);
+                            }
+                            else if (FilterStatus == "سارية")
+                            {
+                                query = query.Where(r => r.ExpiryDate > alertLimit);
+                            }
+                        }
+
+                        if (FilterStartDate.HasValue)
+                        {
+                            query = query.Where(r => r.CalibrationDate >= FilterStartDate.Value);
+                        }
+
+                        if (FilterEndDate.HasValue)
+                        {
+                            query = query.Where(r => r.CalibrationDate <= FilterEndDate.Value);
+                        }
+                    }
+
+                    TotalCount = await query.CountAsync();
+                    TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
+                    if (TotalPages == 0) TotalPages = 1;
+                    if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+                    if (CurrentPage < 1) CurrentPage = 1;
+
+                    var rawList = await query
+                        .OrderByDescending(r => r.CalibrationDate)
+                        .Skip((CurrentPage - 1) * PageSize)
+                        .Take(PageSize)
+                        .ToListAsync();
 
                     var displayItems = rawList.Select(r =>
                     {
@@ -375,47 +420,13 @@ namespace CAL_QR.ViewModels
                         };
                     }).ToList();
 
-                    if (IsAdvancedSearchVisible)
-                    {
-                        if (FilterResult != "الكل")
-                        {
-                            string mappedResult = FilterResult == "ناجح" ? "Passed" : FilterResult == "راسب" ? "Failed" : FilterResult == "مشروط" ? "Conditional" : "غير معاير";
-                            displayItems = displayItems.Where(item => item.Result == mappedResult).ToList();
-                        }
-
-                        if (FilterStatus != "الكل")
-                        {
-                            displayItems = displayItems.Where(item => item.Status == FilterStatus).ToList();
-                        }
-
-                        if (FilterStartDate.HasValue)
-                        {
-                            displayItems = displayItems.Where(item => item.CalibrationDate >= FilterStartDate.Value).ToList();
-                        }
-
-                        if (FilterEndDate.HasValue)
-                        {
-                            displayItems = displayItems.Where(item => item.CalibrationDate <= FilterEndDate.Value).ToList();
-                        }
-                    }
-
-                    TotalCount = displayItems.Count;
-                    TotalPages = (int)Math.Ceiling((double)TotalCount / PageSize);
-                    if (TotalPages == 0) TotalPages = 1;
-                    if (CurrentPage > TotalPages) CurrentPage = TotalPages;
-
-                    var paginated = displayItems
-                        .Skip((CurrentPage - 1) * PageSize)
-                        .Take(PageSize)
-                        .ToList();
-
                     int startIndex = (CurrentPage - 1) * PageSize;
-                    for (int i = 0; i < paginated.Count; i++)
+                    for (int i = 0; i < displayItems.Count; i++)
                     {
-                        paginated[i].SequenceNumber = startIndex + i + 1;
+                        displayItems[i].SequenceNumber = startIndex + i + 1;
                     }
 
-                    Devices = new ObservableCollection<DeviceDisplayItem>(paginated);
+                    Devices = new ObservableCollection<DeviceDisplayItem>(displayItems);
 
                     _isAllSelected = false;
                     OnPropertyChanged(nameof(IsAllSelected));

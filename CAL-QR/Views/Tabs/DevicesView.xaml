@@ -151,7 +151,6 @@
                             <ComboBoxItem Content="سارية" />
                             <ComboBoxItem Content="قريبة الانتهاء" />
                             <ComboBoxItem Content="منتهية" />
-                            <ComboBoxItem Content="غير معاير" />
                         </ComboBox>
                     </StackPanel>
                 </Grid>

@@ -213,6 +213,21 @@
                                         Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
                             </Grid>
 
+                            <!-- Cloud Backup Path -->
+                            <TextBlock Text="مجلد المزامنة السحابية (اختياري)" Style="{StaticResource SettingsLabelStyle}" />
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Text="{Binding CloudBackupPath}" Height="40" IsReadOnly="True" />
+                                <Button Grid.Column="1" Command="{Binding BrowseCloudBackupPathCommand}" Content="تصفح..." Margin="10,0,0,0" Height="40"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                            </Grid>
+                            <Border Background="#F0F7FF" BorderBrush="#BBDEFB" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,15">
+                                <TextBlock Text="💡 اختر مجلداً داخل تطبيق مزامنة سحابي مثبّت على جهازك (مثل OneDrive أو Google Drive). سيقوم CAL-QR بنسخ الأرشيف الاحتياطي إلى هذا المجلد تلقائياً، وسيتولى تطبيق المزامنة رفعه للسحابة تلقائياً — حتى بدون اتصال إنترنت دائم، حيث يُرفع لاحقاً عند توفر الاتصال." FontSize="11" Foreground="#1565C0" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
+                            </Border>
+
                             <!-- Backup Schedule -->
                             <TextBlock Text="جدولة النسخ الاحتياطي التلقائي" Style="{StaticResource SettingsLabelStyle}" />
                             <ComboBox ItemsSource="{Binding BackupSchedules}" SelectedItem="{Binding SelectedBackupSchedule}" Height="40" Margin="0,0,0,20" />

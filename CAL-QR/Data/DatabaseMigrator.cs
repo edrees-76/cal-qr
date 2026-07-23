@@ -173,6 +173,7 @@ namespace CAL_QR.Data
                 new AppSetting { Key = "AttachmentsPath", Value = "" },
                 new AppSetting { Key = "QrOutputPath", Value = "" },
                 new AppSetting { Key = "BackupPath", Value = "" },
+                new AppSetting { Key = "CloudBackupPath", Value = "" },
                 new AppSetting { Key = "BackupSchedule", Value = "Daily" },
                 new AppSetting { Key = "AlertDaysThreshold", Value = "30" },
                 new AppSetting { Key = "AutoLockMinutes", Value = "10" },

@@ -54,9 +54,16 @@ namespace CAL_QR.Services
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
         }
 
-        public async Task BackupNowAsync(string destinationFolder)
+        private async Task<string> GetCloudBackupPathAsync()
         {
-            await Task.Run(async () =>
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var setting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "CloudBackupPath");
+            return setting?.Value ?? string.Empty;
+        }
+
+        public async Task<bool> BackupNowAsync(string destinationFolder)
+        {
+            return await Task.Run(async () =>
             {
                 if (string.IsNullOrWhiteSpace(destinationFolder) || !Path.IsPathRooted(destinationFolder))
                 {
@@ -77,6 +84,7 @@ namespace CAL_QR.Services
 
                 string zipFileName = $"CalQR_Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.zip";
                 string zipFilePath = Path.Combine(destinationFolder, zipFileName);
+                bool cloudCopySuccess = true;
 
                 try
                 {
@@ -145,6 +153,51 @@ namespace CAL_QR.Services
 
                     // 4. Add Audit log entry
                     await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"إنشاء نسخة احتياطية بنجاح: {zipFileName}");
+
+                    // 5. Cloud Backup Copy
+                    string cloudBackupPath = await GetCloudBackupPathAsync();
+                    if (!string.IsNullOrWhiteSpace(cloudBackupPath))
+                    {
+                        if (!Path.IsPathRooted(cloudBackupPath))
+                        {
+                            cloudCopySuccess = false;
+                            await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"فشل نسخ النسخة الاحتياطية إلى المسار السحابي: المسار غير مطلق.");
+                        }
+                        else
+                        {
+                            try
+                            {
+                                if (!Directory.Exists(cloudBackupPath))
+                                {
+                                    Directory.CreateDirectory(cloudBackupPath);
+                                }
+
+                                string cloudZipPath = Path.Combine(cloudBackupPath, zipFileName);
+                                File.Copy(zipFilePath, cloudZipPath, true);
+
+                                // Keep last 10 backups in cloud backup path independently
+                                var oldCloudBackups = Directory.GetFiles(cloudBackupPath, "CalQR_Backup_*.zip")
+                                    .Select(f => new FileInfo(f))
+                                    .OrderByDescending(f => f.CreationTime)
+                                    .Skip(10)
+                                    .ToList();
+
+                                foreach (var old in oldCloudBackups)
+                                {
+                                    try { old.Delete(); } catch { }
+                                }
+
+                                await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"تم نسخ النسخة الاحتياطية أيضاً إلى المسار السحابي: {cloudBackupPath}");
+                            }
+                            catch (Exception ex)
+                            {
+                                cloudCopySuccess = false;
+                                await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"فشل نسخ النسخة الاحتياطية إلى المسار السحابي: {ex.Message}");
+                            }
+                        }
+                    }
+
+                    return cloudCopySuccess;
                 }
                 catch (Exception ex)
                 {

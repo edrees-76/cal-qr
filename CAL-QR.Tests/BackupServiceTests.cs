@@ -420,6 +420,150 @@ namespace CAL_QR.Tests
             if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
         }
 
+        [Fact]
+        public async Task BackupNowAsync_WithEmptyCloudBackupPath_DoesNotAttemptCloudCopy()
+        {
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupCloudEmpty_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+            string testDbFilePath = Path.Combine(testDir, "test.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>().UseSqlite($"Data Source={testDbFilePath}").Options;
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = "" });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            bool result = await backupService.BackupNowAsync(testBackupFolder);
+
+            Assert.True(result);
+            var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+            Assert.Single(zipFiles);
+
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+        }
+
+        [Fact]
+        public async Task BackupNowAsync_WithValidCloudBackupPath_CopiesZipToCloudPathSuccessfully()
+        {
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupCloudValid_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+            string testDbFilePath = Path.Combine(testDir, "test.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            string testCloudFolder = Path.Combine(testDir, "CloudBackups");
+            Directory.CreateDirectory(testBackupFolder);
+            Directory.CreateDirectory(testCloudFolder);
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>().UseSqlite($"Data Source={testDbFilePath}").Options;
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = testCloudFolder });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            bool result = await backupService.BackupNowAsync(testBackupFolder);
+
+            Assert.True(result);
+            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.zip");
+            Assert.Single(localZipFiles);
+            Assert.Single(cloudZipFiles);
+            Assert.Equal(Path.GetFileName(localZipFiles[0]), Path.GetFileName(cloudZipFiles[0]));
+
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+        }
+
+        [Fact]
+        public async Task BackupNowAsync_WithInvalidCloudBackupPath_DoesNotFailLocalBackup()
+        {
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupCloudInvalid_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+            string testDbFilePath = Path.Combine(testDir, "test.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>().UseSqlite($"Data Source={testDbFilePath}").Options;
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = "relative/cloud/path" });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            bool result = await backupService.BackupNowAsync(testBackupFolder);
+
+            Assert.False(result); // Cloud copy failed, but local backup succeeded
+            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+            Assert.Single(localZipFiles);
+
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+        }
+
+        [Fact]
+        public async Task BackupNowAsync_KeepsOnlyLast10BackupsInCloudPathToo()
+        {
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupCloudLimit_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+            string testDbFilePath = Path.Combine(testDir, "test.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            string testCloudFolder = Path.Combine(testDir, "CloudBackups");
+            Directory.CreateDirectory(testBackupFolder);
+            Directory.CreateDirectory(testCloudFolder);
+
+            // Pre-populate 12 old backup files in cloud folder
+            DateTime baseTime = DateTime.Now.AddDays(-20);
+            for (int i = 0; i < 12; i++)
+            {
+                string oldFile = Path.Combine(testCloudFolder, $"CalQR_Backup_2026-01-01_10-{i:D2}.zip");
+                await File.WriteAllTextAsync(oldFile, "mock backup");
+                File.SetCreationTime(oldFile, baseTime.AddMinutes(i));
+            }
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>().UseSqlite($"Data Source={testDbFilePath}").Options;
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = testCloudFolder });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            bool result = await backupService.BackupNowAsync(testBackupFolder);
+
+            Assert.True(result);
+            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.zip");
+            Assert.Equal(10, cloudZipFiles.Length);
+
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+        }
+
 
 
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>

@@ -294,6 +294,7 @@
 10. **إدارة تجمعات الاتصال (Connection Pools) في SQLite:** عند عمل نسخ احتياطي أو ضغط لقاعدة البيانات النشطة، يجب استدعاء دالة `SqliteConnection.ClearAllPools()` مباشرة قبل بدء عملية الضغط لتجنب حدوث خطأ إقفال الملف من قبل عمليات أخرى، وتوحيد فواصل مسارات الـ ZIP لتكون مائلة للأمام `/` دائماً.
 11. **دورة حياة تطبيقات WPF (WPF Application Lifecycle):** إن تجميع البرنامج بنجاح لا يضمن إقلاعه السليم؛ حيث وجب فحص الموارد النشطة مثل تحديث مسارات عناصر Material Design لتتوافق مع الإصدار 5.x، وضبط خاصية `ShutdownMode` لتكون صريحة `OnExplicitShutdown` للتحكم في غلق وتمرير النوافذ دون انهيار التطبيق.
 12. **درس رقم 10 - LiveCharts2/SkiaSharp والنص العربي:** أي عنصر واجهة يُرسَم عبر محرك SkiaSharp (المستخدم داخلياً في LiveCharts2 لكل من Legend، Tooltip، وAxis Labels) لا يدعم تشكيل الحروف العربية المتصلة (Arabic Shaping) ولا اتجاه Bidi بشكل صحيح تلقائياً، حتى مع FlowDirection=RightToLeft على الحاوية. الحلول الممكنة مرتبة حسب الأولوية: (1) الأفضل - استبدال العنصر بعنصر WPF أصلي (ItemsControl/TextBlock) حيثما أمكن، لأن محرك WPF يدعم العربية تلقائياً وبثبات كامل؛ (2) إن تعذّر الاستبدال (كما في Axis Labels التي لا بديل WPF أصلي لها) - استخدام الكلاس المساعد المعزول Helpers/ArabicFixer.cs الذي يُشكّل الحروف يدوياً (Isolated/Initial/Medial/Final + Ligatures مثل لا/لأ/لإ/لآ) ثم يعكس اتجاه النص، ويُطبَّق حصراً على النصوص المُرسَلة فعلياً لعناصر LiveCharts2 (Series.Name، Axis.Labels) دون أي تأثير على TextBlock عادي في XAML.
+13. **قاعدة البناء الافتراضية (Debug) أثناء التطوير اليومي:** أمر `dotnet build` بدون تحديد `--configuration` يبني بيئة Debug افتراضياً، وهذا هو الأمر المعتمد لكل عمليات البناء والاختبار أثناء دورة التطوير اليومية العادية. الأمر `dotnet build --configuration Release` يُستخدم حصراً عند النشر النهائي الفعلي للمستخدم (عبر `FolderProfile.pubxml` أو ما يعادله)، وليس كإجراء افتراضي أثناء تطوير أو اختبار ميزة جديدة. سبب توثيق هذه القاعدة: حدث التباس فعلي حين نُفِّذ بناء بصيغة Release فقط أثناء تطوير ميزة، فتحدَّث مجلد `bin\Release` بينما بقي `bin\Debug` يحمل نسخة قديمة من الملفات التنفيذية لم تتضمن التعديلات الجديدة، مما تسبب بالتباس أثناء الاختبار اليدوي المحلي.
 
 ---
 
@@ -867,4 +868,28 @@
 4. **تقرير البناء والاختبارات:**
    - تم بناء المنظومة بنجاح كامل بدون أخطاء تجميعية.
    - استمرار نجاح كافة الاختبارات البرمجية الوحدوية والتكاملية الـ **66** بنسبة 100%.
+
+---
+
+## القسم 29: ميزة النسخ الاحتياطي السحابي المبسّط وقاعدة بناء Configuration
+
+1. **ميزة النسخ الاحتياطي السحابي المبسّط (Cloud Backup Path):**
+   - **الهدف والمعمارية:** إضافة حقل مسار اختياري ثانٍ باسم `CloudBackupPath` بجانب مسار النسخ الاحتياطي المحلي الحالي `BackupPath` في جدول `AppSettings` (مع بذر قيمة افتراضية فارغة `""` في [DatabaseMigrator.cs](file:///d:/cal-qr/CAL-QR/Data/DatabaseMigrator.cs)). عند تشغيل النسخ الاحتياطي، يُنشأ ملف ZIP المحلي أولاً ويتم الاحتفاظ بآخر 10 نسخ محلية كالمعتاد. فإذا كان `CloudBackupPath` محدداً ومساراً مطلقاً (`Path.IsPathRooted`)، يُنسخ نفس ملف الـ ZIP تلقائياً إلى ذلك المسار (المفترض أنه مجلد مزامنة محلي لتطبيق مثل OneDrive أو Google Drive).
+   - **النسخ الآمن والتعافي:** عُزلت عملية النسخ السحابي في كتلة `try-catch` مستقلة تماماً؛ حيث أن فشل النسخ السحابي (بسبب انقطاع المزامنة أو عدم صلاحية المسار) لا يُفشل النسخة الاحتياطية المحلية إطلاقاً. يُسجَّل الفشل كتحذير في سجل العمليات (`AuditLog`) وتُرجع الدالة قيمة `false` للدلالة على نجاح جزئي، وتُعرض للمستخدم رسالة تنبيه من نوع `MessageBoxImage.Warning` توضح أن النسخة المحلية نجحت بينما فشل النسخ السحابي، بدلاً من رسالة النجاح الكلي `MessageBoxImage.Information`.
+   - **سياسة الحفظ المستقلة:** يُطبَّق نفس حد الاحتفاظ بآخر 10 نسخ (`CalQR_Backup_*.zip`) بشكل مستقل تماماً داخل المجلد السحابي.
+   - **تعديلات الخدمة والواجهة:**
+     - تعديل توقيع دالة [IBackupService.cs](file:///d:/cal-qr/CAL-QR/Services/IBackupService.cs) و [BackupService.cs](file:///d:/cal-qr/CAL-QR/Services/BackupService.cs) لتصبح `Task<bool> BackupNowAsync(string destinationFolder)`.
+     - تعديل واجهة المستخدم [SettingsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/SettingsView.xaml) بإضافة حقل النص الخاص بالمسار السحابي مع زر "تصفح..." ومربع إرشادي توضيحي لكيفية الاستفادة من تطبيقات المزامنة السحابية.
+     - تعديل [SettingsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/SettingsViewModel.cs) بإضافة خاصية `CloudBackupPath` وأمر `BrowseCloudBackupPathCommand` وتحديث دالتي `LoadSettingsAsync` و `SaveGeneralSettingsAsync` لمعالجة الإعداد الجديد وتحديث رسائل الإشعار للمستخدم.
+
+2. **الاختبارات الآلية الجديدة:**
+   - إضافة 4 اختبارات وحدوية جديدة بملف [BackupServiceTests.cs](file:///d:/cal-qr/CAL-QR.Tests/BackupServiceTests.cs):
+     1. `BackupNowAsync_WithEmptyCloudBackupPath_DoesNotAttemptCloudCopy`: التأكد من أن المسار الفارغ لا يحاول إجراء نسخ سحابي.
+     2. `BackupNowAsync_WithValidCloudBackupPath_CopiesZipToCloudPathSuccessfully`: التأكد من نسخ الـ ZIP للمسار السحابي عند صحة الإعداد.
+     3. `BackupNowAsync_WithInvalidCloudBackupPath_DoesNotFailLocalBackup`: التأكد من أن خطأ المسار السحابي لا يُفشل النسخة المحلية ويُرجع `false`.
+     4. `BackupNowAsync_KeepsOnlyLast10BackupsInCloudPathToo`: التأكد من تطبيق حد الـ 10 نسخ في المجلد السحابي بشكل مستقل.
+   - **العدد النهائي للاختبارات الناجحة:** ارتفع إجمالي الاختبارات الناجحة بالمنظومة من 66 إلى **70** اختباراً بنسبة نجاح 100%.
+
+3. **تقرير البناء والاختبارات:**
+   - تم إجراء البناء `dotnet build` والتأكد من نجاحه التام بدون أي أخطاء أو تحذيرات (`0 Error(s)`, `0 Warning(s)`) على كلا بيئتي البناء **Debug** و **Release**.
 

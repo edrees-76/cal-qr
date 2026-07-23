@@ -45,6 +45,7 @@ namespace CAL_QR.ViewModels
 
         // Backup Fields
         private string _backupPath = string.Empty;
+        private string _cloudBackupPath = string.Empty;
         private string _selectedBackupSchedule = "None";
         private ObservableCollection<string> _backupSchedules = new() { "None", "Daily", "Weekly", "Monthly" };
 
@@ -75,6 +76,7 @@ namespace CAL_QR.ViewModels
             SavePrintTemplateCommand = new RelayCommand(async () => await SavePrintTemplateAsync(), () => CanEdit);
             SavePathsCommand = new RelayCommand(async () => await SavePathsAsync(), () => CanEdit && CanSavePaths());
             BrowseBackupPathCommand = new RelayCommand(BrowseBackupPath, () => CanEdit);
+            BrowseCloudBackupPathCommand = new RelayCommand(BrowseCloudBackupPath, () => CanEdit);
             BrowseDatabasePathCommand = new RelayCommand(BrowseDatabasePath, () => CanEdit);
             BrowseAttachmentsPathCommand = new RelayCommand(BrowseAttachmentsPath, () => CanEdit);
             BrowseQrOutputPathCommand = new RelayCommand(BrowseQrOutputPath, () => CanEdit);
@@ -134,6 +136,7 @@ namespace CAL_QR.ViewModels
 
         // Backup Properties
         public string BackupPath { get => _backupPath; set => SetProperty(ref _backupPath, value); }
+        public string CloudBackupPath { get => _cloudBackupPath; set => SetProperty(ref _cloudBackupPath, value); }
         public string SelectedBackupSchedule { get => _selectedBackupSchedule; set => SetProperty(ref _selectedBackupSchedule, value); }
         public ObservableCollection<string> BackupSchedules => _backupSchedules;
 
@@ -157,6 +160,7 @@ namespace CAL_QR.ViewModels
         public ICommand SavePrintTemplateCommand { get; }
         public ICommand SavePathsCommand { get; }
         public ICommand BrowseBackupPathCommand { get; }
+        public ICommand BrowseCloudBackupPathCommand { get; }
         public ICommand BrowseDatabasePathCommand { get; }
         public ICommand BrowseAttachmentsPathCommand { get; }
         public ICommand BrowseQrOutputPathCommand { get; }
@@ -182,6 +186,9 @@ namespace CAL_QR.ViewModels
 
                 var backupPathSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "BackupPath");
                 if (backupPathSetting != null) _backupPath = backupPathSetting.Value;
+
+                var cloudBackupSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "CloudBackupPath");
+                if (cloudBackupSetting != null) _cloudBackupPath = cloudBackupSetting.Value;
 
                 var backupScheduleSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "BackupSchedule");
                 if (backupScheduleSetting != null) _selectedBackupSchedule = backupScheduleSetting.Value;
@@ -225,6 +232,7 @@ namespace CAL_QR.ViewModels
                 OnPropertyChanged(nameof(AlertDaysThreshold));
                 OnPropertyChanged(nameof(AutoLockMinutes));
                 OnPropertyChanged(nameof(BackupPath));
+                OnPropertyChanged(nameof(CloudBackupPath));
                 OnPropertyChanged(nameof(SelectedBackupSchedule));
                 OnPropertyChanged(nameof(DatabasePath));
                 OnPropertyChanged(nameof(AttachmentsPath));
@@ -313,7 +321,7 @@ namespace CAL_QR.ViewModels
                     lockSetting.Value = AutoLockMinutes.ToString();
                 }
 
-                // 3. Save BackupPath & Schedule
+                // 3. Save BackupPath, CloudBackupPath & Schedule
                 var bkpPath = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "BackupPath");
                 if (bkpPath == null)
                 {
@@ -322,6 +330,16 @@ namespace CAL_QR.ViewModels
                 else
                 {
                     bkpPath.Value = BackupPath;
+                }
+
+                var cloudBkpPath = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "CloudBackupPath");
+                if (cloudBkpPath == null)
+                {
+                    context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = CloudBackupPath });
+                }
+                else
+                {
+                    cloudBkpPath.Value = CloudBackupPath;
                 }
 
                 var bkpSchedule = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "BackupSchedule");
@@ -376,6 +394,15 @@ namespace CAL_QR.ViewModels
             if (dialog.ShowDialog() == true)
             {
                 BackupPath = dialog.FolderName;
+            }
+        }
+
+        private void BrowseCloudBackupPath()
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                CloudBackupPath = dialog.FolderName;
             }
         }
 
@@ -677,8 +704,23 @@ namespace CAL_QR.ViewModels
 
             try
             {
-                await _backupService.BackupNowAsync(BackupPath);
-                MessageBox.Show("تم إنشاء النسخة الاحتياطية بنجاح.", "تم النسخ الاحتياطي", MessageBoxButton.OK, MessageBoxImage.Information);
+                bool isSuccess = await _backupService.BackupNowAsync(BackupPath);
+                if (isSuccess)
+                {
+                    MessageBox.Show("تم إنشاء النسخة الاحتياطية بنجاح.", "تم النسخ الاحتياطي", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        Application.Current.MainWindow,
+                        "تم إنشاء النسخة الاحتياطية المحلية بنجاح، لكن فشل نسخها إلى المسار السحابي. راجع سجل العمليات للتفاصيل.",
+                        "تنبيه",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.OK,
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading
+                    );
+                }
             }
             catch (Exception ex)
             {

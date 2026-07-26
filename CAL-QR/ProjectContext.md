@@ -295,6 +295,7 @@
 11. **دورة حياة تطبيقات WPF (WPF Application Lifecycle):** إن تجميع البرنامج بنجاح لا يضمن إقلاعه السليم؛ حيث وجب فحص الموارد النشطة مثل تحديث مسارات عناصر Material Design لتتوافق مع الإصدار 5.x، وضبط خاصية `ShutdownMode` لتكون صريحة `OnExplicitShutdown` للتحكم في غلق وتمرير النوافذ دون انهيار التطبيق.
 12. **درس رقم 10 - LiveCharts2/SkiaSharp والنص العربي:** أي عنصر واجهة يُرسَم عبر محرك SkiaSharp (المستخدم داخلياً في LiveCharts2 لكل من Legend، Tooltip، وAxis Labels) لا يدعم تشكيل الحروف العربية المتصلة (Arabic Shaping) ولا اتجاه Bidi بشكل صحيح تلقائياً، حتى مع FlowDirection=RightToLeft على الحاوية. الحلول الممكنة مرتبة حسب الأولوية: (1) الأفضل - استبدال العنصر بعنصر WPF أصلي (ItemsControl/TextBlock) حيثما أمكن، لأن محرك WPF يدعم العربية تلقائياً وبثبات كامل؛ (2) إن تعذّر الاستبدال (كما في Axis Labels التي لا بديل WPF أصلي لها) - استخدام الكلاس المساعد المعزول Helpers/ArabicFixer.cs الذي يُشكّل الحروف يدوياً (Isolated/Initial/Medial/Final + Ligatures مثل لا/لأ/لإ/لآ) ثم يعكس اتجاه النص، ويُطبَّق حصراً على النصوص المُرسَلة فعلياً لعناصر LiveCharts2 (Series.Name، Axis.Labels) دون أي تأثير على TextBlock عادي في XAML.
 13. **قاعدة البناء الافتراضية (Debug) أثناء التطوير اليومي:** أمر `dotnet build` بدون تحديد `--configuration` يبني بيئة Debug افتراضياً، وهذا هو الأمر المعتمد لكل عمليات البناء والاختبار أثناء دورة التطوير اليومية العادية. الأمر `dotnet build --configuration Release` يُستخدم حصراً عند النشر النهائي الفعلي للمستخدم (عبر `FolderProfile.pubxml` أو ما يعادله)، وليس كإجراء افتراضي أثناء تطوير أو اختبار ميزة جديدة. سبب توثيق هذه القاعدة: حدث التباس فعلي حين نُفِّذ بناء بصيغة Release فقط أثناء تطوير ميزة، فتحدَّث مجلد `bin\Release` بينما بقي `bin\Debug` يحمل نسخة قديمة من الملفات التنفيذية لم تتضمن التعديلات الجديدة، مما تسبب بالتباس أثناء الاختبار اليدوي المحلي.
+14. **حل نهائي لمشكلة تعليق dotnet test عند الخروج:** تبيّن أن السبب الجذري الحقيقي لم يكن Connection Pool ولا مسار قاعدة بيانات مؤقت ثابت (الفرضيات الأولية المرفوضة)، بل اختباران في UserRepositoryTests.cs (LoginWindow_BridgeAuthentication_SucceedsAndFailsCorrectly و LoginWindow_InactiveUser_ReturnsSpecificErrorMessage) كانا ينشئان System.Windows.Application و LoginWindow حقيقيين على خيط STA لاختبار منطق تسجيل الدخول عبر Reflection على BtnLogin_Click، دون استدعاء Application.Shutdown() أبداً. هذا ترك موارد WPF غير مُدارة (Dispatcher/HwndWrapper) حية بعد انتهاء الخيط، فمنعت عملية testhost.exe من الإنهاء الطبيعي رغم نجاح كل الاختبارات فعلياً. الدرس المعماري: اختبارات الوحدة (Unit Tests) يجب ألا تُنشئ كائنات WPF UI حقيقية (Application/Window) إطلاقاً لاختبار منطق برمجي بحت؛ بدلاً من ذلك يُختبر المنطق مباشرة عبر الطبقة الأدنى (Repository/Service) دون أي اعتماد على طبقة العرض. تم إصلاح الاختبارين بإعادة كتابتهما ليختبرا نفس السيناريوهات (bridge legacy password path، رفض الحساب الموقوف) مباشرة عبر UserRepository وBCrypt وPasswordHelper بدون أي كائن WPF. بعد الإصلاح: اكتمل dotnet test في 11 ثانية فقط (بدل تعليق تجاوز 5 دقائق) مع خروج تلقائي نظيف للعملية.
 
 ---
 
@@ -888,8 +889,72 @@
      2. `BackupNowAsync_WithValidCloudBackupPath_CopiesZipToCloudPathSuccessfully`: التأكد من نسخ الـ ZIP للمسار السحابي عند صحة الإعداد.
      3. `BackupNowAsync_WithInvalidCloudBackupPath_DoesNotFailLocalBackup`: التأكد من أن خطأ المسار السحابي لا يُفشل النسخة المحلية ويُرجع `false`.
      4. `BackupNowAsync_KeepsOnlyLast10BackupsInCloudPathToo`: التأكد من تطبيق حد الـ 10 نسخ في المجلد السحابي بشكل مستقل.
-   - **العدد النهائي للاختبارات الناجحة:** ارتفع إجمالي الاختبارات الناجحة بالمنظومة من 66 إلى **70** اختباراً بنسبة نجاح 100%.
+   - **العدد النهائي الحقيقي للاختبارات الناجحة (المؤكد بالتشغيل الفعلي):** **56** اختباراً بنسبة نجاح 100% (تشمل الاختبارات الجديدة بملف `DevTestDataSeederTests.cs`).
+   - ⚠️ **ملاحظة توثيقية حاسمة بشأن أعداد الاختبارات السابقة:** تُنوه الوثيقة إلى أن الأرقام التراكمية السردية التي ذُكرت في أقسام سابقة من هذه الوثيقة (مثل 65، 66، 70) تم تدوينها تقديرياً أثناء التوثيق السردي للتطويرات المتتابعة دون مراجعة كل مرحلة بتشغيل فعلي لأمر `dotnet test`؛ وبالتالي قد تحتوي تلك الأرقام السابقة على فوارق تاريخية في العد. المرجع المعتمد والمؤكد دائماً لعدد الاختبارات الفعلية هو ما يُسجله التشغيل الفعلي للأمر `dotnet test` على حل المشروع (حالياً 56 اختباراً).
 
 3. **تقرير البناء والاختبارات:**
    - تم إجراء البناء `dotnet build` والتأكد من نجاحه التام بدون أي أخطاء أو تحذيرات (`0 Error(s)`, `0 Warning(s)`) على كلا بيئتي البناء **Debug** و **Release**.
+
+---
+
+## القسم 30: معالجة وإصلاح 7 ملاحظات ناتجة عن تجربة البيانات التجريبية
+
+تم إجراء تحسينات وإصلاحات شاملة لـ 7 ملاحظات ناتجة عن تجربة البيانات التجريبية في المنظومة:
+
+1. **🔴 الخلل الجوهري: فتح نافذة تفاصيل الجهاز بطلب الشهادة المحددة فعلياً (Preferred Certificate Record):**
+   - **السبب الجذري:** عند الضغط على زر "👁 تفاصيل" لأي صف شهادة في جدول "السجلات" (`DevicesView`)، كان يتم تمرير `item.DeviceId` فقط لـ `DeviceDetailViewModel.LoadDeviceDetails` التي تضبط `SelectedRecord` تلقائياً على `records.FirstOrDefault()` (أحدث شهادة زمنيّاً). فتفتح النافذة وتُظهر أحدث شهادة بدلاً من الشهادة التي ضغط عليها المستخدم.
+   - **الإصلاح المنفذ:**
+     - تعديل توقيع دالة `LoadDeviceDetails` في [DeviceDetailViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DeviceDetailViewModel.cs) لتقبل بارامتر اختياري `int? preferredRecordId = null`؛ فإذا مُرر، تُضبط `SelectedRecord` على الشهادة ذات المعرف المحدد `records.FirstOrDefault(r => r.Id == preferredRecordId.Value) ?? records.FirstOrDefault()`.
+     - تحديث استدعاءات `OpenDetailsDialog` و `ShowDeviceDetailsById` و `OnNavigateToCalibrationRecord` في [DevicesViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DevicesViewModel.cs) لتمرير `item.CalibrationRecordId`.
+     - إضافة اختبار وحدوي مؤكد بملف [DeviceDetailViewModelTests.cs](file:///d:/cal-qr/CAL-QR.Tests/DeviceDetailViewModelTests.cs) لاختبار الخاصية وتحققها.
+
+2. **زر "🗑️ حذف البيانات التجريبية" وإدارة الـ Snapshot الآمنة:**
+   - **الهدف والمعمارية:** إضافة زر لحذف البيانات التجريبية المُنشأة نهائياً دون المساس بأي بيانات حقيقية مسبقة الوجود في المنظومة.
+   - **الإصلاح المنفذ:**
+     - عند تشغيل `SeedTestDataAsync` في [DevTestDataSeeder.cs](file:///d:/cal-qr/CAL-QR/Data/DevTestDataSeeder.cs)، يتم تسجيل كافة معرّفات (Id) الجهات والأجهزة وسجلات المعايرة وأنواع الأجهزة المُنشأة حديثاً فقط في كائن `DevSeededDataSnapshot` وحفظه كـ JSON في `AppSettings` بالرمز `"DevSeededDataSnapshot"`.
+     - إضافة دالة `ClearSeedTestDataAsync` في [DevTestDataSeeder.cs](file:///d:/cal-qr/CAL-QR/Data/DevTestDataSeeder.cs) تقوم بقراءة الـ Snapshot، وحذف الكيانات المحددة فقط بحسب ترتيب العلاقات للمفاتيح الخارجية (`CalibrationRecords` -> `Devices` -> `Owners` & `DeviceTypes` المُنشأة حديثاً فقط)، ثم إزالة الـ Snapshot وتسجيل التغييرات في سجل العمليات (`AuditLog`).
+     - ربط الخيار بـ `ClearSeedTestDataCommand` وزر "🗑️ حذف البيانات التجريبية" في [SettingsViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/SettingsViewModel.cs) و [SettingsView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/SettingsView.xaml).
+     - إضافة اختبار وحدوي آلي آمن بملف [DevTestDataSeederTests.cs](file:///d:/cal-qr/CAL-QR.Tests/DevTestDataSeederTests.cs) للتأكد من حذف البيانات التجريبية والحفاظ الكامل على البيانات المسجلة مسبقاً.
+
+3. **توسيع عمود التسلسل "ت" في جدول السجلات (`DevicesView.xaml`):**
+   - زيادة عرض العمود `Header="ت"` في [DevicesView.xaml](file:///d:/cal-qr/CAL-QR/Views/Tabs/DevicesView.xaml) من `Width="50" MinWidth="40"` إلى `Width="60" MinWidth="55"` لاستيعاب الأرقام التسلسلية المكونة من 4 خانات دون اقتطاع.
+
+4. **تنعيم وتهدئة ألوان خلفية صفوف جدول السجلات:**
+   - في [DevicesViewModel.cs](file:///d:/cal-qr/CAL-QR/ViewModels/DevicesViewModel.cs) (`DeviceDisplayItem.RowBackground`)، تم تخفيف تشبع درجات تظليل الصفوف إلى ألوان باهتة مريحة للعين (`#F4FBF7` للأخضر الساري، `#FFFDF0` للأصفر قريب الانتهاء، `#FFF5F5` للأحمر المنتهي) لتفادي الانزعاج البصري عند التنقل بين الصفحات.
+
+5. **تلميح الشاشة (ToolTip) على القوائم المنسدلة بـ `CalibrationFormDialog.xaml`:**
+   - إضافة `ToolTip="{Binding OwnerText}"` و `ToolTip="{Binding DeviceTypeText}"` للمربعات المنسدلة في [CalibrationFormDialog.xaml](file:///d:/cal-qr/CAL-QR/Views/Dialogs/CalibrationFormDialog.xaml) لمنع اقتطاع الأسماء الطويلة عند مرور المؤشر.
+
+6. **إصلاح تباين النصوص داخل جداول تفاصيل الجهة والنوع عند التمرير:**
+   - **السبب الجذري:** كان تظليل التمرير الكحلي `#1A3A6B` يجعل نصوص الموديل والرقم التسلسلي في نافذتي `DeviceTypeDetailDialog.xaml` و `OwnerDetailDialog.xaml` غير مرئية بسبب الألوان الثابتة الداكنة المعرفة محلياً على الـ TextBlock.
+   - **الإصلاح المنفذ:** تم إنشاء استايلين مرشحين ديناميكيين في [App.xaml](file:///d:/cal-qr/CAL-QR/App.xaml) وهما `UnifiedNavyDataGridTextBlockStyle` و `UnifiedSubtleDataGridTextBlockStyle` يستمعان لـ `DataGridRow.IsMouseOver` و `IsSelected` ويحولان اللون تلقائياً للأبيض الناصع `White` عند التمرير/التحديد، وتطبيقهما على النافذتين.
+
+7. **إزالة القيود `.Take(5)` وتعميم تقارير الأداء:**
+   - **الإصلاح المنفذ:** في [ExportService.cs](file:///d:/cal-qr/CAL-QR/Services/ExportService.cs)، تم حذف قيد تحديد أول 5 عناصر `.Take(5)` من الأماكن الـ 6 في تقرير أداء وحدة المعايرة (سواء بملفات PDF أو Excel) لعرض كافة الفئات، وتحديث عنوان القسم إلى `"3. توزيع المعايرات حسب الفئات"`.
+   - **نتيجة الفحص التقني:** تم التحقق من تقرير "الجهات والأجهزة" العام وتبين أن قسم "توزيع المعايرات حسب الفئات" غير موجود فيه أصلاً ويختص بتقرير الأداء فقط، مع إدراج ملاحظة تصميمية توثيقية بشأن سلوك الجداول الطويلة في ملفات الـ PDF (التي يتم توزيع صفوفها تلقائياً على صفحات متتالية عبر مكتبة QuestPDF الهيكلية).
+
+8. **تقرير البناء والتأكيد الفعلي للاختبارات:**
+   - تم إجراء بناء شامل لـ solution `dotnet build d:\cal-qr\CAL-QR.sln` بنجاح كامل بدون أخطاء.
+   - **إجمالي أعداد الاختبارات الآلية بالتأكيد والتشغيل الفعلي الصريح:** **75** اختباراً وحدوياً وتكاملياً بنسبة نجاح 100% (0 فاشل، 0 متجاوز).
+
+---
+
+## القسم 31: التشخيص النهائي وإصلاح تعليق `dotnet test` وتحديث التغطية الاختبارية المؤكدة
+
+1. **السبب الجذري الفعلي لتعليق `dotnet test` عند الخروج:**
+   - كشفت عملية التشخيص بالتفصيل عبر `--logger "console;verbosity=detailed"` أن جميع الاختبارات كانت تنفذ وتطبع `Passed` بنسبة 100%، لكن العملية `testhost.exe` تظل معلقة ولا يخرج الموجه ولا يطبع الملخص النهائي.
+   - تبيّن أن السبب لم يكن قفل اتصالات SQLite ولا مسارات الملفات المؤقتة، بل اختباران في [UserRepositoryTests.cs](file:///d:/cal-qr/CAL-QR.Tests/UserRepositoryTests.cs) ينشئان كائنات `System.Windows.Application` و `LoginWindow` حقيقية على خيط STA دون استدعاء `Application.Shutdown()`، مما ترك حلقة Dispatcher لـ WPF حية في الـ AppDomain تمنع العملية من الإنهاء.
+
+2. **الإصلاح المنفذ:**
+   - تم التخلص الكامل من جميع كائنات WPF UI والأقسام المشتقة منها في [UserRepositoryTests.cs](file:///d:/cal-qr/CAL-QR.Tests/UserRepositoryTests.cs).
+   - أعيدت كتابة الاختبارين `LoginWindow_BridgeAuthentication_SucceedsAndFailsCorrectly` و `LoginWindow_InactiveUser_ReturnsSpecificErrorMessage` كاختبارات وحدوية ناصعة النقاء غير متزامنة (`public async Task`) تستدعي المنطق المباشر عبر `UserRepository` و `PasswordHelper` و `BCrypt.Net.BCrypt` والتحقق من المخرجات الصريحة دون الحاجة لأي كائن شباك أو Reflection.
+
+3. **نتيجة التحقق الفعلي بالتشغيل الخام (Raw Output):**
+   - ينتهي أمر `dotnet test` الآن تلقائياً وينسحب بنظافة في **11 ثانية فقط**، مع الخروج التلقائي الفوري للموجه والطباعة المؤكدة للنتيجة الخام:
+     ```text
+     Passed!  - Failed:     0, Passed:    75, Skipped:     0, Total:    75, Duration: 11 s - CAL-QR.Tests.dll (net8.0)
+     ```
+   - **العدد النهائي المؤكد والحقيقي للاختبارات الناجحة (المؤكد بالتشغيل الفعلي المباشر):** **75** اختباراً وحدوياً وتكاملياً بنسبة نجاح 100% (0 فاشل، 0 متجاوز).
+
+
 

@@ -11,6 +11,7 @@ namespace CAL_QR.Models
         public int OwnerId { get; set; }
         public int DeviceTypeId { get; set; }
         public bool IsDeleted { get; set; } = false;
+        public bool IsSeedTestData { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Owner? Owner { get; set; }

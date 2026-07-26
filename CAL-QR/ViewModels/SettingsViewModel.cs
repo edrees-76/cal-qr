@@ -24,6 +24,7 @@ namespace CAL_QR.ViewModels
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly IBackupService _backupService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly IHmacService _hmacService;
 
         // Security Fields
         private string _currentPassword = string.Empty;
@@ -62,7 +63,8 @@ namespace CAL_QR.ViewModels
             IBackupService backupService,
             IAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
-            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory)
+            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory,
+            IHmacService hmacService)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
@@ -70,6 +72,7 @@ namespace CAL_QR.ViewModels
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
             _paperTemplateDialogFactory = paperTemplateDialogFactory;
+            _hmacService = hmacService;
 
             ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
             SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit);
@@ -85,6 +88,9 @@ namespace CAL_QR.ViewModels
             OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
             EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
+            SeedTestDataCommand = new RelayCommand(async () => await SeedTestDataAsync(), () => CanEdit);
+            ClearSeedTestDataCommand = new RelayCommand(async () => await ClearSeedTestDataAsync(), () => CanEdit);
+            FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
 
             _ = LoadSettingsAsync();
         }
@@ -169,6 +175,8 @@ namespace CAL_QR.ViewModels
         public ICommand OpenTemplatesDialogCommand { get; }
         public ICommand EditTemplateCommand { get; }
         public ICommand NewTemplateCommand { get; }
+        public ICommand SeedTestDataCommand { get; }
+        public ICommand ClearSeedTestDataCommand { get; }
         #endregion
 
         private async Task LoadSettingsAsync()
@@ -783,6 +791,114 @@ namespace CAL_QR.ViewModels
             var dialog = _paperTemplateDialogFactory();
             dialog.ShowDialog();
             _ = LoadSettingsAsync(); // Reload templates after dialog closes
+        }
+
+        private async Task SeedTestDataAsync()
+        {
+            try
+            {
+                var result = await DevTestDataSeeder.SeedTestDataAsync(_contextFactory, _hmacService, _auditLogRepository);
+                if (result.Success)
+                {
+                    CalibrationEvents.RaiseCalibrationChanged();
+                    MessageBox.Show(result.Message, "توليد البيانات التجريبية", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"حدث خطأ أثناء توليد البيانات التجريبية: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string _factoryResetConfirmationText = string.Empty;
+        public string FactoryResetConfirmationText
+        {
+            get => _factoryResetConfirmationText;
+            set
+            {
+                if (_factoryResetConfirmationText != value)
+                {
+                    _factoryResetConfirmationText = value;
+                    OnPropertyChanged(nameof(FactoryResetConfirmationText));
+                }
+            }
+        }
+
+        public ICommand FactoryResetCommand { get; }
+
+        private async Task ClearSeedTestDataAsync()
+        {
+            var confirm = MessageBox.Show(
+                "هل أنت تأكد من رغبتك في حذف كافة البيانات التجريبية المُنشأة نهائياً من قاعدة البيانات؟",
+                "تأكيد حذف البيانات التجريبية",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                var result = await DevTestDataSeeder.ClearSeedTestDataAsync(_contextFactory, _auditLogRepository);
+                if (result.Success)
+                {
+                    CalibrationEvents.RaiseCalibrationChanged();
+                    MessageBox.Show(result.Message, "حذف البيانات التجريبية", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"حدث خطأ أثناء حذف البيانات التجريبية: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task FactoryResetAsync()
+        {
+            if (FactoryResetConfirmationText.Trim() != SystemResetService.RequiredConfirmationPhrase)
+            {
+                MessageBox.Show(
+                    "تأكيد غير صحيح. يرجى كتابة النص RESET-ALL-DATA بدقة في الحقل المخصص لتأكيد تصفير النظام.",
+                    "تأكيد مطلوب",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "⚠️ تحذير شديد الخطورة!\n\nأنت على وشك مسح جميع البيانات الفعلية والتجريبية والملفات في النظام نهائياً وإعادتها لحالة التثبيت النظيفة الأولية.\n\nهل أنت تأكد 100% من تنفيذ التصفير الكامل للنظام؟",
+                "تأكيد التصفير الكامل للنظام (Factory Reset)",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                var result = await SystemResetService.FactoryResetAsync(_contextFactory, FactoryResetConfirmationText.Trim(), _auditLogRepository);
+                FactoryResetConfirmationText = string.Empty;
+
+                if (result.Success)
+                {
+                    CalibrationEvents.RaiseCalibrationChanged();
+                    MessageBox.Show(result.Message, "التصفير الكامل للنظام", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                FactoryResetConfirmationText = string.Empty;
+                MessageBox.Show($"حدث خطأ أثناء التصفير الكامل للنظام: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

@@ -54,6 +54,11 @@ namespace CAL_QR.Data
                 // Execute defensive migrations for PaperTemplates
                 ExecuteSqlIfColumnMissing(context, "PaperTemplates", "MarginRightMm", "ALTER TABLE PaperTemplates ADD COLUMN MarginRightMm TEXT DEFAULT '0' NOT NULL;");
                 ExecuteSqlIfColumnMissing(context, "PaperTemplates", "MarginBottomMm", "ALTER TABLE PaperTemplates ADD COLUMN MarginBottomMm TEXT DEFAULT '0' NOT NULL;");
+
+                // Execute defensive migrations for IsSeedTestData column
+                ExecuteSqlIfColumnMissing(context, "Owners", "IsSeedTestData", "ALTER TABLE Owners ADD COLUMN IsSeedTestData INTEGER DEFAULT 0 NOT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Devices", "IsSeedTestData", "ALTER TABLE Devices ADD COLUMN IsSeedTestData INTEGER DEFAULT 0 NOT NULL;");
+                ExecuteSqlIfColumnMissing(context, "CalibrationRecords", "IsSeedTestData", "ALTER TABLE CalibrationRecords ADD COLUMN IsSeedTestData INTEGER DEFAULT 0 NOT NULL;");
             }
 
             // Perform any safe check/migration of columns if they are missing

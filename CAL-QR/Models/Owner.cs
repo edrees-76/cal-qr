@@ -11,6 +11,7 @@ namespace CAL_QR.Models
         public string? ContactPhone { get; set; }
         public string? ContactPerson { get; set; }
         public bool IsDeleted { get; set; } = false;
+        public bool IsSeedTestData { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual ICollection<Device> Devices { get; set; } = new List<Device>();

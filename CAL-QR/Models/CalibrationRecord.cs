@@ -16,6 +16,7 @@ namespace CAL_QR.Models
         public string Result { get; set; } = "Passed"; // "Passed" | "Failed" | "Conditional"
         public string HmacSignature { get; set; } = string.Empty;
         public bool IsDeleted { get; set; } = false;
+        public bool IsSeedTestData { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

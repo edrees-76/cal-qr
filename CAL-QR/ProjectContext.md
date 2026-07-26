@@ -296,6 +296,7 @@
 12. **درس رقم 10 - LiveCharts2/SkiaSharp والنص العربي:** أي عنصر واجهة يُرسَم عبر محرك SkiaSharp (المستخدم داخلياً في LiveCharts2 لكل من Legend، Tooltip، وAxis Labels) لا يدعم تشكيل الحروف العربية المتصلة (Arabic Shaping) ولا اتجاه Bidi بشكل صحيح تلقائياً، حتى مع FlowDirection=RightToLeft على الحاوية. الحلول الممكنة مرتبة حسب الأولوية: (1) الأفضل - استبدال العنصر بعنصر WPF أصلي (ItemsControl/TextBlock) حيثما أمكن، لأن محرك WPF يدعم العربية تلقائياً وبثبات كامل؛ (2) إن تعذّر الاستبدال (كما في Axis Labels التي لا بديل WPF أصلي لها) - استخدام الكلاس المساعد المعزول Helpers/ArabicFixer.cs الذي يُشكّل الحروف يدوياً (Isolated/Initial/Medial/Final + Ligatures مثل لا/لأ/لإ/لآ) ثم يعكس اتجاه النص، ويُطبَّق حصراً على النصوص المُرسَلة فعلياً لعناصر LiveCharts2 (Series.Name، Axis.Labels) دون أي تأثير على TextBlock عادي في XAML.
 13. **قاعدة البناء الافتراضية (Debug) أثناء التطوير اليومي:** أمر `dotnet build` بدون تحديد `--configuration` يبني بيئة Debug افتراضياً، وهذا هو الأمر المعتمد لكل عمليات البناء والاختبار أثناء دورة التطوير اليومية العادية. الأمر `dotnet build --configuration Release` يُستخدم حصراً عند النشر النهائي الفعلي للمستخدم (عبر `FolderProfile.pubxml` أو ما يعادله)، وليس كإجراء افتراضي أثناء تطوير أو اختبار ميزة جديدة. سبب توثيق هذه القاعدة: حدث التباس فعلي حين نُفِّذ بناء بصيغة Release فقط أثناء تطوير ميزة، فتحدَّث مجلد `bin\Release` بينما بقي `bin\Debug` يحمل نسخة قديمة من الملفات التنفيذية لم تتضمن التعديلات الجديدة، مما تسبب بالتباس أثناء الاختبار اليدوي المحلي.
 14. **حل نهائي لمشكلة تعليق dotnet test عند الخروج:** تبيّن أن السبب الجذري الحقيقي لم يكن Connection Pool ولا مسار قاعدة بيانات مؤقت ثابت (الفرضيات الأولية المرفوضة)، بل اختباران في UserRepositoryTests.cs (LoginWindow_BridgeAuthentication_SucceedsAndFailsCorrectly و LoginWindow_InactiveUser_ReturnsSpecificErrorMessage) كانا ينشئان System.Windows.Application و LoginWindow حقيقيين على خيط STA لاختبار منطق تسجيل الدخول عبر Reflection على BtnLogin_Click، دون استدعاء Application.Shutdown() أبداً. هذا ترك موارد WPF غير مُدارة (Dispatcher/HwndWrapper) حية بعد انتهاء الخيط، فمنعت عملية testhost.exe من الإنهاء الطبيعي رغم نجاح كل الاختبارات فعلياً. الدرس المعماري: اختبارات الوحدة (Unit Tests) يجب ألا تُنشئ كائنات WPF UI حقيقية (Application/Window) إطلاقاً لاختبار منطق برمجي بحت؛ بدلاً من ذلك يُختبر المنطق مباشرة عبر الطبقة الأدنى (Repository/Service) دون أي اعتماد على طبقة العرض. تم إصلاح الاختبارين بإعادة كتابتهما ليختبرا نفس السيناريوهات (bridge legacy password path، رفض الحساب الموقوف) مباشرة عبر UserRepository وBCrypt وPasswordHelper بدون أي كائن WPF. بعد الإصلاح: اكتمل dotnet test في 11 ثانية فقط (بدل تعليق تجاوز 5 دقائق) مع خروج تلقائي نظيف للعملية.
+15. **حادثة بيانات محاكاة يتيمة بلا Snapshot وتنظيفها الآمن:** اكتُشف أن قاعدة البيانات النشطة (cal-qr-simulation.db) كانت تحتوي 500 جهاز و2000 سجل معايرة و10 جهات مالكة (بأنماط تسمية CERT-SIM-* وSN-*-EG) لم تُنشأ عبر DevTestDataSeeder.cs الموثق (الذي يسجل DevSeededDataSnapshot في AppSettings لضمان إمكانية الحذف الآمن لاحقاً)، بل عبر مسار توليد بيانات محاكاة قديم غير موثق تم تشغيله مباشرة على قاعدة البيانات الفعلية بدل قاعدة بيانات اختبار معزولة، دون ترك أي أثر يسمح بالحذف الآلي. نتيجة لذلك ظهرت رسالة 'لا توجد بيانات تجريبية مسجلة للحذف' رغم وجود بيانات محاكاة واضحة، لأن ClearSeedTestDataAsync تعتمد حصرياً على قراءة Snapshot من AppSettings ولا تفحص أنماط التسمية. تم التحقق يدوياً من تطابق 100% للبيانات مع نمط المحاكاة (لا سجلات شاذة)، وأُخذت نسخة احتياطية كاملة لملف قاعدة البيانات قبل الحذف اليدوي النهائي (Hard Delete) ضمن معاملة واحدة، مع الحفاظ الصريح على جدول DeviceTypes الخمسة المعتمدة معمارياً وعدم لمسها رغم كونها من نفس دفعة الإنشاء الزمنية. الدرس المعماري: (1) أي أداة توليد بيانات محاكاة يجب أن تُشغَّل حصراً على قاعدة بيانات اختبار معزولة، أبداً على قاعدة البيانات الفعلية المستخدمة في التطوير أو الإنتاج؛ (2) أي مسار توليد بيانات مستقبلي يجب أن يسجل Snapshot بنفس آلية DevTestDataSeeder.cs بلا استثناء لضمان إمكانية التراجع الآمن؛ (3) قبل أي عملية حذف جماعي على بيانات حقيقية أو مشكوك فيها، يجب التحقق من تطابق 100% للنمط المستهدف وأخذ نسخة احتياطية يدوية للملف الكامل حتى لو كانت الثقة عالية بالنتيجة.
 
 ---
 
@@ -958,3 +959,51 @@
 
 
 
+
+
+---
+
+## سجل تطوير: دورة "الصفر التام" للبيانات التجريبية + التصفير الكامل للنظام + توثيق النشر
+
+**تاريخ التوثيق:** 2026-07-27
+
+### 1. الوسم الصريح للبيانات التجريبية (IsSeedTestData)
+- أُضيفت خاصية `public bool IsSeedTestData { get; set; } = false;` إلى الموديلات: `Owner.cs`, `Device.cs`, `CalibrationRecord.cs`.
+- أُضيفت هجرات دفاعية عبر `ExecuteSqlIfColumnMissing` في `DatabaseMigrator.cs` لإضافة العمود برمجياً في SQLite لكل من `Owners`, `Devices`, `CalibrationRecords`.
+- **لم** يُضَف هذا العمود لـ `DeviceTypes` — التصنيفات الخمسة الأساسية (Pancake Probe, Gamma Probe, Beta Scintillator Probe, PED, Dose Rate Meter) تُعتبر بيانات مرجعية أساسية وليست بيانات تجريبية، بتصميم مقصود.
+
+### 2. إعادة كتابة `DevTestDataSeeder.cs` (توليد/حذف البيانات التجريبية)
+- `SeedTestDataAsync`: يستدعي `ClearSeedTestDataAsync` تلقائياً في بدايته لضمان حالة نظيفة بلا تراكم، ثم يولّد 10 جهات + 100 جهاز + 200 سجل معايرة، جميعها موسومة `IsSeedTestData = true`.
+- `ClearSeedTestDataAsync`: يحذف مباشرة (Hard Delete) كل الكيانات الموسومة `IsSeedTestData == true`، بدون اعتماد على أي Snapshot خارجي.
+
+### 3. تحقيق "الصفر التام" الحقيقي في `ClearSeedTestDataAsync` (إغلاق الثغرات)
+تم اكتشاف أن الحذف من قاعدة البيانات وحده غير كافٍ، فأُضيف:
+- **تنظيف `AcknowledgedExpiredDevices`**: حذف الصفوف اليتيمة المرتبطة بـ `DeviceId` أو `CalibrationRecordId` المحذوفين، ضمن نفس الـ Transaction الأساسي (قبل الـ Commit).
+- **حذف ملفات QR الفعلية**: بعد نجاح `CommitAsync` (Post-Commit Phase)، حذف كل ملف `QR/{CertificateNumber}.png` المرتبط بسجل محذوف، مع مسار قراءة مرن من `AppSettings["QrOutputPath"]` (مطابق تماماً لما يستخدمه `QrService.cs`)، وإعادة محاولة تلقائية (3 محاولات، 50ms) لمعالجة أقفال الملفات في Windows.
+- **حذف مجلدات المرفقات**: نفس المبدأ لمجلد `Attachments/{CertificateNumber}` (مسار مطابق تماماً لما يستخدمه `CalibrationFormViewModel.cs` و`BackupService.cs` عبر مفتاح `AppSettings["AttachmentsPath"]`).
+- تم التحقق الصريح (باقتباس الكود الفعلي من 3 ملفات مصدر مستقلة) أن أسماء المفاتيح والمسارات الافتراضية متطابقة 100% بين مكان الحفظ الفعلي ومكان الحذف — موثّق ومؤكد.
+- تم توسيع القيمة المرجعة لتشمل `QrFilesRemoved` و`AttachmentFoldersRemoved`.
+- اختبار تكامل جديد: `SeedAndClear_AchievesAbsoluteZero_IncludingFilesAndOrphanedRows` في `DevTestDataSeederTests.cs`.
+
+### 4. ميزة جديدة مستقلة: التصفير الكامل للنظام (`SystemResetService.cs`)
+- خدمة منفصلة تماماً عن `DevTestDataSeeder.cs` (لا تداخل معماري بينهما).
+- الدالة `FactoryResetAsync(contextFactory, confirmationPhrase, auditLogRepository)`: تحذف **كل** البيانات (حقيقية وتجريبية معاً) من `CalibrationRecords`, `AcknowledgedExpiredDevices`, `Devices`, `Owners`, وتعيد تصفير `DeviceTypes` ثم تُعيد إدراج الأنواع الخمسة الافتراضية فقط — إعادة النظام لحالة تنصيب نظيفة.
+- **محمية بعبارة تأكيد إلزامية**: `const string RequiredConfirmationPhrase = "RESET-ALL-DATA"` — يجب كتابتها يدوياً في حقل نصي بالواجهة قبل تفعيل الزر؛ أي نص مخالف يرفض العملية فوراً بدون أي حذف.
+- تُبقي `AppSettings` (باستثناء مفتاح `DevSeededDataSnapshot`) و`AuditLog` كاملين دون مساس (الأخير كسجل تدقيقي دائم يوثق حتى عملية التصفير نفسها).
+- تنظف ملفات القرص (محتويات `QR`/`Attachments` بالكامل) بعد نجاح الـ Commit، مع الحفاظ على المجلدين الجذريين نفسيهما.
+- واجهة مستخدم: بطاقة "منطقة الخطر (Danger Zone)" مستقلة في `SettingsView.xaml`، تتطلب كتابة `RESET-ALL-DATA` + رسالة تأكيد إضافية (MessageBox) قبل التنفيذ.
+- اختبارات: `FactoryResetAsync_WrongConfirmationPhrase_DoesNothing`, `FactoryResetAsync_CorrectPhrase_WipesAllDataAndFiles` في `SystemResetServiceTests.cs`.
+
+### 5. إخفاء أدوات التطوير من نسخة الإنتاج (Release)
+- بطاقتا "بيانات الاختبار للتطوير" و"منطقة الخطر: التصفير الكامل" في `SettingsView.xaml` مربوطتان بخاصية `IsDevelopmentBuild` في `SettingsViewModel.cs`، المحسوبة عبر `#if DEBUG` وقت الترجمة (Compile-Time)، وليس مجرد إخفاء بصري وقت التشغيل.
+- أوامر `SeedTestDataCommand`, `ClearSeedTestDataCommand`, `FactoryResetCommand` محمية أيضاً بنفس الشرط في `canExecute` كطبقة حماية ثانية (Defense in Depth).
+- **النتيجة**: في أي بناء بإعداد `Release`، هذه الأدوات لا تظهر ولا يمكن تفعيلها إطلاقاً — لا يجوز إزالة هذا الحارس مستقبلاً.
+- الكود الأساسي في `DevTestDataSeeder.cs` و`SystemResetService.cs` نفسه يبقى موجوداً في المشروع (للاختبارات الآلية)، فقط مداخل الواجهة محمية.
+
+### 6. قاعدة النشر الرسمية للعميل (موثقة سابقاً، مُلخّصة هنا للربط)
+راجع القسم المخصص أعلاه بعنوان "قاعدة معمارية: عملية النشر الرسمية للعميل" — الخلاصة: يُستخدم `dotnet publish -c Release --self-contained` + `<SatelliteResourceLanguages>ar;en</SatelliteResourceLanguages>` + تغليف Inno Setup، ولا يُنسخ مجلد `bin\Debug` أبداً للعميل.
+
+### حالة البناء والاختبار النهائية بعد كل التغييرات أعلاه
+- `dotnet build`: نجح بدون أخطاء أو تحذيرات.
+- `dotnet test`: 79/79 اختبار ناجح (شمل: اختبارات `DevTestDataSeeder` الأصلية والصفر التام، واختبارات `SystemResetService` الجديدة).
+- لم يُنفَّذ أي `git commit` أو `git push` حتى تاريخ هذا التوثيق.

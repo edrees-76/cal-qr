@@ -149,6 +149,11 @@ namespace CAL_QR.Data
                 entity.Property(e => e.SurveyMeterModel).HasMaxLength(200);
                 entity.Property(e => e.SurveyMeterSerialNumber).HasMaxLength(100);
 
+                entity.Property(e => e.MeasurementType).HasMaxLength(200);
+                entity.Property(e => e.Distance).HasMaxLength(100);
+                entity.Property(e => e.CountingTime).HasMaxLength(50);
+                entity.Property(e => e.CountingUnit).HasMaxLength(50);
+
                 entity.Property(e => e.Temperature).HasMaxLength(50);
                 entity.Property(e => e.RelativeHumidity).HasMaxLength(50);
                 entity.Property(e => e.AtmosphericPressure).HasMaxLength(50);
@@ -156,6 +161,7 @@ namespace CAL_QR.Data
                 entity.Property(e => e.AverageCorrectionFactor).HasMaxLength(50);
                 entity.Property(e => e.CorrectedReadingFormula).HasMaxLength(200);
                 entity.Property(e => e.ComplianceVerdict).HasMaxLength(300);
+                entity.Property(e => e.CalibrationStandard).HasMaxLength(500);
 
                 entity.Property(e => e.RadiationSource).HasMaxLength(200);
                 entity.Property(e => e.ReferenceGeometry).HasMaxLength(200);
@@ -190,6 +196,7 @@ namespace CAL_QR.Data
                 entity.Property(e => e.SourceId).HasMaxLength(100);
                 entity.Property(e => e.Radionuclide).HasMaxLength(100);
                 entity.Property(e => e.Scale).HasMaxLength(100);
+                entity.Property(e => e.ReferenceDoseLevel).HasMaxLength(100);
                 entity.Property(e => e.ReferenceValue).HasMaxLength(100);
                 entity.Property(e => e.MeasuredReading).HasMaxLength(100);
                 entity.Property(e => e.CorrectionFactor).HasMaxLength(100);

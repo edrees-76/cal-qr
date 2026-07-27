@@ -12,6 +12,12 @@ namespace CAL_QR.Models
         public string? SourceId { get; set; }
         public string? Radionuclide { get; set; }
         public string? Scale { get; set; }
+
+        // مستوى الجرعة المرجعية في نماذج PED (مثل 1.0 mSv). حقل منفصل عن Scale عمداً:
+        // Scale نطاق تضخيم (×0.1، ×10) في نماذج المجسات، وهذا جرعة مرجعية —
+        // نطاقان دلاليان مختلفان رغم تطابق الموضع في جدول الشهادة.
+        public string? ReferenceDoseLevel { get; set; }
+
         public string? ReferenceValue { get; set; }
         public string? MeasuredReading { get; set; }
 

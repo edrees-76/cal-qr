@@ -499,6 +499,190 @@ namespace CAL_QR.Tests
             }
         }
 
+        // مخطط الجدولين كما كان قبل إضافة الأعمدة الستة المكتشفة من نماذج
+        // Beta Scintillation Probe و PED و Dose Rate Meter. نصوص ثابتة لا مستوفاة،
+        // تفادياً لتحذير EF1002.
+        private const string OldSchemaCertificatesSql = @"
+            CREATE TABLE ""Certificates"" (
+                ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_Certificates"" PRIMARY KEY AUTOINCREMENT,
+                ""CalibrationRecordId"" INTEGER NOT NULL,
+                ""CertificateNumber"" TEXT NOT NULL,
+                ""ReferenceNo"" TEXT NULL,
+                ""ClientName"" TEXT NOT NULL,
+                ""ClientAddress"" TEXT NULL,
+                ""DeviceModel"" TEXT NOT NULL,
+                ""DeviceSerialNumber"" TEXT NOT NULL,
+                ""DeviceManufacturer"" TEXT NULL,
+                ""SurveyMeterModel"" TEXT NULL,
+                ""SurveyMeterSerialNumber"" TEXT NULL,
+                ""Temperature"" TEXT NULL,
+                ""RelativeHumidity"" TEXT NULL,
+                ""AtmosphericPressure"" TEXT NULL,
+                ""AverageCorrectionFactor"" TEXT NULL,
+                ""CorrectedReadingFormula"" TEXT NULL,
+                ""ComplianceVerdict"" TEXT NULL,
+                ""MethodologyEnabled"" INTEGER NOT NULL,
+                ""RadiationSource"" TEXT NULL,
+                ""ReferenceGeometry"" TEXT NULL,
+                ""MethodologyText"" TEXT NULL,
+                ""TraceabilityReference"" TEXT NULL,
+                ""UncertaintyEnabled"" INTEGER NOT NULL,
+                ""CombinedUncertainty"" TEXT NULL,
+                ""ExpandedUncertainty"" TEXT NULL,
+                ""CoverageFactor"" TEXT NULL,
+                ""AdditionalInformation"" TEXT NULL,
+                ""Notes"" TEXT NULL,
+                ""QrPayload"" TEXT NULL,
+                ""QrPayloadVersion"" TEXT NULL,
+                ""CalibratedByName"" TEXT NULL,
+                ""CalibratedByTitle"" TEXT NULL,
+                ""CalibratedByDate"" TEXT NULL,
+                ""ReviewedByName"" TEXT NULL,
+                ""ReviewedByTitle"" TEXT NULL,
+                ""ReviewedByDate"" TEXT NULL,
+                ""ApprovedByName"" TEXT NULL,
+                ""ApprovedByTitle"" TEXT NULL,
+                ""ApprovedByDate"" TEXT NULL,
+                ""AuthorizedByName"" TEXT NULL,
+                ""AuthorizedByTitle"" TEXT NULL,
+                ""AuthorizedByDate"" TEXT NULL,
+                ""IssuedAt"" TEXT NOT NULL,
+                ""IsDeleted"" INTEGER NOT NULL,
+                ""CreatedAt"" TEXT NOT NULL,
+                ""UpdatedAt"" TEXT NOT NULL,
+                CONSTRAINT ""FK_Certificates_CalibrationRecords_CalibrationRecordId"" FOREIGN KEY (""CalibrationRecordId"") REFERENCES ""CalibrationRecords"" (""Id"") ON DELETE RESTRICT
+            );";
+
+        private const string OldSchemaCalibrationResultsSql = @"
+            CREATE TABLE ""CertificateCalibrationResults"" (
+                ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_CertificateCalibrationResults"" PRIMARY KEY AUTOINCREMENT,
+                ""CertificateId"" INTEGER NOT NULL,
+                ""SortOrder"" INTEGER NOT NULL,
+                ""SourceId"" TEXT NULL,
+                ""Radionuclide"" TEXT NULL,
+                ""Scale"" TEXT NULL,
+                ""ReferenceValue"" TEXT NULL,
+                ""MeasuredReading"" TEXT NULL,
+                ""CorrectionFactor"" TEXT NULL,
+                ""AbsoluteRelativeError"" TEXT NULL,
+                ""Unit"" TEXT NULL,
+                ""Remarks"" TEXT NULL,
+                CONSTRAINT ""FK_CertificateCalibrationResults_Certificates_CertificateId"" FOREIGN KEY (""CertificateId"") REFERENCES ""Certificates"" (""Id"") ON DELETE CASCADE
+            );";
+
+        [Fact]
+        public void Migrator_AddsNewCertificateColumns_OnDatabaseWithOldSchema()
+        {
+            string dbPath = NewDbPath("oldschema");
+            var options = OptionsFor(dbPath);
+
+            try
+            {
+                // 1. قاعدة بيانات حقيقية بالمخطط الكامل الحالي
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                // 2. محاكاة نسخة مثبَّتة قديمة: إسقاط الجدولين وإعادة إنشائهما بلا الأعمدة الستة
+                using (var context = new CalQrDbContext(options))
+                {
+                    DropTable(context, "CertificateCalibrationResults");
+                    DropTable(context, "Certificates");
+                    context.Database.ExecuteSqlRaw(OldSchemaCertificatesSql);
+                    context.Database.ExecuteSqlRaw(OldSchemaCalibrationResultsSql);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.False(ColumnExists(context, "Certificates", "MeasurementType"));
+                    Assert.False(ColumnExists(context, "Certificates", "Distance"));
+                    Assert.False(ColumnExists(context, "Certificates", "CountingTime"));
+                    Assert.False(ColumnExists(context, "Certificates", "CountingUnit"));
+                    Assert.False(ColumnExists(context, "Certificates", "CalibrationStandard"));
+                    Assert.False(ColumnExists(context, "CertificateCalibrationResults", "ReferenceDoseLevel"));
+                }
+
+                // 3. تشغيل الهجرة على القاعدة ذات المخطط القديم
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                // 4. إثبات وجود الأعمدة الستة عبر PRAGMA table_info
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.True(ColumnExists(context, "Certificates", "MeasurementType"));
+                    Assert.True(ColumnExists(context, "Certificates", "Distance"));
+                    Assert.True(ColumnExists(context, "Certificates", "CountingTime"));
+                    Assert.True(ColumnExists(context, "Certificates", "CountingUnit"));
+                    Assert.True(ColumnExists(context, "Certificates", "CalibrationStandard"));
+                    Assert.True(ColumnExists(context, "CertificateCalibrationResults", "ReferenceDoseLevel"));
+                }
+
+                // 5. كتابة وقراءة فعلية تملأ الحقول الستة لإثبات أنها عاملة
+                using (var context = new CalQrDbContext(options))
+                {
+                    int recordId = SeedCalibrationRecord(context, "CERT-OLDSCHEMA-001");
+                    var certificate = NewCertificate(recordId, "CERT-OLDSCHEMA-001");
+                    certificate.MeasurementType = "Personal Dose Measurement (mSv)";
+                    certificate.Distance = "1.0 meter";
+                    certificate.CountingTime = "60 Sec";
+                    certificate.CountingUnit = "kCPM";
+                    certificate.CalibrationStandard = "SSDL-TNRC Internal Calibration Procedure Ref.: SSDL-CP-01 Implemented in accordance with ISO/IEC 17025:2017 requirements.";
+                    certificate.CalibrationResults.Add(new CertificateCalibrationResult
+                    {
+                        SortOrder = 1,
+                        Radionuclide = "Cs-137",
+                        ReferenceDoseLevel = "1.0 mSv",
+                        ReferenceValue = "1.00"
+                    });
+                    context.Certificates.Add(certificate);
+                    context.SaveChanges();
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    var stored = context.Certificates.Include(c => c.CalibrationResults).Single();
+                    Assert.Equal("Personal Dose Measurement (mSv)", stored.MeasurementType);
+                    Assert.Equal("1.0 meter", stored.Distance);
+                    Assert.Equal("60 Sec", stored.CountingTime);
+                    Assert.Equal("kCPM", stored.CountingUnit);
+                    Assert.StartsWith("SSDL-TNRC Internal Calibration Procedure", stored.CalibrationStandard);
+                    Assert.Equal("1.0 mSv", stored.CalibrationResults.Single().ReferenceDoseLevel);
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        private static bool ColumnExists(CalQrDbContext context, string tableName, string columnName)
+        {
+            var connection = context.Database.GetDbConnection();
+            bool alreadyOpen = connection.State == System.Data.ConnectionState.Open;
+            try
+            {
+                if (!alreadyOpen) connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = $"PRAGMA table_info({tableName});";
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    if (string.Equals(reader["name"]?.ToString(), columnName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            finally
+            {
+                if (!alreadyOpen) connection.Close();
+            }
+        }
+
         private static void DropTable(CalQrDbContext context, string tableName)
         {
             var connection = context.Database.GetDbConnection();

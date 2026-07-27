@@ -78,12 +78,17 @@ namespace CAL_QR.Data
                         ""DeviceManufacturer"" TEXT NULL,
                         ""SurveyMeterModel"" TEXT NULL,
                         ""SurveyMeterSerialNumber"" TEXT NULL,
+                        ""MeasurementType"" TEXT NULL,
+                        ""Distance"" TEXT NULL,
+                        ""CountingTime"" TEXT NULL,
+                        ""CountingUnit"" TEXT NULL,
                         ""Temperature"" TEXT NULL,
                         ""RelativeHumidity"" TEXT NULL,
                         ""AtmosphericPressure"" TEXT NULL,
                         ""AverageCorrectionFactor"" TEXT NULL,
                         ""CorrectedReadingFormula"" TEXT NULL,
                         ""ComplianceVerdict"" TEXT NULL,
+                        ""CalibrationStandard"" TEXT NULL,
                         ""MethodologyEnabled"" INTEGER NOT NULL,
                         ""RadiationSource"" TEXT NULL,
                         ""ReferenceGeometry"" TEXT NULL,
@@ -125,6 +130,7 @@ namespace CAL_QR.Data
                         ""SourceId"" TEXT NULL,
                         ""Radionuclide"" TEXT NULL,
                         ""Scale"" TEXT NULL,
+                        ""ReferenceDoseLevel"" TEXT NULL,
                         ""ReferenceValue"" TEXT NULL,
                         ""MeasuredReading"" TEXT NULL,
                         ""CorrectionFactor"" TEXT NULL,
@@ -161,6 +167,18 @@ namespace CAL_QR.Data
                         CONSTRAINT ""FK_CertificateFunctionalChecks_Certificates_CertificateId"" FOREIGN KEY (""CertificateId"") REFERENCES ""Certificates"" (""Id"") ON DELETE CASCADE
                     );
                 ");
+
+                // Defensive migrations for the columns discovered in the Beta Scintillation Probe,
+                // PED and Dose Rate Meter certificate forms. The CREATE TABLE statements above cover
+                // databases created from now on; these ALTER statements cover databases where the
+                // Certificate tables already exist without these columns. Without them the first
+                // query against Certificates fails with "no such column".
+                ExecuteSqlIfColumnMissing(context, "Certificates", "MeasurementType", "ALTER TABLE Certificates ADD COLUMN MeasurementType TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "Distance", "ALTER TABLE Certificates ADD COLUMN Distance TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CountingTime", "ALTER TABLE Certificates ADD COLUMN CountingTime TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CountingUnit", "ALTER TABLE Certificates ADD COLUMN CountingUnit TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationStandard", "ALTER TABLE Certificates ADD COLUMN CalibrationStandard TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "CertificateCalibrationResults", "ReferenceDoseLevel", "ALTER TABLE CertificateCalibrationResults ADD COLUMN ReferenceDoseLevel TEXT NULL;");
 
                 // Certificate indexes. IX_Certificates_CalibrationRecordId is a partial unique index:
                 // it forbids two live certificates for one calibration record, yet still allows issuing

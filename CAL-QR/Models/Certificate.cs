@@ -26,6 +26,17 @@ namespace CAL_QR.Models
         public string? SurveyMeterModel { get; set; }
         public string? SurveyMeterSerialNumber { get; set; }
 
+        // نوع القياس والمسافة (تظهر في نماذج PED و Dose Rate Meter)
+        // مثال: MeasurementType = "Dose Rate Measurement (µSv/h)" أو "Personal Dose Measurement (µSv)"
+        // مثال: Distance = "1.0 meter"
+        public string? MeasurementType { get; set; }
+        public string? Distance { get; set; }
+
+        // معلومات العدّ (تظهر في نماذج المجسات: Pancake و Beta)
+        // مثال: CountingTime = "60 Sec"، CountingUnit = "kCPM"
+        public string? CountingTime { get; set; }
+        public string? CountingUnit { get; set; }
+
         // الظروف البيئية
         public string? Temperature { get; set; }
         public string? RelativeHumidity { get; set; }
@@ -35,6 +46,11 @@ namespace CAL_QR.Models
         public string? AverageCorrectionFactor { get; set; }
         public string? CorrectedReadingFormula { get; set; }
         public string? ComplianceVerdict { get; set; }
+
+        // المرجع الإجرائي للمعايرة (يظهر في كل النماذج)
+        // مثال: "SSDL-TNRC Internal Calibration Procedure Ref.: SSDL-CP-01
+        // Implemented in accordance with ISO/IEC 17025:2017 requirements."
+        public string? CalibrationStandard { get; set; }
 
         // منهجية المعايرة (اختياري على مستوى القسم بأكمله)
         public bool MethodologyEnabled { get; set; } = false;

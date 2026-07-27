@@ -38,19 +38,24 @@ namespace CAL_QR.Services
 
             try
             {
-                // 1. مسح كافة سجلات المعايرة
+                // 1. مسح كافة الشهادات قبل سجلات المعايرة، لأن علاقة Certificate → CalibrationRecord
+                // بسلوك Restrict فيمنع حذف السجل قبل شهادته.
+                // الجداول الأبناء الثلاثة للشهادة تُحذف تلقائياً بسلوك Cascade.
+                context.Certificates.RemoveRange(await context.Certificates.ToListAsync());
+
+                // 2. مسح كافة سجلات المعايرة
                 context.CalibrationRecords.RemoveRange(await context.CalibrationRecords.ToListAsync());
 
-                // 2. مسح كافة سجلات التنبيهات المعتمدة (AcknowledgedExpiredDevices)
+                // 3. مسح كافة سجلات التنبيهات المعتمدة (AcknowledgedExpiredDevices)
                 context.AcknowledgedExpiredDevices.RemoveRange(await context.AcknowledgedExpiredDevices.ToListAsync());
 
-                // 3. مسح كافة الأجهزة
+                // 4. مسح كافة الأجهزة
                 context.Devices.RemoveRange(await context.Devices.ToListAsync());
 
-                // 4. مسح كافة الجهات المالكة
+                // 5. مسح كافة الجهات المالكة
                 context.Owners.RemoveRange(await context.Owners.ToListAsync());
 
-                // 5. مسح كافة أنواع الأجهزة وإعادة إضافة الأنواع الخمسة الافتراضية لربط النظام بحالة تثبيت نظيفة
+                // 6. مسح كافة أنواع الأجهزة وإعادة إضافة الأنواع الخمسة الافتراضية لربط النظام بحالة تثبيت نظيفة
                 context.DeviceTypes.RemoveRange(await context.DeviceTypes.ToListAsync());
 
                 var defaultDeviceTypes = new[]
@@ -72,7 +77,7 @@ namespace CAL_QR.Services
                     });
                 }
 
-                // 6. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (مع الحفاظ الكامل على بقية الإعدادات وسجل AuditLog)
+                // 7. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (مع الحفاظ الكامل على بقية الإعدادات وسجل AuditLog)
                 var snapshotSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "DevSeededDataSnapshot");
                 if (snapshotSetting != null)
                 {

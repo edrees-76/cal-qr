@@ -11,6 +11,7 @@ using CAL_QR.Repositories;
 
 namespace CAL_QR.Tests
 {
+    [Collection("SharedDiskFolders")]
     public class SystemResetServiceTests
     {
         [Fact]

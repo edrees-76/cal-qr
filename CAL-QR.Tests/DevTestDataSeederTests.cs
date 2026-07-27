@@ -10,6 +10,15 @@ using CAL_QR.Services;
 
 namespace CAL_QR.Tests
 {
+    /// <summary>
+    /// مجموعة تجمع الاختبارات التي تتشارك مجلدي QR و Attachments تحت BaseDirectory،
+    /// فتمنع تشغيلها على التوازي. بدونها يمسح اختبار التصفير الكامل محتويات المجلدين
+    /// بينما يعتمد اختبار الصفر التام على وجود مجلد عيّنة أنشأه للتوّ.
+    /// </summary>
+    [CollectionDefinition("SharedDiskFolders")]
+    public class SharedDiskFoldersCollection { }
+
+    [Collection("SharedDiskFolders")]
     public class DevTestDataSeederTests
     {
         [Fact]

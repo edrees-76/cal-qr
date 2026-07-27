@@ -19,6 +19,10 @@ namespace CAL_QR.Data
         public DbSet<AppSetting> AppSettings { get; set; } = null!;
         public DbSet<AcknowledgedExpiredDevice> AcknowledgedExpiredDevices { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Certificate> Certificates { get; set; } = null!;
+        public DbSet<CertificateCalibrationResult> CertificateCalibrationResults { get; set; } = null!;
+        public DbSet<CertificateUncertaintyComponent> CertificateUncertaintyComponents { get; set; } = null!;
+        public DbSet<CertificateFunctionalCheck> CertificateFunctionalChecks { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -120,6 +124,116 @@ namespace CAL_QR.Data
                     .WithMany()
                     .HasForeignKey(e => e.UserId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Certificate Indexes and constraints
+            modelBuilder.Entity<Certificate>(entity =>
+            {
+                entity.HasIndex(e => e.CertificateNumber).IsUnique();
+                // فهرس فريد مشروط يمنع على مستوى قاعدة البيانات وجود شهادتين غير محذوفتين
+                // لسجل معايرة واحد، مع السماح بإصدار شهادة بديلة بعد الحذف الناعم للأولى
+                entity.HasIndex(e => e.CalibrationRecordId)
+                    .IsUnique()
+                    .HasFilter("\"IsDeleted\" = 0");
+                entity.HasIndex(e => e.IsDeleted);
+                entity.HasIndex(e => e.IssuedAt);
+
+                entity.Property(e => e.CertificateNumber).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.ReferenceNo).HasMaxLength(100);
+
+                entity.Property(e => e.ClientName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.ClientAddress).HasMaxLength(300);
+                entity.Property(e => e.DeviceModel).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.DeviceSerialNumber).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.DeviceManufacturer).HasMaxLength(200);
+                entity.Property(e => e.SurveyMeterModel).HasMaxLength(200);
+                entity.Property(e => e.SurveyMeterSerialNumber).HasMaxLength(100);
+
+                entity.Property(e => e.Temperature).HasMaxLength(50);
+                entity.Property(e => e.RelativeHumidity).HasMaxLength(50);
+                entity.Property(e => e.AtmosphericPressure).HasMaxLength(50);
+
+                entity.Property(e => e.AverageCorrectionFactor).HasMaxLength(50);
+                entity.Property(e => e.CorrectedReadingFormula).HasMaxLength(200);
+                entity.Property(e => e.ComplianceVerdict).HasMaxLength(300);
+
+                entity.Property(e => e.RadiationSource).HasMaxLength(200);
+                entity.Property(e => e.ReferenceGeometry).HasMaxLength(200);
+                entity.Property(e => e.TraceabilityReference).HasMaxLength(300);
+
+                entity.Property(e => e.CombinedUncertainty).HasMaxLength(50);
+                entity.Property(e => e.ExpandedUncertainty).HasMaxLength(50);
+                entity.Property(e => e.CoverageFactor).HasMaxLength(20);
+
+                entity.Property(e => e.QrPayloadVersion).HasMaxLength(20);
+
+                entity.Property(e => e.CalibratedByName).HasMaxLength(200);
+                entity.Property(e => e.CalibratedByTitle).HasMaxLength(200);
+                entity.Property(e => e.ReviewedByName).HasMaxLength(200);
+                entity.Property(e => e.ReviewedByTitle).HasMaxLength(200);
+                entity.Property(e => e.ApprovedByName).HasMaxLength(200);
+                entity.Property(e => e.ApprovedByTitle).HasMaxLength(200);
+                entity.Property(e => e.AuthorizedByName).HasMaxLength(200);
+                entity.Property(e => e.AuthorizedByTitle).HasMaxLength(200);
+
+                entity.HasOne(c => c.CalibrationRecord)
+                    .WithOne()
+                    .HasForeignKey<Certificate>(c => c.CalibrationRecordId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // CertificateCalibrationResult constraints
+            modelBuilder.Entity<CertificateCalibrationResult>(entity =>
+            {
+                entity.HasIndex(e => e.CertificateId);
+
+                entity.Property(e => e.SourceId).HasMaxLength(100);
+                entity.Property(e => e.Radionuclide).HasMaxLength(100);
+                entity.Property(e => e.Scale).HasMaxLength(100);
+                entity.Property(e => e.ReferenceValue).HasMaxLength(100);
+                entity.Property(e => e.MeasuredReading).HasMaxLength(100);
+                entity.Property(e => e.CorrectionFactor).HasMaxLength(100);
+                entity.Property(e => e.AbsoluteRelativeError).HasMaxLength(100);
+                entity.Property(e => e.Unit).HasMaxLength(50);
+                entity.Property(e => e.Remarks).HasMaxLength(300);
+
+                entity.HasOne(d => d.Certificate)
+                    .WithMany(p => p.CalibrationResults)
+                    .HasForeignKey(d => d.CertificateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // CertificateUncertaintyComponent constraints
+            modelBuilder.Entity<CertificateUncertaintyComponent>(entity =>
+            {
+                entity.HasIndex(e => e.CertificateId);
+
+                entity.Property(e => e.ComponentName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.EvaluationType).HasMaxLength(10);
+                entity.Property(e => e.StandardUncertainty).HasMaxLength(50);
+                entity.Property(e => e.ContributionPercent).HasMaxLength(50);
+                entity.Property(e => e.Distribution).HasMaxLength(50);
+
+                entity.HasOne(d => d.Certificate)
+                    .WithMany(p => p.UncertaintyComponents)
+                    .HasForeignKey(d => d.CertificateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // CertificateFunctionalCheck constraints
+            modelBuilder.Entity<CertificateFunctionalCheck>(entity =>
+            {
+                entity.HasIndex(e => e.CertificateId);
+
+                entity.Property(e => e.CheckName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Requirement).HasMaxLength(300);
+                entity.Property(e => e.Result).HasMaxLength(100);
+                entity.Property(e => e.Remarks).HasMaxLength(300);
+
+                entity.HasOne(d => d.Certificate)
+                    .WithMany(p => p.FunctionalChecks)
+                    .HasForeignKey(d => d.CertificateId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

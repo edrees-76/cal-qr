@@ -357,23 +357,31 @@ namespace CAL_QR.Data
 
             try
             {
-                // 1. حذف سجلات المعايرة الموسومة
+                // 1. حذف الشهادات المرتبطة بالسجلات الموسومة قبل حذف السجلات نفسها،
+                // لأن علاقة Certificate → CalibrationRecord بسلوك Restrict فيمنع حذف السجل قبلها.
+                // الجداول الأبناء الثلاثة للشهادة تُحذف تلقائياً بسلوك Cascade.
+                var certificatesToDelete = await context.Certificates
+                    .Where(c => calibrationRecordIds.Contains(c.CalibrationRecordId))
+                    .ToListAsync();
+                context.Certificates.RemoveRange(certificatesToDelete);
+
+                // 2. حذف سجلات المعايرة الموسومة
                 context.CalibrationRecords.RemoveRange(recordsToDelete);
 
-                // 2. حذف الأجهزة الموسومة
+                // 3. حذف الأجهزة الموسومة
                 context.Devices.RemoveRange(devicesToDelete);
 
-                // 3. حذف الجهات المالكة الموسومة
+                // 4. حذف الجهات المالكة الموسومة
                 context.Owners.RemoveRange(ownersToDelete);
 
-                // 4. حذف سجلات التنبيهات المعتمدة المرتبطة بهذه الأجهزة/السجلات (AcknowledgedExpiredDevices)
+                // 5. حذف سجلات التنبيهات المعتمدة المرتبطة بهذه الأجهزة/السجلات (AcknowledgedExpiredDevices)
                 // الملاحظة التوثيقية: يحتوي جدول AcknowledgedExpiredDevices على الأعمدة: Id, DeviceId, CalibrationRecordId, AcknowledgedDate
                 var orphanedAcks = await context.AcknowledgedExpiredDevices
                     .Where(a => deviceIds.Contains(a.DeviceId) || calibrationRecordIds.Contains(a.CalibrationRecordId))
                     .ToListAsync();
                 context.AcknowledgedExpiredDevices.RemoveRange(orphanedAcks);
 
-                // 5. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (تنظيف توثيقي)
+                // 6. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (تنظيف توثيقي)
                 var setting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "DevSeededDataSnapshot");
                 if (setting != null)
                 {

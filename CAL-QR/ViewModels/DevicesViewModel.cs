@@ -47,6 +47,11 @@ namespace CAL_QR.ViewModels
         private string _filterResult = "الكل"; // الكل | ناجح | راسب | مشروط | غير معاير
         private string _filterStatus = "الكل"; // الكل | سارية | قريبة | منتهية
 
+        // Year scope (independent of the advanced search panel — always visible, applied on change)
+        private ObservableCollection<int?> _availableYears = new();
+        private int? _selectedYear;
+        private int? _defaultYear;
+
         // View configuration
         private bool _isTableView = true; // true = Table, false = Cards
         private int _pageSize = 20; // 10 | 20 | 50
@@ -204,6 +209,21 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _filterStatus, value);
         }
 
+        public ObservableCollection<int?> AvailableYears => _availableYears;
+
+        public int? SelectedYear
+        {
+            get => _selectedYear;
+            set
+            {
+                if (SetProperty(ref _selectedYear, value))
+                {
+                    CurrentPage = 1;
+                    _ = LoadDataAsync();
+                }
+            }
+        }
+
         public bool IsTableView
         {
             get => _isTableView;
@@ -271,6 +291,8 @@ namespace CAL_QR.ViewModels
                     DeviceTypesFilter = new ObservableCollection<DeviceType>(types);
                 }
 
+                await LoadAvailableYearsAsync(computeDefault: AvailableYears.Count == 0);
+
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     var thresholdSetting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AlertDaysThreshold");
@@ -296,6 +318,11 @@ namespace CAL_QR.ViewModels
                             r.Device!.Owner!.Name.ToLower().Contains(simple) ||
                             r.CertificateNumber.ToLower().Contains(simple)
                         );
+                    }
+
+                    if (SelectedYear.HasValue)
+                    {
+                        query = query.Where(r => r.CalibrationDate.Year == SelectedYear.Value);
                     }
 
                     if (IsAdvancedSearchVisible)
@@ -438,6 +465,65 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        private async Task LoadAvailableYearsAsync(bool computeDefault)
+        {
+            using (var context = _contextFactory.CreateDbContext())
+            {
+                var years = await context.CalibrationRecords
+                    .AsNoTracking()
+                    .Where(r => !r.IsDeleted && !r.Device!.IsDeleted)
+                    .Select(r => r.CalibrationDate.Year)
+                    .Distinct()
+                    .OrderByDescending(y => y)
+                    .ToListAsync();
+
+                if (computeDefault)
+                {
+                    _defaultYear = ComputeDefaultYear(years);
+                }
+
+                // Guard against an endless cycle: rebuilding the bound collection resets the
+                // ComboBox selection to null, which fires the SelectedYear setter and reloads.
+                // Rebuild only when the set of years actually changed.
+                var current = _availableYears.Skip(1).Select(y => y!.Value).ToList();
+                if (_availableYears.Count > 0 && current.SequenceEqual(years))
+                {
+                    return;
+                }
+
+                int? preserved = computeDefault ? _defaultYear : _selectedYear;
+
+                _availableYears.Clear();
+                _availableYears.Add(null); // "كل السنوات"
+                foreach (var year in years)
+                {
+                    _availableYears.Add(year);
+                }
+
+                if (!preserved.HasValue || years.Contains(preserved.Value))
+                {
+                    // Assign the backing field directly: the property setter would trigger a second load cycle
+                    _selectedYear = preserved;
+                }
+                else
+                {
+                    // The selected year no longer exists: recompute from the new list and keep
+                    // _defaultYear consistent with reality (ClearFiltersAsync relies on it).
+                    _defaultYear = ComputeDefaultYear(years);
+                    _selectedYear = _defaultYear;
+                }
+                OnPropertyChanged(nameof(SelectedYear));
+            }
+        }
+
+        private static int? ComputeDefaultYear(System.Collections.Generic.List<int> years)
+        {
+            int currentYear = DateTime.Today.Year;
+            return years.Contains(currentYear)
+                ? currentYear
+                : (years.Count > 0 ? years[0] : (int?)null);
+        }
+
         private async Task ClearFiltersAsync()
         {
             SearchText = string.Empty;
@@ -449,6 +535,9 @@ namespace CAL_QR.ViewModels
             FilterEndDate = null;
             FilterResult = "الكل";
             FilterStatus = "الكل";
+            // Backing field directly: LoadDataAsync is already called at the end of this method
+            _selectedYear = _defaultYear;
+            OnPropertyChanged(nameof(SelectedYear));
             CurrentPage = 1;
             await LoadDataAsync();
         }

@@ -4,7 +4,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="نموذج معايرة جهاز | Calibration Form" Height="620" Width="720"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="Transparent"
         FlowDirection="RightToLeft"
         WindowStyle="None"
@@ -14,7 +14,19 @@
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="White" BorderBrush="#1A3A6B">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="BorderThickness" Value="1.5" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WindowState}" Value="Maximized">
+                        <Setter Property="CornerRadius" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -23,7 +35,7 @@
             </Grid.RowDefinitions>
 
             <!-- Top Header Bar -->
-            <Grid Grid.Row="0" Margin="0,0,0,15">
+            <Grid Grid.Row="0" Margin="0,0,0,15" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -32,9 +44,25 @@
                     <TextBlock Text="سجل معايرة جهاز" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="إدخال بيانات المعايرة وتوليد كود التوقيع الرقمي" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
+                        <materialDesign:PackIcon x:Name="IconMaximize" Foreground="#1A3A6B" Width="20" Height="20">
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon">
+                                    <Setter Property="Kind" Value="WindowMaximize" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WindowState}" Value="Maximized">
+                                            <Setter Property="Kind" Value="WindowRestore" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" ToolTip="إغلاق">
+                        <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    </Button>
+                </StackPanel>
             </Grid>
 
             <!-- Form Content -->
@@ -66,12 +94,12 @@
                         
                         <StackPanel Grid.Column="0" Margin="5">
                             <TextBlock Text="الجهة المالكة *" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                            <ComboBox IsEditable="True" ItemsSource="{Binding Owners}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedOwner}" Text="{Binding OwnerText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <ComboBox IsEditable="True" ItemsSource="{Binding Owners}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedOwner}" Text="{Binding OwnerText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" ToolTip="{Binding OwnerText}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="5">
                             <TextBlock Text="نوع الجهاز *" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                            <ComboBox IsEditable="True" ItemsSource="{Binding DeviceTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDeviceType}" Text="{Binding DeviceTypeText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <ComboBox IsEditable="True" ItemsSource="{Binding DeviceTypes}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDeviceType}" Text="{Binding DeviceTypeText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" ToolTip="{Binding DeviceTypeText}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="5">

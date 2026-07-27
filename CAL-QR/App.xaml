@@ -144,6 +144,32 @@
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
+
+            <!-- 8. Unified Navy DataGrid TextBlock Style -->
+            <Style x:Key="UnifiedNavyDataGridTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#1A3A6B" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                        <Setter Property="Foreground" Value="White" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- 9. Unified Subtle DataGrid TextBlock Style -->
+            <Style x:Key="UnifiedSubtleDataGridTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#707070" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                        <Setter Property="Foreground" Value="#F0F0F0" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                        <Setter Property="Foreground" Value="#F0F0F0" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

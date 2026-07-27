@@ -468,7 +468,8 @@ namespace CAL_QR.ViewModels
 
             var dialog = _deviceDetailDialogFactory();
             var vm = (DeviceDetailViewModel)dialog.DataContext;
-            vm.LoadDeviceDetails(item.DeviceId);
+            int? preferredRecordId = item.CalibrationRecordId > 0 ? item.CalibrationRecordId : (int?)null;
+            vm.LoadDeviceDetails(item.DeviceId, preferredRecordId);
             vm.Saved += async (s, e) => await LoadDataAsync();
             dialog.ShowDialog();
         }
@@ -579,7 +580,7 @@ namespace CAL_QR.ViewModels
                     .FirstOrDefault(r => r.Id == recordId && !r.IsDeleted);
                 if (record != null)
                 {
-                    ShowDeviceDetailsById(record.DeviceId);
+                    ShowDeviceDetailsById(record.DeviceId, record.Id);
                 }
             }
             catch (Exception ex)
@@ -588,7 +589,7 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void ShowDeviceDetailsById(int deviceId)
+        private void ShowDeviceDetailsById(int deviceId, int? preferredRecordId = null)
         {
             try
             {
@@ -628,7 +629,7 @@ namespace CAL_QR.ViewModels
                 {
                     var dialog = _deviceDetailDialogFactory();
                     var vm = (DeviceDetailViewModel)dialog.DataContext;
-                    vm.LoadDeviceDetails(item.DeviceId);
+                    vm.LoadDeviceDetails(item.DeviceId, preferredRecordId);
                     dialog.ShowDialog();
                 });
             }
@@ -683,6 +684,6 @@ namespace CAL_QR.ViewModels
         
         public string ResultAr => Result == "Passed" ? "✅ ناجح" : Result == "Failed" ? "❌ راسب" : Result == "Conditional" ? "⚠️ مشروط" : Result;
 
-        public string RowBackground => Status == "سارية" ? "#E8F5E9" : Status == "قريبة الانتهاء" ? "#FFFDE7" : Status == "منتهية" ? "#FFEBEE" : "Transparent";
+        public string RowBackground => Status == "سارية" ? "#F4FBF7" : Status == "قريبة الانتهاء" ? "#FFFDF0" : Status == "منتهية" ? "#FFF5F5" : "Transparent";
     }
 }

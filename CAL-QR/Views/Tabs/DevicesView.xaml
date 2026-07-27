@@ -198,7 +198,7 @@
                         </DataGridTemplateColumn>
 
                         <!-- عمود التسلسل -->
-                        <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="50" MinWidth="40" ElementStyle="{StaticResource DynamicTextColumnStyle}">
+                        <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="60" MinWidth="55" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="ت" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>

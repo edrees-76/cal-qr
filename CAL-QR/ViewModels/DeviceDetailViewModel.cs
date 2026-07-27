@@ -99,7 +99,7 @@ namespace CAL_QR.ViewModels
         public ICommand OpenAttachmentCommand { get; }
         #endregion
 
-        public void LoadDeviceDetails(int deviceId)
+        public void LoadDeviceDetails(int deviceId, int? preferredRecordId = null)
         {
             try
             {
@@ -112,7 +112,14 @@ namespace CAL_QR.ViewModels
                 }
                 Calibrations = new ObservableCollection<CalibrationRecord>(records);
 
-                SelectedRecord = records.FirstOrDefault();
+                if (preferredRecordId.HasValue && preferredRecordId.Value > 0)
+                {
+                    SelectedRecord = records.FirstOrDefault(r => r.Id == preferredRecordId.Value) ?? records.FirstOrDefault();
+                }
+                else
+                {
+                    SelectedRecord = records.FirstOrDefault();
+                }
 
                 var timelineRecords = records.OrderBy(r => r.CalibrationDate).ToList();
                 var nodes = new List<TimelineNode>();

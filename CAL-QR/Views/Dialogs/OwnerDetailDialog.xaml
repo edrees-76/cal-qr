@@ -128,8 +128,8 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="5,2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Model}" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
-                                                <TextBlock Text="{Binding SerialNumber}" FontSize="10" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="{Binding Model}" FontWeight="Bold" Style="{StaticResource UnifiedNavyDataGridTextBlockStyle}" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="{Binding SerialNumber}" FontSize="10" Style="{StaticResource UnifiedSubtleDataGridTextBlockStyle}" FontFamily="{StaticResource CairoFont}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

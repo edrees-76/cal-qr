@@ -488,7 +488,7 @@ namespace CAL_QR.Services
                                 col.Item().PaddingVertical(10);
 
                                 // Section 3: Top Categories
-                                col.Item().PaddingBottom(5).Text("3. توزيع المعايرات حسب الفئات الأكثر تكراراً").FontFamily("Cairo").Bold().FontSize(11).FontColor("#1A3A6B");
+                                col.Item().PaddingBottom(5).Text("3. توزيع المعايرات حسب الفئات").FontFamily("Cairo").Bold().FontSize(11).FontColor("#1A3A6B");
                                 
                                 col.Item().Row(r =>
                                 {
@@ -502,7 +502,7 @@ namespace CAL_QR.Services
                                             t.Cell().Background("#34495E").Padding(3).AlignCenter().Text("الجهة").FontFamily("Cairo").Bold().FontSize(8).FontColor(Colors.White);
                                             t.Cell().Background("#34495E").Padding(3).AlignCenter().Text("العدد").FontFamily("Cairo").Bold().FontSize(8).FontColor(Colors.White);
 
-                                            foreach (var item in data.ByOwner.Take(5))
+                                            foreach (var item in data.ByOwner)
                                             {
                                                 t.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(item.Name).FontFamily("Cairo").FontSize(8);
                                                 t.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignCenter().Text(item.Count.ToString()).FontFamily("Cairo").FontSize(8);
@@ -520,7 +520,7 @@ namespace CAL_QR.Services
                                             t.Cell().Background("#34495E").Padding(3).AlignCenter().Text("النوع").FontFamily("Cairo").Bold().FontSize(8).FontColor(Colors.White);
                                             t.Cell().Background("#34495E").Padding(3).AlignCenter().Text("العدد").FontFamily("Cairo").Bold().FontSize(8).FontColor(Colors.White);
 
-                                            foreach (var item in data.ByDeviceType.Take(5))
+                                            foreach (var item in data.ByDeviceType)
                                             {
                                                 t.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignRight().Text(item.Name).FontFamily("Cairo").FontSize(8);
                                                 t.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(3).AlignCenter().Text(item.Count.ToString()).FontFamily("Cairo").FontSize(8);
@@ -742,11 +742,13 @@ namespace CAL_QR.Services
                     }
 
                     // Section 3: Top Categories
-                    ws.Cell(14, 1).Value = "3. توزيع المعايرات حسب الفئات (الأكثر تكراراً)";
+                    ws.Cell(14, 1).Value = "3. توزيع المعايرات حسب الفئات";
                     ws.Cell(14, 1).Style.Font.FontName = "Cairo";
                     ws.Cell(14, 1).Style.Font.Bold = true;
                     ws.Cell(14, 1).Style.Font.FontSize = 12;
                     ws.Cell(14, 1).Style.Font.FontColor = XLColor.FromHtml("#1A3A6B");
+
+                    int maxRIdx = 17;
 
                     // By Owner
                     ws.Cell(15, 1).Value = "توزيع حسب الجهة المالكة";
@@ -759,7 +761,7 @@ namespace CAL_QR.Services
                     ws.Cell(16, 2).Style.Font.FontName = "Cairo";
                     ws.Cell(16, 2).Style.Font.Bold = true;
                     int rIdx = 17;
-                    foreach (var item in data.ByOwner.Take(5))
+                    foreach (var item in data.ByOwner)
                     {
                         ws.Cell(rIdx, 1).Value = item.Name;
                         ws.Cell(rIdx, 2).Value = item.Count;
@@ -767,6 +769,7 @@ namespace CAL_QR.Services
                         ws.Cell(rIdx, 2).Style.Font.FontName = "Cairo";
                         rIdx++;
                     }
+                    maxRIdx = Math.Max(maxRIdx, rIdx);
 
                     // By Device Type
                     int colStart = 4;
@@ -780,7 +783,7 @@ namespace CAL_QR.Services
                     ws.Cell(16, colStart + 1).Style.Font.FontName = "Cairo";
                     ws.Cell(16, colStart + 1).Style.Font.Bold = true;
                     rIdx = 17;
-                    foreach (var item in data.ByDeviceType.Take(5))
+                    foreach (var item in data.ByDeviceType)
                     {
                         ws.Cell(rIdx, colStart).Value = item.Name;
                         ws.Cell(rIdx, colStart + 1).Value = item.Count;
@@ -788,6 +791,7 @@ namespace CAL_QR.Services
                         ws.Cell(rIdx, colStart + 1).Style.Font.FontName = "Cairo";
                         rIdx++;
                     }
+                    maxRIdx = Math.Max(maxRIdx, rIdx);
 
                     // By Engineer
                     colStart = 7;
@@ -801,7 +805,7 @@ namespace CAL_QR.Services
                     ws.Cell(16, colStart + 1).Style.Font.FontName = "Cairo";
                     ws.Cell(16, colStart + 1).Style.Font.Bold = true;
                     rIdx = 17;
-                    foreach (var item in data.ByEngineer.Take(5))
+                    foreach (var item in data.ByEngineer)
                     {
                         ws.Cell(rIdx, colStart).Value = item.Name;
                         ws.Cell(rIdx, colStart + 1).Value = item.Count;
@@ -809,11 +813,12 @@ namespace CAL_QR.Services
                         ws.Cell(rIdx, colStart + 1).Style.Font.FontName = "Cairo";
                         rIdx++;
                     }
+                    maxRIdx = Math.Max(maxRIdx, rIdx);
 
                     // Section 4: Detailed Records (if requested)
                     if (data.IsDetailed && data.Records.Count > 0)
                     {
-                        int dStartRow = Math.Max(rIdx + 2, 25);
+                        int dStartRow = Math.Max(maxRIdx + 2, 25);
                         ws.Cell(dStartRow, 1).Value = "4. جدول السجلات التفصيلية للمعايرة خلال الفترة";
                         ws.Cell(dStartRow, 1).Style.Font.FontName = "Cairo";
                         ws.Cell(dStartRow, 1).Style.Font.Bold = true;

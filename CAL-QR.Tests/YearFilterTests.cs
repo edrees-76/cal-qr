@@ -187,5 +187,77 @@ namespace CAL_QR.Tests
             var empty = new System.Collections.Generic.List<int>();
             Assert.Null(ComputeDefaultYear(empty));
         }
+
+        // Mirrors DevicesViewModel.ParseYearText / YearToText (both private): the bound ComboBox
+        // value is text, the query needs a number, and "كل السنوات" is the catch-all — no sentinel
+        // number stands in for "all years".
+        private const string AllYearsLabel = "كل السنوات";
+
+        private static int? ParseYearText(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text) || text == AllYearsLabel)
+            {
+                return null;
+            }
+            return int.TryParse(text, out var year) ? year : (int?)null;
+        }
+
+        private static string YearToText(int? year) =>
+            year.HasValue ? year.Value.ToString() : AllYearsLabel;
+
+        [Fact]
+        public void YearText_RoundTrips_BetweenTextAndNullableInt()
+        {
+            // "كل السنوات" <-> null
+            Assert.Null(ParseYearText(AllYearsLabel));
+            Assert.Equal(AllYearsLabel, YearToText(null));
+
+            // "2026" <-> 2026
+            Assert.Equal(2026, ParseYearText("2026"));
+            Assert.Equal("2026", YearToText(2026));
+
+            // Round trip in both directions preserves the value
+            Assert.Equal(2026, ParseYearText(YearToText(2026)));
+            Assert.Equal(AllYearsLabel, YearToText(ParseYearText(AllYearsLabel)));
+
+            // Empty, whitespace, null and non-numeric text all fall back to "all years"
+            Assert.Null(ParseYearText(string.Empty));
+            Assert.Null(ParseYearText("   "));
+            Assert.Null(ParseYearText(null));
+            Assert.Null(ParseYearText("abc"));
+
+            // No sentinel number means "all years": 0 and -1 parse as themselves, not null
+            Assert.Equal(0, ParseYearText("0"));
+            Assert.Equal(-1, ParseYearText("-1"));
+        }
+
+        [Fact]
+        public void DefaultYear_IsNotResolved_WhenNoRecordsExist()
+        {
+            // The _defaultYearResolved field in DevicesViewModel is private; this mirrors the
+            // exact condition that guards it — the flag is raised only for a non-empty year list.
+            bool defaultYearResolved = false;
+
+            void ComputeDefaultOnce(System.Collections.Generic.List<int> years, out int? defaultYear)
+            {
+                defaultYear = ComputeDefaultYear(years);
+                if (years.Count > 0)
+                {
+                    defaultYearResolved = true;
+                }
+            }
+
+            // 1. Empty database: no default is knowable and the flag stays down, so the next
+            //    load recomputes instead of freezing on "كل السنوات" until the app restarts.
+            ComputeDefaultOnce(new System.Collections.Generic.List<int>(), out var firstDefault);
+            Assert.Null(firstDefault);
+            Assert.False(defaultYearResolved);
+
+            // 2. Data appears on a later load: the default now resolves and the flag latches.
+            int currentYear = DateTime.Today.Year;
+            ComputeDefaultOnce(new System.Collections.Generic.List<int> { currentYear, currentYear - 1 }, out var secondDefault);
+            Assert.Equal(currentYear, secondDefault);
+            Assert.True(defaultYearResolved);
+        }
     }
 }

@@ -48,9 +48,17 @@ namespace CAL_QR.ViewModels
         private string _filterStatus = "الكل"; // الكل | سارية | قريبة | منتهية
 
         // Year scope (independent of the advanced search panel — always visible, applied on change)
-        private ObservableCollection<int?> _availableYears = new();
+        // The bound collection holds text, matching the "النتيجة" and "الحالة" filters on this screen:
+        // a null ComboBox item means "no selection" and leaves the closed box blank, so the
+        // catch-all option is a real string item. The numeric value is kept separately for the query.
+        private const string AllYearsLabel = "كل السنوات";
+        private ObservableCollection<string> _availableYears = new();
+        private string _selectedYearText = AllYearsLabel;
         private int? _selectedYear;
         private int? _defaultYear;
+        // Raised only once the default has been computed from a non-empty year list, so a system
+        // that starts with no records still resolves its default after data appears.
+        private bool _defaultYearResolved = false;
 
         // View configuration
         private bool _isTableView = true; // true = Table, false = Cards
@@ -209,15 +217,16 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _filterStatus, value);
         }
 
-        public ObservableCollection<int?> AvailableYears => _availableYears;
+        public ObservableCollection<string> AvailableYears => _availableYears;
 
-        public int? SelectedYear
+        public string SelectedYearText
         {
-            get => _selectedYear;
+            get => _selectedYearText;
             set
             {
-                if (SetProperty(ref _selectedYear, value))
+                if (SetProperty(ref _selectedYearText, value))
                 {
+                    _selectedYear = ParseYearText(value);
                     CurrentPage = 1;
                     _ = LoadDataAsync();
                 }
@@ -291,7 +300,7 @@ namespace CAL_QR.ViewModels
                     DeviceTypesFilter = new ObservableCollection<DeviceType>(types);
                 }
 
-                await LoadAvailableYearsAsync(computeDefault: AvailableYears.Count == 0);
+                await LoadAvailableYearsAsync(computeDefault: !_defaultYearResolved);
 
                 using (var context = _contextFactory.CreateDbContext())
                 {
@@ -320,9 +329,9 @@ namespace CAL_QR.ViewModels
                         );
                     }
 
-                    if (SelectedYear.HasValue)
+                    if (_selectedYear.HasValue)
                     {
-                        query = query.Where(r => r.CalibrationDate.Year == SelectedYear.Value);
+                        query = query.Where(r => r.CalibrationDate.Year == _selectedYear.Value);
                     }
 
                     if (IsAdvancedSearchVisible)
@@ -480,13 +489,19 @@ namespace CAL_QR.ViewModels
                 if (computeDefault)
                 {
                     _defaultYear = ComputeDefaultYear(years);
+                    // Only a non-empty list settles the default. On an empty database the answer
+                    // is not yet knowable, so leave the flag down and retry on the next load.
+                    if (years.Count > 0)
+                    {
+                        _defaultYearResolved = true;
+                    }
                 }
 
                 // Guard against an endless cycle: rebuilding the bound collection resets the
-                // ComboBox selection to null, which fires the SelectedYear setter and reloads.
+                // ComboBox selection to null, which fires the SelectedYearText setter and reloads.
                 // Rebuild only when the set of years actually changed.
-                var current = _availableYears.Skip(1).Select(y => y!.Value).ToList();
-                if (_availableYears.Count > 0 && current.SequenceEqual(years))
+                var current = _availableYears.Skip(1).ToList();
+                if (_availableYears.Count > 0 && current.SequenceEqual(years.Select(y => y.ToString())))
                 {
                     return;
                 }
@@ -494,10 +509,10 @@ namespace CAL_QR.ViewModels
                 int? preserved = computeDefault ? _defaultYear : _selectedYear;
 
                 _availableYears.Clear();
-                _availableYears.Add(null); // "كل السنوات"
+                _availableYears.Add(AllYearsLabel);
                 foreach (var year in years)
                 {
-                    _availableYears.Add(year);
+                    _availableYears.Add(year.ToString());
                 }
 
                 if (!preserved.HasValue || years.Contains(preserved.Value))
@@ -512,7 +527,8 @@ namespace CAL_QR.ViewModels
                     _defaultYear = ComputeDefaultYear(years);
                     _selectedYear = _defaultYear;
                 }
-                OnPropertyChanged(nameof(SelectedYear));
+                _selectedYearText = YearToText(_selectedYear);
+                OnPropertyChanged(nameof(SelectedYearText));
             }
         }
 
@@ -523,6 +539,20 @@ namespace CAL_QR.ViewModels
                 ? currentYear
                 : (years.Count > 0 ? years[0] : (int?)null);
         }
+
+        // The bound value is text; the query needs a number. These two keep the pair in step
+        // without smuggling a sentinel number (0 / -1) into a range that means calendar years.
+        private static int? ParseYearText(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text) || text == AllYearsLabel)
+            {
+                return null;
+            }
+            return int.TryParse(text, out var year) ? year : (int?)null;
+        }
+
+        private static string YearToText(int? year) =>
+            year.HasValue ? year.Value.ToString() : AllYearsLabel;
 
         private async Task ClearFiltersAsync()
         {
@@ -537,7 +567,8 @@ namespace CAL_QR.ViewModels
             FilterStatus = "الكل";
             // Backing field directly: LoadDataAsync is already called at the end of this method
             _selectedYear = _defaultYear;
-            OnPropertyChanged(nameof(SelectedYear));
+            _selectedYearText = YearToText(_selectedYear);
+            OnPropertyChanged(nameof(SelectedYearText));
             CurrentPage = 1;
             await LoadDataAsync();
         }

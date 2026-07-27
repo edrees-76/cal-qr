@@ -174,24 +174,7 @@
 
                 <TextBlock Grid.Column="0" Text="سنة المعايرة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" VerticalAlignment="Center" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
 
-                <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableYears}" SelectedItem="{Binding SelectedYear}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock FontFamily="{StaticResource CairoFont}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Text" Value="{Binding}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                                <Setter Property="Text" Value="كل السنوات" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableYears}" SelectedItem="{Binding SelectedYearText}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
             </Grid>
         </Border>
 

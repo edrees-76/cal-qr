@@ -25,7 +25,16 @@ namespace CAL_QR.Models
         // و"Calibration Factor" في نماذج جاما — نفس الاختصار بمصطلحين حسب نوع الجهاز.
         public string? CorrectionFactor { get; set; }
 
+        // الخطأ النسبي بإشارته. يُخزَّن مع نظيره المطلق معاً بقرار معتمد، لمرونة
+        // التقارير والمراجعة اللاحقة (الإشارة تُفقد نهائياً لو خُزّن المطلق وحده).
+        public string? RelativeError { get; set; }
+
+        // القيمة المطلقة لـ RelativeError. تُشتق بإزالة إشارة السالب البادئة **نصياً**
+        // عبر MeasurementValueRules.AbsoluteOf — لا عبر Parse/Abs/ToString.
+        // السبب: القيم قد تكون غير رقمية ("< 0.1"، "N/A")، والتحليل الرقمي يُتلف
+        // الأرقام المعنوية ("-5.40" تعود "-5.4") وهو خلل تحت ISO/IEC 17025 لا تنسيق.
         public string? AbsoluteRelativeError { get; set; }
+
         public string? Unit { get; set; }
         public string? Remarks { get; set; }
 

@@ -23,6 +23,8 @@ namespace CAL_QR.Data
         public DbSet<CertificateCalibrationResult> CertificateCalibrationResults { get; set; } = null!;
         public DbSet<CertificateUncertaintyComponent> CertificateUncertaintyComponents { get; set; } = null!;
         public DbSet<CertificateFunctionalCheck> CertificateFunctionalChecks { get; set; } = null!;
+        public DbSet<CertificateSequence> CertificateSequence { get; set; } = null!;
+        public DbSet<CertificateVerifyCodeHistory> CertificateVerifyCodeHistory { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -171,7 +173,16 @@ namespace CAL_QR.Data
                 entity.Property(e => e.ExpandedUncertainty).HasMaxLength(50);
                 entity.Property(e => e.CoverageFactor).HasMaxLength(20);
 
+                entity.Property(e => e.CertificateTemplateType).HasMaxLength(200);
+
                 entity.Property(e => e.QrPayloadVersion).HasMaxLength(20);
+                entity.Property(e => e.VerifyCode).HasMaxLength(64);
+                entity.Property(e => e.SignaturePayloadVersion).HasMaxLength(20);
+
+                // فهرس البحث بالرمز — مسار «الكود السريع» يبحث به وحده.
+                // غير فريد عمداً: تصادم رمز ١٦ خانة ممكن نظرياً، وفهرس فريد
+                // كان سيُسقِط عملية إصدار مشروعة.
+                entity.HasIndex(e => e.VerifyCode);
 
                 entity.Property(e => e.CalibratedByName).HasMaxLength(200);
                 entity.Property(e => e.CalibratedByTitle).HasMaxLength(200);
@@ -200,6 +211,7 @@ namespace CAL_QR.Data
                 entity.Property(e => e.ReferenceValue).HasMaxLength(100);
                 entity.Property(e => e.MeasuredReading).HasMaxLength(100);
                 entity.Property(e => e.CorrectionFactor).HasMaxLength(100);
+                entity.Property(e => e.RelativeError).HasMaxLength(100);
                 entity.Property(e => e.AbsoluteRelativeError).HasMaxLength(100);
                 entity.Property(e => e.Unit).HasMaxLength(50);
                 entity.Property(e => e.Remarks).HasMaxLength(300);
@@ -240,6 +252,36 @@ namespace CAL_QR.Data
                 entity.HasOne(d => d.Certificate)
                     .WithMany(p => p.FunctionalChecks)
                     .HasForeignKey(d => d.CertificateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // عدّاد أرقام الشهادات
+            modelBuilder.Entity<CertificateSequence>(entity =>
+            {
+                entity.ToTable("CertificateSequence");
+
+                // السنة مفتاح أساسي صريح لا مولَّد: القيمة تأتي من IssueDate،
+                // والمفتاح يمنع على مستوى المحرّك وجود صفّين لسنة واحدة.
+                entity.HasKey(e => e.Year);
+                entity.Property(e => e.Year).ValueGeneratedNever();
+                entity.Property(e => e.LastNumber).IsRequired();
+            });
+
+            // أرشيف رموز التحقق المستبدلة
+            modelBuilder.Entity<CertificateVerifyCodeHistory>(entity =>
+            {
+                entity.ToTable("CertificateVerifyCodeHistory");
+
+                // غير فريد عمداً — انظر تعليق الكيان
+                entity.HasIndex(e => e.VerifyCode);
+                entity.HasIndex(e => e.CertificateId);
+
+                entity.Property(e => e.VerifyCode).IsRequired().HasMaxLength(64);
+                entity.Property(e => e.SignaturePayloadVersion).HasMaxLength(20);
+
+                entity.HasOne(h => h.Certificate)
+                    .WithMany()
+                    .HasForeignKey(h => h.CertificateId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

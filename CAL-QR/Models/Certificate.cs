@@ -17,6 +17,12 @@ namespace CAL_QR.Models
         public string CertificateNumber { get; set; } = string.Empty;
         public string? ReferenceNo { get; set; }
 
+        // نوع النموذج المطبوع (مثل "Pancake Probe")، منسوخ نصاً وقت الإصدار من
+        // DeviceType.Name. لا يُقرأ حياً عبر CalibrationRecord → Device → DeviceType:
+        // إعادة تصنيف الجهاز بعد الإصدار كانت ستُغيّر عنوان شهادة صادرة وموقّعة
+        // دون كسر التوقيع — وهو تزوير غير مقصود يخالف مبدأ التجميد أعلاه.
+        public string? CertificateTemplateType { get; set; }
+
         // بيانات منسوخة نصياً وقت الإصدار (مبدأ الوثيقة التاريخية المجمّدة)
         public string ClientName { get; set; } = string.Empty;
         public string? ClientAddress { get; set; }
@@ -69,9 +75,25 @@ namespace CAL_QR.Models
         public string? AdditionalInformation { get; set; }
         public string? Notes { get; set; }
 
+        // التواريخ الثلاثة. CalibrationDate و DueDate منسوخان نصياً وقت الإصدار
+        // تطبيقاً لمبدأ الوثيقة المجمّدة — الملصق والشهادة يقرآن منهما لا من
+        // CalibrationRecord، وإلا تباعدت القيمتان بعد أول تعديل.
+        // DueDate = CalibrationDate + سنة (لا من IssueDate).
+        public DateTime CalibrationDate { get; set; }
+        public DateTime IssueDate { get; set; }
+        public DateTime DueDate { get; set; }
+
         // رمز QR — الوعاء فقط، المحتوى يُحدَّد في مرحلة لاحقة
         public string? QrPayload { get; set; }
         public string? QrPayloadVersion { get; set; }
+
+        // توقيع HMAC بكامل خاناته الستة عشر — لا اشتقاق ولا اقتطاع.
+        public string? VerifyCode { get; set; }
+
+        // إصدار بانِي نص التوقيع الذي أنتج VerifyCode (مثل "SIG1"). مفصول عن
+        // QrPayloadVersion عمداً: الأول يصف صيغة العرض، وهذا يصف نصاً موقّعاً
+        // مجمّداً. إصدار مجهول أو خالٍ ⇒ فشل تحقق صريح، لا سقوط إلى الإصدار الحالي.
+        public string? SignaturePayloadVersion { get; set; }
 
         // الموقّعون الأربعة — منسوخون نصياً
         public string? CalibratedByName { get; set; }
@@ -88,7 +110,16 @@ namespace CAL_QR.Models
         public DateTime? AuthorizedByDate { get; set; }
 
         // النظام
+        // IssuedAt ختم نظام (UTC، لحظة كتابة الصف) ولا يُخلط بـ IssueDate الإداري.
         public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+
+        // أول طباعة فعلية. بدونه يستحيل تنفيذ شرط «أول تعديل بعد الطباعة» حرفياً.
+        public DateTime? FirstPrintedAt { get; set; }
+
+        // تاريخ أول تعديل بعد الطباعة — لا آخره. خارج نص التوقيع بالضرورة:
+        // لو دخله لَغيَّر تسجيلُ التعديل نصَّ التوقيع بذاته، فتلزم دورة إعادة حساب لا تنتهي.
+        public DateTime? AmendedAt { get; set; }
+
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

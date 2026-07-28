@@ -114,6 +114,14 @@ namespace CAL_QR.Data
                         ""AuthorizedByName"" TEXT NULL,
                         ""AuthorizedByTitle"" TEXT NULL,
                         ""AuthorizedByDate"" TEXT NULL,
+                        ""CertificateTemplateType"" TEXT NULL,
+                        ""CalibrationDate"" TEXT NULL,
+                        ""IssueDate"" TEXT NULL,
+                        ""DueDate"" TEXT NULL,
+                        ""VerifyCode"" TEXT NULL,
+                        ""SignaturePayloadVersion"" TEXT NULL,
+                        ""FirstPrintedAt"" TEXT NULL,
+                        ""AmendedAt"" TEXT NULL,
                         ""IssuedAt"" TEXT NOT NULL,
                         ""IsDeleted"" INTEGER NOT NULL,
                         ""CreatedAt"" TEXT NOT NULL,
@@ -134,6 +142,7 @@ namespace CAL_QR.Data
                         ""ReferenceValue"" TEXT NULL,
                         ""MeasuredReading"" TEXT NULL,
                         ""CorrectionFactor"" TEXT NULL,
+                        ""RelativeError"" TEXT NULL,
                         ""AbsoluteRelativeError"" TEXT NULL,
                         ""Unit"" TEXT NULL,
                         ""Remarks"" TEXT NULL,
@@ -180,6 +189,60 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationStandard", "ALTER TABLE Certificates ADD COLUMN CalibrationStandard TEXT NULL;");
                 ExecuteSqlIfColumnMissing(context, "CertificateCalibrationResults", "ReferenceDoseLevel", "ALTER TABLE CertificateCalibrationResults ADD COLUMN ReferenceDoseLevel TEXT NULL;");
 
+                // البنية التحتية لميزة الشهادة — المرحلة ١.
+                // كلها TEXT NULL: SQLite لا يقبل ADD COLUMN NOT NULL بلا قيمة افتراضية.
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CertificateTemplateType", "ALTER TABLE Certificates ADD COLUMN CertificateTemplateType TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationDate", "ALTER TABLE Certificates ADD COLUMN CalibrationDate TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "IssueDate", "ALTER TABLE Certificates ADD COLUMN IssueDate TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "DueDate", "ALTER TABLE Certificates ADD COLUMN DueDate TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "VerifyCode", "ALTER TABLE Certificates ADD COLUMN VerifyCode TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "SignaturePayloadVersion", "ALTER TABLE Certificates ADD COLUMN SignaturePayloadVersion TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "FirstPrintedAt", "ALTER TABLE Certificates ADD COLUMN FirstPrintedAt TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "AmendedAt", "ALTER TABLE Certificates ADD COLUMN AmendedAt TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "CertificateCalibrationResults", "RelativeError", "ALTER TABLE CertificateCalibrationResults ADD COLUMN RelativeError TEXT NULL;");
+
+                // التعبئة الرجعية للتواريخ الثلاثة — جزء إلزامي من الهجرة لا تحسين.
+                // الأعمدة تُضاف NULL بحكم قيد SQLite، بينما هي DateTime غير قابل
+                // للعدم في الكيان: قراءة NULL فيها تُلقي استثناءً عند أول استعلام.
+                // AmendedAt و FirstPrintedAt و VerifyCode تبقى NULL — دلالتها الصحيحة
+                // «لم يحدث بعد»، وهي nullable في الكيان أصلاً.
+                // ملاحظة مسجَّلة: date(IssuedAt) يقرأ التاريخ بتوقيت UTC، فشهادة
+                // أُصدرت بعد الساعة 22:00 بتوقيت ليبيا تُعبَّأ بتاريخ اليوم السابق.
+                // غير مؤثر عملياً: لا توجد شهادات صادرة في أي قاعدة، فهذه الجملة
+                // لن تلمس صفاً واحداً. تُسجَّل هنا كي لا تُكتشف كعطل لاحقاً.
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE Certificates SET IssueDate = date(IssuedAt) WHERE IssueDate IS NULL;");
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE Certificates SET CalibrationDate = (
+                        SELECT date(cr.CalibrationDate) FROM CalibrationRecords cr
+                        WHERE cr.Id = Certificates.CalibrationRecordId)
+                    WHERE CalibrationDate IS NULL;");
+                context.Database.ExecuteSqlRaw(@"
+                    UPDATE Certificates SET DueDate = date(CalibrationDate, '+1 year')
+                    WHERE DueDate IS NULL AND CalibrationDate IS NOT NULL;");
+
+                // عدّاد أرقام الشهادات. Year مفتاح أساسي ⇒ فهرس فريد مجاني
+                // ⇒ استحالة صفّين لسنة واحدة على مستوى المحرّك.
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS CertificateSequence (
+                        Year       INTEGER NOT NULL PRIMARY KEY,
+                        LastNumber INTEGER NOT NULL DEFAULT 0
+                    );
+                ");
+
+                // أرشيف رموز التحقق المستبدلة بعد تعديل شهادة.
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS CertificateVerifyCodeHistory (
+                        Id                      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        CertificateId           INTEGER NOT NULL,
+                        VerifyCode              TEXT    NOT NULL,
+                        SignaturePayloadVersion TEXT    NULL,
+                        ReplacedAt              TEXT    NOT NULL,
+                        CONSTRAINT FK_CertificateVerifyCodeHistory_Certificates_CertificateId
+                            FOREIGN KEY (CertificateId) REFERENCES Certificates (Id) ON DELETE CASCADE
+                    );
+                ");
+
                 // Certificate indexes. IX_Certificates_CalibrationRecordId is a partial unique index:
                 // it forbids two live certificates for one calibration record, yet still allows issuing
                 // a replacement after the first one has been soft-deleted.
@@ -192,6 +255,12 @@ namespace CAL_QR.Data
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateCalibrationResults_CertificateId"" ON ""CertificateCalibrationResults"" (""CertificateId"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateUncertaintyComponents_CertificateId"" ON ""CertificateUncertaintyComponents"" (""CertificateId"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateFunctionalChecks_CertificateId"" ON ""CertificateFunctionalChecks"" (""CertificateId"");");
+
+                // فهارس البحث بالرمز. غير فريدة عمداً: تصادم رمز ١٦ خانة ممكن
+                // نظرياً، وفهرس فريد كان سيُسقِط عملية إصدار أو تعديل مشروعة.
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Certificates_VerifyCode"" ON ""Certificates"" (""VerifyCode"");");
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateVerifyCodeHistory_VerifyCode"" ON ""CertificateVerifyCodeHistory"" (""VerifyCode"");");
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateVerifyCodeHistory_CertificateId"" ON ""CertificateVerifyCodeHistory"" (""CertificateId"");");
             }
 
             // Perform any safe check/migration of columns if they are missing

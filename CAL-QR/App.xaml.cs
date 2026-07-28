@@ -91,6 +91,8 @@ namespace CAL_QR
             services.AddSingleton<IBackupService, BackupService>();
             services.AddSingleton<ISearchService, SearchService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
+            services.AddSingleton<ICertificateNumberService, CertificateNumberService>();
+            services.AddSingleton<ICertificateSignatureService, CertificateSignatureService>();
 
             // Register Repositories
             services.AddSingleton<IOwnerRepository, OwnerRepository>();
@@ -101,6 +103,7 @@ namespace CAL_QR
             services.AddSingleton<IPaperTemplateRepository, PaperTemplateRepository>();
             services.AddSingleton<IAuditLogRepository, AuditLogRepository>();
             services.AddSingleton<IUserRepository, UserRepository>();
+            services.AddSingleton<ICertificateRepository, CertificateRepository>();
 
             // Register ViewModels
             services.AddTransient<MainViewModel>();

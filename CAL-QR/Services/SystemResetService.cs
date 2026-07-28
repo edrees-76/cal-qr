@@ -40,8 +40,15 @@ namespace CAL_QR.Services
             {
                 // 1. مسح كافة الشهادات قبل سجلات المعايرة، لأن علاقة Certificate → CalibrationRecord
                 // بسلوك Restrict فيمنع حذف السجل قبل شهادته.
-                // الجداول الأبناء الثلاثة للشهادة تُحذف تلقائياً بسلوك Cascade.
+                // الجداول الأبناء الثلاثة للشهادة — وأرشيف رموز التحقق — تُحذف
+                // تلقائياً بسلوك Cascade.
                 context.Certificates.RemoveRange(await context.Certificates.ToListAsync());
+
+                // 1.ب تصفير عدّاد أرقام الشهادات. قاعدة «الرقم لا يعود للاستخدام»
+                // تحكم النظام العامل، لا التصفير الكامل: تصفير المصنع يمحو الشهادات
+                // نفسها، فإبقاء العدّاد على ٤٢ كان سيجعل أول شهادة في نظام «نظيف»
+                // تحمل الرقم ٠٠٤٣ بلا سلف.
+                context.CertificateSequence.RemoveRange(await context.CertificateSequence.ToListAsync());
 
                 // 2. مسح كافة سجلات المعايرة
                 context.CalibrationRecords.RemoveRange(await context.CalibrationRecords.ToListAsync());

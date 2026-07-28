@@ -658,6 +658,172 @@ namespace CAL_QR.Tests
             }
         }
 
+        [Fact]
+        public void Migrator_CreatesPhaseOneTables_OnExistingDatabase()
+        {
+            string dbPath = NewDbPath("phase1tables");
+            var options = OptionsFor(dbPath);
+            var newTables = new[] { "CertificateVerifyCodeHistory", "CertificateSequence" };
+
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    foreach (var table in newTables)
+                    {
+                        DropTable(context, table);
+                    }
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var table in newTables)
+                    {
+                        Assert.False(TableExists(context, table), $"من المفترض أن الجدول {table} غير موجود قبل الهجرة.");
+                    }
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var table in newTables)
+                    {
+                        Assert.True(TableExists(context, table), $"الجدول {table} لم يُنشأ بواسطة الهجرة.");
+                    }
+
+                    // جداول عاملة لا هياكل فارغة: كتابة وقراءة فعلية
+                    int recordId = SeedCalibrationRecord(context, "CERT-PHASE1-001");
+                    var certificate = NewCertificate(recordId, "CERT-PHASE1-001");
+                    certificate.VerifyCode = "ABCDEF0123456789";
+                    certificate.SignaturePayloadVersion = "SIG1";
+                    context.Certificates.Add(certificate);
+                    context.SaveChanges();
+
+                    context.CertificateSequence.Add(new CertificateSequence { Year = 2026, LastNumber = 7 });
+                    context.CertificateVerifyCodeHistory.Add(new CertificateVerifyCodeHistory
+                    {
+                        CertificateId = certificate.Id,
+                        VerifyCode = "0000000000000000",
+                        SignaturePayloadVersion = "SIG1",
+                        ReplacedAt = DateTime.UtcNow
+                    });
+                    context.SaveChanges();
+
+                    Assert.Equal(7, context.CertificateSequence.Single(s => s.Year == 2026).LastNumber);
+                    Assert.Single(context.CertificateVerifyCodeHistory);
+                }
+
+                // أرشيف الرموز يتبع الشهادة بسلوك Cascade
+                using (var context = new CalQrDbContext(options))
+                {
+                    var certificate = context.Certificates.Single();
+                    context.Certificates.Remove(certificate);
+                    context.SaveChanges();
+
+                    Assert.Empty(context.CertificateVerifyCodeHistory);
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        [Fact]
+        public void Migrator_AddsPhaseOneColumns_AndBackfillsDates_OnOldSchema()
+        {
+            string dbPath = NewDbPath("phase1columns");
+            var options = OptionsFor(dbPath);
+            var newCertificateColumns = new[]
+            {
+                "CertificateTemplateType", "CalibrationDate", "IssueDate", "DueDate",
+                "VerifyCode", "SignaturePayloadVersion", "FirstPrintedAt", "AmendedAt"
+            };
+
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                // محاكاة نسخة مثبَّتة سابقة للمرحلة ١: إسقاط الجدولين وإعادة
+                // إنشائهما بالمخطط الذي سبق أعمدة هذه المرحلة
+                using (var context = new CalQrDbContext(options))
+                {
+                    DropTable(context, "CertificateCalibrationResults");
+                    DropTable(context, "Certificates");
+                    context.Database.ExecuteSqlRaw(OldSchemaCertificatesSql);
+                    context.Database.ExecuteSqlRaw(OldSchemaCalibrationResultsSql);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var column in newCertificateColumns)
+                    {
+                        Assert.False(ColumnExists(context, "Certificates", column));
+                    }
+                    Assert.False(ColumnExists(context, "CertificateCalibrationResults", "RelativeError"));
+                }
+
+                // صف قائم بالمخطط القديم — بلا أي من التواريخ الثلاثة.
+                // التعبئة الرجعية إلزامية: التواريخ DateTime غير قابل للعدم في
+                // الكيان، وقراءة NULL فيها تُلقي استثناءً.
+                int recordId;
+                using (var context = new CalQrDbContext(options))
+                {
+                    recordId = SeedCalibrationRecord(context, "CERT-BACKFILL-001");
+                    context.Database.ExecuteSqlRaw(
+                        @"INSERT INTO Certificates
+                            (CalibrationRecordId, CertificateNumber, ClientName, DeviceModel,
+                             DeviceSerialNumber, MethodologyEnabled, UncertaintyEnabled,
+                             IssuedAt, IsDeleted, CreatedAt, UpdatedAt)
+                          VALUES ({0}, 'CERT-BACKFILL-001', 'جهة قديمة', 'Ludlum 44-9',
+                                  'SN-OLD', 0, 0, '2026-02-10 08:00:00', 0,
+                                  '2026-02-10 08:00:00', '2026-02-10 08:00:00');",
+                        recordId);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var column in newCertificateColumns)
+                    {
+                        Assert.True(ColumnExists(context, "Certificates", column), $"العمود {column} لم يُضف.");
+                    }
+                    Assert.True(ColumnExists(context, "CertificateCalibrationResults", "RelativeError"));
+                }
+
+                // القراءة لا تُلقي استثناءً، والتواريخ معبّأة من المصادر الصحيحة:
+                // IssueDate من IssuedAt، CalibrationDate من سجل المعايرة،
+                // DueDate = CalibrationDate + سنة
+                using (var context = new CalQrDbContext(options))
+                {
+                    var stored = context.Certificates.Single(c => c.CertificateNumber == "CERT-BACKFILL-001");
+
+                    Assert.Equal(new DateTime(2026, 2, 10), stored.IssueDate.Date);
+                    Assert.Equal(new DateTime(2026, 1, 15), stored.CalibrationDate.Date);
+                    Assert.Equal(new DateTime(2027, 1, 15), stored.DueDate.Date);
+                    Assert.Null(stored.AmendedAt);
+                    Assert.Null(stored.FirstPrintedAt);
+                    Assert.Null(stored.VerifyCode);
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
         private static bool ColumnExists(CalQrDbContext context, string tableName, string columnName)
         {
             var connection = context.Database.GetDbConnection();

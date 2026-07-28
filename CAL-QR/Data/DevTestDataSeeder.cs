@@ -427,25 +427,9 @@ namespace CAL_QR.Data
                 try
                 {
                     string qrPath = System.IO.Path.Combine(qrFolder, $"{certNo.Trim()}.png");
-                    if (System.IO.File.Exists(qrPath))
+                    if (FileSystemRetryHelper.TryDeleteFile(qrPath))
                     {
-                        for (int attempt = 0; attempt < 3; attempt++)
-                        {
-                            try
-                            {
-                                System.IO.File.Delete(qrPath);
-                                break;
-                            }
-                            catch when (attempt < 2)
-                            {
-                                System.Threading.Thread.Sleep(50);
-                            }
-                        }
-
-                        if (!System.IO.File.Exists(qrPath))
-                        {
-                            qrFilesDeleted++;
-                        }
+                        qrFilesDeleted++;
                     }
                 }
                 catch (Exception ex)
@@ -460,25 +444,9 @@ namespace CAL_QR.Data
                 try
                 {
                     string certAttachmentFolder = System.IO.Path.Combine(attachmentsFolder, certNo.Trim());
-                    if (System.IO.Directory.Exists(certAttachmentFolder))
+                    if (FileSystemRetryHelper.TryDeleteDirectory(certAttachmentFolder))
                     {
-                        for (int attempt = 0; attempt < 3; attempt++)
-                        {
-                            try
-                            {
-                                System.IO.Directory.Delete(certAttachmentFolder, recursive: true);
-                                break;
-                            }
-                            catch when (attempt < 2)
-                            {
-                                System.Threading.Thread.Sleep(50);
-                            }
-                        }
-
-                        if (!System.IO.Directory.Exists(certAttachmentFolder))
-                        {
-                            attachmentFoldersDeleted++;
-                        }
+                        attachmentFoldersDeleted++;
                     }
                 }
                 catch (Exception ex)

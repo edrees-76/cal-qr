@@ -73,9 +73,20 @@ namespace CAL_QR.Tests
 
             var factory = new TestDbContextFactory(options);
 
+            // Isolated disk paths: the shared QR/Attachments folders under BaseDirectory are
+            // written and wiped by other tests in the same run.
+            string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_factoryreset_qr_{Guid.NewGuid():N}");
+            string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_factoryreset_att_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(qrFolder);
+            Directory.CreateDirectory(attachmentsFolder);
+
             using (var context = new CalQrDbContext(options))
             {
                 DatabaseMigrator.RunMigrations(context);
+
+                context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
+                context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
+                context.SaveChanges();
             }
 
             var hmacService = new HmacService(factory);
@@ -135,13 +146,10 @@ namespace CAL_QR.Tests
                 }
 
                 // 3. Create sample QR file and attachment folder on disk
-                string qrFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR");
-                Directory.CreateDirectory(qrFolder);
                 string realQrPath = Path.Combine(qrFolder, $"{realCertNo}.png");
                 File.WriteAllText(realQrPath, "REAL_QR_IMAGE_BYTES");
                 Assert.True(File.Exists(realQrPath));
 
-                string attachmentsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
                 string realAttFolder = Path.Combine(attachmentsFolder, realCertNo);
                 Directory.CreateDirectory(realAttFolder);
                 string realAttFilePath = Path.Combine(realAttFolder, "report.pdf");
@@ -199,6 +207,8 @@ namespace CAL_QR.Tests
                 {
                     try { File.Delete(dbPath); } catch { }
                 }
+                try { Directory.Delete(qrFolder, recursive: true); } catch { }
+                try { Directory.Delete(attachmentsFolder, recursive: true); } catch { }
             }
         }
 

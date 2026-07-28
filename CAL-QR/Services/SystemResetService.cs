@@ -127,20 +127,7 @@ namespace CAL_QR.Services
                     {
                         try
                         {
-                            for (int attempt = 0; attempt < 3; attempt++)
-                            {
-                                try
-                                {
-                                    File.Delete(filePath);
-                                    break;
-                                }
-                                catch when (attempt < 2)
-                                {
-                                    System.Threading.Thread.Sleep(50);
-                                }
-                            }
-
-                            if (!File.Exists(filePath))
+                            if (FileSystemRetryHelper.TryDeleteFile(filePath))
                             {
                                 qrFilesDeleted++;
                             }
@@ -167,20 +154,7 @@ namespace CAL_QR.Services
                     {
                         try
                         {
-                            for (int attempt = 0; attempt < 3; attempt++)
-                            {
-                                try
-                                {
-                                    Directory.Delete(subDir, recursive: true);
-                                    break;
-                                }
-                                catch when (attempt < 2)
-                                {
-                                    System.Threading.Thread.Sleep(50);
-                                }
-                            }
-
-                            if (!Directory.Exists(subDir))
+                            if (FileSystemRetryHelper.TryDeleteDirectory(subDir))
                             {
                                 attachmentFoldersDeleted++;
                             }
@@ -197,18 +171,7 @@ namespace CAL_QR.Services
                     {
                         try
                         {
-                            for (int attempt = 0; attempt < 3; attempt++)
-                            {
-                                try
-                                {
-                                    File.Delete(rootFile);
-                                    break;
-                                }
-                                catch when (attempt < 2)
-                                {
-                                    System.Threading.Thread.Sleep(50);
-                                }
-                            }
+                            FileSystemRetryHelper.TryDeleteFile(rootFile);
                         }
                         catch { }
                     }

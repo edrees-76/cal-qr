@@ -31,6 +31,7 @@ namespace CAL_QR.Repositories
             using var context = await _contextFactory.CreateDbContextAsync();
             return await context.Certificates
                 .AsNoTracking()
+                .Include(c => c.NuclideSummaries)
                 .Include(c => c.CalibrationResults)
                 .Include(c => c.UncertaintyComponents)
                 .Include(c => c.FunctionalChecks)
@@ -44,6 +45,7 @@ namespace CAL_QR.Repositories
 
             return await context.Certificates
                 .AsNoTracking()
+                .Include(c => c.NuclideSummaries)
                 .Include(c => c.CalibrationResults)
                 .Include(c => c.UncertaintyComponents)
                 .Include(c => c.FunctionalChecks)
@@ -132,6 +134,7 @@ namespace CAL_QR.Repositories
             using var transaction = await context.Database.BeginTransactionAsync();
 
             var stored = await context.Certificates
+                .Include(c => c.NuclideSummaries)
                 .Include(c => c.CalibrationResults)
                 .Include(c => c.UncertaintyComponents)
                 .Include(c => c.FunctionalChecks)
@@ -259,6 +262,7 @@ namespace CAL_QR.Repositories
             // ١. الرموز الحالية
             var current = await context.Certificates
                 .AsNoTracking()
+                .Include(c => c.NuclideSummaries)
                 .Include(c => c.CalibrationResults)
                 .Include(c => c.UncertaintyComponents)
                 .Include(c => c.FunctionalChecks)
@@ -287,6 +291,7 @@ namespace CAL_QR.Repositories
             {
                 var certificate = await context.Certificates
                     .AsNoTracking()
+                    .Include(c => c.NuclideSummaries)
                     .Include(c => c.CalibrationResults)
                     .Include(c => c.UncertaintyComponents)
                     .Include(c => c.FunctionalChecks)
@@ -328,6 +333,14 @@ namespace CAL_QR.Repositories
         /// </summary>
         private static void SyncChildren(CalQrDbContext context, Certificate stored, Certificate incoming)
         {
+            SyncCollection(
+                context,
+                stored.NuclideSummaries.ToList(),
+                incoming.NuclideSummaries.ToList(),
+                stored.NuclideSummaries,
+                n => n.Id,
+                (target, source) => context.Entry(target).CurrentValues.SetValues(source));
+
             SyncCollection(
                 context,
                 stored.CalibrationResults.ToList(),

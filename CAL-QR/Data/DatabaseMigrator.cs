@@ -85,7 +85,6 @@ namespace CAL_QR.Data
                         ""Temperature"" TEXT NULL,
                         ""RelativeHumidity"" TEXT NULL,
                         ""AtmosphericPressure"" TEXT NULL,
-                        ""AverageCorrectionFactor"" TEXT NULL,
                         ""CorrectedReadingFormula"" TEXT NULL,
                         ""ComplianceVerdict"" TEXT NULL,
                         ""CalibrationStandard"" TEXT NULL,
@@ -115,6 +114,10 @@ namespace CAL_QR.Data
                         ""AuthorizedByTitle"" TEXT NULL,
                         ""AuthorizedByDate"" TEXT NULL,
                         ""CertificateTemplateType"" TEXT NULL,
+                        ""ProcedureNo"" TEXT NULL,
+                        ""CalibrationLocation"" TEXT NULL,
+                        ""Instrumentation"" TEXT NULL,
+                        ""DetectorType"" TEXT NULL,
                         ""CalibrationDate"" TEXT NULL,
                         ""IssueDate"" TEXT NULL,
                         ""DueDate"" TEXT NULL,
@@ -243,6 +246,90 @@ namespace CAL_QR.Data
                     );
                 ");
 
+                // ── المرحلة ٢: مكتبة الحقول والقوالب ──
+
+                // أعمدة الشهادة الأربعة (Pancake و PED)
+                ExecuteSqlIfColumnMissing(context, "Certificates", "ProcedureNo", "ALTER TABLE Certificates ADD COLUMN ProcedureNo TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationLocation", "ALTER TABLE Certificates ADD COLUMN CalibrationLocation TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "Instrumentation", "ALTER TABLE Certificates ADD COLUMN Instrumentation TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "DetectorType", "ALTER TABLE Certificates ADD COLUMN DetectorType TEXT NULL;");
+
+                // أعمدة قالب الشهادة على DeviceTypes
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "ProcedureNo", "ALTER TABLE DeviceTypes ADD COLUMN ProcedureNo TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CalibrationLocation", "ALTER TABLE DeviceTypes ADD COLUMN CalibrationLocation TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "ReferenceGeometry", "ALTER TABLE DeviceTypes ADD COLUMN ReferenceGeometry TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CountingTime", "ALTER TABLE DeviceTypes ADD COLUMN CountingTime TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CountingUnit", "ALTER TABLE DeviceTypes ADD COLUMN CountingUnit TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "MethodologyText", "ALTER TABLE DeviceTypes ADD COLUMN MethodologyText TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "TraceabilityReference", "ALTER TABLE DeviceTypes ADD COLUMN TraceabilityReference TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "ComplianceVerdict", "ALTER TABLE DeviceTypes ADD COLUMN ComplianceVerdict TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CalibrationStandard", "ALTER TABLE DeviceTypes ADD COLUMN CalibrationStandard TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "Notes", "ALTER TABLE DeviceTypes ADD COLUMN Notes TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "AdditionalInformation", "ALTER TABLE DeviceTypes ADD COLUMN AdditionalInformation TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "MeasurementType", "ALTER TABLE DeviceTypes ADD COLUMN MeasurementType TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "Distance", "ALTER TABLE DeviceTypes ADD COLUMN Distance TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CorrectedReadingFormula", "ALTER TABLE DeviceTypes ADD COLUMN CorrectedReadingFormula TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "DetectorType", "ALTER TABLE DeviceTypes ADD COLUMN DetectorType TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "Instrumentation", "ALTER TABLE DeviceTypes ADD COLUMN Instrumentation TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "UncertaintyEnabled", "ALTER TABLE DeviceTypes ADD COLUMN UncertaintyEnabled INTEGER NOT NULL DEFAULT 0;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "MethodologyEnabled", "ALTER TABLE DeviceTypes ADD COLUMN MethodologyEnabled INTEGER NOT NULL DEFAULT 0;");
+
+                // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS CertificateNuclideSummaries (
+                        Id                      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        CertificateId           INTEGER NOT NULL,
+                        SortOrder               INTEGER NOT NULL,
+                        Radionuclide            TEXT    NOT NULL,
+                        AverageCorrectionFactor TEXT    NULL,
+                        CONSTRAINT FK_CertificateNuclideSummaries_Certificates_CertificateId
+                            FOREIGN KEY (CertificateId) REFERENCES Certificates (Id) ON DELETE CASCADE
+                    );
+                ");
+
+                // جدولا القوالب على مستوى نوع الجهاز
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS DeviceTypeFunctionalCheckTemplates (
+                        Id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        DeviceTypeId  INTEGER NOT NULL,
+                        SortOrder     INTEGER NOT NULL,
+                        CheckName     TEXT    NOT NULL,
+                        Requirement   TEXT    NULL,
+                        DefaultResult TEXT    NULL,
+                        CONSTRAINT FK_DeviceTypeFunctionalCheckTemplates_DeviceTypes_DeviceTypeId
+                            FOREIGN KEY (DeviceTypeId) REFERENCES DeviceTypes (Id) ON DELETE CASCADE
+                    );
+                ");
+
+                context.Database.ExecuteSqlRaw(@"
+                    CREATE TABLE IF NOT EXISTS DeviceTypeUncertaintyComponentTemplates (
+                        Id                  INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        DeviceTypeId        INTEGER NOT NULL,
+                        SortOrder           INTEGER NOT NULL,
+                        ComponentName       TEXT    NOT NULL,
+                        EvaluationType      TEXT    NULL,
+                        StandardUncertainty TEXT    NULL,
+                        ContributionPercent TEXT    NULL,
+                        Distribution        TEXT    NULL,
+                        CONSTRAINT FK_DeviceTypeUncertaintyComponentTemplates_DeviceTypes_DeviceTypeId
+                            FOREIGN KEY (DeviceTypeId) REFERENCES DeviceTypes (Id) ON DELETE CASCADE
+                    );
+                ");
+
+                // إسقاط Certificate.AverageCorrectionFactor — استبدله جدول
+                // CertificateNuclideSummaries، لأن الحقل المفرد يعجز عن تمثيل
+                // أكثر من نويدة واحدة.
+                //
+                // إسقاط فعلي لا هجر: SQLite المرفق مع SQLitePCLRaw 2.1.6 هو 3.44+،
+                // و DROP COLUMN مدعوم منذ 3.35.0. الإصدار مثبَّت بمرجع الحزمة لا
+                // بنظام المستخدم، فالسلوك حتمي. والعمود غير مفهرس وغير داخل أي
+                // قيد، وهما الحالتان الوحيدتان اللتان يرفض فيهما SQLite الإسقاط.
+                // ولا شهادات صادرة، فصفر فقد بيانات.
+                //
+                // الترتيب ملزم: بعد كل ALTER … ADD وقبل إنشاء الفهارس.
+                ExecuteSqlIfColumnExists(context, "Certificates", "AverageCorrectionFactor",
+                    "ALTER TABLE Certificates DROP COLUMN AverageCorrectionFactor;");
+
                 // Certificate indexes. IX_Certificates_CalibrationRecordId is a partial unique index:
                 // it forbids two live certificates for one calibration record, yet still allows issuing
                 // a replacement after the first one has been soft-deleted.
@@ -261,6 +348,11 @@ namespace CAL_QR.Data
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Certificates_VerifyCode"" ON ""Certificates"" (""VerifyCode"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateVerifyCodeHistory_VerifyCode"" ON ""CertificateVerifyCodeHistory"" (""VerifyCode"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateVerifyCodeHistory_CertificateId"" ON ""CertificateVerifyCodeHistory"" (""CertificateId"");");
+
+                // فهارس المرحلة ٢
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateNuclideSummaries_CertificateId"" ON ""CertificateNuclideSummaries"" (""CertificateId"");");
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_DeviceTypeFunctionalCheckTemplates_DeviceTypeId"" ON ""DeviceTypeFunctionalCheckTemplates"" (""DeviceTypeId"");");
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_DeviceTypeUncertaintyComponentTemplates_DeviceTypeId"" ON ""DeviceTypeUncertaintyComponentTemplates"" (""DeviceTypeId"");");
             }
 
             // Perform any safe check/migration of columns if they are missing
@@ -271,6 +363,25 @@ namespace CAL_QR.Data
 
             // Seed default admin user if no users exist (under upgrade condition)
             SeedDefaultAdminUser(context);
+
+            // بذر الأنواع الخمسة وقوالبها من DeviceTypeCatalog — مرة واحدة،
+            // محروسة بعلم في AppSettings، ولا تدهس تعديلات المستخدم.
+            //
+            // الحصيلة تُكتب داخلياً في AppSettings تحت ConflictsKey أو FailureKey
+            // ولا تُهمل هنا: إهمالها كان يُمرّر تعارض التسمية بصمت تام.
+            // عرضها للمدير عند الإقلاع بند حاجز مسجَّل في القسم 10.0 من ملف القرارات.
+            //
+            // SeedIfNeeded لا تُصعِّد استثناءً أبداً — انظر تعليقها. فلا حاجة إلى
+            // معالج هنا، والحارس داخلها لا في موضع الاستدعاء كي يشمل أي مستدعٍ آخر.
+            var seedResult = DeviceTypeSeeder.SeedIfNeeded(context);
+            if (seedResult.HasDiagnostics)
+            {
+                // ⚠ Debug.WriteLine يختفي في Release: هذا سطر مساعدة للمطوّر لا
+                // مسار إبلاغ. المعوَّل عليه هو التسجيل الدائم في AppSettings،
+                // وعرضه للمدير هو البند الحاجز رقم ٧.
+                System.Diagnostics.Debug.WriteLine(
+                    "[DeviceTypeSeeder] حصيلة تستحق العرض:\n" + seedResult.ToDiagnosticsText());
+            }
 
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
             try
@@ -364,6 +475,50 @@ namespace CAL_QR.Data
                     using var alterCommand = connection.CreateCommand();
                     alterCommand.CommandText = alterTableSql;
                     alterCommand.ExecuteNonQuery();
+                }
+            }
+            finally
+            {
+                if (!alreadyOpen) connection.Close();
+            }
+        }
+
+        /// <summary>
+        /// مرآة معكوسة لـ ExecuteSqlIfColumnMissing: تُنفّذ الجملة **إن كان** العمود
+        /// موجوداً. تُستعمل للإسقاط، فتكون idempotent — التشغيل الثاني لا يفعل شيئاً
+        /// ولا يُلقي استثناءً على عمود غير موجود.
+        /// </summary>
+        public static void ExecuteSqlIfColumnExists(CalQrDbContext context, string tableName, string columnName, string sql)
+        {
+            var connection = context.Database.GetDbConnection();
+            var alreadyOpen = connection.State == ConnectionState.Open;
+
+            try
+            {
+                if (!alreadyOpen) connection.Open();
+
+                using var command = connection.CreateCommand();
+                command.CommandText = $"PRAGMA table_info({tableName});";
+
+                bool columnExists = false;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var name = reader["name"]?.ToString();
+                        if (string.Equals(name, columnName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            columnExists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (columnExists)
+                {
+                    using var executeCommand = connection.CreateCommand();
+                    executeCommand.CommandText = sql;
+                    executeCommand.ExecuteNonQuery();
                 }
             }
             finally

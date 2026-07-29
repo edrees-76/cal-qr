@@ -23,6 +23,9 @@ namespace CAL_QR.Data
         public DbSet<CertificateCalibrationResult> CertificateCalibrationResults { get; set; } = null!;
         public DbSet<CertificateUncertaintyComponent> CertificateUncertaintyComponents { get; set; } = null!;
         public DbSet<CertificateFunctionalCheck> CertificateFunctionalChecks { get; set; } = null!;
+        public DbSet<CertificateNuclideSummary> CertificateNuclideSummaries { get; set; } = null!;
+        public DbSet<DeviceTypeFunctionalCheckTemplate> DeviceTypeFunctionalCheckTemplates { get; set; } = null!;
+        public DbSet<DeviceTypeUncertaintyComponentTemplate> DeviceTypeUncertaintyComponentTemplates { get; set; } = null!;
         public DbSet<CertificateSequence> CertificateSequence { get; set; } = null!;
         public DbSet<CertificateVerifyCodeHistory> CertificateVerifyCodeHistory { get; set; } = null!;
 
@@ -44,6 +47,55 @@ namespace CAL_QR.Data
                 entity.HasIndex(e => e.Name);
                 entity.HasIndex(e => e.IsDeleted);
                 entity.Property(e => e.Name).IsRequired();
+
+                // قالب الشهادة على مستوى النوع (المرحلة ٢)
+                entity.Property(e => e.ProcedureNo).HasMaxLength(100);
+                entity.Property(e => e.CalibrationLocation).HasMaxLength(300);
+                entity.Property(e => e.ReferenceGeometry).HasMaxLength(200);
+                entity.Property(e => e.CountingTime).HasMaxLength(50);
+                entity.Property(e => e.CountingUnit).HasMaxLength(50);
+                entity.Property(e => e.TraceabilityReference).HasMaxLength(300);
+                entity.Property(e => e.ComplianceVerdict).HasMaxLength(300);
+                entity.Property(e => e.CalibrationStandard).HasMaxLength(500);
+                entity.Property(e => e.MeasurementType).HasMaxLength(200);
+                entity.Property(e => e.Distance).HasMaxLength(100);
+                entity.Property(e => e.CorrectedReadingFormula).HasMaxLength(200);
+                entity.Property(e => e.DetectorType).HasMaxLength(200);
+                entity.Property(e => e.Instrumentation).HasMaxLength(500);
+                // MethodologyText و Notes و AdditionalInformation بلا حدّ طول،
+                // أسوةً بنظائرها على Certificate: فقرات كاملة لا سطور.
+            });
+
+            // قوالب الفحوص الوظيفية على مستوى نوع الجهاز
+            modelBuilder.Entity<DeviceTypeFunctionalCheckTemplate>(entity =>
+            {
+                entity.HasIndex(e => e.DeviceTypeId);
+
+                entity.Property(e => e.CheckName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Requirement).HasMaxLength(300);
+                entity.Property(e => e.DefaultResult).HasMaxLength(100);
+
+                entity.HasOne(t => t.DeviceType)
+                    .WithMany(p => p.FunctionalCheckTemplates)
+                    .HasForeignKey(t => t.DeviceTypeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // قوالب مكوّنات عدم اليقين على مستوى نوع الجهاز
+            modelBuilder.Entity<DeviceTypeUncertaintyComponentTemplate>(entity =>
+            {
+                entity.HasIndex(e => e.DeviceTypeId);
+
+                entity.Property(e => e.ComponentName).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.EvaluationType).HasMaxLength(10);
+                entity.Property(e => e.StandardUncertainty).HasMaxLength(50);
+                entity.Property(e => e.ContributionPercent).HasMaxLength(50);
+                entity.Property(e => e.Distribution).HasMaxLength(50);
+
+                entity.HasOne(t => t.DeviceType)
+                    .WithMany(p => p.UncertaintyComponentTemplates)
+                    .HasForeignKey(t => t.DeviceTypeId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Device Indexes and constraints
@@ -160,7 +212,6 @@ namespace CAL_QR.Data
                 entity.Property(e => e.RelativeHumidity).HasMaxLength(50);
                 entity.Property(e => e.AtmosphericPressure).HasMaxLength(50);
 
-                entity.Property(e => e.AverageCorrectionFactor).HasMaxLength(50);
                 entity.Property(e => e.CorrectedReadingFormula).HasMaxLength(200);
                 entity.Property(e => e.ComplianceVerdict).HasMaxLength(300);
                 entity.Property(e => e.CalibrationStandard).HasMaxLength(500);
@@ -174,6 +225,10 @@ namespace CAL_QR.Data
                 entity.Property(e => e.CoverageFactor).HasMaxLength(20);
 
                 entity.Property(e => e.CertificateTemplateType).HasMaxLength(200);
+                entity.Property(e => e.ProcedureNo).HasMaxLength(100);
+                entity.Property(e => e.CalibrationLocation).HasMaxLength(300);
+                entity.Property(e => e.Instrumentation).HasMaxLength(500);
+                entity.Property(e => e.DetectorType).HasMaxLength(200);
 
                 entity.Property(e => e.QrPayloadVersion).HasMaxLength(20);
                 entity.Property(e => e.VerifyCode).HasMaxLength(64);
@@ -197,6 +252,20 @@ namespace CAL_QR.Data
                     .WithOne()
                     .HasForeignKey<Certificate>(c => c.CalibrationRecordId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ملخّص النويدات — الطبقة الوسطى التي يقرأ منها الملصق
+            modelBuilder.Entity<CertificateNuclideSummary>(entity =>
+            {
+                entity.HasIndex(e => e.CertificateId);
+
+                entity.Property(e => e.Radionuclide).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.AverageCorrectionFactor).HasMaxLength(100);
+
+                entity.HasOne(d => d.Certificate)
+                    .WithMany(p => p.NuclideSummaries)
+                    .HasForeignKey(d => d.CertificateId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // CertificateCalibrationResult constraints

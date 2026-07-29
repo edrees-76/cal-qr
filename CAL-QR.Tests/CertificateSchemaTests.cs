@@ -486,6 +486,7 @@ namespace CAL_QR.Tests
                     Assert.Empty(context.CalibrationRecords);
                     Assert.Empty(context.Certificates);
                     // الجداول الأبناء تتبع الشهادة بسلوك Cascade
+                    Assert.Empty(context.CertificateNuclideSummaries);
                     Assert.Empty(context.CertificateCalibrationResults);
                     Assert.Empty(context.CertificateUncertaintyComponents);
                     Assert.Empty(context.CertificateFunctionalChecks);
@@ -816,6 +817,195 @@ namespace CAL_QR.Tests
                     Assert.Null(stored.AmendedAt);
                     Assert.Null(stored.FirstPrintedAt);
                     Assert.Null(stored.VerifyCode);
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        [Fact]
+        public void Migrator_CreatesPhaseTwoTables_OnExistingDatabase()
+        {
+            string dbPath = NewDbPath("phase2tables");
+            var options = OptionsFor(dbPath);
+            var newTables = new[]
+            {
+                "CertificateNuclideSummaries",
+                "DeviceTypeFunctionalCheckTemplates",
+                "DeviceTypeUncertaintyComponentTemplates"
+            };
+
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    foreach (var table in newTables)
+                    {
+                        DropTable(context, table);
+                    }
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var table in newTables)
+                    {
+                        Assert.False(TableExists(context, table));
+                    }
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var table in newTables)
+                    {
+                        Assert.True(TableExists(context, table), $"الجدول {table} لم يُنشأ بواسطة الهجرة.");
+                    }
+
+                    int recordId = SeedCalibrationRecord(context, "CERT-PHASE2-001");
+                    var certificate = NewCertificate(recordId, "CERT-PHASE2-001");
+                    certificate.NuclideSummaries.Add(new CertificateNuclideSummary
+                    {
+                        SortOrder = 1,
+                        Radionuclide = "Cs-137",
+                        AverageCorrectionFactor = "1.038"
+                    });
+                    context.Certificates.Add(certificate);
+                    context.SaveChanges();
+
+                    Assert.Single(context.CertificateNuclideSummaries);
+                    // القيمة نصية كما أُدخلت — لا حساب ولا إعادة تنسيق
+                    Assert.Equal("1.038", context.CertificateNuclideSummaries.Single().AverageCorrectionFactor);
+                }
+
+                // Cascade من الشهادة إلى ملخّص النويدات
+                using (var context = new CalQrDbContext(options))
+                {
+                    context.Certificates.Remove(context.Certificates.Single());
+                    context.SaveChanges();
+                    Assert.Empty(context.CertificateNuclideSummaries);
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        [Fact]
+        public void Migrator_DropsAverageCorrectionFactor_FromDatabasesThatStillHaveIt()
+        {
+            // OldSchemaCertificatesSql يحتفظ بالعمود عمداً — هو الحمولة الصحيحة
+            // لهذا الاختبار: قاعدة مثبَّتة سابقاً للمرحلة ٢.
+            string dbPath = NewDbPath("dropcolumn");
+            var options = OptionsFor(dbPath);
+
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    DropTable(context, "CertificateCalibrationResults");
+                    DropTable(context, "Certificates");
+                    context.Database.ExecuteSqlRaw(OldSchemaCertificatesSql);
+                    context.Database.ExecuteSqlRaw(OldSchemaCalibrationResultsSql);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.True(ColumnExists(context, "Certificates", "AverageCorrectionFactor"),
+                        "الحمولة غير صالحة: العمود يجب أن يكون موجوداً قبل الهجرة.");
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.False(ColumnExists(context, "Certificates", "AverageCorrectionFactor"),
+                        "العمود لم يُسقَط.");
+
+                    // إثبات أن الجدول ما زال عاملاً بعد الإسقاط لا مجرد خالٍ من العمود
+                    int recordId = SeedCalibrationRecord(context, "CERT-DROP-001");
+                    var certificate = NewCertificate(recordId, "CERT-DROP-001");
+                    certificate.NuclideSummaries.Add(new CertificateNuclideSummary
+                    {
+                        SortOrder = 1,
+                        Radionuclide = "Cs-137",
+                        AverageCorrectionFactor = "1.038"
+                    });
+                    context.Certificates.Add(certificate);
+                    context.SaveChanges();
+
+                    var stored = context.Certificates.Include(c => c.NuclideSummaries).Single();
+                    Assert.Equal("1.038", stored.NuclideSummaries.Single().AverageCorrectionFactor);
+                }
+
+                // idempotence: التشغيل الثاني على قاعدة بلا العمود لا يُلقي استثناءً
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    Assert.False(ColumnExists(context, "Certificates", "AverageCorrectionFactor"));
+                }
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        [Fact]
+        public void Migrator_AddsPhaseTwoColumns_OnOldSchema()
+        {
+            string dbPath = NewDbPath("phase2columns");
+            var options = OptionsFor(dbPath);
+            var certificateColumns = new[] { "ProcedureNo", "CalibrationLocation", "Instrumentation", "DetectorType" };
+            var deviceTypeColumns = new[]
+            {
+                "ProcedureNo", "CalibrationLocation", "ReferenceGeometry", "CountingTime", "CountingUnit",
+                "MethodologyText", "TraceabilityReference", "ComplianceVerdict", "CalibrationStandard",
+                "Notes", "AdditionalInformation", "MeasurementType", "Distance", "CorrectedReadingFormula",
+                "DetectorType", "Instrumentation", "UncertaintyEnabled", "MethodologyEnabled"
+            };
+
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    DropTable(context, "CertificateCalibrationResults");
+                    DropTable(context, "Certificates");
+                    context.Database.ExecuteSqlRaw(OldSchemaCertificatesSql);
+                    context.Database.ExecuteSqlRaw(OldSchemaCalibrationResultsSql);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var column in certificateColumns)
+                    {
+                        Assert.False(ColumnExists(context, "Certificates", column));
+                    }
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var column in certificateColumns)
+                    {
+                        Assert.True(ColumnExists(context, "Certificates", column), $"Certificates.{column} لم يُضف.");
+                    }
+                    foreach (var column in deviceTypeColumns)
+                    {
+                        Assert.True(ColumnExists(context, "DeviceTypes", column), $"DeviceTypes.{column} لم يُضف.");
+                    }
                 }
             }
             finally

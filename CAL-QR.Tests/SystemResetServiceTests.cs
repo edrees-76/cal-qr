@@ -174,15 +174,18 @@ namespace CAL_QR.Tests
                     Assert.Equal(0, await context.CalibrationRecords.CountAsync());
                     Assert.Equal(0, await context.AcknowledgedExpiredDevices.CountAsync());
 
-                    // DeviceTypes must be exactly the 5 re-seeded defaults
+                    // DeviceTypes must be exactly the 5 re-seeded defaults.
+                    // الأسماء تُقارَن بـ DeviceTypeCatalog لا بسلسلة مكتوبة هنا:
+                    // نسخة مكتوبة يدوياً في الاختبار كانت ستُبقي الازدواج الذي
+                    // عالجه مصدر الحقيقة الواحد، وتمرّ حتى لو تباعد التصفير عن الهجرة.
                     var deviceTypes = await context.DeviceTypes.Where(t => !t.IsDeleted).ToListAsync();
                     Assert.Equal(5, deviceTypes.Count);
-                    var typeNames = deviceTypes.Select(t => t.Name).ToList();
-                    Assert.Contains("Pancake Probe", typeNames);
-                    Assert.Contains("Gamma Probe", typeNames);
-                    Assert.Contains("Beta Scintillator Probe", typeNames);
-                    Assert.Contains("PED", typeNames);
-                    Assert.Contains("Dose Rate Meter", typeNames);
+                    Assert.Equal(
+                        DeviceTypeCatalog.CanonicalNames.OrderBy(n => n).ToArray(),
+                        deviceTypes.Select(t => t.Name).OrderBy(n => n).ToArray());
+
+                    // والقوالب أُعيد بناؤها معها لا الأسماء وحدها
+                    Assert.True(await context.DeviceTypeFunctionalCheckTemplates.CountAsync() > 0);
 
                     // AppSettings preserved (except Snapshot key removed)
                     Assert.True(await context.AppSettings.CountAsync() > 0);

@@ -8,20 +8,32 @@ namespace CAL_QR.Services.Payloads
 {
     /// <summary>
     /// ╔══════════════════════════════════════════════════════════════════════════╗
-    /// ║  ⚠⚠  نص التوقيع SIG1 — مجمَّد. لا يُعدَّل هذا الصنف إطلاقاً.  ⚠⚠         ║
+    /// ║  ⚠⚠  نص التوقيع SIG1 — القاعدة الدقيقة أدناه. اقرأها قبل أي تعديل.  ⚠⚠  ║
     /// ╚══════════════════════════════════════════════════════════════════════════╝
     ///
-    /// ترتيب الحقول، وأسماء مفاتيحها، وفواصلها، ومسافاتها، ورمز القيمة الخالية،
-    /// وقواعد الهروب، وفاصل الأسطر — كلها **مجمَّدة إلى الأبد**. تغيير أيٍّ منها
-    /// يُبطل التحقق من كل شهادة صدرت بهذا الإصدار: التوقيع المخزَّن يبقى كما هو،
-    /// والنص المُعاد بناؤه يختلف، فتظهر كل شهادة سليمة كأنها مزوَّرة.
+    /// **الصيغة مسوّدة حتى تُصدَر أول شهادة؛ وبعدها مجمَّدة، وأي تغيير يتطلب V2.**
     ///
-    /// إن لزم تغيير: أنشئ SignaturePayloadBuilderV2 وسجّله بجانب هذا، واجعله
-    /// الإصدار الحالي. الشهادات القديمة تبقى محمولة على SIG1 عبر
-    /// Certificate.SignaturePayloadVersion. لا تلمس هذا الملف.
+    /// الغرض من التجميد حماية **وثائق صادرة**، لا حماية الملف من التحرير. فما دام
+    ///     SELECT COUNT(*) FROM Certificates = 0
+    /// فلا وثيقة موقّعة في الوجود، والتعديل تصحيحُ مواصفةٍ قبل نفاذها لا كسرُ تجميد.
+    /// ومع أول شهادة تُصدَر يصير التجميد نافذاً بأثر مطلق.
     ///
-    /// SignaturePayloadGoldenTests يثبّت البايتات. فشله ليس اختباراً يحتاج تحديثاً،
-    /// بل إنذاراً بأن تعديلاً هنا أبطل شهادات صادرة.
+    /// **سجل التعديلات قبل النفاذ — وهو جزء من التحذير لا هامش عليه:**
+    /// عُدّلت هذه الصيغة مرتين وهي مسوّدة:
+    ///   • المرحلة ١: إضافة TT و RE و Remarks في ذيل R و F قبل أول التزام.
+    ///   • المرحلة ٢: حذف AF، وإضافة PN و LO و IN و DT، وإضافة كتلة النويدات NC/N.
+    /// يُسجَّل هذا صراحةً لأن تعليقاً يقول «مجمَّد إلى الأبد» ثم يُعدَّل مرتين
+    /// يفقد قيمته كتحذير: القارئ التالي يتعلم أن التحذير لا يُؤخذ حرفياً.
+    /// التحذير الدقيق يُطاع؛ التحذير المبالَغ يُتجاوز.
+    ///
+    /// **بعد أول إصدار:** أي تغيير هنا يُبطل التحقق من كل شهادة صدرت — التوقيع
+    /// المخزَّن يبقى، والنص المُعاد بناؤه يختلف، فتظهر كل شهادة سليمة كأنها مزوَّرة.
+    /// العلاج عندها: SignaturePayloadBuilderV2 مسجَّل بجانب هذا ويصير الإصدار
+    /// الحالي، والشهادات القديمة تبقى محمولة على SIG1 عبر
+    /// Certificate.SignaturePayloadVersion. ولا يُلمس هذا الملف.
+    ///
+    /// SignaturePayloadGoldenTests يثبّت البايتات. **بعد أول إصدار**، فشله ليس
+    /// اختباراً يحتاج تحديثاً بل إنذاراً بأن تعديلاً هنا أبطل شهادات صادرة.
     ///
     /// ─── قواعد الصيغة ───
     /// • فاصل الأسطر: \n حصراً — ممنوع Environment.NewLine (يُنتج CRLF على ويندوز).
@@ -62,6 +74,10 @@ namespace CAL_QR.Services.Payloads
 
             Add("CN", PayloadNormalizer.Text(c.CertificateNumber));
             Add("TT", PayloadNormalizer.Text(c.CertificateTemplateType));
+            Add("PN", PayloadNormalizer.Text(c.ProcedureNo));
+            Add("LO", PayloadNormalizer.Text(c.CalibrationLocation));
+            Add("IN", PayloadNormalizer.Text(c.Instrumentation));
+            Add("DT", PayloadNormalizer.Text(c.DetectorType));
             Add("CL", PayloadNormalizer.Text(c.ClientName));
             Add("CA", PayloadNormalizer.Text(c.ClientAddress));
             Add("DM", PayloadNormalizer.Text(c.DeviceModel));
@@ -79,7 +95,6 @@ namespace CAL_QR.Services.Payloads
             Add("CD", PayloadNormalizer.Date(c.CalibrationDate));
             Add("ID", PayloadNormalizer.Date(c.IssueDate));
             Add("DD", PayloadNormalizer.Date(c.DueDate));
-            Add("AF", PayloadNormalizer.Text(c.AverageCorrectionFactor));
             Add("RF", PayloadNormalizer.Text(c.CorrectedReadingFormula));
             Add("VD", PayloadNormalizer.Text(c.ComplianceVerdict));
             Add("ST", PayloadNormalizer.Text(c.CalibrationStandard));
@@ -92,6 +107,18 @@ namespace CAL_QR.Services.Payloads
             Add("UC", PayloadNormalizer.Text(c.CombinedUncertainty));
             Add("UX", PayloadNormalizer.Text(c.ExpandedUncertainty));
             Add("UK", PayloadNormalizer.Text(c.CoverageFactor));
+
+            // كتلة النويدات: الطبقة التي يقرأ منها الملصق. تسبق صفوف النتائج
+            // الخام لأنها أعلى منها في التجريد.
+            var nuclides = Ordered(c.NuclideSummaries, n => n.SortOrder, n => n.Id);
+            Add("NC", nuclides.Count.ToString(CultureInfo.InvariantCulture));
+            for (int i = 0; i < nuclides.Count; i++)
+            {
+                var n = nuclides[i];
+                Add("N" + (i + 1).ToString(CultureInfo.InvariantCulture), Join(
+                    PayloadNormalizer.Text(n.Radionuclide),
+                    PayloadNormalizer.Text(n.AverageCorrectionFactor)));
+            }
 
             var results = Ordered(c.CalibrationResults, r => r.SortOrder, r => r.Id);
             Add("RC", results.Count.ToString(CultureInfo.InvariantCulture));

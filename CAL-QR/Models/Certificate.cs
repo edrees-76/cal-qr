@@ -23,6 +23,13 @@ namespace CAL_QR.Models
         // دون كسر التوقيع — وهو تزوير غير مقصود يخالف مبدأ التجميد أعلاه.
         public string? CertificateTemplateType { get; set; }
 
+        // حقول ظهرت في نماذج Pancake و PED. منسوخة نصاً من قالب DeviceType
+        // وقت الإصدار، وقابلة للتعديل داخل الشهادة قبل الحفظ.
+        public string? ProcedureNo { get; set; }
+        public string? CalibrationLocation { get; set; }
+        public string? Instrumentation { get; set; }
+        public string? DetectorType { get; set; }
+
         // بيانات منسوخة نصياً وقت الإصدار (مبدأ الوثيقة التاريخية المجمّدة)
         public string ClientName { get; set; } = string.Empty;
         public string? ClientAddress { get; set; }
@@ -49,7 +56,9 @@ namespace CAL_QR.Models
         public string? AtmosphericPressure { get; set; }
 
         // نتائج على مستوى الشهادة
-        public string? AverageCorrectionFactor { get; set; }
+        // ملاحظة: AverageCorrectionFactor المفرد أُزيل في المرحلة ٢ — كان يعجز عن
+        // تمثيل أكثر من نويدة واحدة. استبدله جدول CertificateNuclideSummary،
+        // وأُسقط العمود فعلياً من قاعدة البيانات.
         public string? CorrectedReadingFormula { get; set; }
         public string? ComplianceVerdict { get; set; }
 
@@ -125,6 +134,7 @@ namespace CAL_QR.Models
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual CalibrationRecord? CalibrationRecord { get; set; }
+        public virtual ICollection<CertificateNuclideSummary> NuclideSummaries { get; set; } = new List<CertificateNuclideSummary>();
         public virtual ICollection<CertificateCalibrationResult> CalibrationResults { get; set; } = new List<CertificateCalibrationResult>();
         public virtual ICollection<CertificateUncertaintyComponent> UncertaintyComponents { get; set; } = new List<CertificateUncertaintyComponent>();
         public virtual ICollection<CertificateFunctionalCheck> FunctionalChecks { get; set; } = new List<CertificateFunctionalCheck>();

@@ -10,9 +10,15 @@ namespace CAL_QR.Tests
     /// الاختبار الذهبي لنص التوقيع SIG1 — تثبيت البايتات.
     ///
     /// ⚠ هذا الاختبار هو ما يجعل تجميد SIG1 حقيقة لا تعليقاً.
-    /// فشله لا يعني «اختبار يحتاج تحديثاً»؛ يعني أن تعديلاً على البانِي أبطل
-    /// التحقق من كل شهادة موقّعة بـ SIG1. العلاج هو التراجع عن التعديل،
-    /// أو إضافة SignaturePayloadBuilderV2 — لا تعديل السلسلة المتوقعة أدناه.
+    /// **بعد إصدار أول شهادة**، فشله لا يعني «اختبار يحتاج تحديثاً»؛ يعني أن
+    /// تعديلاً على البانِي أبطل التحقق من كل شهادة موقّعة بـ SIG1. العلاج عندها
+    /// هو التراجع عن التعديل، أو إضافة SignaturePayloadBuilderV2 — لا تعديل
+    /// السلسلة المتوقعة أدناه.
+    ///
+    /// سجل تحديثات السلسلة وهي مسوّدة (لا شهادة صادرة في أي قاعدة):
+    ///   • المرحلة ١ — الصيغة الأولى.
+    ///   • المرحلة ٢ — حذف AF، وإضافة PN و LO و IN و DT، وكتلة النويدات NC/N.
+    /// وهذا آخر تحديث مصرّح به.
     ///
     /// السلسلة تُبنى بـ string.Join("\n", ...) عمداً: لو كُتبت كنص حرفي
     /// متعدد الأسطر لحملت CRLF من نظام الملفات على ويندوز وأخفت خطأ
@@ -33,6 +39,10 @@ namespace CAL_QR.Tests
                 CalibrationRecordId = 7,
                 CertificateNumber = "TNRC-SSDL-2026-0018",
                 CertificateTemplateType = "Pancake Probe",
+                ProcedureNo = "SSDL-PED-IS-CP-01",
+                CalibrationLocation = "SSDL Calibration Laboratory, Tajoura - Libya",
+                Instrumentation = null,
+                DetectorType = null,
 
                 ClientName = "مستشفى بنغازي الطبي",
                 ClientAddress = null,
@@ -55,7 +65,6 @@ namespace CAL_QR.Tests
                 IssueDate = new DateTime(2026, 1, 20),
                 DueDate = new DateTime(2027, 1, 15),
 
-                AverageCorrectionFactor = "1.038",
                 CorrectedReadingFormula = "Measured × CFavg",
                 ComplianceVerdict = "Complies",
                 CalibrationStandard = "SSDL-CP-01",
@@ -91,6 +100,21 @@ namespace CAL_QR.Tests
                 AuthorizedByTitle = null,
                 AuthorizedByDate = null
             };
+
+            certificate.NuclideSummaries.Add(new CertificateNuclideSummary
+            {
+                Id = 41,
+                SortOrder = 1,
+                Radionuclide = "Cs-137",
+                AverageCorrectionFactor = "1.038"
+            });
+            certificate.NuclideSummaries.Add(new CertificateNuclideSummary
+            {
+                Id = 42,
+                SortOrder = 2,
+                Radionuclide = "Co-60",
+                AverageCorrectionFactor = null
+            });
 
             certificate.CalibrationResults.Add(new CertificateCalibrationResult
             {
@@ -146,6 +170,10 @@ namespace CAL_QR.Tests
             "CALQR-SIG-V1",
             "CN:TNRC-SSDL-2026-0018",
             "TT:Pancake Probe",
+            "PN:SSDL-PED-IS-CP-01",
+            "LO:SSDL Calibration Laboratory, Tajoura - Libya",
+            "IN:~",
+            "DT:~",
             "CL:مستشفى بنغازي الطبي",
             "CA:~",
             "DM:Ludlum 44-9",
@@ -163,7 +191,6 @@ namespace CAL_QR.Tests
             "CD:20260115",
             "ID:20260120",
             "DD:20270115",
-            "AF:1.038",
             "RF:Measured × CFavg",
             "VD:Complies",
             "ST:SSDL-CP-01",
@@ -176,6 +203,9 @@ namespace CAL_QR.Tests
             "UC:5.40",
             "UX:10.80",
             "UK:2",
+            "NC:2",
+            "N1:Cs-137;1.038",
+            "N2:Co-60;~",
             "RC:2",
             "R1:S-01;Cs-137;×1;~;5.40;5.20;1.038;-3.70;3.70;kCPM;ضمن الحدود",
             "R2:S-02;Co-60;×1;~;8.00;8.10;0.988;1.25;1.25;kCPM;~",
@@ -247,17 +277,31 @@ namespace CAL_QR.Tests
         {
             var builder = new SignaturePayloadBuilderV1();
             var certificate = BuildReferenceCertificate();
+            certificate.NuclideSummaries.Clear();
             certificate.CalibrationResults.Clear();
             certificate.UncertaintyComponents.Clear();
 
             string actual = builder.Build(certificate);
 
+            Assert.Contains("\nNC:0\n", actual);
             Assert.Contains("\nRC:0\n", actual);
             Assert.Contains("\nUCC:0\n", actual);
             Assert.Contains("\nFC:0\n", actual);
+            Assert.DoesNotContain("\nN1:", actual);
             Assert.DoesNotContain("\nR1:", actual);
             Assert.DoesNotContain("\nU1:", actual);
             Assert.DoesNotContain("\nF1:", actual);
+        }
+
+        [Fact]
+        public void SignaturePayloadV1_NoLongerCarriesTheSingleAverageCorrectionFactor()
+        {
+            // AF كان حقلاً مفرداً يعجز عن تمثيل أكثر من نويدة. استبدلته كتلة NC/N.
+            var builder = new SignaturePayloadBuilderV1();
+
+            string actual = builder.Build(BuildReferenceCertificate());
+
+            Assert.DoesNotContain("\nAF:", actual);
         }
 
         [Theory]
@@ -265,6 +309,12 @@ namespace CAL_QR.Tests
         [InlineData("RelativeError")]
         [InlineData("ResultRemarks")]
         [InlineData("CheckRemarks")]
+        [InlineData("ProcedureNo")]
+        [InlineData("CalibrationLocation")]
+        [InlineData("Instrumentation")]
+        [InlineData("DetectorType")]
+        [InlineData("NuclideName")]
+        [InlineData("NuclideCfAvg")]
         public void SignaturePayloadV1_CoversFieldsAddedBeforeFreeze(string field)
         {
             var builder = new SignaturePayloadBuilderV1();
@@ -292,6 +342,24 @@ namespace CAL_QR.Tests
                         Result = "Pass",
                         Remarks = "ملاحظة داخل جدول مطبوع"
                     });
+                    break;
+                case "ProcedureNo":
+                    mutated.ProcedureNo = "SSDL-XX-99";
+                    break;
+                case "CalibrationLocation":
+                    mutated.CalibrationLocation = "موقع آخر";
+                    break;
+                case "Instrumentation":
+                    mutated.Instrumentation = "Ludlum Model 3 + 44-9";
+                    break;
+                case "DetectorType":
+                    mutated.DetectorType = "Electronic Personal Dosimeter";
+                    break;
+                case "NuclideName":
+                    mutated.NuclideSummaries.First().Radionuclide = "Am-241";
+                    break;
+                case "NuclideCfAvg":
+                    mutated.NuclideSummaries.First().AverageCorrectionFactor = "9.999";
                     break;
             }
 

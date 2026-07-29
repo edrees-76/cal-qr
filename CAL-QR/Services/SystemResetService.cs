@@ -62,27 +62,19 @@ namespace CAL_QR.Services
                 // 5. مسح كافة الجهات المالكة
                 context.Owners.RemoveRange(await context.Owners.ToListAsync());
 
-                // 6. مسح كافة أنواع الأجهزة وإعادة إضافة الأنواع الخمسة الافتراضية لربط النظام بحالة تثبيت نظيفة
+                // 6. مسح كافة أنواع الأجهزة وإعادة بذر الأنواع الخمسة بقوالبها
+                // لربط النظام بحالة تثبيت نظيفة.
+                //
+                // ⚠ الأسماء تُقرأ من DeviceTypeCatalog ولا تُكتب هنا. كانت مصفوفة
+                // أسماء مضمّنة في هذا الموضع، وثلاثة من خمسة فيها تخالف أسماء
+                // النماذج الفعلية — فتصفير مصنع واحد كان يُنتج قائمة مضاعفة
+                // وقوالب معلّقة على أنواع بلا أجهزة.
                 context.DeviceTypes.RemoveRange(await context.DeviceTypes.ToListAsync());
+                await context.SaveChangesAsync();
 
-                var defaultDeviceTypes = new[]
-                {
-                    "Pancake Probe",
-                    "Gamma Probe",
-                    "Beta Scintillator Probe",
-                    "PED",
-                    "Dose Rate Meter"
-                };
-
-                foreach (var name in defaultDeviceTypes)
-                {
-                    context.DeviceTypes.Add(new DeviceType
-                    {
-                        Name = name,
-                        IsDeleted = false,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
+                // Apply لا SeedIfNeeded: علم البذر مضبوط سلفاً على قاعدة عاملة،
+                // والتصفير يجب أن يُعيد البناء رغمه.
+                DeviceTypeSeeder.Apply(context);
 
                 // 7. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (مع الحفاظ الكامل على بقية الإعدادات وسجل AuditLog)
                 var snapshotSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "DevSeededDataSnapshot");

@@ -124,6 +124,7 @@ namespace CAL_QR
             services.AddTransient<DeviceTypeDetailViewModel>();
             services.AddTransient<UsersViewModel>();
             services.AddTransient<UserFormViewModel>();
+            services.AddTransient<HelpViewModel>();
 
             // Register Windows
             services.AddTransient<SplashWindow>();

@@ -94,8 +94,46 @@
                             <TextBlock Text="تأكيد كلمة المرور الجديدة" Style="{StaticResource SettingsLabelStyle}" />
                             <PasswordBox x:Name="TxtConfirmPassword" Height="40" PasswordChanged="TxtConfirmPassword_PasswordChanged" Margin="0,0,0,15" />
 
-                            <Button Command="{Binding ChangePasswordCommand}" Content="تحديث كلمة المرور" 
+                            <Button Command="{Binding ChangePasswordCommand}" Content="تحديث كلمة المرور"
                                     Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!--
+                        كلمة سرّ قسم «مفتاح التوقيع» في تبويب المساعدة.
+                        المدير وحده يرى هذه البطاقة — نفس حدّ القسم نفسه.
+                        ❌ لا كلمة سرّ ولا تلميح افتراضي في الكود: يُكتبان هنا فقط.
+                    -->
+                    <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,15,0,0"
+                            Visibility="{Binding IsHelpSectionPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="🔑 كلمة سرّ قسم «مفتاح التوقيع»" Style="{StaticResource SettingsSectionTitleStyle}" />
+                            <TextBlock Text="تحمي قسم «مفتاح التوقيع» في تبويب المساعدة. قسم «الاستعادة والطوارئ» يبقى مفتوحاً للجميع ولا تحميه هذه الكلمة."
+                                       FontSize="12" Foreground="#4A5568" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                            <TextBlock Text="{Binding HelpSectionPasswordStatusText}" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,12" />
+
+                            <TextBlock Text="كلمة السرّ" Style="{StaticResource SettingsLabelStyle}" />
+                            <PasswordBox x:Name="TxtHelpSectionPassword" Height="40" PasswordChanged="TxtHelpSectionPassword_PasswordChanged" Margin="0,0,0,12" />
+
+                            <TextBlock Text="تأكيد كلمة السرّ" Style="{StaticResource SettingsLabelStyle}" />
+                            <PasswordBox x:Name="TxtHelpSectionPasswordConfirm" Height="40" PasswordChanged="TxtHelpSectionPasswordConfirm_PasswordChanged" Margin="0,0,0,12" />
+
+                            <TextBlock Text="تلميح يُعرض فوق حقل الإدخال (اختياري)" Style="{StaticResource SettingsLabelStyle}" />
+                            <TextBox Text="{Binding HelpSectionPasswordHint, UpdateSourceTrigger=PropertyChanged}" Height="40" Margin="0,0,0,15" />
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Command="{Binding SaveHelpSectionPasswordCommand}" Content="حفظ كلمة السرّ"
+                                        Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40"
+                                        FontFamily="{StaticResource CairoFont}" Margin="0,0,10,0" />
+                                <Button Grid.Column="1" Command="{Binding ClearHelpSectionPasswordCommand}" Content="إزالة"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#D32F2F" BorderBrush="#D32F2F" Height="40" Width="100"
+                                        FontFamily="{StaticResource CairoFont}" />
+                            </Grid>
                         </StackPanel>
                     </Border>
 

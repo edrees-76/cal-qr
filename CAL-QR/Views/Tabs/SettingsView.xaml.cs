@@ -24,6 +24,22 @@ namespace CAL_QR.Views.Tabs
             }
         }
 
+        private void TxtHelpSectionPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.HelpSectionPassword = ((PasswordBox)sender).Password;
+            }
+        }
+
+        private void TxtHelpSectionPasswordConfirm_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.HelpSectionPasswordConfirm = ((PasswordBox)sender).Password;
+            }
+        }
+
         private void TxtNewPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (DataContext is SettingsViewModel vm)

@@ -36,4 +36,12 @@
     <InternalsVisibleTo Include="CAL-QR.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Assets/Design مجلد مراجع بصرية: تصميم الشهادة والشعارات.
+         net_8.cs مرجع بصريّ للمرحلة ٥، لا كود يُترجَم — وهو ملف C#
+         كامل فيه Main، فتركه في الترجمة يُنتج نقطة دخول ثانية
+         تتعارض مع WPF (CS0017). ولا يُترجَم من هذا المجلد شيء أبداً. -->
+    <Compile Remove="Assets\Design\**\*.cs" />
+  </ItemGroup>
+
 </Project>

@@ -31,6 +31,12 @@ namespace CAL_QR.ViewModels
         private string _newPassword = string.Empty;
         private string _confirmPassword = string.Empty;
 
+        // كلمة سرّ قسم «مفتاح التوقيع» في تبويب المساعدة (المدير وحده)
+        private string _helpSectionPassword = string.Empty;
+        private string _helpSectionPasswordConfirm = string.Empty;
+        private string _helpSectionPasswordHint = string.Empty;
+        private bool _helpSectionPasswordIsSet;
+
         // Threshold & Auto-Lock Fields
         private int _alertDaysThreshold = 30;
         private int _autoLockMinutes = 10;
@@ -91,11 +97,25 @@ namespace CAL_QR.ViewModels
             SeedTestDataCommand = new RelayCommand(async () => await SeedTestDataAsync(), () => CanEdit);
             ClearSeedTestDataCommand = new RelayCommand(async () => await ClearSeedTestDataAsync(), () => CanEdit);
             FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
+            SaveHelpSectionPasswordCommand = new RelayCommand(
+                async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword());
+            ClearHelpSectionPasswordCommand = new RelayCommand(
+                async () => await ClearHelpSectionPasswordAsync(), () => IsHelpSectionPasswordVisible && HelpSectionPasswordIsSet);
 
             _ = LoadSettingsAsync();
+            _ = LoadHelpSectionPasswordStateAsync();
         }
 
         public bool IsBackupRestoreVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Settings) ?? false;
+
+        /// <summary>
+        /// قسم ضبط كلمة سرّ «مفتاح التوقيع»: المدير وحده.
+        /// UserRole.Admin لا SystemPermissions.Settings — نفس الحدّ الذي يحرس
+        /// القسم في تبويب المساعدة (HelpViewModel.IsSigningKeySectionVisible).
+        /// من لا يرى القسم لا يضبط قفله.
+        /// </summary>
+        public bool IsHelpSectionPasswordVisible =>
+            _currentUserService.CurrentUser?.Role == UserRole.Admin;
         public bool CanEdit => _currentUserService.CurrentUser != null && 
                                (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
@@ -104,6 +124,30 @@ namespace CAL_QR.ViewModels
         public string CurrentPassword { get => _currentPassword; set { if (SetProperty(ref _currentPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
         public string NewPassword { get => _newPassword; set { if (SetProperty(ref _newPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
         public string ConfirmPassword { get => _confirmPassword; set { if (SetProperty(ref _confirmPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+
+        // كلمة سرّ قسم «مفتاح التوقيع» — تُدخَل هنا وتُخزَّن مُجزّأة بـBCrypt.
+        // ❌ لا قيمة افتراضية لأيٍّ منها في الكود. التلميح يبدأ فارغاً.
+        public string HelpSectionPassword { get => _helpSectionPassword; set { if (SetProperty(ref _helpSectionPassword, value)) (SaveHelpSectionPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string HelpSectionPasswordConfirm { get => _helpSectionPasswordConfirm; set { if (SetProperty(ref _helpSectionPasswordConfirm, value)) (SaveHelpSectionPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+
+        /// <summary>نصّ حرّ يكتبه المدير، يُخزَّن كما هو ويُعرض فوق حقل الإدخال.</summary>
+        public string HelpSectionPasswordHint { get => _helpSectionPasswordHint; set => SetProperty(ref _helpSectionPasswordHint, value); }
+
+        /// <summary>هل توجد كلمة سرّ مضبوطة؟ لعرض الحالة فقط — لا تكشف الكلمة.</summary>
+        public bool HelpSectionPasswordIsSet
+        {
+            get => _helpSectionPasswordIsSet;
+            private set
+            {
+                if (SetProperty(ref _helpSectionPasswordIsSet, value))
+                {
+                    OnPropertyChanged(nameof(HelpSectionPasswordStatusText));
+                }
+            }
+        }
+
+        public string HelpSectionPasswordStatusText =>
+            HelpSectionPasswordIsSet ? "الحالة: مضبوطة ✔" : "الحالة: لم تُضبط بعد";
 
         // General Config Properties
         public int AlertDaysThreshold { get => _alertDaysThreshold; set => SetProperty(ref _alertDaysThreshold, value); }
@@ -829,6 +873,149 @@ namespace CAL_QR.ViewModels
         }
 
         public ICommand FactoryResetCommand { get; }
+
+        #region كلمة سرّ قسم «مفتاح التوقيع»
+
+        public ICommand SaveHelpSectionPasswordCommand { get; }
+        public ICommand ClearHelpSectionPasswordCommand { get; }
+
+        private bool CanSaveHelpSectionPassword() =>
+            IsHelpSectionPasswordVisible &&
+            !string.IsNullOrWhiteSpace(HelpSectionPassword) &&
+            HelpSectionPassword == HelpSectionPasswordConfirm;
+
+        /// <summary>يقرأ حالة الضبط والتلميح. لا يقرأ التجزئة ولا يعرضها.</summary>
+        private async Task LoadHelpSectionPasswordStateAsync()
+        {
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var hash = await context.AppSettings.AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Key == HelpViewModel.PasswordHashKey);
+                var hint = await context.AppSettings.AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Key == HelpViewModel.PasswordHintKey);
+
+                HelpSectionPasswordIsSet = !string.IsNullOrWhiteSpace(hash?.Value);
+                HelpSectionPasswordHint = hint?.Value ?? string.Empty;
+            }
+            catch
+            {
+                HelpSectionPasswordIsSet = false;
+                HelpSectionPasswordHint = string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// يُخزّن التجزئة بـBCrypt — نفس آلية كلمات مرور المستخدمين.
+        /// ❌ لا نصّ صريح في القاعدة، ولا قيمة مكتوبة في الكود.
+        /// التلميح يُخزَّن كما كتبه المدير حرفياً بلا معالجة.
+        /// </summary>
+        private async Task SaveHelpSectionPasswordAsync()
+        {
+            if (!IsHelpSectionPasswordVisible)
+            {
+                return;
+            }
+
+            if (HelpSectionPassword != HelpSectionPasswordConfirm)
+            {
+                MessageBox.Show("كلمتا السرّ غير متطابقتين.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(HelpSectionPassword))
+            {
+                MessageBox.Show("اكتب كلمة سرّ أولاً.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                string hash = BCrypt.Net.BCrypt.HashPassword(HelpSectionPassword);
+
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                await UpsertAppSettingAsync(context, HelpViewModel.PasswordHashKey, hash);
+                await UpsertAppSettingAsync(context, HelpViewModel.PasswordHintKey, HelpSectionPasswordHint ?? string.Empty);
+
+                await context.SaveChangesAsync();
+
+                // لا تبقى الكلمة في الذاكرة بعد الحفظ
+                HelpSectionPassword = string.Empty;
+                HelpSectionPasswordConfirm = string.Empty;
+                HelpSectionPasswordIsSet = true;
+
+                MessageBox.Show(
+                    "حُفظت كلمة سرّ قسم «مفتاح التوقيع».",
+                    "تم",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"تعذّر الحفظ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// يزيل كلمة السرّ والتلميح. بعدها يعرض القسم رسالة «لم تُضبط» بدل
+        /// حقل الإدخال — ❌ لا ينفتح المحتوى بغياب الكلمة.
+        /// </summary>
+        private async Task ClearHelpSectionPasswordAsync()
+        {
+            if (!IsHelpSectionPasswordVisible)
+            {
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                "إزالة كلمة سرّ قسم «مفتاح التوقيع»؟ سيبقى القسم مقفلاً بلا محتوى حتى تُضبط كلمة جديدة.",
+                "تأكيد",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                using var context = await _contextFactory.CreateDbContextAsync();
+
+                var hash = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == HelpViewModel.PasswordHashKey);
+                if (hash != null) context.AppSettings.Remove(hash);
+
+                var hint = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == HelpViewModel.PasswordHintKey);
+                if (hint != null) context.AppSettings.Remove(hint);
+
+                await context.SaveChangesAsync();
+
+                HelpSectionPasswordIsSet = false;
+                HelpSectionPasswordHint = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"تعذّر الإزالة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private static async Task UpsertAppSettingAsync(CalQrDbContext context, string key, string value)
+        {
+            var setting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == key);
+            if (setting == null)
+            {
+                context.AppSettings.Add(new AppSetting { Key = key, Value = value, UpdatedAt = DateTime.UtcNow });
+            }
+            else
+            {
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        #endregion
 
         private async Task ClearSeedTestDataAsync()
         {

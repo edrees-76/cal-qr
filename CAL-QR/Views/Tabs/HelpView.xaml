@@ -56,6 +56,23 @@
             <Setter Property="Padding" Value="15,12" />
             <Setter Property="Margin" Value="0,10,0,15" />
         </Style>
+
+        <!--
+            بطاقة خطر — أعلى درجة تحذير في هذا التبويب.
+            ⚠ **لا تُصغَّر ولا تُخفَّف.** أوسع حدّاً وأكبر حشوة من NoticeCardStyle
+            الأصفر عمداً: التحذير الذي يبدو كبقية التحذيرات يُقرأ كبقيتها، وهذا
+            تحديداً ما لا يُحتمل هنا — تجاهله يُبطل كل شهادة صادرة بصمت.
+        -->
+        <Style x:Key="DangerCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FDECEA" />
+            <Setter Property="BorderBrush" Value="#D32F2F" />
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="18,16" />
+            <Setter Property="Margin" Value="0,12,0,18" />
+        </Style>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
 
     <Grid>
@@ -88,20 +105,40 @@
                      BorderThickness="0" Background="Transparent"
                      ItemContainerStyle="{StaticResource HelpListBoxItemStyle}"
                      SelectionChanged="HelpSectionsListBox_SelectionChanged">
-                <ListBoxItem Content="1. معالج الإعداد الأول" IsSelected="True" />
-                <ListBoxItem Content="2. تسجيل الدخول وقفل الأمان" />
-                <ListBoxItem Content="3. لوحة التحكم للمتابعة" />
-                <ListBoxItem Content="4. إدخال وإدارة الأجهزة" />
-                <ListBoxItem Content="5. تسجيل عمليات المعايرة" />
-                <ListBoxItem Content="6. تصميم وضبط ملصقات QR" />
-                <ListBoxItem Content="7. إدخال الجهات والأنواع" />
-                <ListBoxItem Content="8. استخراج التقارير وتصديرها" />
-                <ListBoxItem Content="9. النسخ الاحتياطية واستعادتها" />
-                <ListBoxItem Content="10. تصفح سجل العمليات" />
-                <ListBoxItem Content="11. حل المشاكل الشائعة" />
-                <ListBoxItem Content="12. دورة العمل اليومية" />
-                <ListBoxItem Content="13. العناية بملصق QR المطبوع" />
-                <ListBoxItem Content="14. مسح كود QR بالهاتف" />
+                <!--
+                    Tag = اسم اللوحة المقابلة. المطابقة بالاسم لا بالفهرس
+                    (HelpView.xaml.cs): إخفاء عنصر واحد كان يزيح كل ما بعده
+                    فيعرض القسم الخطأ تحت العنوان الصحيح.
+                -->
+                <ListBoxItem Content="1. معالج الإعداد الأول" Tag="Panel1" IsSelected="True" />
+                <ListBoxItem Content="2. تسجيل الدخول وقفل الأمان" Tag="Panel2" />
+                <ListBoxItem Content="3. لوحة التحكم للمتابعة" Tag="Panel3" />
+                <ListBoxItem Content="4. إدخال وإدارة الأجهزة" Tag="Panel4" />
+                <ListBoxItem Content="5. تسجيل عمليات المعايرة" Tag="Panel5" />
+                <ListBoxItem Content="6. تصميم وضبط ملصقات QR" Tag="Panel6" />
+                <ListBoxItem Content="7. إدخال الجهات والأنواع" Tag="Panel7" />
+                <ListBoxItem Content="8. استخراج التقارير وتصديرها" Tag="Panel8" />
+                <ListBoxItem Content="9. النسخ الاحتياطية واستعادتها" Tag="Panel9" />
+                <ListBoxItem Content="10. تصفح سجل العمليات" Tag="Panel10" />
+                <ListBoxItem Content="11. حل المشاكل الشائعة" Tag="Panel11" />
+                <ListBoxItem Content="12. دورة العمل اليومية" Tag="Panel12" />
+                <ListBoxItem Content="13. العناية بملصق QR المطبوع" Tag="Panel13" />
+                <ListBoxItem Content="14. مسح كود QR بالهاتف" Tag="Panel14" />
+
+                <!--
+                    ⚠ بارز عمداً (رمز أحمر + عريض): أخطر قسم في التبويب.
+                    ❌ **لا يُقفل بحال** — لا صلاحية ولا كلمة سرّ ولا حساب.
+                    من يحتاجه قد يكون فنّي صيانة بلا حساب، وحبسه خلف تسجيل دخول
+                    يُبطل كل الشهادات بحسن نية.
+                -->
+                <ListBoxItem Content="🔴 15. الاستعادة والطوارئ" Tag="PanelRecovery" FontWeight="Bold" />
+
+                <!--
+                    الطبقة الأولى: المدير وحده يرى العنصر. غيره لا يراه إطلاقاً —
+                    لا عنصر رمادي ولا رسالة «ممنوع»: وجود القفل بذاته معلومة.
+                -->
+                <ListBoxItem Content="🔑 16. مفتاح التوقيع" Tag="PanelSigningKey"
+                             Visibility="{Binding IsSigningKeySectionVisible, Converter={StaticResource BoolToVis}}" />
             </ListBox>
         </Grid>
 
@@ -411,6 +448,117 @@
 
                         <TextBlock Text="خطوات المسح والتحقق:" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
                         <TextBlock Text="1. افتح تطبيق كاميرا الهاتف الذكي (أو أي تطبيق مخصص لمسح أكواد QR).&#x0a;2. وجّه الكاميرا نحو كود الـ QR المطبوع على الملصق الخاص بالجهاز.&#x0a;3. انقر على الرابط أو النص الذي سيظهر لك على الشاشة.&#x0a;4. ستظهر لك البيانات الأساسية للجهاز مباشرة للتأكد من مطابقتها للجهاز الفعلي:&#x0a;   * رقم الشهادة&#x0a;   * الموديل والرقم التسلسلي&#x0a;   * الجهة المالكة&#x0a;   * تاريخ انتهاء المعايرة&#x0a;   * التوقيع الإلكتروني (Signature): وهو رمز أمان يؤكد لك أن هذا الملصق تم توليده وتوقيعه من قبل نظام CAL-QR الرسمي ولم يتم التلاعب ببياناته." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- ═══════════ Panel 15: الاستعادة والطوارئ (مفتوح دائماً) ═══════════ -->
+                    <!--
+                        ❌ لا Visibility مربوطة بصلاحية ولا بقفل. هذا مقصود ومُلزِم.
+                    -->
+                    <StackPanel x:Name="PanelRecovery" Visibility="Collapsed">
+                        <TextBlock Text="الاستعادة والطوارئ" FontSize="18" FontWeight="Bold" Foreground="#B71C1C" Margin="0,0,0,10" />
+                        <TextBlock Text="اقرأ هذا القسم قبل نقل النظام إلى أي جهاز آخر، وقبل إعادة تثبيت النظام، وقبل أي فورمات. هذا القسم متاح للجميع بلا كلمة مرور." FontSize="13" Foreground="#333333" Margin="0,0,0,15" TextWrapping="Wrap" />
+
+                        <!-- ═══ التحذير الأحمر — أخطر ما في التبويب ═══ -->
+                        <Border Style="{StaticResource DangerCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="⛔ تحذير: عند نقل النظام إلى جهاز آخر" FontSize="15" FontWeight="Bold" Foreground="#B71C1C" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#B71C1C" TextWrapping="Wrap"
+                                           Text="استعِد نسخة احتياطية، لا تثبّت نظيفاً. التثبيت النظيف يولّد مفتاح توقيع جديداً، فتفشل كل الشهادات السابقة في التحقّق — بلا رسالة خطأ. المفتاح داخل قاعدة البيانات، والبرنامج بلا قاعدته لا يعرف شيئاً." />
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="كيف تستعيد نسخة احتياطية" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,10,0,2" />
+                        <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap"
+                                   Text="1. افتح تبويب 'الإعدادات'.&#x0a;2. انقر زر 'استعادة نسخة احتياطية'.&#x0a;3. اختر ملف الـ ZIP المطلوب (اسمه يبدأ بـ CalQR_Backup ويتضمّن التاريخ والوقت).&#x0a;4. سيحذّرك النظام بأن البيانات الحالية ستُستبدل بالكامل — راجع التاريخ في اسم الملف قبل الموافقة.&#x0a;5. بعد الموافقة يُعيد البرنامج تشغيل نفسه بالبيانات المستعادة." />
+
+                        <TextBlock Text="كيف تتأكّد أن النسخ الاحتياطي يعمل" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                        <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap"
+                                   Text="1. في 'الإعدادات' تأكّد أن 'مسار النسخ الاحتياطي' مضبوط على مجلد موجود وقابل للكتابة — مسار فارغ يعني أن لا نسخة تُنشأ إطلاقاً.&#x0a;2. تأكّد أن 'جدولة النسخ' ليست 'None' إن أردت نسخاً تلقائياً.&#x0a;3. افتح مجلد النسخ الاحتياطي وتحقّق من وجود ملف ZIP حديث — التاريخ والوقت في اسم الملف.&#x0a;4. اضغط 'نسخ احتياطي الآن' وتأكّد من ظهور ملف جديد بتاريخ اللحظة." />
+
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap"
+                                       Text="💡 نسخة لم تُختبر ليست نسخة. جرّب الاستعادة فعلياً مرة واحدة على جهاز آخر للتأكّد من سلامة الملف — قبل أن تحتاجها فعلاً." />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- ═══════════ Panel 16: مفتاح التوقيع (طبقتان) ═══════════ -->
+                    <StackPanel x:Name="PanelSigningKey" Visibility="Collapsed">
+                        <TextBlock Text="مفتاح التوقيع" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+
+                        <!-- الطبقة ٢-أ: لم تُضبط كلمة سرّ ⇒ إرشاد لا محتوى -->
+                        <Border Style="{StaticResource NoticeCardStyle}"
+                                Visibility="{Binding ShowNotConfiguredNotice, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="🔒 لم تُضبط كلمة سرّ — اضبطها من الإعدادات."
+                                       FontSize="13" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
+                        </Border>
+
+                        <!-- الطبقة ٢-ب: حقل الفتح -->
+                        <StackPanel Visibility="{Binding ShowPasswordPrompt, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="هذا القسم محميّ بكلمة سرّ." FontSize="13" Foreground="#4A5568" Margin="0,0,0,10" TextWrapping="Wrap" />
+
+                            <!-- التلميح كما كتبه المدير حرفياً. لا يظهر إن كان فارغاً. -->
+                            <Border Background="#F1F5F9" BorderBrush="#CBD5E0" BorderThickness="1" CornerRadius="6" Padding="12,10" Margin="0,0,0,12"
+                                    Visibility="{Binding HasPasswordHint, Converter={StaticResource BoolToVis}}">
+                                <TextBlock FontSize="12" Foreground="#4A5568" TextWrapping="Wrap">
+                                    <Run Text="💬 تلميح: " FontWeight="Bold" />
+                                    <Run Text="{Binding PasswordHint, Mode=OneWay}" />
+                                </TextBlock>
+                            </Border>
+
+                            <!--
+                                ⚠ بلا HorizontalAlignment وبلا MaxWidth — نمط
+                                SettingsView.xaml العامل منذ أشهر. FlowDirection
+                                هنا RightToLeft، فـ"Right" تعني الحافة الخلفية =
+                                اليسار البصريّ، وحقلٌ محدود العرض هناك ينزلق خارج
+                                المنطقة المرئية. الامتداد الكامل هو السلوك الصحيح.
+                            -->
+                            <PasswordBox x:Name="TxtSigningKeyPassword" Height="40"
+                                         PasswordChanged="TxtSigningKeyPassword_PasswordChanged" Margin="0,0,0,10" />
+
+                            <TextBlock Text="{Binding UnlockError}" FontSize="12" Foreground="#D32F2F" Margin="0,0,0,10" TextWrapping="Wrap"
+                                       Visibility="{Binding HasUnlockError, Converter={StaticResource BoolToVis}}" />
+
+                            <!--
+                                "Left" لا "Right": في RTL تُعكس المحاذاة، فـLeft
+                                هي اليمين البصريّ — حيث يبدأ القارئ. نفس ما يفعله
+                                قالب عنصر القائمة أعلى الملف (ContentPresenter).
+                            -->
+                            <Button Command="{Binding UnlockCommand}" Content="فتح" Width="120" HorizontalAlignment="Left"
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="38"
+                                    FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+
+                        <!-- المحتوى بعد الفتح -->
+                        <StackPanel Visibility="{Binding IsSigningKeySectionUnlocked, Converter={StaticResource BoolToVis}}">
+
+                            <TextBlock Text="١. ما هو مفتاح التوقيع ولماذا لا يُفقد" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                            <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap"
+                                       Text="مفتاح التوقيع سلسلة سرّية يولّدها النظام مرة واحدة عند أول تشغيل، ويوقّع بها كل شهادة. رمز التحقّق المطبوع على الشهادة والملصق مشتقّ منه.&#x0a;&#x0a;فقدان المفتاح يعني أن كل شهادة صدرت لا يمكن التحقّق منها إلى الأبد — لا يوجد مسار استرجاع، ولا نسخة لدى جهة أخرى، ولا وسيلة لإعادة توليده. المفتاح داخل قاعدة البيانات وحدها." />
+
+                            <TextBlock Text="٢. خطوات استخراجه" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                            <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap"
+                                       Text="1. أغلق البرنامج تماماً.&#x0a;2. افتح ملف قاعدة البيانات (مساره ظاهر في 'الإعدادات' ← 'مسار قاعدة البيانات') بأي أداة تقرأ SQLite.&#x0a;3. افتح جدول AppSettings.&#x0a;4. ابحث عن الصفّ الذي عموده Key يساوي: HmacSecretKey&#x0a;5. القيمة في عمود Value هي المفتاح. ⚠ لا تنسخها — انظر إليها واكتبها بخطّ اليد مباشرةً (الخطوة ٣). النسخ يضعها في حافظة ويندوز حيث تبقى حتى تنسخ شيئاً آخر." />
+
+                            <TextBlock Text="٣. الظرف المختوم" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                            <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap"
+                                       Text="• يُكتب المفتاح بخطّ اليد على ورقة — لا يُطبع ولا يُرسل بالبريد.&#x0a;• نسختان في موقعين مختلفين، لا نسخة واحدة.&#x0a;• توقيع على حافة لسان الظرف، بحيث لا يُفتح دون أن يظهر أثر الفتح.&#x0a;• يُكتب التاريخ على الظرف." />
+                            <Border Style="{StaticResource DangerCardStyle}">
+                                <TextBlock FontSize="14" FontWeight="Bold" Foreground="#B71C1C" TextWrapping="Wrap"
+                                           Text="⛔ يُنفَّذ يوم التثبيت في تجورا، قبل إصدار أول شهادة حقيقية." />
+                            </Border>
+
+                            <TextBlock Text="٤. بعد الانتهاء" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                            <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap"
+                                       Text="• أغلق أداة SQLite واختر 'No / Don't Save' — فُتحت القاعدة للقراءة فقط.&#x0a;• إن نسخت شيئاً بالخطأ، انسخ أي نصّ آخر فوقه لتفريغ الحافظة.&#x0a;• لا تترك لقطة شاشة ولا ملفاً مؤقّتاً يحمل المفتاح." />
+
+                            <TextBlock Text="٥. النسخ الاحتياطية تحمل المفتاح" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,2" />
+                            <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap"
+                                       Text="كل نسخة احتياطية تتضمّن قاعدة البيانات كاملة، والمفتاح داخلها بلا تشفير وبلا كلمة سرّ. من يحصل على أي نسخة احتياطية يملك المفتاح." />
+                            <Border Style="{StaticResource DangerCardStyle}">
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#B71C1C" TextWrapping="Wrap"
+                                           Text="⛔ تُحفظ النسخ الاحتياطية حفظ الوثائق السرّية: لا قرص مشترك، لا مجلد سحابي عامّ، لا إرسال بالبريد.&#x0a;&#x0a;ومسار النسخ السحابي يرفع المفتاح إلى السحابة نصّاً صريحاً — لا يُضبط إلا على مجلد مشفَّر أو حساب مخصّص محكوم." />
+                            </Border>
+                        </StackPanel>
                     </StackPanel>
 
                 </Grid>

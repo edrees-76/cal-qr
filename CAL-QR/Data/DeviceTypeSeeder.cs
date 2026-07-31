@@ -353,6 +353,7 @@ namespace CAL_QR.Data
             Fill(t => t.ReferenceGeometry, (t, v) => t.ReferenceGeometry = v, d.ReferenceGeometry);
             Fill(t => t.CountingTime, (t, v) => t.CountingTime = v, d.CountingTime);
             Fill(t => t.CountingUnit, (t, v) => t.CountingUnit = v, d.CountingUnit);
+            Fill(t => t.CalibrationMode, (t, v) => t.CalibrationMode = v, d.CalibrationMode);
             Fill(t => t.MethodologyText, (t, v) => t.MethodologyText = v, d.MethodologyText);
             Fill(t => t.TraceabilityReference, (t, v) => t.TraceabilityReference = v, d.TraceabilityReference);
             Fill(t => t.ComplianceVerdict, (t, v) => t.ComplianceVerdict = v, d.ComplianceVerdict);
@@ -407,7 +408,8 @@ namespace CAL_QR.Data
                         {
                             SortOrder = component.SortOrder,
                             ComponentName = component.ComponentName,
-                            EvaluationType = component.EvaluationType
+                            EvaluationType = component.EvaluationType,
+                            Distribution = component.Distribution
                             // StandardUncertainty و ContributionPercent فارغان عمداً
                         });
                     }

@@ -54,6 +54,9 @@ namespace CAL_QR.Data
                 entity.Property(e => e.ReferenceGeometry).HasMaxLength(200);
                 entity.Property(e => e.CountingTime).HasMaxLength(50);
                 entity.Property(e => e.CountingUnit).HasMaxLength(50);
+                // 200 لا 50: القيمة المزروعة نصّ هندسة مطابق لـReferenceGeometry
+                // ("Direct Contact Geometry")، فيتبع حدَّه لا حدَّ CountingTime.
+                entity.Property(e => e.CalibrationMode).HasMaxLength(200);
                 entity.Property(e => e.TraceabilityReference).HasMaxLength(300);
                 entity.Property(e => e.ComplianceVerdict).HasMaxLength(300);
                 entity.Property(e => e.CalibrationStandard).HasMaxLength(500);
@@ -207,6 +210,7 @@ namespace CAL_QR.Data
                 entity.Property(e => e.Distance).HasMaxLength(100);
                 entity.Property(e => e.CountingTime).HasMaxLength(50);
                 entity.Property(e => e.CountingUnit).HasMaxLength(50);
+                entity.Property(e => e.CalibrationMode).HasMaxLength(200);
 
                 entity.Property(e => e.Temperature).HasMaxLength(50);
                 entity.Property(e => e.RelativeHumidity).HasMaxLength(50);

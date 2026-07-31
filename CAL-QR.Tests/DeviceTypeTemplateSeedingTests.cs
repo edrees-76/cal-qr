@@ -162,10 +162,11 @@ namespace CAL_QR.Tests
                 using (var context = new CalQrDbContext(options))
                 {
                     Assert.Equal(5, context.DeviceTypes.Count());
-                    // Pancake وحده يحمل مكوّنات عدم يقين في الكتالوج
-                    Assert.Equal(5, context.DeviceTypeUncertaintyComponentTemplates.Count());
-                    // خمسة فحوص لكل نوع عدا Beta (نصّه [يحتاج تأكيد])
-                    Assert.Equal(20, context.DeviceTypeFunctionalCheckTemplates.Count());
+                    // العائلة الكاملة وحدها تحمل مكوّنات عدم يقين: Pancake و Beta
+                    // خمسةً لكلٍّ. الثلاثة الباقية UncertaintyEnabled = false.
+                    Assert.Equal(10, context.DeviceTypeUncertaintyComponentTemplates.Count());
+                    // خمسة فحوص لكل نوع من الخمسة
+                    Assert.Equal(25, context.DeviceTypeFunctionalCheckTemplates.Count());
                 }
             }
             finally { CleanUp(dbPath); }
@@ -460,23 +461,177 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public void Catalog_LeavesBetaTemplateBlank_NoFabricatedText()
+        public void Catalog_BetaTemplate_IsSeededFromItsOwnForm_NotCopiedFromPancake()
         {
-            // نموذج Beta تالف OCR. البنية تُزرع، والنصوص غير المؤكدة تبقى فارغة.
-            // هذا الاختبار يمنع «ملء الفراغ» بنسخ من Pancake بحسن نية.
+            // خلَف Catalog_LeavesBetaTemplateBlank_NoFabricatedText. سقط سبب ذاك
+            // الاختبار بوصول قالب Beta الفعلي (كان OCR تالفاً)، لكن **غرضه باقٍ**:
+            // منع ملء قالب Beta بنسخ من Pancake بحسن نية. الحراسة انتقلت من
+            // «يجب أن يكون فارغاً» إلى «يجب أن يطابق نموذجه هو».
             var beta = DeviceTypeCatalog.All.Single(d => d.Name == "Beta Scintillation Probe");
+            var pancake = DeviceTypeCatalog.All.Single(d => d.Name == "Pancake Probe");
 
+            // ── الحارس الأصلي في صورته الجديدة ──
+            // الفارق الوحيد بين النموذجين في جدول الفحوص هو الصفّ الخامس. نسخة
+            // من Pancake كانت ستكتب Detector Window Inspection، وهو خطأ صامت:
+            // النصّ معقول ويُطبع على شهادة، فلا شيء يكشفه سوى هذا التوكيد.
+            Assert.Equal("Probe Window Inspection", beta.FunctionalChecks.Single(c => c.SortOrder == 5).CheckName);
+            Assert.Equal("Detector Window Inspection", pancake.FunctionalChecks.Single(c => c.SortOrder == 5).CheckName);
+
+            // ولا MethodologyText مُختلق: لا نصّ منهجية في قالب Beta ولا في Pancake
             Assert.Null(beta.MethodologyText);
-            Assert.Null(beta.ComplianceVerdict);
-            Assert.Null(beta.CountingTime);
-            Assert.Null(beta.CountingUnit);
-            Assert.Null(beta.ReferenceGeometry);
-            Assert.Empty(beta.FunctionalChecks);
-            Assert.Empty(beta.UncertaintyComponents);
 
-            // والمؤكَّد مزروع
-            Assert.NotNull(beta.CalibrationStandard);
+            // ── القالب مزروع كاملاً، لا فراغات [يحتاج تأكيد] ──
+            Assert.Equal("Certified Sr-90/Y-90 Reference Beta Sources", beta.CalibrationStandard);
+            Assert.Equal("Direct Contact Geometry", beta.ReferenceGeometry);
+            Assert.Equal("Direct Contact Geometry", beta.CalibrationMode);
+            Assert.Equal("60 Sec", beta.CountingTime);
+            Assert.Equal("kCPM", beta.CountingUnit);
+            Assert.Equal("APPROVED FOR OPERATIONAL USE", beta.ComplianceVerdict);
+            Assert.Equal("Corrected Reading = Measured Reading × CFavg", beta.CorrectedReadingFormula);
+            Assert.False(string.IsNullOrWhiteSpace(beta.TraceabilityReference));
+            Assert.False(string.IsNullOrWhiteSpace(beta.Notes));
             Assert.True(beta.UncertaintyEnabled);
+            Assert.True(beta.MethodologyEnabled);
+
+            Assert.Equal(5, beta.FunctionalChecks.Length);
+            Assert.Equal(5, beta.UncertaintyComponents.Length);
+            Assert.All(beta.FunctionalChecks, c => Assert.Equal("Yes", c.DefaultResult));
+        }
+
+        [Fact]
+        public void Catalog_SeedsNoFieldAbsentFromTheFiveForms()
+        {
+            // الحقول الستّة تبقى على الكيان — v3 §٦ يحرّم حذفها — لكنها **لا تُبذَر**:
+            // null هنا معناه «لا قالب لهذا الحقل في هذا النوع» لا «قيمة فارغة».
+            // الحارس ضدّ عودة قيم من مراجع أقدم إلى الكتالوج، وكلها كانت مزروعة
+            // فعلاً قبل المرحلة ٢٫٥ (ProcedureNo و CalibrationLocation في Pancake ·
+            // DetectorType في PED · MeasurementType و Distance في Dose Rate Meter).
+            Assert.All(DeviceTypeCatalog.All, d =>
+            {
+                Assert.Null(d.ProcedureNo);
+                Assert.Null(d.CalibrationLocation);
+                Assert.Null(d.Instrumentation);
+                Assert.Null(d.DetectorType);
+                Assert.Null(d.MeasurementType);
+                Assert.Null(d.Distance);
+            });
+        }
+
+        [Fact]
+        public void Catalog_CarriesNoNonReproductionClause()
+        {
+            // بند «This certificate shall not be reproduced except in full» محذوف
+            // من الأنواع الخمسة بقرار إدريس. كان في Gamma و DRM (عبر ثابت مشترك)
+            // وفي PED بصياغة مختلفة الشرطة — ولذلك يفحص هذا الاختبار الكلمة
+            // المفتاحية لا الجملة كاملة.
+            foreach (var d in DeviceTypeCatalog.All)
+            {
+                foreach (var text in new[] { d.Notes, d.AdditionalInformation, d.MethodologyText })
+                {
+                    if (text is null) continue;
+                    Assert.DoesNotContain("reproduced", text, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+        }
+
+        [Fact]
+        public void Catalog_MethodologyNuclides_MatchTheApprovedForms()
+        {
+            // النويدة مثبَّتة في نصّ م. رضا المعتمد، وتختلف بين الأنواع الثلاثة.
+            // الحارس ضدّ عودة `DoseRateMeterMethodologyText = GammaMethodologyText`:
+            // ثابت مشترك واحد كان قد ورّث Dose Rate Meter نويدة Gamma الخطأ بصمت،
+            // وهو عطل لا يكشفه أي اختبار بنيوي — النصّ يبقى سليم التركيب.
+            string Methodology(string name) =>
+                DeviceTypeCatalog.All.Single(d => d.Name == name).MethodologyText!;
+
+            Assert.Contains("Co-60", Methodology("Gamma Scintillation Probe"));
+            Assert.Contains("Co-60", Methodology("Personal Electronic Dosimeter (PED)"));
+            Assert.Contains("Cs-137", Methodology("Dose Rate Meter"));
+
+            // ولا تسرّب في الاتجاه المعاكس
+            Assert.DoesNotContain("Cs-137", Methodology("Gamma Scintillation Probe"));
+            Assert.DoesNotContain("Cs-137", Methodology("Personal Electronic Dosimeter (PED)"));
+            Assert.DoesNotContain("Co-60", Methodology("Dose Rate Meter"));
+
+            // ولا وصف عام: «Co-60, Cs-137 and point gamma source» كان النصّ المزروع،
+            // و«Relative Error (%)» كان الحدّ الخطأ مكان «absolute relative error (AE)».
+            foreach (var name in new[] { "Gamma Scintillation Probe", "Personal Electronic Dosimeter (PED)", "Dose Rate Meter" })
+            {
+                Assert.Contains("absolute relative error (AE)", Methodology(name));
+            }
+        }
+
+        [Fact]
+        public void Catalog_UncertaintyComponents_CarryTheirDistribution()
+        {
+            // Distribution كان إغفالاً: الحقل موجود على
+            // DeviceTypeUncertaintyComponentTemplate منذ المرحلة ٢، وملف البذر
+            // يحدّد قيمته للمكوّنات الخمسة، لكن CatalogUncertaintyComponent لم
+            // يكن يحمله أصلاً — فكان يُزرع NULL بصمت.
+            //
+            // إسقاطه لا يكسر شيئاً بنيوياً: البذر ينجح، والعدد يبقى خمسة، ولا
+            // اختبار يشتكي. الأثر الوحيد عمود فارغ في جدول ميزانية عدم اليقين
+            // على شهادة مطبوعة — أي أن الكشف يقع عند العميل لا عند البناء.
+            //
+            // ⚠ Distribution قالب لا نتيجة: خاصّية ثابتة للمكوّن، بخلاف
+            // StandardUncertainty و ContributionPercent اللتين تُتركان فارغتين
+            // عمداً لأنهما تتغيّران بكل معايرة (يحرسهما
+            // Catalog_UncertaintyTemplates_CarryNoPreFilledValues).
+            var expected = new[] { "Normal", "Normal", "Poisson", "Normal", "Rectangular" };
+
+            foreach (var name in new[] { "Pancake Probe", "Beta Scintillation Probe" })
+            {
+                var components = DeviceTypeCatalog.All
+                    .Single(d => d.Name == name)
+                    .UncertaintyComponents
+                    .OrderBy(c => c.SortOrder)
+                    .ToList();
+
+                Assert.Equal(5, components.Count);
+                Assert.Equal(expected, components.Select(c => c.Distribution).ToArray());
+            }
+
+            // والقيمة تصل إلى القاعدة، لا إلى الكتالوج وحده: مسار البذر هو
+            // الموضع الذي سقط فيه الحقل فعلاً.
+            string dbPath = NewDbPath("distribution");
+            var options = OptionsFor(dbPath);
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    foreach (var name in new[] { "Pancake Probe", "Beta Scintillation Probe" })
+                    {
+                        int typeId = context.DeviceTypes.Single(t => t.Name == name).Id;
+
+                        var stored = context.DeviceTypeUncertaintyComponentTemplates
+                            .Where(t => t.DeviceTypeId == typeId)
+                            .OrderBy(t => t.SortOrder)
+                            .Select(t => t.Distribution)
+                            .ToArray();
+
+                        Assert.Equal(expected, stored);
+                    }
+                }
+            }
+            finally { CleanUp(dbPath); }
+        }
+
+        [Fact]
+        public void Catalog_PedTemplate_HasNoUncertaintySection()
+        {
+            // «عائلة ب» المنفصلة لـPED ملغاة: قالب م. رضا الفعلي بلا عدم يقين
+            // إطلاقاً. كان UncertaintyEnabled = true بلا جدول مكوّنات — حالة
+            // معلّقة تُظهر على الشهادة قسم عدم يقين فارغاً.
+            var ped = DeviceTypeCatalog.All.Single(d => d.Name == "Personal Electronic Dosimeter (PED)");
+
+            Assert.False(ped.UncertaintyEnabled);
+            Assert.Empty(ped.UncertaintyComponents);
+            Assert.Equal("Corrected Reading = Measured Reading × CF", ped.CorrectedReadingFormula);
         }
 
         [Fact]

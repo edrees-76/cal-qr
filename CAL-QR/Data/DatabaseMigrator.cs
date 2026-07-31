@@ -82,6 +82,7 @@ namespace CAL_QR.Data
                         ""Distance"" TEXT NULL,
                         ""CountingTime"" TEXT NULL,
                         ""CountingUnit"" TEXT NULL,
+                        ""CalibrationMode"" TEXT NULL,
                         ""Temperature"" TEXT NULL,
                         ""RelativeHumidity"" TEXT NULL,
                         ""AtmosphericPressure"" TEXT NULL,
@@ -273,6 +274,12 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "DeviceTypes", "Instrumentation", "ALTER TABLE DeviceTypes ADD COLUMN Instrumentation TEXT NULL;");
                 ExecuteSqlIfColumnMissing(context, "DeviceTypes", "UncertaintyEnabled", "ALTER TABLE DeviceTypes ADD COLUMN UncertaintyEnabled INTEGER NOT NULL DEFAULT 0;");
                 ExecuteSqlIfColumnMissing(context, "DeviceTypes", "MethodologyEnabled", "ALTER TABLE DeviceTypes ADD COLUMN MethodologyEnabled INTEGER NOT NULL DEFAULT 0;");
+
+                // ── المرحلة ٢٫٥: CalibrationMode (v3 §٤ بند ١) ──
+                // إضافة فقط، على الجدولين. قالب على DeviceType يُنسخ نصاً إلى
+                // Certificate وقت الإصدار، كنظيريه CountingTime و CountingUnit.
+                ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationMode", "ALTER TABLE Certificates ADD COLUMN CalibrationMode TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CalibrationMode", "ALTER TABLE DeviceTypes ADD COLUMN CalibrationMode TEXT NULL;");
 
                 // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
                 context.Database.ExecuteSqlRaw(@"

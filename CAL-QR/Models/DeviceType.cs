@@ -27,6 +27,7 @@ namespace CAL_QR.Models
         public string? ReferenceGeometry { get; set; }
         public string? CountingTime { get; set; }
         public string? CountingUnit { get; set; }
+        public string? CalibrationMode { get; set; }
         public string? MethodologyText { get; set; }
         public string? TraceabilityReference { get; set; }
         public string? ComplianceVerdict { get; set; }

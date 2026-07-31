@@ -50,6 +50,12 @@ namespace CAL_QR.Models
         public string? CountingTime { get; set; }
         public string? CountingUnit { get; set; }
 
+        // نمط المعايرة، يظهر في كتلة TECHNICAL INFORMATION في العائلة الكاملة.
+        // مثال: "Direct Contact Geometry". منسوخ نصاً من قالب DeviceType وقت
+        // الإصدار، كنظيريه CountingTime و CountingUnit.
+        // ملاحظة: خارج SIG1 في هذه المرحلة — لا يُضاف إلى SignaturePayloadBuilderV1.
+        public string? CalibrationMode { get; set; }
+
         // الظروف البيئية
         public string? Temperature { get; set; }
         public string? RelativeHumidity { get; set; }

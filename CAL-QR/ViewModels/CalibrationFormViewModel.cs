@@ -99,6 +99,7 @@ namespace CAL_QR.ViewModels
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
             IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
+            EditCertificateCommand = new RelayCommand(EditCertificate, () => HasCertificate && _existingCertificateId > 0);
             
             LoadFormSources();
         }
@@ -326,6 +327,7 @@ namespace CAL_QR.ViewModels
         /// CalibrationRecordId يمنع الثانية على مستوى القاعدة، فالمنع هنا واجهة لا حماية.
         /// </summary>
         private bool _hasCertificate;
+        private int _existingCertificateId;
         public bool HasCertificate
         {
             get => _hasCertificate;
@@ -385,6 +387,7 @@ namespace CAL_QR.ViewModels
         public ICommand AddAttachmentCommand { get; }
         public ICommand RemoveAttachmentCommand { get; }
         public ICommand IssueCertificateCommand { get; }
+        public ICommand EditCertificateCommand { get; }
         #endregion
 
         private void IssueCertificate()
@@ -421,6 +424,41 @@ namespace CAL_QR.ViewModels
             HasCertificate = true;
             Saved?.Invoke(this, EventArgs.Empty);
             CloseWindowAction?.Invoke();
+        }
+
+        private void EditCertificate()
+        {
+            if (_existingCertificateId <= 0) return;
+
+            try
+            {
+                var dialog = _certificateFormDialogFactory();
+                dialog.LoadForEdit(_existingCertificateId);
+                dialog.Owner = Application.Current?.Windows
+                    .OfType<Window>()
+                    .FirstOrDefault(w => w.IsActive);
+                dialog.ShowDialog();
+
+                // تحديث حالة الشهادة بعد الإغلاق (قد يكون الرقم تغيّر)
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var cert = context.Certificates
+                        .AsNoTracking()
+                        .Where(c => c.Id == _existingCertificateId && !c.IsDeleted)
+                        .Select(c => c.CertificateNumber)
+                        .FirstOrDefault();
+                    if (cert != null)
+                    {
+                        CertificateNumber = cert;
+                    }
+                }
+                Saved?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في فتح نموذج تعديل الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void LoadFormSources()
@@ -532,9 +570,13 @@ namespace CAL_QR.ViewModels
 
                     // استعلام وجود مباشر: يبقى سطح ICertificateRepository بلا توسيع،
                     // ويطابق أسلوب هذا الملف في القراءات المحلية.
-                    HasCertificate = context.Certificates
+                    var existingCert = context.Certificates
                         .AsNoTracking()
-                        .Any(c => c.CalibrationRecordId == recordId && !c.IsDeleted);
+                        .Where(c => c.CalibrationRecordId == recordId && !c.IsDeleted)
+                        .Select(c => new { c.Id })
+                        .FirstOrDefault();
+                    HasCertificate = existingCert != null;
+                    _existingCertificateId = existingCert?.Id ?? 0;
                 }
 
                 OnPropertyChanged(nameof(CanIssueCertificate));

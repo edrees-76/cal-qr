@@ -28,6 +28,7 @@ namespace CAL_QR.ViewModels
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly Func<Views.Dialogs.DeviceDetailDialog> _deviceDetailDialogFactory;
         private readonly Func<Views.Dialogs.CalibrationFormDialog> _calibrationFormDialogFactory;
+        private readonly Func<Views.Dialogs.CertificateFormDialog> _certificateFormDialogFactory;
         private readonly ICurrentUserService _currentUserService;
 
         private ObservableCollection<DeviceDisplayItem> _devices = new();
@@ -79,6 +80,7 @@ namespace CAL_QR.ViewModels
             IPaperTemplateRepository templateRepository,
             Func<Views.Dialogs.DeviceDetailDialog> deviceDetailDialogFactory,
             Func<Views.Dialogs.CalibrationFormDialog> calibrationFormDialogFactory,
+            Func<Views.Dialogs.CertificateFormDialog> certificateFormDialogFactory,
             ICurrentUserService currentUserService)
         {
             _deviceRepository = deviceRepository;
@@ -91,6 +93,7 @@ namespace CAL_QR.ViewModels
             _templateRepository = templateRepository;
             _deviceDetailDialogFactory = deviceDetailDialogFactory;
             _calibrationFormDialogFactory = calibrationFormDialogFactory;
+            _certificateFormDialogFactory = certificateFormDialogFactory;
             _currentUserService = currentUserService;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
@@ -107,6 +110,7 @@ namespace CAL_QR.ViewModels
             AddDeviceCommand = new RelayCommand(OpenAddDeviceDialog, () => CanEdit);
             ViewDetailsCommand = new RelayCommand(OpenDetailsDialog);
             EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
+            EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog);
             PrintDeviceCommand = new RelayCommand(PrintSpecificCertificate);
             PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
             PrintSpecificCertificateCommand = new RelayCommand(PrintSpecificCertificate);
@@ -283,6 +287,7 @@ namespace CAL_QR.ViewModels
         public ICommand AddDeviceCommand { get; }
         public ICommand ViewDetailsCommand { get; }
         public ICommand EditDeviceCommand { get; }
+        public ICommand EditCertificateCommand { get; }
         #endregion
 
         public async Task LoadDataAsync()
@@ -422,6 +427,10 @@ namespace CAL_QR.ViewModels
                             IssuedNumber = context.Certificates
                                 .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
                                 .Select(c => c.CertificateNumber)
+                                .FirstOrDefault(),
+                            IssuedCertificateId = context.Certificates
+                                .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
+                                .Select(c => c.Id)
                                 .FirstOrDefault()
                         })
                         .ToListAsync();
@@ -468,6 +477,7 @@ namespace CAL_QR.ViewModels
                             OwnerName = d.Owner?.Name ?? "غير محدد",
                             DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
                             CertificateNumber = certNumber,
+                            CertificateId = x.IssuedCertificateId,
                             CalibrationDate = calDate,
                             ExpiryDate = expDate,
                             Result = result,
@@ -636,7 +646,27 @@ namespace CAL_QR.ViewModels
             dialog.ShowDialog();
         }
 
+        private void OpenEditCertificateDialog(object? parameter)
+        {
+            if (parameter is not DeviceDisplayItem item) return;
+            if (item.CertificateId <= 0) return;
 
+            try
+            {
+                var dialog = _certificateFormDialogFactory();
+                dialog.LoadForEdit(item.CertificateId);
+                dialog.Owner = Application.Current?.Windows
+                    .OfType<Window>()
+                    .FirstOrDefault(w => w.IsActive);
+                dialog.ShowDialog();
+                _ = LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في فتح نموذج تعديل الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         private void PrintSpecificCertificate(object? parameter)
         {
@@ -752,11 +782,18 @@ namespace CAL_QR.ViewModels
                 // الرقم يُقرأ من جدول Certificates عبر القاعدة الموحّدة، لا من العمود
                 // المهجور على CalibrationRecord — نفس المصدر المستخدم في LoadDataAsync.
                 string certNumber = CertificateNumberDisplayRules.None;
+                int certificateId = 0;
                 if (latestCal != null)
                 {
                     var issuedNumbers = CertificateNumberDisplayRules.Load(context, new[] { latestCal.Id });
                     certNumber = CertificateNumberDisplayRules.Display(
                         issuedNumbers.TryGetValue(latestCal.Id, out var issuedNumber) ? issuedNumber : null);
+
+                    certificateId = context.Certificates
+                        .AsNoTracking()
+                        .Where(c => c.CalibrationRecordId == latestCal.Id && !c.IsDeleted)
+                        .Select(c => c.Id)
+                        .FirstOrDefault();
                 }
 
                 var item = new DeviceDisplayItem
@@ -770,6 +807,7 @@ namespace CAL_QR.ViewModels
                     OwnerName = d.Owner?.Name ?? "غير محدد",
                     DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
                     CertificateNumber = certNumber,
+                    CertificateId = certificateId,
                     CalibrationDate = latestCal?.CalibrationDate,
                     ExpiryDate = latestCal?.ExpiryDate,
                     Result = latestCal?.Result ?? "غير معاير",
@@ -816,6 +854,8 @@ namespace CAL_QR.ViewModels
         public string OwnerName { get; set; } = string.Empty;
         public string DeviceTypeName { get; set; } = string.Empty;
         public string CertificateNumber { get; set; } = string.Empty;
+        public int CertificateId { get; set; }
+        public bool HasIssuedCertificate => CertificateId > 0;
         public DateTime? CalibrationDate { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string Result { get; set; } = string.Empty;

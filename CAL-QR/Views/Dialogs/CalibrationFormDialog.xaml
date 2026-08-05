@@ -249,10 +249,23 @@
                     <Button Command="{Binding IssueCertificateCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
                             Height="40" Margin="0,0,10,0" Foreground="#1A3A6B" BorderBrush="#1A3A6B"
                             FontFamily="{StaticResource CairoFont}"
-                            ToolTip="إنشاء شهادة معايرة رسمية من هذا السجل">
+                            ToolTip="إنشاء شهادة معايرة رسمية من هذا السجل"
+                            Visibility="{Binding CanIssueCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="FileDocument" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="إنشاء شهادة" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <!-- مكمّل لزر الإنشاء أعلاه: يظهر بدلاً منه حين توجد شهادة صادرة -->
+                    <Button Command="{Binding EditCertificateCommand}" Style="{StaticResource MaterialDesignRaisedButton}"
+                            Background="#1A3A6B" BorderBrush="#1A3A6B"
+                            Height="40" Margin="0,0,10,0"
+                            FontFamily="{StaticResource CairoFont}"
+                            ToolTip="تعديل الشهادة الصادرة لهذا السجل"
+                            Visibility="{Binding HasCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileDocumentEdit" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="تعديل الشهادة" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />

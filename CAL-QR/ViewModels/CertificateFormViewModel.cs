@@ -45,6 +45,8 @@ namespace CAL_QR.ViewModels
         private int _calibrationRecordId;
         private bool _isSaving;
         private bool _isLoaded;
+        private bool _isEditMode;
+        private int _certificateId;
 
         public event EventHandler<CertificateIssuedEventArgs>? CertificateIssued;
 
@@ -478,6 +480,8 @@ namespace CAL_QR.ViewModels
 
         #region حالة الواجهة
 
+        public string FormTitle => _isEditMode ? "تعديل الشهادة" : "إصدار شهادة جديدة";
+
         /// <summary>شريط ظاهر غير حاجب. لا أثر له على إمكان الحفظ.</summary>
         private bool _hasNoTemplateWarning;
         public bool HasNoTemplateWarning
@@ -571,6 +575,72 @@ namespace CAL_QR.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"خطأ في تحميل بيانات الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// يقرأ شهادة موجودة (مع كل صفوفها الأبناء بأرقامها الحقيقية) ويملأ النموذج
+        /// لتعديلها. ApplyDraft لا تضبط حقول الموقّعين — تُضبط هنا يدوياً من الشهادة
+        /// المخزَّنة، لا من الإعدادات الافتراضية.
+        /// </summary>
+        public void LoadForEdit(int certificateId)
+        {
+            _certificateId = certificateId;
+            _isEditMode = true;
+
+            try
+            {
+                Certificate? certificate;
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    certificate = context.Certificates
+                        .AsNoTracking()
+                        .Include(c => c.NuclideSummaries)
+                        .Include(c => c.CalibrationResults)
+                        .Include(c => c.UncertaintyComponents)
+                        .Include(c => c.FunctionalChecks)
+                        .FirstOrDefault(c => c.Id == certificateId && !c.IsDeleted);
+                }
+
+                if (certificate == null)
+                {
+                    ValidationErrors = "تعذّر تحميل الشهادة.";
+                    return;
+                }
+
+                _calibrationRecordId = certificate.CalibrationRecordId;
+
+                var draft = new CertificateDraftResult
+                {
+                    Certificate = certificate,
+                    HasTemplate = true
+                };
+                ApplyDraft(draft);
+
+                // ApplyDraft يضبط IssueDate = DateTime.Today. في التعديل نريد التاريخ المخزَّن.
+                IssueDate = certificate.IssueDate;
+
+                CalibratedByName = certificate.CalibratedByName ?? string.Empty;
+                CalibratedByTitle = certificate.CalibratedByTitle ?? string.Empty;
+                CalibratedByDate = certificate.CalibratedByDate;
+                ReviewedByName = certificate.ReviewedByName ?? string.Empty;
+                ReviewedByTitle = certificate.ReviewedByTitle ?? string.Empty;
+                ReviewedByDate = certificate.ReviewedByDate;
+                ApprovedByName = certificate.ApprovedByName ?? string.Empty;
+                ApprovedByTitle = certificate.ApprovedByTitle ?? string.Empty;
+                ApprovedByDate = certificate.ApprovedByDate;
+                AuthorizedByName = certificate.AuthorizedByName ?? string.Empty;
+                AuthorizedByTitle = certificate.AuthorizedByTitle ?? string.Empty;
+                AuthorizedByDate = certificate.AuthorizedByDate;
+
+                _isLoaded = true;
+                OnPropertyChanged(nameof(FormTitle));
+                CommandManager.InvalidateRequerySuggested();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في تحميل الشهادة للتعديل: {ex.Message}", "خطأ",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -697,42 +767,85 @@ namespace CAL_QR.ViewModels
 
                 var certificate = BuildCertificateFromForm();
 
-                // ١. الإصدار: الرقم والتوقيع والحمولة و DueDate كلها من AddAsync.
-                string number = await _certificateRepository.AddAsync(certificate);
-
-                // ٢. طور ما بعد الـCommit — خارج أي معاملة، وفشله لا يُبطل الإصدار.
-                string postCommitError = string.Empty;
-                try
+                if (_isEditMode)
                 {
-                    await _auditLogRepository.LogAsync(
-                        "إصدار شهادة",
-                        "Certificate",
-                        certificate.Id.ToString(),
-                        $"إصدار شهادة رقم {number} لسجل المعايرة {_calibrationRecordId}");
-                }
-                catch (Exception ex)
-                {
-                    postCommitError = $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
-                }
+                    // ━━ مسار التعديل ━━
+                    certificate.Id = _certificateId;
 
-                // ٣. إعادة الرقم إلى المستدعي.
-                CertificateIssued?.Invoke(this, new CertificateIssuedEventArgs(number, _calibrationRecordId));
+                    bool rotated = await _certificateRepository.UpdateAsync(certificate);
 
-                // ٤. رسالة النجاح ثم الإغلاق.
-                if (postCommitError.Length > 0)
-                {
-                    MessageBox.Show(
-                        $"تم إصدار الشهادة بنجاح برقم {number}، ولكن حدث خطأ بعد الحفظ:{postCommitError}"
-                        + "\n\n(لا تحتاج لإعادة الإصدار — الشهادة مسجلة بنجاح).",
-                        "تحذير - فشل جزئي بعد الحفظ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string editPostCommitError = string.Empty;
+                    try
+                    {
+                        await _auditLogRepository.LogAsync(
+                            "تعديل شهادة",
+                            "Certificate",
+                            certificate.Id.ToString(),
+                            $"تعديل شهادة رقم {certificate.CertificateNumber} لسجل المعايرة {_calibrationRecordId}"
+                            + (rotated ? " — تم تدوير رمز التحقق" : ""));
+                    }
+                    catch (Exception ex)
+                    {
+                        editPostCommitError = $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
+                    }
+
+                    string editMsg = rotated
+                        ? "تم تعديل الشهادة بنجاح.\n\n⚠ تم تدوير رمز التحقق — يجب إعادة طباعة الشهادة والملصق."
+                        : "تم تعديل الشهادة بنجاح.";
+
+                    if (editPostCommitError.Length > 0)
+                    {
+                        editMsg += $"\n\nتحذير:{editPostCommitError}";
+                        MessageBox.Show(editMsg, "تحذير - فشل جزئي بعد الحفظ",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        MessageBox.Show(editMsg, "تم التعديل",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+
+                    CloseWindowAction?.Invoke();
                 }
                 else
                 {
-                    MessageBox.Show($"تم إصدار الشهادة بنجاح برقم {number}.", "تم الإصدار",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
-                }
+                    // ١. الإصدار: الرقم والتوقيع والحمولة و DueDate كلها من AddAsync.
+                    string number = await _certificateRepository.AddAsync(certificate);
 
-                CloseWindowAction?.Invoke();
+                    // ٢. طور ما بعد الـCommit — خارج أي معاملة، وفشله لا يُبطل الإصدار.
+                    string postCommitError = string.Empty;
+                    try
+                    {
+                        await _auditLogRepository.LogAsync(
+                            "إصدار شهادة",
+                            "Certificate",
+                            certificate.Id.ToString(),
+                            $"إصدار شهادة رقم {number} لسجل المعايرة {_calibrationRecordId}");
+                    }
+                    catch (Exception ex)
+                    {
+                        postCommitError = $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
+                    }
+
+                    // ٣. إعادة الرقم إلى المستدعي.
+                    CertificateIssued?.Invoke(this, new CertificateIssuedEventArgs(number, _calibrationRecordId));
+
+                    // ٤. رسالة النجاح ثم الإغلاق.
+                    if (postCommitError.Length > 0)
+                    {
+                        MessageBox.Show(
+                            $"تم إصدار الشهادة بنجاح برقم {number}، ولكن حدث خطأ بعد الحفظ:{postCommitError}"
+                            + "\n\n(لا تحتاج لإعادة الإصدار — الشهادة مسجلة بنجاح).",
+                            "تحذير - فشل جزئي بعد الحفظ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"تم إصدار الشهادة بنجاح برقم {number}.", "تم الإصدار",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+
+                    CloseWindowAction?.Invoke();
+                }
             }
             catch (Exception ex)
             {

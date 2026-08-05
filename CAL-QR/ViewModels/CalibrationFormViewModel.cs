@@ -27,14 +27,18 @@ namespace CAL_QR.ViewModels
         private readonly IDeviceRepository _deviceRepository;
         private readonly ICalibrationRepository _calibrationRepository;
         private readonly IAttachmentRepository _attachmentRepository;
-        private readonly IHmacService _hmacService;
-        private readonly IQrService _qrService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly Func<Views.Dialogs.CertificateFormDialog> _certificateFormDialogFactory;
 
         // Form Fields
         private int _deviceId;
         private int _calibrationRecordId;
         private bool _isEditMode;
+
+        // يُلتقط مرّة واحدة وقت التحميل: هل جاء هذا السجل من القاعدة وله رقم شهادة
+        // مكتوب يدوياً؟ (سجل مُرحَّل). لا يُشتقّ من IsEditMode، لأن السجل الجديد يصير
+        // IsEditMode = true بعد أول حفظ وهو ليس مُرحَّلاً.
+        private bool _hasLegacyCertificateNumber;
 
         private bool _isSyncingOwnerSelection;
         private bool _isSyncingDeviceTypeSelection;
@@ -65,6 +69,13 @@ namespace CAL_QR.ViewModels
 
         public event EventHandler? Saved;
 
+        /// <remarks>
+        /// لا IHmacService ولا IQrService هنا — عن قصد. التوقيع القديم ورمز الـQR
+        /// على مستوى سجل المعايرة أُوقفا: الشهادة صاحبة التوقيع والرمز، وتُصدرهما
+        /// CertificateRepository.AddAsync وحدها. إبقاء التبعيتين مُحقَنتين بلا
+        /// استعمال كان سيوحي بأن المسار حيّ، ويُنتج تحذير CS0414 يخالف سياسة
+        /// «صفر تحذيرات».
+        /// </remarks>
         public CalibrationFormViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
             IOwnerRepository ownerRepository,
@@ -72,9 +83,8 @@ namespace CAL_QR.ViewModels
             IDeviceRepository deviceRepository,
             ICalibrationRepository calibrationRepository,
             IAttachmentRepository attachmentRepository,
-            IHmacService hmacService,
-            IQrService qrService,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            Func<Views.Dialogs.CertificateFormDialog> certificateFormDialogFactory)
         {
             _contextFactory = contextFactory;
             _ownerRepository = ownerRepository;
@@ -82,13 +92,13 @@ namespace CAL_QR.ViewModels
             _deviceRepository = deviceRepository;
             _calibrationRepository = calibrationRepository;
             _attachmentRepository = attachmentRepository;
-            _hmacService = hmacService;
-            _qrService = qrService;
             _auditLogRepository = auditLogRepository;
+            _certificateFormDialogFactory = certificateFormDialogFactory;
 
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
+            IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
             
             LoadFormSources();
         }
@@ -297,7 +307,76 @@ namespace CAL_QR.ViewModels
         public bool IsEditMode
         {
             get => _isEditMode;
-            set => SetProperty(ref _isEditMode, value);
+            set
+            {
+                if (SetProperty(ref _isEditMode, value))
+                {
+                    OnPropertyChanged(nameof(FormTitle));
+                    OnPropertyChanged(nameof(FormSubtitle));
+                }
+            }
+        }
+
+        public string FormTitle => IsEditMode ? "تعديل سجل معايرة" : "سجل معايرة جهاز";
+
+        public string FormSubtitle => IsEditMode ? "تعديل بيانات المعايرة" : "إدخال بيانات المعايرة";
+
+        /// <summary>
+        /// وجود شهادة غير محذوفة لهذا السجل. الفهرس الفريد المشروط على
+        /// CalibrationRecordId يمنع الثانية على مستوى القاعدة، فالمنع هنا واجهة لا حماية.
+        /// </summary>
+        private bool _hasCertificate;
+        public bool HasCertificate
+        {
+            get => _hasCertificate;
+            set
+            {
+                if (SetProperty(ref _hasCertificate, value))
+                {
+                    OnPropertyChanged(nameof(CanIssueCertificate));
+                    RaiseCertificateNumberStateChanged();
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
+
+        /// <summary>
+        /// الإصدار يقتضي سجلاً محفوظاً: الشهادة تحمل CalibrationRecordId غير قابل للإلغاء،
+        /// وفي وضع الإضافة لا وجود للسجل بعد.
+        /// </summary>
+        public bool CanIssueCertificate => IsEditMode && _calibrationRecordId > 0 && !HasCertificate;
+
+        /// <summary>
+        /// ثلاث حالات لحقل رقم الشهادة، لا حالة واحدة:
+        ///   ١. سجل جديد بلا شهادة  ⇒ للقراءة فقط، الرقم يُولَّد عند الإصدار.
+        ///   ٢. سجل له شهادة صادرة  ⇒ مقفل، الرقم من CertificateRepository.AddAsync.
+        ///   ٣. سجل مُرحَّل بترقيم ورقي سابق ⇒ قابل للتحرير كما كان.
+        ///
+        /// HasCertificate تسبق في الأولوية: سجل مُرحَّل صدرت له شهادة لاحقاً يُقفل
+        /// رقمه، وإلا لأمكن دهس رقم مولَّد بكتابة يدوية.
+        /// </summary>
+        public bool IsCertificateNumberReadOnly => HasCertificate || !_hasLegacyCertificateNumber;
+
+        /// <summary>الإلزام للمُرحَّل وحده — الرقم المولَّد لا يُطالَب به المستخدم.</summary>
+        public bool RequiresCertificateNumber => !HasCertificate && _hasLegacyCertificateNumber;
+
+        /// <summary>
+        /// نصّ نائب للعرض وحده. يُمرَّر إلى HintAssist لا إلى Text، فلا يُكتب في
+        /// CertificateNumber: الخاصّية تبقى فارغة حرفياً حتى يُخصَّص رقم حقيقي.
+        /// </summary>
+        public string CertificateNumberHint =>
+            IsCertificateNumberReadOnly && !HasCertificate ? "يُولَّد آلياً عند الإصدار" : string.Empty;
+
+        /// <summary>النجمة تتبع الإلزام الفعلي بدل أن تكون ساكنة تكذب على المستخدم.</summary>
+        public string CertificateNumberLabel =>
+            RequiresCertificateNumber ? "رقم الشهادة *" : "رقم الشهادة";
+
+        private void RaiseCertificateNumberStateChanged()
+        {
+            OnPropertyChanged(nameof(IsCertificateNumberReadOnly));
+            OnPropertyChanged(nameof(RequiresCertificateNumber));
+            OnPropertyChanged(nameof(CertificateNumberHint));
+            OnPropertyChanged(nameof(CertificateNumberLabel));
         }
         #endregion
 
@@ -305,7 +384,42 @@ namespace CAL_QR.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand AddAttachmentCommand { get; }
         public ICommand RemoveAttachmentCommand { get; }
+        public ICommand IssueCertificateCommand { get; }
         #endregion
+
+        private void IssueCertificate()
+        {
+            if (!CanIssueCertificate) return;
+
+            try
+            {
+                var dialog = _certificateFormDialogFactory();
+                dialog.ViewModel.CertificateIssued += OnCertificateIssued;
+                try
+                {
+                    dialog.LoadForRecord(_calibrationRecordId);
+                    dialog.Owner = Application.Current?.Windows
+                        .OfType<Window>()
+                        .FirstOrDefault(w => w.IsActive);
+                    dialog.ShowDialog();
+                }
+                finally
+                {
+                    dialog.ViewModel.CertificateIssued -= OnCertificateIssued;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في فتح نموذج الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OnCertificateIssued(object? sender, CertificateIssuedEventArgs e)
+        {
+            CertificateNumber = e.CertificateNumber;
+            HasCertificate = true;
+        }
 
         private void LoadFormSources()
         {
@@ -389,6 +503,12 @@ namespace CAL_QR.ViewModels
                         SerialNumber = record.Device.SerialNumber;
                         
                         CertificateNumber = record.CertificateNumber;
+
+                        // الالتقاط من القيمة المخزَّنة وقت التحميل لا من حالة تُضبط
+                        // لاحقاً: رقم مكتوب في القاعدة ⇒ سجل مُرحَّل ⇒ الحقل يبقى
+                        // قابلاً للتحرير وإلزامياً كما كان قبل ميزة الشهادة.
+                        _hasLegacyCertificateNumber = !string.IsNullOrWhiteSpace(record.CertificateNumber);
+
                         CalibrationDate = record.CalibrationDate;
                         ExpiryDate = record.ExpiryDate;
                         EngineerName = record.EngineerName;
@@ -407,7 +527,17 @@ namespace CAL_QR.ViewModels
                             });
                         }
                     }
+
+                    // استعلام وجود مباشر: يبقى سطح ICertificateRepository بلا توسيع،
+                    // ويطابق أسلوب هذا الملف في القراءات المحلية.
+                    HasCertificate = context.Certificates
+                        .AsNoTracking()
+                        .Any(c => c.CalibrationRecordId == recordId && !c.IsDeleted);
                 }
+
+                OnPropertyChanged(nameof(CanIssueCertificate));
+                RaiseCertificateNumberStateChanged();
+                CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
             {
@@ -446,7 +576,7 @@ namespace CAL_QR.ViewModels
                    (!string.IsNullOrWhiteSpace(DeviceTypeText) || SelectedDeviceType != null) &&
                    !string.IsNullOrWhiteSpace(Model) &&
                    !string.IsNullOrWhiteSpace(SerialNumber) &&
-                   !string.IsNullOrWhiteSpace(CertificateNumber) &&
+                   (!RequiresCertificateNumber || !string.IsNullOrWhiteSpace(CertificateNumber)) &&
                    !string.IsNullOrWhiteSpace(EngineerName);
         }
 
@@ -455,6 +585,10 @@ namespace CAL_QR.ViewModels
             if (_isSaving) return;
             _isSaving = true;
             CommandManager.InvalidateRequerySuggested();
+
+            // يُلتقط قبل أي ضبط للحالة: طور ما بعد الـCommit يضبط IsEditMode = true،
+            // فقراءته بعد ذلك كانت ستُعيد true دائماً ويصير الشرط عاطلاً.
+            bool wasNewRecord = !IsEditMode;
 
             try
             {
@@ -478,14 +612,20 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
-            using (var context = await _contextFactory.CreateDbContextAsync())
+            // الفراغ وحده يتخطّى فحص التفرّد — نظير الفلتر على الفهرس تماماً. أي رقم
+            // غير فارغ يبقى محروساً كما كان. بلا هذا الشرط كان ثاني سجل جديد يُرفض
+            // برسالة «رقم الشهادة مسجل مسبقاً» لأن فراغه يطابق فراغ سابقه.
+            if (!string.IsNullOrWhiteSpace(CertificateNumber))
             {
-                var dupCert = await context.CalibrationRecords
-                    .AnyAsync(r => r.CertificateNumber == CertificateNumber.Trim() && r.Id != _calibrationRecordId && !r.IsDeleted);
-                if (dupCert)
+                using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    ValidationErrors = "تنبيه: رقم الشهادة مسجل مسبقاً بسجل آخر. يرجى إدخال رقم شهادة فريد.";
-                    return;
+                    var dupCert = await context.CalibrationRecords
+                        .AnyAsync(r => r.CertificateNumber == CertificateNumber.Trim() && r.Id != _calibrationRecordId && !r.IsDeleted);
+                    if (dupCert)
+                    {
+                        ValidationErrors = "تنبيه: رقم الشهادة مسجل مسبقاً بسجل آخر. يرجى إدخال رقم شهادة فريد.";
+                        return;
+                    }
                 }
             }
 
@@ -616,17 +756,14 @@ namespace CAL_QR.ViewModels
                         _deviceId = device.Id;
 
                         // 4. Process Calibration Record
-                        realSignature = _hmacService.ComputeSignature(
-                            certNo: CertificateNumber.Trim(),
-                            model: Model.Trim(),
-                            serial: SerialNumber.Trim(),
-                            ownerName: finalOwner.Name.Trim(),
-                            calDate: CalibrationDate.ToString("yyyy-MM-dd"),
-                            expDate: ExpiryDate.ToString("yyyy-MM-dd"),
-                            result: SelectedResult,
-                            engineerName: EngineerName.Trim()
-                        );
-
+                        //
+                        // لا توقيع HMAC على مستوى السجل. التوقيع مسؤولية الشهادة وحدها
+                        // (SignaturePayloadBuilderV1 عبر CertificateRepository.AddAsync)،
+                        // وكل سجل جديد يتطلّب شهادة بالقرار المحوريّ.
+                        //
+                        // realSignature يبقى "" من تهيئته أعلاه. العمود HmacSignature
+                        // مُعرَّف IsRequired أي NOT NULL لا «غير فارغ»، فالنصّ الفارغ
+                        // مقبول بلا تغيير مخطط ولا ترقية.
                         CalibrationRecord record;
                         if (IsEditMode)
                         {
@@ -646,16 +783,19 @@ namespace CAL_QR.ViewModels
                         }
                         else
                         {
+                            // CertificateNumber وHmacSignature يُحفَظان فارغين قصداً عند
+                            // الإنشاء: الشهادة صاحبة الرقم والتوقيع وحدها (القرار المحوريّ)،
+                            // وحقل الشاشة في وضع الإضافة مقفل بلا قيمة مُدخَلة أصلاً.
                             record = new CalibrationRecord
                             {
                                 DeviceId = _deviceId,
-                                CertificateNumber = CertificateNumber.Trim(),
+                                CertificateNumber = string.Empty,
                                 CalibrationDate = CalibrationDate,
                                 ExpiryDate = ExpiryDate,
                                 EngineerName = EngineerName.Trim(),
                                 CalibrationDescription = Description.Trim(),
                                 Result = SelectedResult,
-                                HmacSignature = realSignature,
+                                HmacSignature = string.Empty,
                                 CreatedAt = DateTime.UtcNow,
                                 UpdatedAt = DateTime.UtcNow,
                                 IsDeleted = false
@@ -697,28 +837,10 @@ namespace CAL_QR.ViewModels
                 postCommitError += $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
             }
 
-            try
-            {
-                // Generate and Save QR Code (executed outside main DbContext to prevent locks)
-                _qrService.GenerateAndSaveQrForRecord(
-                    ownerName: finalOwner.Name.Trim(),
-                    deviceType: finalType.Name.Trim(),
-                    model: Model.Trim(),
-                    serial: SerialNumber.Trim(),
-                    certNo: CertificateNumber.Trim(),
-                    calDate: CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: EngineerName.Trim(),
-                    description: Description.Trim(),
-                    result: SelectedResult,
-                    verifyCode: realSignature
-                );
-            }
-            catch (Exception ex)
-            {
-                postCommitFailed = true;
-                postCommitError += $"\n- خطأ توليد رمز QR: {ex.Message}";
-            }
+            // لا توليد QR على مستوى السجل. رمز الاستجابة السريعة يخصّ الشهادة،
+            // ويُبنى عند إصدارها. كان توليده هنا يكتب الملف باسم
+            // "{CertificateNumber}.png" ورقمُ السجل فارغ دائماً، فينتج ملف ".png"
+            // واحد يدهسه كل حفظ جديد.
 
             try
             {
@@ -735,19 +857,39 @@ namespace CAL_QR.ViewModels
             if (ownerAdded) MasterDataEvents.RaiseOwnerAdded();
             if (typeAdded) MasterDataEvents.RaiseDeviceTypeAdded();
 
+            // السجل صار محفوظاً وله معرّف ⇒ صار قابلاً لأن تُنسب إليه شهادة.
+            // لا مسّ لمنطق الحفظ: ضبط حالة عرض فقط، في طور ما بعد الـCommit.
+            IsEditMode = true;
+            HasCertificate = false;
+            OnPropertyChanged(nameof(CanIssueCertificate));
+            CommandManager.InvalidateRequerySuggested();
+
             Saved?.Invoke(this, EventArgs.Empty);
             CalibrationEvents.RaiseCalibrationChanged();
 
+            // سجل جديد صار جاهزاً لإصدار شهادته ⇒ تبقى النافذة مفتوحة ليضغط المستخدم
+            // «إنشاء شهادة». لا نافذة سؤال عن الطباعة — تلك زرّ ظاهر في المرحلة ٥.
+            bool stayOpenForCertificate = wasNewRecord && CanIssueCertificate;
+
             if (postCommitFailed)
             {
-                MessageBox.Show($"تم حفظ سجل المعايرة بنجاح في قاعدة البيانات، ولكن حدث خطأ أثناء حفظ المرفقات أو توليد رمز الـ QR:{postCommitError}\n\n(لن تحتاج لإعادة حفظ السجل — السجل الرئيسي مسجل بنجاح).", 
+                MessageBox.Show($"تم حفظ سجل المعايرة بنجاح في قاعدة البيانات، ولكن حدث خطأ أثناء حفظ المرفقات أو تسجيل العملية:{postCommitError}\n\n(لن تحتاج لإعادة حفظ السجل — السجل الرئيسي مسجل بنجاح).",
                     "تحذير - فشل جزئي في الحفظ", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            else if (stayOpenForCertificate)
+            {
+                MessageBox.Show("تم حفظ سجل المعايرة بنجاح.\n\nيمكنك الآن إصدار شهادته بالضغط على «إنشاء شهادة»، أو إغلاق النافذة.",
+                    "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
                 MessageBox.Show("تم حفظ سجل المعايرة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            CloseWindowAction?.Invoke();
+
+            if (!stayOpenForCertificate)
+            {
+                CloseWindowAction?.Invoke();
+            }
         }
         catch (Exception ex)
         {

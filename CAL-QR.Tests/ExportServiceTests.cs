@@ -158,7 +158,9 @@ namespace CAL_QR.Tests
                 context.Devices.Add(device);
                 await context.SaveChangesAsync();
 
-                context.CalibrationRecords.Add(new CalibrationRecord
+                // الرقم اليدويّ على السجل يبقى **طُعماً** مقصوداً: العمود مهجور،
+                // والتصدير يجب ألّا يقرأه. لو قرأه لظهر "C-PERF-TEST" وسقط التأكيد.
+                var record = new CalibrationRecord
                 {
                     DeviceId = device.Id,
                     CertificateNumber = "C-PERF-TEST",
@@ -166,6 +168,22 @@ namespace CAL_QR.Tests
                     ExpiryDate = DateTime.Today.AddYears(1),
                     Result = "Passed",
                     EngineerName = "إدريس"
+                };
+                context.CalibrationRecords.Add(record);
+                await context.SaveChangesAsync();
+
+                // شهادة حقيقية مربوطة بالسجل، برقم يخالف الرقم اليدويّ عمداً.
+                // تُدرَج مباشرةً لا عبر AddAsync: الاختبار يحرس مسار **العرض**
+                // (التصدير يقرأ من Certificates عبر الضمّ)، لا مسار الإصدار.
+                context.Certificates.Add(new Certificate
+                {
+                    CalibrationRecordId = record.Id,
+                    CertificateNumber = "TNRC-SSDL-2026-0042",
+                    ClientName = "جهة فحص تجريبية",
+                    DeviceModel = "X-Model",
+                    DeviceSerialNumber = "SN-999",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today
                 });
                 await context.SaveChangesAsync();
             }
@@ -246,7 +264,14 @@ namespace CAL_QR.Tests
 
                         // Verify values
                         Assert.Equal("1", ws.Cell(headerRow + 1, 1).GetString());
-                        Assert.Equal("C-PERF-TEST", ws.Cell(headerRow + 1, 2).GetString());
+
+                        // رقم الشهادة يأتي من جدول Certificates عبر الضمّ، لا من
+                        // العمود المهجور على سجل المعايرة. التأكيدان معاً لا أحدهما:
+                        // الأول يُثبت أن الضمّ يعمل، والثاني يمنع رجوع القراءة إلى
+                        // العمود القديم بصمت لو عاد أحدهم يكتبه.
+                        Assert.Equal("TNRC-SSDL-2026-0042", ws.Cell(headerRow + 1, 2).GetString());
+                        Assert.NotEqual("C-PERF-TEST", ws.Cell(headerRow + 1, 2).GetString());
+
                         Assert.Equal("جهة فحص تجريبية", ws.Cell(headerRow + 1, 3).GetString());
                     }
                 }

@@ -41,8 +41,8 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="سجل معايرة جهاز" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="إدخال بيانات المعايرة وتوليد كود التوقيع الرقمي" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding FormSubtitle}" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
@@ -139,8 +139,8 @@
 
                         <!-- Row 1 -->
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="5">
-                            <TextBlock Text="رقم الشهادة *" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                            <TextBox Text="{Binding CertificateNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="{Binding CertificateNumberLabel}" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                            <TextBox Text="{Binding CertificateNumber, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsCertificateNumberReadOnly}" materialDesign:HintAssist.Hint="{Binding CertificateNumberHint}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40" FontFamily="{StaticResource CairoFont}" ToolTip="رقم الشهادة يُولّده النظام عند إصدارها. يبقى قابلاً للتحرير في السجلات المُرحَّلة ذات الترقيم الورقي السابق." />
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="5">
@@ -245,7 +245,17 @@
                 <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Command="{Binding SaveCommand}" Content="حفظ وتوليد QR" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <!-- متاح في وضع التعديل فقط: الشهادة تحتاج سجلاً محفوظاً تُنسب إليه -->
+                    <Button Command="{Binding IssueCertificateCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Height="40" Margin="0,0,10,0" Foreground="#1A3A6B" BorderBrush="#1A3A6B"
+                            FontFamily="{StaticResource CairoFont}"
+                            ToolTip="إنشاء شهادة معايرة رسمية من هذا السجل">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileDocument" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="إنشاء شهادة" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
                     <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>

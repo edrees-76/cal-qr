@@ -102,6 +102,19 @@ namespace CAL_QR.Data
         public const string FailureKey = "DeviceTypeSeedFailure_v1";
 
         /// <summary>
+        /// علم الترقية التصحيحية لمرة واحدة (المرحلة ٣-أ). مستقلّ عن SeedFlagKey
+        /// عمداً: الأخير مضبوط سلفاً على كل قاعدة عاملة وهو ما جمّد الخلل، وتصفيره
+        /// كان سيُعيد بذراً كاملاً على قواعد لا تحتاجه.
+        /// </summary>
+        public const string RepairFlagKey = "DeviceTypeCatalogRepair_v1";
+
+        /// <summary>
+        /// سبب فشل الترقية التصحيحية إن وقع. وجوده يعني أن العلم لم يُضبط وأن
+        /// المحاولة ستُعاد عند الإقلاع التالي.
+        /// </summary>
+        public const string RepairFailureKey = "DeviceTypeCatalogRepairFailure_v1";
+
+        /// <summary>
         /// مسار الإقلاع. يُنفَّذ مرة واحدة، ووجود علم البذر يعني الخروج فوراً.
         ///
         /// ⚠ **لا يُصعِّد استثناءً أبداً.** هذا مقصود ويخصّ هذه الدالّة وحدها:
@@ -154,6 +167,110 @@ namespace CAL_QR.Data
                 result.Failure = ex;
                 RecordFailure(context, ex);
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// ترقية تصحيحية تُنفَّذ **مرّة واحدة** على القواعد القائمة (المرحلة ٣-أ).
+        ///
+        /// السبب: علم البذر SeedFlagKey مضبوط سلفاً على كل قاعدة عاملة، فـSeedIfNeeded
+        /// تخرج فوراً ولا تُصلح شيئاً. وقواعد الإنتاج تحمل خللاً مثبتاً:
+        ///   • العَلَمان خاطئان على الأنواع الخمسة كلها (كانا يُضبطان عند الإنشاء فقط).
+        ///   • نوع Beta Scintillation Probe بلا فحوص ولا مكوّنات عدم يقين وبحقول خالية.
+        /// وبلا هذه الترقية تبقى الحالة مجمّدة مهما أُعيد التشغيل.
+        ///
+        /// لا تُكرّر منطق البذر: تستدعي Apply نفسها. بعد أن صار فرض العَلَمين داخلها،
+        /// صارت Apply هي الإصلاح المطلوب حرفياً — تفرض العَلَمين، وتملأ النصّي الناقص،
+        /// وتزرع الأبناء الغائبين. ونسخةٌ ثانية من منطق المطابقة كانت ستتباعد عن الأصل
+        /// بأول تعديل.
+        ///
+        /// idempotent بالكامل:
+        ///   • FillBlanks لا تكتب إلا على حقل خالٍ ⇒ لا تدهس قيمة كتبها المستخدم.
+        ///   • SeedChildTemplates لا تضيف إلا حين لا ابن واحد للنوع ⇒ لا ازدواج صفوف.
+        ///   • فرض العَلَمين إسناد لنفس القيمة في كل مرّة.
+        /// فإعادة تشغيلها — ولو حُذف علمها يدوياً — بلا ضرر.
+        ///
+        /// ⚠ نوع أبناؤه ناقصون جزئياً (٣ فحوص من ٥) **يبقى كما هو**: حارس
+        /// SeedChildTemplates كلٌّ-أو-لا-شيء عن قصد، لأن إضافة الناقص كانت قد تُحيي
+        /// فحصاً حذفه المستخدم عمداً. لا نوع جزئيّ في قواعد اليوم (كلها صفر أو خمسة).
+        ///
+        /// محروسة كـSeedIfNeeded: لا تُصعِّد استثناءً أبداً. فشلها يُسجَّل في
+        /// RepairFailureKey ولا يُسقط الإقلاع، والعلم لا يُكتب فتُعاد المحاولة.
+        /// </summary>
+        public static DeviceTypeSeedResult RepairCatalogTypesIfNeeded(CalQrDbContext context)
+        {
+            var result = new DeviceTypeSeedResult();
+
+            try
+            {
+                var flag = context.AppSettings.FirstOrDefault(s => s.Key == RepairFlagKey);
+                if (flag != null && flag.Value == "true")
+                {
+                    return result;
+                }
+
+                Apply(context, result);
+
+                if (flag == null)
+                {
+                    context.AppSettings.Add(new AppSetting { Key = RepairFlagKey, Value = "true", UpdatedAt = DateTime.UtcNow });
+                }
+                else
+                {
+                    flag.Value = "true";
+                    flag.UpdatedAt = DateTime.UtcNow;
+                }
+
+                var staleFailure = context.AppSettings.FirstOrDefault(s => s.Key == RepairFailureKey);
+                if (staleFailure != null)
+                {
+                    context.AppSettings.Remove(staleFailure);
+                }
+
+                context.SaveChanges();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Failure = ex;
+                RecordRepairFailure(context, ex);
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// تسجيل سبب فشل الترقية التصحيحية. نظيرة RecordFailure ومبنية على نفس
+        /// المبدأ: تُسقط ما تتبّعه المحاولة الفاشلة قبل أي كتابة، ولا تُصعِّد شيئاً.
+        /// </summary>
+        private static void RecordRepairFailure(CalQrDbContext context, Exception ex)
+        {
+            try
+            {
+                context.ChangeTracker.Clear();
+
+                string text =
+                    $"فشلت الترقية التصحيحية لأنواع الأجهزة في {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.\n" +
+                    $"السبب: {ex.GetType().Name} — {ex.Message}\n" +
+                    "المنظومة تعمل، لكن أعلام الأقسام أو قوالب بعض الأنواع قد تبقى ناقصة. " +
+                    "ستُعاد المحاولة تلقائياً عند الإقلاع التالي بعد إصلاح السبب.";
+
+                var setting = context.AppSettings.FirstOrDefault(s => s.Key == RepairFailureKey);
+                if (setting == null)
+                {
+                    context.AppSettings.Add(new AppSetting { Key = RepairFailureKey, Value = text, UpdatedAt = DateTime.UtcNow });
+                }
+                else
+                {
+                    setting.Value = text;
+                    setting.UpdatedAt = DateTime.UtcNow;
+                }
+
+                context.SaveChanges();
+            }
+            catch (Exception recordingException)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[DeviceTypeSeeder] تعذّر تسجيل فشل الترقية التصحيحية: {recordingException.Message}");
             }
         }
 
@@ -258,16 +375,33 @@ namespace CAL_QR.Data
                     {
                         Name = definition.Name,
                         IsDeleted = false,
-                        CreatedAt = DateTime.UtcNow,
-                        // العلمان يُضبطان عند الإنشاء فقط — false قيمة مشروعة
-                        // لا «فراغ»، فلا سبيل لتمييز «لم يُضبط» لاحقاً.
-                        UncertaintyEnabled = definition.UncertaintyEnabled,
-                        MethodologyEnabled = definition.MethodologyEnabled
+                        CreatedAt = DateTime.UtcNow
+                        // العَلَمان لا يُضبطان هنا — يُفرضان أدناه على كل نوع
+                        // مطابق للكتالوج سواء أنُشئ الآن أم كان قائماً.
                     };
                     context.DeviceTypes.Add(target);
                     existing.Add(target);
                     result.Created++;
                 }
+
+                // العَلَمان يُفرضان من الكتالوج فرضاً — دهس مقصود ومحصور.
+                //
+                // كانا يُضبطان في فرع الإنشاء وحده، فبقي كل نوع **قائم** بعَلَمين
+                // خاطئين إلى الأبد: قاعدة الإنتاج أظهرت الأنواع الخمسة كلها
+                // بـMethodologyEnabled = false بينما الكتالوج يضبطها true للخمسة،
+                // وPancake بخمسة مكوّنات عدم يقين وعَلَمه false. الأثر: قسما عدم
+                // اليقين والمنهجية مخفيان في نافذة الشهادة لكل الأنواع.
+                //
+                // ولماذا يُدهسان بينما FillBlanks تملأ ولا تدهس؟ لأن الحقل النصّي
+                // يحتمل «قيمة كتبها المستخدم» فتُصان، أما bool فلا يحتمل «لم يُضبط»:
+                // false تعني «مخفي عمداً» و«لم يُضبط قطّ» معاً بلا تمييز، فلا سبيل
+                // لصون قرار المستخدم فيه أصلاً. والكتالوج هو مصدر الحقيقة لأنواعه.
+                //
+                // الحصر مضمون بالبنية: هذه الحلقة لا تدور إلا على
+                // DeviceTypeCatalog.All، والمطابقة بالاسم المعتمد أو أحد الألياس،
+                // فنوع أنشأه المستخدم لا يبلغ هذا السطر إطلاقاً.
+                target.UncertaintyEnabled = definition.UncertaintyEnabled;
+                target.MethodologyEnabled = definition.MethodologyEnabled;
 
                 if (FillBlanks(target, definition))
                 {

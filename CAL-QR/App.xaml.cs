@@ -93,6 +93,8 @@ namespace CAL_QR
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<ICertificateNumberService, CertificateNumberService>();
             services.AddSingleton<ICertificateSignatureService, CertificateSignatureService>();
+            // بانِي المسوّدة صرف بلا حالة ولا DbContext ⇒ Singleton آمن.
+            services.AddSingleton<ICertificateDraftBuilder, CertificateDraftBuilder>();
 
             // Register Repositories
             services.AddSingleton<IOwnerRepository, OwnerRepository>();
@@ -111,6 +113,7 @@ namespace CAL_QR
             services.AddTransient<DeviceTypeViewModel>();
             services.AddTransient<DevicesViewModel>();
             services.AddTransient<CalibrationFormViewModel>();
+            services.AddTransient<CertificateFormViewModel>();
             services.AddTransient<DeviceDetailViewModel>();
             services.AddTransient<QrVerifyViewModel>();
             services.AddTransient<DashboardViewModel>();
@@ -132,6 +135,7 @@ namespace CAL_QR
             services.AddTransient<MainWindow>();
             services.AddTransient<Views.ScreensaverWindow>();
             services.AddTransient<Views.Dialogs.CalibrationFormDialog>();
+            services.AddTransient<Views.Dialogs.CertificateFormDialog>();
             services.AddTransient<Views.Dialogs.DeviceDetailDialog>();
             services.AddTransient<Views.Dialogs.PaperTemplateDialog>();
             services.AddTransient<Views.Dialogs.PrintPreviewDialog>();
@@ -145,6 +149,9 @@ namespace CAL_QR
             // Register Dialog Factories to support Constructor Injection
             services.AddTransient<Func<Views.Dialogs.DeviceDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceDetailDialog>());
             services.AddTransient<Func<Views.Dialogs.CalibrationFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.CalibrationFormDialog>());
+            services.AddTransient<Func<Views.Dialogs.CertificateFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.CertificateFormDialog>());
+            // مصنع الـViewModel: يحقنه مُنشئ CertificateFormDialog بدل App.ServiceProvider.
+            services.AddTransient<Func<CertificateFormViewModel>>(provider => () => provider.GetRequiredService<CertificateFormViewModel>());
             services.AddTransient<Func<Views.Dialogs.OwnerFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.OwnerFormDialog>());
             services.AddTransient<Func<Views.Dialogs.OwnerDetailDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.OwnerDetailDialog>());
             services.AddTransient<Func<Views.Dialogs.DeviceTypeFormDialog>>(provider => () => provider.GetRequiredService<Views.Dialogs.DeviceTypeFormDialog>());

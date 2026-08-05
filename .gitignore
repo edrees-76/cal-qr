@@ -41,3 +41,12 @@ Desktop.ini
 
 # Claude Code local settings
 .claude/
+
+## Local scratch / non-project working files
+.tmp/
+CAL-QR_ISO17025_Presentation.pptx
+CAL-QR_ISO17025_Presentation.pptx.inspect.ndjson
+CAL-QR_Manus_Final_Review_Prompt_AR.txt
+CAL-QR_Manus_Prompt_AR.txt
+CAL-QR_NotebookLM_Generation_Prompt.txt
+CAL-QR_NotebookLM_Source.txt

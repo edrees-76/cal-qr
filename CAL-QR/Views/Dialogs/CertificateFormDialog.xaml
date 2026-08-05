@@ -1,0 +1,550 @@
+<Window x:Class="CAL_QR.Views.Dialogs.CertificateFormDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="إنشاء شهادة معايرة | Certificate Form" Height="760" Width="900"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="Transparent"
+        FlowDirection="RightToLeft"
+        WindowStyle="None"
+        AllowsTransparency="True">
+
+    <!--
+        تخطيط وظيفي لا نهائي. التصميم البصري مؤجَّل إلى المرحلة ٤ عمداً:
+        الغرض هنا إتاحة كل حقل من الأقسام الستة للتحرير والاختبار، لا إخراج الوثيقة.
+    -->
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#C9A227" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#1A3A6B" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+
+        <Style x:Key="FieldBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+
+        <Style x:Key="FieldDate" TargetType="DatePicker" BasedOn="{StaticResource MaterialDesignOutlinedDatePicker}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+
+        <Style x:Key="GridStyle" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="MinHeight" Value="90" />
+            <Setter Property="MaxHeight" Value="220" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <Style x:Key="RowActionButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="8,0" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+    </Window.Resources>
+
+    <Border Background="White" BorderBrush="#1A3A6B">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="BorderThickness" Value="1.5" />
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WindowState}" Value="Maximized">
+                        <Setter Property="CornerRadius" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- شريط العنوان -->
+            <Grid Grid.Row="0" Margin="0,0,0,12" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="إنشاء شهادة معايرة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
+                        <materialDesign:PackIcon x:Name="IconMaximize" Foreground="#1A3A6B" Width="20" Height="20">
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon">
+                                    <Setter Property="Kind" Value="WindowMaximize" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WindowState}" Value="Maximized">
+                                            <Setter Property="Kind" Value="WindowRestore" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" ToolTip="إغلاق">
+                        <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- المحتوى -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="5">
+
+                    <!-- شريط تحذير النوع بلا قالب: ظاهر غير حاجب، لا يمنع الحفظ -->
+                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" CornerRadius="4"
+                            Padding="10" Margin="0,0,0,12"
+                            Visibility="{Binding HasNoTemplateWarning, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="AlertCircleOutline" Foreground="#F57F17" Width="20" Height="20" VerticalAlignment="Top" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding NoTemplateWarningText}" Foreground="#795548" FontSize="11.5"
+                                       TextWrapping="Wrap" MaxWidth="760" FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ═══ ١. بيانات الوثيقة والجهاز ═══ -->
+                    <TextBlock Text="أولاً: بيانات الوثيقة والجهاز" Style="{StaticResource SectionHeader}" />
+                    <Separator Margin="0,4,0,8" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
+                            <TextBlock Text="الجهة المالكة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="4">
+                            <TextBlock Text="عنوان الجهة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="4">
+                            <TextBlock Text="رقم المرجع (Reference No.)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
+                            <TextBlock Text="موديل الجهاز" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
+                            <TextBlock Text="الرقم التسلسلي" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
+                            <TextBlock Text="الشركة المصنّعة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="4">
+                            <TextBlock Text="نوع الكاشف (Detector Type)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
+                            <TextBlock Text="موديل جهاز المسح المرجعي" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
+                            <TextBlock Text="تسلسلي جهاز المسح المرجعي" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
+                            <TextBlock Text="رقم الإجراء (Procedure No.)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="3" Margin="4">
+                            <TextBlock Text="موقع المعايرة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="4">
+                            <TextBlock Text="نوع القياس" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="4">
+                            <TextBlock Text="المسافة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="2" Margin="4">
+                            <TextBlock Text="زمن العدّ" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="3" Grid.Column="3" Margin="4">
+                            <TextBlock Text="وحدة العدّ" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Grid.Column="0" Margin="4">
+                            <TextBlock Text="نمط المعايرة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Margin="4">
+                            <TextBlock Text="الأجهزة المستعملة (Instrumentation)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="4">
+                            <TextBlock Text="المرجع الإجرائي (Calibration Standard)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="60"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                     FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Grid.Column="2" Margin="4">
+                            <TextBlock Text="تاريخ المعايرة" Style="{StaticResource FieldLabel}" />
+                            <DatePicker SelectedDate="{Binding CalibrationDate}" Style="{StaticResource FieldDate}" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Grid.Column="3" Margin="4">
+                            <TextBlock Text="تاريخ الإصدار" Style="{StaticResource FieldLabel}" />
+                            <DatePicker SelectedDate="{Binding IssueDate}" Style="{StaticResource FieldDate}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ═══ ٢. الظروف البيئية ═══ -->
+                    <TextBlock Text="ثانياً: الظروف البيئية" Style="{StaticResource SectionHeader}" />
+                    <Separator Margin="0,4,0,8" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="4">
+                            <TextBlock Text="درجة الحرارة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4">
+                            <TextBlock Text="الرطوبة النسبية" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding RelativeHumidity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="4">
+                            <TextBlock Text="الضغط الجوي" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding AtmosphericPressure, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ═══ ٣. المنهجية — قسم مشروط بـ MethodologyEnabled ═══ -->
+                    <StackPanel Visibility="{Binding MethodologyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="ثالثاً: منهجية المعايرة" Style="{StaticResource SectionHeader}" />
+                        <Separator Margin="0,4,0,8" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
+                                <TextBlock Text="المصدر الإشعاعي (يُدخل يدوياً لكل معايرة)" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
+                                <TextBlock Text="الهندسة المرجعية" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
+                                <TextBlock Text="نص المنهجية" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                         FontFamily="{StaticResource CairoFont}" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
+                                <TextBlock Text="مرجع القابلية للتتبّع" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding TraceabilityReference, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                         FontFamily="{StaticResource CairoFont}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ═══ ٤. نتائج المعايرة ═══ -->
+                    <TextBlock Text="رابعاً: نتائج المعايرة" Style="{StaticResource SectionHeader}" />
+                    <Separator Margin="0,4,0,8" />
+
+                    <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
+                        <Button Command="{Binding AddCalibrationResultCommand}" Content="إضافة صفّ نتيجة" Style="{StaticResource RowActionButton}" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="معرّف المصدر" Binding="{Binding SourceId}" Width="1*" />
+                            <DataGridTextColumn Header="النويدة" Binding="{Binding Radionuclide}" Width="1*" />
+                            <DataGridTextColumn Header="النطاق" Binding="{Binding Scale}" Width="0.8*" />
+                            <DataGridTextColumn Header="الجرعة المرجعية" Binding="{Binding ReferenceDoseLevel}" Width="1*" />
+                            <DataGridTextColumn Header="القيمة المرجعية" Binding="{Binding ReferenceValue}" Width="1*" />
+                            <DataGridTextColumn Header="القراءة المقيسة" Binding="{Binding MeasuredReading}" Width="1*" />
+                            <DataGridTextColumn Header="معامل CF" Binding="{Binding CorrectionFactor}" Width="0.9*" />
+                            <DataGridTextColumn Header="الخطأ النسبي" Binding="{Binding RelativeError}" Width="0.9*" />
+                            <DataGridTextColumn Header="الوحدة" Binding="{Binding Unit}" Width="0.7*" />
+                            <DataGridTextColumn Header="ملاحظات" Binding="{Binding Remarks}" Width="1*" />
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.RemoveCalibrationResultCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
+                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="ملخّص النويدات (المصدر الذي يقرأ منه الملصق)" Style="{StaticResource FieldLabel}" Margin="4,4,4,4" />
+                    <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
+                        <Button Command="{Binding AddNuclideSummaryCommand}" Content="إضافة صفّ نويدة" Style="{StaticResource RowActionButton}" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="النويدة" Binding="{Binding Radionuclide}" Width="1*" />
+                            <DataGridTextColumn Header="متوسط معامل التصحيح (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" />
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.RemoveNuclideSummaryCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
+                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="4">
+                            <TextBlock Text="صيغة القراءة المصحّحة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CorrectedReadingFormula, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4">
+                            <TextBlock Text="حكم المطابقة" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ═══ ٥. ميزانية عدم اليقين — قسم مشروط بـ UncertaintyEnabled ═══ -->
+                    <StackPanel Visibility="{Binding UncertaintyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="خامساً: ميزانية عدم اليقين" Style="{StaticResource SectionHeader}" />
+                        <Separator Margin="0,4,0,8" />
+
+                        <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
+                            <Button Command="{Binding AddUncertaintyComponentCommand}" Content="إضافة مكوّن" Style="{StaticResource RowActionButton}" />
+                        </StackPanel>
+
+                        <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="اسم المكوّن" Binding="{Binding ComponentName}" Width="2*" />
+                                <DataGridTextColumn Header="نوع التقييم (A/B)" Binding="{Binding EvaluationType}" Width="0.8*" />
+                                <DataGridTextColumn Header="عدم اليقين القياسي" Binding="{Binding StandardUncertainty}" Width="1.2*" />
+                                <DataGridTextColumn Header="نسبة الإسهام %" Binding="{Binding ContributionPercent}" Width="1*" />
+                                <DataGridTextColumn Header="التوزيع" Binding="{Binding Distribution}" Width="1*" />
+                                <DataGridTemplateColumn Width="Auto">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding DataContext.RemoveUncertaintyComponentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="4">
+                                <TextBlock Text="عدم اليقين المركّب" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding CombinedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="4">
+                                <TextBlock Text="عدم اليقين الموسّع" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ExpandedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Margin="4">
+                                <TextBlock Text="معامل التغطية (k)" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding CoverageFactor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ═══ ٦. الفحوص الوظيفية ═══ -->
+                    <TextBlock Text="سادساً: الفحوص الوظيفية" Style="{StaticResource SectionHeader}" />
+                    <Separator Margin="0,4,0,8" />
+
+                    <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
+                        <Button Command="{Binding AddFunctionalCheckCommand}" Content="إضافة فحص" Style="{StaticResource RowActionButton}" />
+                    </StackPanel>
+
+                    <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="اسم الفحص" Binding="{Binding CheckName}" Width="2*" />
+                            <DataGridTextColumn Header="المتطلَّب" Binding="{Binding Requirement}" Width="1.5*" />
+                            <DataGridTextColumn Header="النتيجة" Binding="{Binding Result}" Width="1*" />
+                            <DataGridTextColumn Header="ملاحظات" Binding="{Binding Remarks}" Width="1.2*" />
+                            <DataGridTemplateColumn Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding DataContext.RemoveFunctionalCheckCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
+                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="4">
+                            <TextBlock Text="معلومات إضافية" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding AdditionalInformation, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                     FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="4">
+                            <TextBlock Text="ملاحظات" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                     FontFamily="{StaticResource CairoFont}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ═══ ٧. الاعتماد ═══ -->
+                    <TextBlock Text="سابعاً: الاعتماد والتوقيعات" Style="{StaticResource SectionHeader}" />
+                    <Separator Margin="0,4,0,8" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="الاسم" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="المسمّى الوظيفي" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="التاريخ" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="عايَرَها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CalibratedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CalibratedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CalibratedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="راجَعَها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ReviewedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding ReviewedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ReviewedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="اعتمدها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ApprovedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding ApprovedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <DatePicker Grid.Row="3" Grid.Column="3" SelectedDate="{Binding ApprovedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="أجازها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorizedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding AuthorizedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <DatePicker Grid.Row="4" Grid.Column="3" SelectedDate="{Binding AuthorizedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
+                    </Grid>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- التذييل -->
+            <Grid Grid.Row="2" Margin="0,14,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12"
+                           VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}"
+                           Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Command="{Binding SaveCommand}" Content="حفظ وإصدار الشهادة"
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B"
+                            Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
+                            BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click"
+                            FontFamily="{StaticResource CairoFont}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

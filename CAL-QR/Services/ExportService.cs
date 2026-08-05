@@ -10,6 +10,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using CAL_QR.Models;
 using CAL_QR.Data;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Services
 {
@@ -71,6 +72,27 @@ namespace CAL_QR.Services
             return 30;
         }
 
+        /// <summary>
+        /// يملأ DisplayCertificateNumber لكل سجل من جدول Certificates، ويُعيد
+        /// القائمة مادّيةً.
+        ///
+        /// التجسيد مقصود: لو بقي المصدر IEnumerable كسولاً لأعاد التعداد الثاني
+        /// كائنات جديدة بلا الخاصّية المملوءة، فيُصدَّر «—» رغم وجود الشهادة.
+        ///
+        /// بلا try/catch: تقرير يخرج بأرقام فارغة صامتاً أسوأ من تصدير يفشل
+        /// فيراه المستخدم.
+        /// </summary>
+        private List<CalibrationRecord> WithCertificateNumbers(IEnumerable<CalibrationRecord>? records)
+        {
+            var list = records?.ToList() ?? new List<CalibrationRecord>();
+            if (list.Count == 0) return list;
+
+            using var context = _contextFactory.CreateDbContext();
+            var issuedNumbers = CertificateNumberDisplayRules.Load(context, list.Select(r => r.Id));
+            CertificateNumberDisplayRules.Populate(list, issuedNumbers);
+            return list;
+        }
+
         private string GetStatusText(CalibrationRecord record, int alertDays)
         {
             DateTime today = DateTime.Today;
@@ -89,6 +111,7 @@ namespace CAL_QR.Services
         {
             return Task.Run(() =>
             {
+                var recordList = WithCertificateNumbers(records);
                 int alertDays = GetAlertThresholdDays();
 
                 using (var workbook = new XLWorkbook())
@@ -145,13 +168,13 @@ namespace CAL_QR.Services
 
                     int row = startRow + 1;
                     int idx = 1;
-                    foreach (var record in records)
+                    foreach (var record in recordList)
                     {
                         ws.Row(row).Style.Font.FontName = "Cairo";
                         if (isDetailed)
                         {
                             ws.Cell(row, 1).Value = idx;
-                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
                             ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
                             ws.Cell(row, 4).Value = record.Device?.DeviceType?.Name ?? "";
                             ws.Cell(row, 5).Value = record.Device?.Model ?? "";
@@ -165,7 +188,7 @@ namespace CAL_QR.Services
                         else
                         {
                             ws.Cell(row, 1).Value = idx;
-                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
                             ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
                             ws.Cell(row, 4).Value = record.Device?.Model ?? "";
                             ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
@@ -201,6 +224,7 @@ namespace CAL_QR.Services
         {
             return Task.Run(() =>
             {
+                var recordList = WithCertificateNumbers(records);
                 int alertDays = GetAlertThresholdDays();
                 bool isDetailed = reportType == "Detailed";
 
@@ -323,7 +347,7 @@ namespace CAL_QR.Services
                                 });
 
                                 int idx = 1;
-                                foreach (var record in records)
+                                foreach (var record in recordList)
                                 {
                                     void AddCell(string text, bool isBold = false, string colorHex = "#000000")
                                     {
@@ -342,7 +366,7 @@ namespace CAL_QR.Services
                                     if (isDetailed)
                                     {
                                         AddCell(idx.ToString());
-                                        AddCell(record.CertificateNumber ?? "");
+                                        AddCell(record.DisplayCertificateNumber);
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
                                         AddCell(record.Device?.SerialNumber ?? "");
@@ -354,7 +378,7 @@ namespace CAL_QR.Services
                                     else
                                     {
                                         AddCell(idx.ToString());
-                                        AddCell(record.CertificateNumber ?? "");
+                                        AddCell(record.DisplayCertificateNumber);
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
                                         AddCell(record.Device?.SerialNumber ?? "");
@@ -390,6 +414,15 @@ namespace CAL_QR.Services
         {
             return Task.Run(() =>
             {
+                // data.Records قائمة مادّية، فالملء يقع على نفس الكائنات التي
+                // يقرأها الجدول أدناه.
+                //
+                // بلا ?. عمداً: بقيّة الدالّة تُلغي مرجع data بلا حراسة (data.StartDate
+                // وغيرها)، فحراسة هنا وحدها كانت تُخبر المحلّل أن data قد يكون فارغاً
+                // فيَعتبر كل استعمال لاحق إلغاءَ مرجعٍ محتمل الفراغ — تسعة تحذيرات
+                // CS8602 من حرفين. الحراسة الصحيحة كلٌّ أو لا شيء، وتوحيدها بند مستقل.
+                WithCertificateNumbers(data.Records);
+
                 Document.Create(container =>
                 {
                     container.Page(page =>
@@ -612,7 +645,7 @@ namespace CAL_QR.Services
                                             }
 
                                             AddCell(pIdx.ToString());
-                                            AddCell(record.CertificateNumber ?? "");
+                                            AddCell(record.DisplayCertificateNumber);
                                             AddCell(record.Device?.Owner?.Name ?? "");
                                             AddCell(record.Device?.Model ?? "");
                                             AddCell(record.Device?.SerialNumber ?? "");
@@ -649,6 +682,8 @@ namespace CAL_QR.Services
         {
             return Task.Run(() =>
             {
+                WithCertificateNumbers(data.Records);
+
                 using (var workbook = new XLWorkbook())
                 {
                     var ws = workbook.Worksheets.Add("أداء وحدة المعايرة");
@@ -843,7 +878,7 @@ namespace CAL_QR.Services
                         {
                             ws.Row(row).Style.Font.FontName = "Cairo";
                             ws.Cell(row, 1).Value = idx;
-                            ws.Cell(row, 2).Value = record.CertificateNumber;
+                            ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
                             ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
                             ws.Cell(row, 4).Value = record.Device?.Model ?? "";
                             ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";

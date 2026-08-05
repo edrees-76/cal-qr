@@ -81,12 +81,10 @@ namespace CAL_QR.ViewModels
             {
                 if (IsEditMode)
                 {
-                    var type = new DeviceType
-                    {
-                        Id = DeviceTypeId,
-                        Name = Name
-                    };
-                    await _deviceTypeRepository.UpdateAsync(type);
+                    // الاسم وحده يُكتب. هذا النموذج لا يحرّر القالب ولا العَلَمين،
+                    // فتمرير كائن كامل هنا كان يعني إرسال قيم خالية عن حقول لا
+                    // يعرفها النموذج أصلاً — فتُكتب فوق القالب المزروع وتمحوه.
+                    await _deviceTypeRepository.RenameAsync(DeviceTypeId, Name);
                 }
                 else
                 {

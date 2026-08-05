@@ -13,6 +13,7 @@ using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -88,9 +89,23 @@ namespace CAL_QR.ViewModels
                 {
                     LoadAttachmentsForRecord(value);
                     (PrintRecordCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    OnPropertyChanged(nameof(ShowLegacySignature));
                 }
             }
         }
+
+        /// <summary>
+        /// التوقيع الرقميّ القديم وملصق المعايرة: يظهران للسجل المُرحَّل وحده.
+        ///
+        /// الشرط على <b>خلوّ التوقيع</b> لا على غياب الشهادة، وهو أصدق وأبسط:
+        /// السجل الجديد يُحفظ بتوقيع فارغ وبلا ملف QR بقرار معماريّ، والملصق
+        /// يُبنى في PrintPreviewViewModel من CertificateNumber و HmacSignature —
+        /// وكلاهما فارغ، فكان سيُطبع ملصق برقم فارغ ورمز تحقّق فارغ.
+        ///
+        /// الإخفاء لا التعطيل: الميزة غير موجودة لهذه السجلات، لا موجودة ومعطّلة.
+        /// </summary>
+        public bool ShowLegacySignature =>
+            SelectedRecord != null && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
 
         public bool IsUserAdmin => _currentUserService.CurrentUser?.Role == UserRole.Admin;
         #endregion
@@ -110,6 +125,16 @@ namespace CAL_QR.ViewModels
                 {
                     records[i].SequenceNumber = i + 1;
                 }
+
+                // رقم الشهادة يُقرأ من Certificates لا من العمود المهجور على السجل.
+                // استعلام واحد لكل سجلات الجهاز، ثم ملء خاصّية العرض — نفس نمط
+                // SequenceNumber أعلاه: خاصّية [NotMapped] تُملأ هنا.
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    var issuedNumbers = CertificateNumberDisplayRules.Load(context, records.Select(r => r.Id));
+                    CertificateNumberDisplayRules.Populate(records, issuedNumbers);
+                }
+
                 Calibrations = new ObservableCollection<CalibrationRecord>(records);
 
                 if (preferredRecordId.HasValue && preferredRecordId.Value > 0)
@@ -128,7 +153,7 @@ namespace CAL_QR.ViewModels
                     var r = timelineRecords[i];
                     nodes.Add(new TimelineNode
                     {
-                        CertificateNumber = r.CertificateNumber,
+                        CertificateNumber = r.DisplayCertificateNumber,
                         DateString = r.CalibrationDate.ToString("yyyy-MM-dd"),
                         ResultColor = r.Result == "Passed" ? "#2E7D32" : r.Result == "Failed" ? "#C62828" : "#F9A825",
                         IsPassed = r.Result == "Passed",

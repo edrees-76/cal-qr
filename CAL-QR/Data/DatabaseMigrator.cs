@@ -360,6 +360,23 @@ namespace CAL_QR.Data
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateNuclideSummaries_CertificateId"" ON ""CertificateNuclideSummaries"" (""CertificateId"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_DeviceTypeFunctionalCheckTemplates_DeviceTypeId"" ON ""DeviceTypeFunctionalCheckTemplates"" (""DeviceTypeId"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_DeviceTypeUncertaintyComponentTemplates_DeviceTypeId"" ON ""DeviceTypeUncertaintyComponentTemplates"" (""DeviceTypeId"");");
+
+                // المرحلة ٣-أ: تحويل فهرس رقم شهادة سجل المعايرة إلى فهرس مشروط.
+                //
+                // السجل الجديد يُحفظ برقم فارغ لأن الرقم يُولّده إصدار الشهادة. والفهرس
+                // غير المشروط كان يسمح بسجل واحد فارغ في القاعدة كلها ويرفض الثاني.
+                //
+                // DROP ثم CREATE لا CREATE IF NOT EXISTS وحدها: الفهرس القديم موجود
+                // بنفس الاسم في كل قاعدة قائمة، و IF NOT EXISTS كانت ستراه موجوداً
+                // فتتخطّى الإنشاء ويبقى الفهرس غير المشروط على حاله.
+                //
+                // آمنة على قاعدة فيها بيانات: الفلتر يُضيّق نطاق التفرّد ولا يوسّعه،
+                // فكل صفّ يمرّ اليوم يمرّ بعدها. ولا يمكن أن تفشل بتضارب قائم.
+                // و idempotent: إعادة التشغيل تُسقط وتُنشئ نفس الفهرس.
+                context.Database.ExecuteSqlRaw(@"DROP INDEX IF EXISTS ""IX_CalibrationRecords_CertificateNumber"";");
+                context.Database.ExecuteSqlRaw(
+                    @"CREATE UNIQUE INDEX IF NOT EXISTS ""IX_CalibrationRecords_CertificateNumber"" ON ""CalibrationRecords"" (""CertificateNumber"") WHERE "
+                    + CalQrDbContext.CalibrationRecordCertificateNumberIndexFilter + ";");
             }
 
             // Perform any safe check/migration of columns if they are missing
@@ -388,6 +405,20 @@ namespace CAL_QR.Data
                 // وعرضه للمدير هو البند الحاجز رقم ٧.
                 System.Diagnostics.Debug.WriteLine(
                     "[DeviceTypeSeeder] حصيلة تستحق العرض:\n" + seedResult.ToDiagnosticsText());
+            }
+
+            // ترقية تصحيحية لمرة واحدة — المرحلة ٣-أ.
+            //
+            // موضعها **بعد** SeedIfNeeded لا قبلها: القاعدة الجديدة يبذرها البذر
+            // العادي فتخرج هذه بلا عمل يُذكر، والقاعدة القائمة يتخطّاها البذر لأن
+            // علمه مضبوط — وهي وحدها ما تحتاج التصحيح.
+            //
+            // محروسة بعلم خاص بها، ولا تُصعِّد استثناءً (انظر تعليقها)، فلا معالج هنا.
+            var repairResult = DeviceTypeSeeder.RepairCatalogTypesIfNeeded(context);
+            if (repairResult.HasDiagnostics)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "[DeviceTypeSeeder] حصيلة الترقية التصحيحية:\n" + repairResult.ToDiagnosticsText());
             }
 
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
@@ -581,7 +612,21 @@ namespace CAL_QR.Data
                 new AppSetting { Key = "Language", Value = "ar" },
                 new AppSetting { Key = "FirstRunCompleted", Value = "" },
                 new AppSetting { Key = "SecurityQuestion", Value = "" },
-                new AppSetting { Key = "SecurityAnswer", Value = "" }
+                new AppSetting { Key = "SecurityAnswer", Value = "" },
+
+                // الموقّعون الأربعة على الشهادة: قيم افتراضية ساكنة تُملأ بها حقول
+                // قسم الاعتماد عند فتح نموذج الشهادة، وتبقى قابلة للتعديل فيه.
+                // ساكنة لا مشتقّة من المستخدم المسجَّل دخوله عمداً: من يشغّل النظام
+                // ليس بالضرورة من عايَر أو راجع أو اعتمد، والاشتقاق كان سينسب
+                // توقيعاً إلى غير صاحبه على وثيقة تحت ISO/IEC 17025.
+                new AppSetting { Key = "DefaultCalibratedByName", Value = "" },
+                new AppSetting { Key = "DefaultCalibratedByTitle", Value = "" },
+                new AppSetting { Key = "DefaultReviewedByName", Value = "" },
+                new AppSetting { Key = "DefaultReviewedByTitle", Value = "" },
+                new AppSetting { Key = "DefaultApprovedByName", Value = "" },
+                new AppSetting { Key = "DefaultApprovedByTitle", Value = "" },
+                new AppSetting { Key = "DefaultAuthorizedByName", Value = "" },
+                new AppSetting { Key = "DefaultAuthorizedByTitle", Value = "" }
             };
 
             bool changed = false;

@@ -39,12 +39,11 @@ namespace CAL_QR.Tests
             var deviceRepo = new DeviceRepository(factory);
             var calRepo = new CalibrationRepository(factory);
             var attachmentRepo = new AttachmentRepository(factory);
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-            var qrService = new QrService(factory);
             var authService = new TestCurrentUserService();
             var auditRepo = new AuditLogRepository(factory, authService);
 
+            // لا HmacService ولا QrService: نُزعا من مُنشئ الـViewModel بعد إيقاف
+            // التوقيع ورمز الـQR على مستوى سجل المعايرة — صارا مسؤولية الشهادة.
             var vm = new CalibrationFormViewModel(
                 factory,
                 ownerRepo,
@@ -52,9 +51,10 @@ namespace CAL_QR.Tests
                 deviceRepo,
                 calRepo,
                 attachmentRepo,
-                hmacService,
-                qrService,
-                auditRepo
+                auditRepo,
+                // مصنع حوار الشهادة: لا يُستدعى في هذا الاختبار (لا مسار إصدار هنا)،
+                // وإنشاء نافذة WPF في خيط اختبار غير STA كان سيفشل أصلاً.
+                () => throw new NotSupportedException("لا يُنشأ حوار الشهادة في هذا الاختبار.")
             );
 
             // Populate required fields to make CanSave return true normally

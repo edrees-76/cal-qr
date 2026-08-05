@@ -9,6 +9,21 @@ namespace CAL_QR.Data
         {
         }
 
+        /// <summary>
+        /// فلتر الفهرس الفريد على CalibrationRecords.CertificateNumber.
+        ///
+        /// مصدر حقيقة واحد يقرأه موضعان: تعريف الفهرس في OnModelCreating أدناه،
+        /// وجملة CREATE UNIQUE INDEX في DatabaseMigrator. صياغتان منفصلتان كانتا
+        /// ستتباعدان بأول تعديل، فينشأ فهرسان مختلفان: واحد يظنّه EF قائماً وآخر
+        /// موجود فعلاً في الملف.
+        ///
+        /// سببه: السجل الجديد يُحفظ برقم شهادة فارغ، لأن الرقم يُولّده إصدار
+        /// الشهادة لا المستخدم. فهرس فريد غير مشروط كان سيسمح بسجل واحد فارغ في
+        /// القاعدة كلها ويرفض الثاني. والفراغ مستثنى وحده — الأرقام غير الفارغة
+        /// تبقى فريدة كما كانت.
+        /// </summary>
+        public const string CalibrationRecordCertificateNumberIndexFilter = @"""CertificateNumber"" <> ''";
+
         public DbSet<Owner> Owners { get; set; } = null!;
         public DbSet<DeviceType> DeviceTypes { get; set; } = null!;
         public DbSet<Device> Devices { get; set; } = null!;
@@ -127,7 +142,9 @@ namespace CAL_QR.Data
             {
                 entity.HasIndex(e => e.DeviceId);
                 entity.HasIndex(e => e.ExpiryDate);
-                entity.HasIndex(e => e.CertificateNumber).IsUnique();
+                entity.HasIndex(e => e.CertificateNumber)
+                    .IsUnique()
+                    .HasFilter(CalibrationRecordCertificateNumberIndexFilter);
                 entity.HasIndex(e => e.IsDeleted);
                 entity.Property(e => e.CertificateNumber).IsRequired();
                 entity.Property(e => e.EngineerName).IsRequired();

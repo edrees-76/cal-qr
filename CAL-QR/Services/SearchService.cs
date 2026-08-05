@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
 using CAL_QR.Models;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Services
 {
@@ -91,15 +92,24 @@ namespace CAL_QR.Services
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 using var context = _contextFactory.CreateDbContext();
+                // البحث والعرض على الشهادة لا على العمود المهجور: المطابقة عبر
+                // استعلام فرعيّ، والعنوان من الرقم المُصدَر. لولا الاثنين معاً لظهرت
+                // كل نتيجة بعنوان فارغ ولما وُجدت شهادة بالبحث عن رقمها.
                 var rawItems = await context.CalibrationRecords
                     .AsNoTracking()
                     .Include(r => r.Device)
                         .ThenInclude(d => d!.Owner)
-                    .Where(r => !r.IsDeleted && r.CertificateNumber.ToLower().Contains(normalizedQuery))
+                    .Where(r => !r.IsDeleted && context.Certificates.Any(c =>
+                        c.CalibrationRecordId == r.Id &&
+                        !c.IsDeleted &&
+                        c.CertificateNumber.ToLower().Contains(normalizedQuery)))
                     .Select(r => new
                     {
                         r.Id,
-                        r.CertificateNumber,
+                        IssuedNumber = context.Certificates
+                            .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
+                            .Select(c => c.CertificateNumber)
+                            .FirstOrDefault(),
                         DeviceModel = r.Device != null ? r.Device.Model : string.Empty,
                         OwnerName = (r.Device != null && r.Device.Owner != null) ? r.Device.Owner.Name : string.Empty
                     })
@@ -111,7 +121,7 @@ namespace CAL_QR.Services
                 {
                     Id = r.Id,
                     EntityType = SearchEntityType.CalibrationRecord,
-                    DisplayTitle = r.CertificateNumber,
+                    DisplayTitle = CertificateNumberDisplayRules.Display(r.IssuedNumber),
                     DisplaySubtitle = string.IsNullOrWhiteSpace(r.DeviceModel) 
                         ? "شهادة معايرة" 
                         : $"{r.DeviceModel} — {r.OwnerName}"

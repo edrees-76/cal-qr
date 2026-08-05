@@ -35,6 +35,16 @@ namespace CAL_QR.Repositories
                 .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
         }
 
+        public async Task<DeviceType?> GetByIdWithTemplatesAsync(int id)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.DeviceTypes
+                .AsNoTracking()
+                .Include(t => t.FunctionalCheckTemplates)
+                .Include(t => t.UncertaintyComponentTemplates)
+                .FirstOrDefaultAsync(t => t.Id == id && !t.IsDeleted);
+        }
+
         public async Task AddAsync(DeviceType type)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
@@ -44,11 +54,26 @@ namespace CAL_QR.Repositories
             await context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(DeviceType type)
+        /// <summary>
+        /// تُحمَّل الصفّ من السياق ويُعدَّل اسمه وحده، فلا يُكتب عمود آخر.
+        ///
+        /// ⚠ لا EntityState.Modified ولا كائن مفصول: كلاهما يكتب كل الأعمدة، وهو
+        /// ما كان يمسح القالب كاملاً عند كل إعادة تسمية.
+        ///
+        /// الاسم يُكتب كما ورد بلا Trim ولا فحص تفرّد — تطبيع أو تشديد هنا يغيّر
+        /// سلوك نموذج أنواع الأجهزة القائم، وهو خارج نطاق هذا الإصلاح.
+        ///
+        /// نوع غير موجود ⇒ لا شيء، على نمط SoftDeleteAsync أدناه.
+        /// </summary>
+        public async Task RenameAsync(int id, string name)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            context.Entry(type).State = EntityState.Modified;
-            await context.SaveChangesAsync();
+            var type = await context.DeviceTypes.FirstOrDefaultAsync(t => t.Id == id);
+            if (type != null)
+            {
+                type.Name = name;
+                await context.SaveChangesAsync();
+            }
         }
 
         public async Task SoftDeleteAsync(int id)

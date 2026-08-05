@@ -12,6 +12,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Services;
 using CAL_QR.Helpers;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -325,7 +326,12 @@ namespace CAL_QR.ViewModels
                             r.Device!.Model.ToLower().Contains(simple) ||
                             r.Device!.SerialNumber.ToLower().Contains(simple) ||
                             r.Device!.Owner!.Name.ToLower().Contains(simple) ||
-                            r.CertificateNumber.ToLower().Contains(simple)
+                            // الرقم يُطابَق على الشهادة لا على العمود المهجور، وإلا عرض
+                            // العمودُ رقماً لا يجده البحث عنه.
+                            context.Certificates.Any(c =>
+                                c.CalibrationRecordId == r.Id &&
+                                !c.IsDeleted &&
+                                c.CertificateNumber.ToLower().Contains(simple))
                         );
                     }
 
@@ -400,16 +406,31 @@ namespace CAL_QR.ViewModels
                     if (CurrentPage > TotalPages) CurrentPage = TotalPages;
                     if (CurrentPage < 1) CurrentPage = 1;
 
+                    // الضمّ بعد Skip/Take لا قبلهما: الترقيم يقع على السجلات وحدها،
+                    // فلا يتأثّر عدد الصفحات بوجود شهادة أو غيابها.
+                    //
+                    // استعلام فرعيّ مترابط يترجمه EF Core إلى LEFT JOIN. لا Include هنا
+                    // لسببين: لا تنقّل عكسيّ على المخطط (مجمَّد بقرار)، ولا يقبل Include
+                    // مرشّحاً على تنقّل مرجعيّ — فكان !IsDeleted سيسقط.
                     var rawList = await query
                         .OrderByDescending(r => r.CalibrationDate)
                         .Skip((CurrentPage - 1) * PageSize)
                         .Take(PageSize)
+                        .Select(r => new
+                        {
+                            Record = r,
+                            IssuedNumber = context.Certificates
+                                .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
+                                .Select(c => c.CertificateNumber)
+                                .FirstOrDefault()
+                        })
                         .ToListAsync();
 
-                    var displayItems = rawList.Select(r =>
+                    var displayItems = rawList.Select(x =>
                     {
+                        var r = x.Record;
                         var d = r.Device!;
-                        string certNumber = r.CertificateNumber;
+                        string certNumber = CertificateNumberDisplayRules.Display(x.IssuedNumber);
                         DateTime? calDate = r.CalibrationDate;
                         DateTime? expDate = r.ExpiryDate;
                         string result = r.Result;

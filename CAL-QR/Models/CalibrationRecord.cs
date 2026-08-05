@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Models
 {
@@ -22,6 +23,18 @@ namespace CAL_QR.Models
 
         [NotMapped]
         public int SequenceNumber { get; set; }
+
+        /// <summary>
+        /// رقم الشهادة كما يُعرض — يُقرأ من جدول Certificates لا من العمود
+        /// CertificateNumber أعلاه، لأن الشهادة صاحبة الكلمة بقرار معماريّ.
+        /// يملؤه CertificateNumberDisplayRules.Populate عند تحميل السجلات،
+        /// ويبقى "—" لسجل بلا شهادة.
+        ///
+        /// [NotMapped] كنظير SequenceNumber تماماً: خاصّية عرض لا عمود، فلا
+        /// ترقية قاعدة ولا مساس بالمخطط المجمَّد.
+        /// </summary>
+        [NotMapped]
+        public string DisplayCertificateNumber { get; set; } = CertificateNumberDisplayRules.None;
 
         [NotMapped]
         public string ResultAr => Result == "Passed" ? "✅ ناجح" : Result == "Failed" ? "❌ راسب" : Result == "Conditional" ? "⚠️ مشروط" : Result;

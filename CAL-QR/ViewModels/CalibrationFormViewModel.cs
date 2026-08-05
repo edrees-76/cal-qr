@@ -419,7 +419,8 @@ namespace CAL_QR.ViewModels
         {
             CertificateNumber = e.CertificateNumber;
             HasCertificate = true;
-            CalibrationEvents.RaiseCalibrationChanged();
+            Saved?.Invoke(this, EventArgs.Empty);
+            CloseWindowAction?.Invoke();
         }
 
         private void LoadFormSources()

@@ -18,6 +18,9 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
+        <!-- Watermark color: faded Arabic placeholder inside text fields -->
+        <SolidColorBrush x:Key="WatermarkBrush" Color="#9E9E9E" />
+
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
@@ -37,6 +40,7 @@
         <Style x:Key="FieldBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
             <Setter Property="Height" Value="38" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="materialDesign:HintAssist.Foreground" Value="{StaticResource WatermarkBrush}" />
         </Style>
 
         <Style x:Key="FieldDate" TargetType="DatePicker" BasedOn="{StaticResource MaterialDesignOutlinedDatePicker}">
@@ -132,7 +136,10 @@
                     </Border>
 
                     <!-- ═══ ١. بيانات الوثيقة والجهاز ═══ -->
-                    <TextBlock Text="أولاً: بيانات الوثيقة والجهاز" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="1. Document &amp; Instrument Data" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="بيانات الوثيقة والجهاز" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
                     <Grid>
@@ -152,97 +159,102 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
-                            <TextBlock Text="الجهة المالكة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Owner Organization" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="الجهة المالكة للجهاز" />
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="4">
-                            <TextBlock Text="عنوان الجهة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="عنوان الجهة" />
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="3" Margin="4">
-                            <TextBlock Text="رقم المرجع (Reference No.)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Reference No." Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="رقم المرجع" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                            <TextBlock Text="موديل الجهاز" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Device Model" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="موديل الجهاز" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                            <TextBlock Text="الرقم التسلسلي" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Serial Number" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="الرقم التسلسلي" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
-                            <TextBlock Text="الشركة المصنّعة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="الشركة المصنّعة" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="3" Margin="4">
-                            <TextBlock Text="نوع الكاشف (Detector Type)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Detector Type" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="نوع الكاشف" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
-                            <TextBlock Text="موديل جهاز المسح المرجعي" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Survey Meter Model" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="موديل جهاز المسح المرجعي" />
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
-                            <TextBlock Text="تسلسلي جهاز المسح المرجعي" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Survey Meter S/N" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="تسلسلي جهاز المسح المرجعي" />
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
-                            <TextBlock Text="رقم الإجراء (Procedure No.)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Procedure No." Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="رقم الإجراء" />
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="3" Margin="4">
-                            <TextBlock Text="موقع المعايرة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Calibration Location" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="موقع إجراء المعايرة" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="3" Grid.Column="0" Margin="4">
-                            <TextBlock Text="نوع القياس" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Measurement Type" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="نوع القياس" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="1" Margin="4">
-                            <TextBlock Text="المسافة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Distance" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="المسافة بين المصدر والكاشف" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="2" Margin="4">
-                            <TextBlock Text="زمن العدّ" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Counting Time" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="زمن العدّ" />
                         </StackPanel>
                         <StackPanel Grid.Row="3" Grid.Column="3" Margin="4">
-                            <TextBlock Text="وحدة العدّ" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Counting Unit" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="وحدة العدّ" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="4" Grid.Column="0" Margin="4">
-                            <TextBlock Text="نمط المعايرة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Calibration Mode" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="نمط المعايرة" />
                         </StackPanel>
                         <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Margin="4">
-                            <TextBlock Text="الأجهزة المستعملة (Instrumentation)" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Instrumentation" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="الأجهزة المستعملة في المعايرة" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="4">
-                            <TextBlock Text="المرجع الإجرائي (Calibration Standard)" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Calibration Standard" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="60"
                                      TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                     FontFamily="{StaticResource CairoFont}" />
+                                     FontFamily="{StaticResource CairoFont}"
+                                     materialDesign:HintAssist.Hint="المرجع الإجرائي للمعايرة"
+                                     materialDesign:HintAssist.Foreground="{StaticResource WatermarkBrush}" />
                         </StackPanel>
                         <StackPanel Grid.Row="5" Grid.Column="2" Margin="4">
-                            <TextBlock Text="تاريخ المعايرة" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Calibration Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding CalibrationDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
                         <StackPanel Grid.Row="5" Grid.Column="3" Margin="4">
-                            <TextBlock Text="تاريخ الإصدار" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Issue Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding IssueDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
                     </Grid>
 
                     <!-- ═══ ٢. الظروف البيئية ═══ -->
-                    <TextBlock Text="ثانياً: الظروف البيئية" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="2. Environmental Conditions" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الظروف البيئية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
                     <Grid>
@@ -253,22 +265,25 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="4">
-                            <TextBlock Text="درجة الحرارة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Temperature" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="°C مثال: 23.0 ± 2.0" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
-                            <TextBlock Text="الرطوبة النسبية" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding RelativeHumidity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Relative Humidity" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding RelativeHumidity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="% RH مثال: 50 ± 10" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="4">
-                            <TextBlock Text="الضغط الجوي" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding AtmosphericPressure, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Atmospheric Pressure" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding AtmosphericPressure, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="kPa مثال: 101.30 ± 1.00" />
                         </StackPanel>
                     </Grid>
 
                     <!-- ═══ ٣. المنهجية — قسم مشروط بـ MethodologyEnabled ═══ -->
                     <StackPanel Visibility="{Binding MethodologyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="ثالثاً: منهجية المعايرة" Style="{StaticResource SectionHeader}" />
+                        <StackPanel Margin="0,10,0,0">
+                            <TextBlock Text="3. Calibration Methodology" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="منهجية المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        </StackPanel>
                         <Separator Margin="0,4,0,8" />
 
                         <Grid>
@@ -282,32 +297,39 @@
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
-                                <TextBlock Text="المصدر الإشعاعي (يُدخل يدوياً لكل معايرة)" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Radiation Source" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="المصدر الإشعاعي المستخدم" />
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
-                                <TextBlock Text="الهندسة المرجعية" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Reference Geometry" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="الهندسة المرجعية" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                                <TextBlock Text="نص المنهجية" Style="{StaticResource FieldLabel}" />
+                                <TextBlock Text="Methodology" Style="{StaticResource FieldLabel}" />
                                 <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                          TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                         FontFamily="{StaticResource CairoFont}" />
+                                         FontFamily="{StaticResource CairoFont}"
+                                         materialDesign:HintAssist.Hint="وصف منهجية المعايرة"
+                                         materialDesign:HintAssist.Foreground="{StaticResource WatermarkBrush}" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                                <TextBlock Text="مرجع القابلية للتتبّع" Style="{StaticResource FieldLabel}" />
+                                <TextBlock Text="Traceability Reference" Style="{StaticResource FieldLabel}" />
                                 <TextBox Text="{Binding TraceabilityReference, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                          TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                         FontFamily="{StaticResource CairoFont}" />
+                                         FontFamily="{StaticResource CairoFont}"
+                                         materialDesign:HintAssist.Hint="مرجع القابلية للتتبّع"
+                                         materialDesign:HintAssist.Foreground="{StaticResource WatermarkBrush}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
 
                     <!-- ═══ ٤. نتائج المعايرة ═══ -->
-                    <TextBlock Text="رابعاً: نتائج المعايرة" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="4. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="نتائج المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
                     <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
@@ -316,16 +338,16 @@
 
                     <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="معرّف المصدر" Binding="{Binding SourceId}" Width="1*" />
-                            <DataGridTextColumn Header="النويدة" Binding="{Binding Radionuclide}" Width="1*" />
-                            <DataGridTextColumn Header="النطاق" Binding="{Binding Scale}" Width="0.8*" />
-                            <DataGridTextColumn Header="الجرعة المرجعية" Binding="{Binding ReferenceDoseLevel}" Width="1*" />
-                            <DataGridTextColumn Header="القيمة المرجعية" Binding="{Binding ReferenceValue}" Width="1*" />
-                            <DataGridTextColumn Header="القراءة المقيسة" Binding="{Binding MeasuredReading}" Width="1*" />
-                            <DataGridTextColumn Header="معامل CF" Binding="{Binding CorrectionFactor}" Width="0.9*" />
-                            <DataGridTextColumn Header="الخطأ النسبي" Binding="{Binding RelativeError}" Width="0.9*" />
-                            <DataGridTextColumn Header="الوحدة" Binding="{Binding Unit}" Width="0.7*" />
-                            <DataGridTextColumn Header="ملاحظات" Binding="{Binding Remarks}" Width="1*" />
+                            <DataGridTextColumn Header="Source ID" Binding="{Binding SourceId}" Width="1*" />
+                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" />
+                            <DataGridTextColumn Header="Scale" Binding="{Binding Scale}" Width="0.8*" />
+                            <DataGridTextColumn Header="Ref. Dose Level" Binding="{Binding ReferenceDoseLevel}" Width="1*" />
+                            <DataGridTextColumn Header="Ref. Value" Binding="{Binding ReferenceValue}" Width="1*" />
+                            <DataGridTextColumn Header="Measured Reading" Binding="{Binding MeasuredReading}" Width="1*" />
+                            <DataGridTextColumn Header="CF" Binding="{Binding CorrectionFactor}" Width="0.9*" />
+                            <DataGridTextColumn Header="AE %" Binding="{Binding RelativeError}" Width="0.9*" />
+                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="0.7*" />
+                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1*" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -340,15 +362,15 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <TextBlock Text="ملخّص النويدات (المصدر الذي يقرأ منه الملصق)" Style="{StaticResource FieldLabel}" Margin="4,4,4,4" />
+                    <TextBlock Text="Nuclide Summary" Style="{StaticResource FieldLabel}" Margin="4,4,4,4" />
                     <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
                         <Button Command="{Binding AddNuclideSummaryCommand}" Content="إضافة صفّ نويدة" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
                     <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="النويدة" Binding="{Binding Radionuclide}" Width="1*" />
-                            <DataGridTextColumn Header="متوسط معامل التصحيح (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" />
+                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" />
+                            <DataGridTextColumn Header="Average CF (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -369,18 +391,21 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="4">
-                            <TextBlock Text="صيغة القراءة المصحّحة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CorrectedReadingFormula, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Corrected Reading Formula" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CorrectedReadingFormula, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="معادلة القراءة المصحّحة" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
-                            <TextBlock Text="حكم المطابقة" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                            <TextBlock Text="Compliance Verdict" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="حكم الامتثال النهائي" />
                         </StackPanel>
                     </Grid>
 
                     <!-- ═══ ٥. ميزانية عدم اليقين — قسم مشروط بـ UncertaintyEnabled ═══ -->
                     <StackPanel Visibility="{Binding UncertaintyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="خامساً: ميزانية عدم اليقين" Style="{StaticResource SectionHeader}" />
+                        <StackPanel Margin="0,10,0,0">
+                            <TextBlock Text="5. Uncertainty Budget" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="ميزانية عدم اليقين" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        </StackPanel>
                         <Separator Margin="0,4,0,8" />
 
                         <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
@@ -389,11 +414,11 @@
 
                         <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="اسم المكوّن" Binding="{Binding ComponentName}" Width="2*" />
-                                <DataGridTextColumn Header="نوع التقييم (A/B)" Binding="{Binding EvaluationType}" Width="0.8*" />
-                                <DataGridTextColumn Header="عدم اليقين القياسي" Binding="{Binding StandardUncertainty}" Width="1.2*" />
-                                <DataGridTextColumn Header="نسبة الإسهام %" Binding="{Binding ContributionPercent}" Width="1*" />
-                                <DataGridTextColumn Header="التوزيع" Binding="{Binding Distribution}" Width="1*" />
+                                <DataGridTextColumn Header="Component" Binding="{Binding ComponentName}" Width="2*" />
+                                <DataGridTextColumn Header="Evaluation Type" Binding="{Binding EvaluationType}" Width="0.8*" />
+                                <DataGridTextColumn Header="Std. Uncertainty" Binding="{Binding StandardUncertainty}" Width="1.2*" />
+                                <DataGridTextColumn Header="Contribution %" Binding="{Binding ContributionPercent}" Width="1*" />
+                                <DataGridTextColumn Header="Distribution" Binding="{Binding Distribution}" Width="1*" />
                                 <DataGridTemplateColumn Width="Auto">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -415,22 +440,25 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="4">
-                                <TextBlock Text="عدم اليقين المركّب" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding CombinedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Combined Uncertainty" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding CombinedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="عدم اليقين المركّب" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Margin="4">
-                                <TextBlock Text="عدم اليقين الموسّع" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding ExpandedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Expanded Uncertainty" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ExpandedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="عدم اليقين الموسّع" />
                             </StackPanel>
                             <StackPanel Grid.Column="2" Margin="4">
-                                <TextBlock Text="معامل التغطية (k)" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding CoverageFactor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" />
+                                <TextBlock Text="Coverage Factor (k)" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding CoverageFactor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" materialDesign:HintAssist.Hint="معامل التغطية" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
 
                     <!-- ═══ ٦. الفحوص الوظيفية ═══ -->
-                    <TextBlock Text="سادساً: الفحوص الوظيفية" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="6. Functional Checks &amp; Notes" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الفحوص الوظيفية والملاحظات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
                     <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
@@ -439,10 +467,10 @@
 
                     <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="اسم الفحص" Binding="{Binding CheckName}" Width="2*" />
-                            <DataGridTextColumn Header="المتطلَّب" Binding="{Binding Requirement}" Width="1.5*" />
-                            <DataGridTextColumn Header="النتيجة" Binding="{Binding Result}" Width="1*" />
-                            <DataGridTextColumn Header="ملاحظات" Binding="{Binding Remarks}" Width="1.2*" />
+                            <DataGridTextColumn Header="Check Name" Binding="{Binding CheckName}" Width="2*" />
+                            <DataGridTextColumn Header="Requirement" Binding="{Binding Requirement}" Width="1.5*" />
+                            <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="1*" />
+                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1.2*" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -463,23 +491,30 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="4">
-                            <TextBlock Text="معلومات إضافية" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Additional Information" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding AdditionalInformation, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                      TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                     FontFamily="{StaticResource CairoFont}" />
+                                     FontFamily="{StaticResource CairoFont}"
+                                     materialDesign:HintAssist.Hint="معلومات إضافية عن المعايرة"
+                                     materialDesign:HintAssist.Foreground="{StaticResource WatermarkBrush}" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
-                            <TextBlock Text="ملاحظات" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Notes" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                      TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                     FontFamily="{StaticResource CairoFont}" />
+                                     FontFamily="{StaticResource CairoFont}"
+                                     materialDesign:HintAssist.Hint="ملاحظات ختامية"
+                                     materialDesign:HintAssist.Foreground="{StaticResource WatermarkBrush}" />
                         </StackPanel>
                     </Grid>
 
                     <!-- ═══ ٧. الاعتماد ═══ -->
-                    <TextBlock Text="سابعاً: الاعتماد والتوقيعات" Style="{StaticResource SectionHeader}" />
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="7. Authorization &amp; Signatures" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الاعتماد والتوقيعات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
                     <Grid>
@@ -497,28 +532,28 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="الاسم" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="المسمّى الوظيفي" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Text="التاريخ" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Name" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Title" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Date" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="عايَرَها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CalibratedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
-                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CalibratedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Calibrated By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CalibratedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="اسم المهندس المعاير" />
+                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CalibratedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="المسمّى الوظيفي" />
                         <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CalibratedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="راجَعَها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
-                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ReviewedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
-                        <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding ReviewedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Reviewed By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ReviewedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="اسم المراجع" />
+                        <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding ReviewedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="المسمّى الوظيفي" />
                         <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ReviewedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="اعتمدها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
-                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ApprovedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
-                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding ApprovedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Approved By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ApprovedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="اسم المعتمد" />
+                        <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding ApprovedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="المسمّى الوظيفي" />
                         <DatePicker Grid.Row="3" Grid.Column="3" SelectedDate="{Binding ApprovedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="أجازها" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
-                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorizedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
-                        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding AuthorizedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Authorized By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorizedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="اسم المجيز" />
+                        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding AuthorizedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" materialDesign:HintAssist.Hint="المسمّى الوظيفي" />
                         <DatePicker Grid.Row="4" Grid.Column="3" SelectedDate="{Binding AuthorizedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
                     </Grid>
 

@@ -749,6 +749,16 @@ namespace CAL_QR.ViewModels
                     .OrderByDescending(r => r.CalibrationDate)
                     .FirstOrDefault();
 
+                // الرقم يُقرأ من جدول Certificates عبر القاعدة الموحّدة، لا من العمود
+                // المهجور على CalibrationRecord — نفس المصدر المستخدم في LoadDataAsync.
+                string certNumber = CertificateNumberDisplayRules.None;
+                if (latestCal != null)
+                {
+                    var issuedNumbers = CertificateNumberDisplayRules.Load(context, new[] { latestCal.Id });
+                    certNumber = CertificateNumberDisplayRules.Display(
+                        issuedNumbers.TryGetValue(latestCal.Id, out var issuedNumber) ? issuedNumber : null);
+                }
+
                 var item = new DeviceDisplayItem
                 {
                     Device = d,
@@ -759,7 +769,7 @@ namespace CAL_QR.ViewModels
                     SerialNumber = d.SerialNumber,
                     OwnerName = d.Owner?.Name ?? "غير محدد",
                     DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
-                    CertificateNumber = latestCal?.CertificateNumber ?? "لا توجد شهادة",
+                    CertificateNumber = certNumber,
                     CalibrationDate = latestCal?.CalibrationDate,
                     ExpiryDate = latestCal?.ExpiryDate,
                     Result = latestCal?.Result ?? "غير معاير",

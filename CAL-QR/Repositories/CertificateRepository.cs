@@ -245,6 +245,32 @@ namespace CAL_QR.Repositories
             }
         }
 
+        /// <summary>
+        /// يبدّل حالة إرفاق النسخة الموقّعة يدوياً. لا صلة له بنص التوقيع أو
+        /// VerifyCode — خطوة عمل بشرية خارج النظام، لا تدوير رمز ولا AuditLog هنا
+        /// (نمط post-commit: المستدعي يسجّل بعد نجاح الاستدعاء).
+        /// </summary>
+        public async Task<bool> ToggleSignedCopyAsync(int certificateId)
+        {
+            using var context = _contextFactory.CreateDbContext();
+
+            var certificate = await context.Certificates
+                .FirstOrDefaultAsync(c => c.Id == certificateId && !c.IsDeleted);
+
+            if (certificate == null)
+                throw new InvalidOperationException($"الشهادة {certificateId} غير موجودة.");
+
+            certificate.IsSignedCopyAttached = !certificate.IsSignedCopyAttached;
+            certificate.SignedCopyConfirmedAt = certificate.IsSignedCopyAttached
+                ? DateTime.UtcNow
+                : null;
+            certificate.UpdatedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
+
+            return certificate.IsSignedCopyAttached;
+        }
+
         public async Task<CertificateVerificationResult> VerifyByCodeAsync(string verifyCode)
         {
             string code = (verifyCode ?? string.Empty).Trim().ToUpperInvariant();

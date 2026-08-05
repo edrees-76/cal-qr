@@ -281,6 +281,12 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "Certificates", "CalibrationMode", "ALTER TABLE Certificates ADD COLUMN CalibrationMode TEXT NULL;");
                 ExecuteSqlIfColumnMissing(context, "DeviceTypes", "CalibrationMode", "ALTER TABLE DeviceTypes ADD COLUMN CalibrationMode TEXT NULL;");
 
+                // ── تتبع إرفاق النسخة الموقّعة والمختومة (خطوة بشرية خارج النظام) ──
+                ExecuteSqlIfColumnMissing(context, "Certificates", "IsSignedCopyAttached",
+                    "ALTER TABLE Certificates ADD COLUMN IsSignedCopyAttached INTEGER NOT NULL DEFAULT 0;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "SignedCopyConfirmedAt",
+                    "ALTER TABLE Certificates ADD COLUMN SignedCopyConfirmedAt TEXT NULL;");
+
                 // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
                 context.Database.ExecuteSqlRaw(@"
                     CREATE TABLE IF NOT EXISTS CertificateNuclideSummaries (

@@ -135,6 +135,12 @@ namespace CAL_QR.Models
         // لو دخله لَغيَّر تسجيلُ التعديل نصَّ التوقيع بذاته، فتلزم دورة إعادة حساب لا تنتهي.
         public DateTime? AmendedAt { get; set; }
 
+        // ─── تتبع إرفاق النسخة الموقّعة والمختومة ───
+        // الشهادة لا تُعتبر «مكتملة» إلا بتأكيد صريح من المستخدم أنه طبعها
+        // ووقّعها وختمها ومسحها وأرفقها. القيمة قابلة للتراجع.
+        public bool IsSignedCopyAttached { get; set; } = false;
+        public DateTime? SignedCopyConfirmedAt { get; set; }
+
         public bool IsDeleted { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

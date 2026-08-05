@@ -225,6 +225,34 @@
                                 <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="الحالة" Width="Auto" IsReadOnly="True">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate><TextBlock Text="الحالة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding CertificateStatus}"
+                                               FontFamily="{StaticResource CairoFont}"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Center"
+                                               FontSize="12">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#E65100" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                        <Setter Property="Foreground" Value="#2E7D32" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding CertificateId}" Value="0">
+                                                        <Setter Property="Foreground" Value="Transparent" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="الجهة المالكة" Binding="{Binding OwnerName}" Width="2*" MinWidth="140" ElementStyle="{StaticResource WrapTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="الجهة المالكة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
@@ -262,7 +290,7 @@
                         </DataGridTextColumn>
                         
                         <!-- Actions -->
-                        <DataGridTemplateColumn Width="150">
+                        <DataGridTemplateColumn Width="190">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -275,6 +303,32 @@
                                         </Button>
                                         <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="#1A3A6B" Width="18" Height="18" />
+                                        </Button>
+                                        <Button Command="{Binding DataContext.ToggleSignedCopyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignToolIconButton}">
+                                                    <Setter Property="ToolTip" Value="تأكيد إرفاق النسخة الموقّعة" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                            <Setter Property="ToolTip" Value="إلغاء تأكيد الإرفاق" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                            <materialDesign:PackIcon Width="18" Height="18">
+                                                <materialDesign:PackIcon.Style>
+                                                    <Style TargetType="materialDesign:PackIcon">
+                                                        <Setter Property="Kind" Value="ClipboardCheck" />
+                                                        <Setter Property="Foreground" Value="#757575" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                                <Setter Property="Kind" Value="ClipboardCheckMultiple" />
+                                                                <Setter Property="Foreground" Value="#2E7D32" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </materialDesign:PackIcon.Style>
+                                            </materialDesign:PackIcon>
                                         </Button>
                                         <Button Command="{Binding DataContext.PrintDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="طباعة ملصق QR">
                                             <materialDesign:PackIcon Kind="Printer" Foreground="#2E7D32" Width="18" Height="18" />
@@ -342,6 +396,23 @@
                                             <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="تحديد للطباعة الدفيعة" VerticalAlignment="Center" Margin="5,0,0,0" />
                                         </Grid>
 
+                                        <TextBlock Text="{Binding CertificateStatus}"
+                                                   FontFamily="{StaticResource CairoFont}"
+                                                   FontSize="11"
+                                                   Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                   Margin="0,0,0,5">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#E65100" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                            <Setter Property="Foreground" Value="#2E7D32" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="#C9A227" Margin="0,0,5,0" VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding OwnerName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
@@ -403,6 +474,32 @@
                                                 </Button>
                                                 <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="#1A3A6B" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Command="{Binding DataContext.ToggleSignedCopyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignToolIconButton}">
+                                                            <Setter Property="ToolTip" Value="تأكيد إرفاق النسخة الموقّعة" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                                    <Setter Property="ToolTip" Value="إلغاء تأكيد الإرفاق" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <materialDesign:PackIcon Width="16" Height="16">
+                                                        <materialDesign:PackIcon.Style>
+                                                            <Style TargetType="materialDesign:PackIcon">
+                                                                <Setter Property="Kind" Value="ClipboardCheck" />
+                                                                <Setter Property="Foreground" Value="#757575" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
+                                                                        <Setter Property="Kind" Value="ClipboardCheckMultiple" />
+                                                                        <Setter Property="Foreground" Value="#2E7D32" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </materialDesign:PackIcon.Style>
+                                                    </materialDesign:PackIcon>
                                                 </Button>
                                                 <Button Command="{Binding DataContext.PrintDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="طباعة">
                                                     <materialDesign:PackIcon Kind="Printer" Foreground="#2E7D32" Width="16" Height="16" />

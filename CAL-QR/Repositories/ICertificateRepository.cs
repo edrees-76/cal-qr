@@ -47,6 +47,9 @@ namespace CAL_QR.Repositories
         /// <summary>تسجيل أول طباعة. استدعاؤها ثانيةً لا يغيّر شيئاً.</summary>
         Task MarkPrintedAsync(int certificateId);
 
+        /// <summary>يبدّل حالة إرفاق النسخة الموقّعة. يُرجع الحالة الجديدة.</summary>
+        Task<bool> ToggleSignedCopyAsync(int certificateId);
+
         /// <summary>بحث بالرمز في الرموز الحالية أولاً ثم التاريخية.</summary>
         Task<CertificateVerificationResult> VerifyByCodeAsync(string verifyCode);
 

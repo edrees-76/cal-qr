@@ -29,6 +29,7 @@ namespace CAL_QR.ViewModels
         private readonly Func<Views.Dialogs.DeviceDetailDialog> _deviceDetailDialogFactory;
         private readonly Func<Views.Dialogs.CalibrationFormDialog> _calibrationFormDialogFactory;
         private readonly Func<Views.Dialogs.CertificateFormDialog> _certificateFormDialogFactory;
+        private readonly ICertificateRepository _certificateRepository;
         private readonly ICurrentUserService _currentUserService;
 
         private ObservableCollection<DeviceDisplayItem> _devices = new();
@@ -81,6 +82,7 @@ namespace CAL_QR.ViewModels
             Func<Views.Dialogs.DeviceDetailDialog> deviceDetailDialogFactory,
             Func<Views.Dialogs.CalibrationFormDialog> calibrationFormDialogFactory,
             Func<Views.Dialogs.CertificateFormDialog> certificateFormDialogFactory,
+            ICertificateRepository certificateRepository,
             ICurrentUserService currentUserService)
         {
             _deviceRepository = deviceRepository;
@@ -94,6 +96,7 @@ namespace CAL_QR.ViewModels
             _deviceDetailDialogFactory = deviceDetailDialogFactory;
             _calibrationFormDialogFactory = calibrationFormDialogFactory;
             _certificateFormDialogFactory = certificateFormDialogFactory;
+            _certificateRepository = certificateRepository;
             _currentUserService = currentUserService;
 
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
@@ -111,6 +114,7 @@ namespace CAL_QR.ViewModels
             ViewDetailsCommand = new RelayCommand(OpenDetailsDialog);
             EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
             EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog);
+            ToggleSignedCopyCommand = new RelayCommand(async (p) => await ToggleSignedCopy(p));
             PrintDeviceCommand = new RelayCommand(PrintSpecificCertificate);
             PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
             PrintSpecificCertificateCommand = new RelayCommand(PrintSpecificCertificate);
@@ -288,6 +292,7 @@ namespace CAL_QR.ViewModels
         public ICommand ViewDetailsCommand { get; }
         public ICommand EditDeviceCommand { get; }
         public ICommand EditCertificateCommand { get; }
+        public ICommand ToggleSignedCopyCommand { get; }
         #endregion
 
         public async Task LoadDataAsync()
@@ -431,6 +436,10 @@ namespace CAL_QR.ViewModels
                             IssuedCertificateId = context.Certificates
                                 .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
                                 .Select(c => c.Id)
+                                .FirstOrDefault(),
+                            IsSignedCopyAttached = context.Certificates
+                                .Where(c => c.CalibrationRecordId == r.Id && !c.IsDeleted)
+                                .Select(c => c.IsSignedCopyAttached)
                                 .FirstOrDefault()
                         })
                         .ToListAsync();
@@ -478,6 +487,7 @@ namespace CAL_QR.ViewModels
                             DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
                             CertificateNumber = certNumber,
                             CertificateId = x.IssuedCertificateId,
+                            IsSignedCopyAttached = x.IsSignedCopyAttached,
                             CalibrationDate = calDate,
                             ExpiryDate = expDate,
                             Result = result,
@@ -668,6 +678,49 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        private async Task ToggleSignedCopy(object? parameter)
+        {
+            if (parameter is not DeviceDisplayItem item) return;
+            if (item.CertificateId <= 0) return;
+
+            string message = item.IsSignedCopyAttached
+                ? $"هل تريد إلغاء تأكيد إرفاق النسخة الموقّعة للشهادة {item.CertificateNumber}؟"
+                : $"هل تؤكد إرفاق النسخة الموقّعة والمختومة للشهادة {item.CertificateNumber}؟";
+
+            string title = item.IsSignedCopyAttached ? "إلغاء التأكيد" : "تأكيد الإرفاق";
+
+            var result = MessageBox.Show(message, title,
+                MessageBoxButton.YesNo, MessageBoxImage.Question,
+                MessageBoxResult.No);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            try
+            {
+                bool newState = await _certificateRepository.ToggleSignedCopyAsync(item.CertificateId);
+
+                try
+                {
+                    await _auditLogRepository.LogAsync(
+                        newState ? "تأكيد إرفاق نسخة موقّعة" : "إلغاء تأكيد إرفاق نسخة موقّعة",
+                        "Certificate",
+                        item.CertificateId.ToString(),
+                        $"الشهادة {item.CertificateNumber} — {(newState ? "تم التأكيد" : "تم الإلغاء")}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Audit] {ex.Message}");
+                }
+
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void PrintSpecificCertificate(object? parameter)
         {
             int recordId = 0;
@@ -783,17 +836,20 @@ namespace CAL_QR.ViewModels
                 // المهجور على CalibrationRecord — نفس المصدر المستخدم في LoadDataAsync.
                 string certNumber = CertificateNumberDisplayRules.None;
                 int certificateId = 0;
+                bool isSignedCopyAttached = false;
                 if (latestCal != null)
                 {
                     var issuedNumbers = CertificateNumberDisplayRules.Load(context, new[] { latestCal.Id });
                     certNumber = CertificateNumberDisplayRules.Display(
                         issuedNumbers.TryGetValue(latestCal.Id, out var issuedNumber) ? issuedNumber : null);
 
-                    certificateId = context.Certificates
+                    var issuedCert = context.Certificates
                         .AsNoTracking()
                         .Where(c => c.CalibrationRecordId == latestCal.Id && !c.IsDeleted)
-                        .Select(c => c.Id)
+                        .Select(c => new { c.Id, c.IsSignedCopyAttached })
                         .FirstOrDefault();
+                    certificateId = issuedCert?.Id ?? 0;
+                    isSignedCopyAttached = issuedCert?.IsSignedCopyAttached ?? false;
                 }
 
                 var item = new DeviceDisplayItem
@@ -808,6 +864,7 @@ namespace CAL_QR.ViewModels
                     DeviceTypeName = d.DeviceType?.Name ?? "غير محدد",
                     CertificateNumber = certNumber,
                     CertificateId = certificateId,
+                    IsSignedCopyAttached = isSignedCopyAttached,
                     CalibrationDate = latestCal?.CalibrationDate,
                     ExpiryDate = latestCal?.ExpiryDate,
                     Result = latestCal?.Result ?? "غير معاير",
@@ -856,6 +913,16 @@ namespace CAL_QR.ViewModels
         public string CertificateNumber { get; set; } = string.Empty;
         public int CertificateId { get; set; }
         public bool HasIssuedCertificate => CertificateId > 0;
+        public bool IsSignedCopyAttached { get; set; }
+
+        /// <summary>
+        /// حالة الشهادة للعرض: فارغة إن لم توجد شهادة، "بانتظار النسخة الموقّعة"
+        /// إن وُجدت ولم تُؤكَّد، "مكتملة ✓" إن أُكّدت.
+        /// </summary>
+        public string CertificateStatus =>
+            CertificateId <= 0 ? string.Empty :
+            IsSignedCopyAttached ? "مكتملة ✓" : "بانتظار النسخة الموقّعة";
+
         public DateTime? CalibrationDate { get; set; }
         public DateTime? ExpiryDate { get; set; }
         public string Result { get; set; } = string.Empty;

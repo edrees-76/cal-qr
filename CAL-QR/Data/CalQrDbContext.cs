@@ -255,6 +255,8 @@ namespace CAL_QR.Data
                 entity.Property(e => e.VerifyCode).HasMaxLength(64);
                 entity.Property(e => e.SignaturePayloadVersion).HasMaxLength(20);
 
+                entity.Property(e => e.IsSignedCopyAttached).HasDefaultValue(false);
+
                 // فهرس البحث بالرمز — مسار «الكود السريع» يبحث به وحده.
                 // غير فريد عمداً: تصادم رمز ١٦ خانة ممكن نظرياً، وفهرس فريد
                 // كان سيُسقِط عملية إصدار مشروعة.

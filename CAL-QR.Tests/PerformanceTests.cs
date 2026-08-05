@@ -65,6 +65,7 @@ namespace CAL_QR.Tests
                 null, // deviceDetailDialogFactory
                 null, // calibrationFormDialogFactory
                 null, // certificateFormDialogFactory
+                null, // certificateRepository
                 authService
             );
 

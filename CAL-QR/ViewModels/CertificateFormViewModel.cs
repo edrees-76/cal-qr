@@ -727,16 +727,19 @@ namespace CAL_QR.ViewModels
                     .ToDictionary(s => s.Key, s => s.Value);
             }
 
-            string Get(string key) => settings.TryGetValue(key, out var value) ? value ?? string.Empty : string.Empty;
+            string Get(string key, string fallback = "") =>
+                settings.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+                    ? value
+                    : fallback;
 
             CalibratedByName = Get("DefaultCalibratedByName");
-            CalibratedByTitle = Get("DefaultCalibratedByTitle");
+            CalibratedByTitle = Get("DefaultCalibratedByTitle", "SSDL - TNRC");
             ReviewedByName = Get("DefaultReviewedByName");
-            ReviewedByTitle = Get("DefaultReviewedByTitle");
+            ReviewedByTitle = Get("DefaultReviewedByTitle", "Calibration Unit Head   SSDL - TNRC");
             ApprovedByName = Get("DefaultApprovedByName");
-            ApprovedByTitle = Get("DefaultApprovedByTitle");
+            ApprovedByTitle = Get("DefaultApprovedByTitle", "Head of Department   SSDL - TNRC");
             AuthorizedByName = Get("DefaultAuthorizedByName");
-            AuthorizedByTitle = Get("DefaultAuthorizedByTitle");
+            AuthorizedByTitle = Get("DefaultAuthorizedByTitle", "Radiation Protection Management - TNRC");
         }
 
         private bool CanSave() => _isLoaded && !_isSaving && _calibrationRecordId > 0;

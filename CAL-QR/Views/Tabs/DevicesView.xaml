@@ -5,12 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
+             xmlns:converters="clr-namespace:CAL_QR.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="900"
              Background="Transparent">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:ShortCertificateNumberConverter x:Key="ShortCertNumber" />
     </UserControl.Resources>
     
     <Grid Margin="10">
@@ -220,7 +222,7 @@
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber}" Width="1.2*" MinWidth="100" ElementStyle="{StaticResource DynamicTextColumnStyle}">
+                        <DataGridTextColumn Header="رقم الشهادة" Binding="{Binding CertificateNumber, Converter={StaticResource ShortCertNumber}}" Width="1.2*" MinWidth="100" ElementStyle="{StaticResource DynamicTextColumnStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate><TextBlock Text="رقم الشهادة" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" /></DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>

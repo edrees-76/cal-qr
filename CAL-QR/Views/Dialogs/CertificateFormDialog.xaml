@@ -163,10 +163,10 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- ═══ ١. بيانات الوثيقة والجهاز ═══ -->
+                    <!-- ═══ ١. بيانات الجهة والجهاز ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="1. Document &amp; Instrument Data" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="بيانات الوثيقة والجهاز" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        <TextBlock Text="1. Client &amp; Instrument Identification" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="بيانات الجهة والجهاز" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -181,22 +181,23 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
                             <TextBlock Text="Owner Organization" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الجهة المالكة للجهاز" />
                         </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="4">
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
                             <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عنوان الجهة" />
                         </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="4">
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4">
                             <TextBlock Text="Reference No." Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="3" Margin="4">
+                            <TextBlock Text="Detector Type" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع الكاشف" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
@@ -212,66 +213,19 @@
                             <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الشركة المصنّعة" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Detector Type" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع الكاشف" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
                             <TextBlock Text="Survey Meter Model" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موديل جهاز المسح المرجعي" />
                         </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
                             <TextBlock Text="Survey Meter S/N" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="تسلسلي جهاز المسح المرجعي" />
                         </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
-                            <TextBlock Text="Procedure No." Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم الإجراء" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Calibration Location" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موقع إجراء المعايرة" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="3" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Measurement Type" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع القياس" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="3" Grid.Column="1" Margin="4">
-                            <TextBlock Text="Distance" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المسافة بين المصدر والكاشف" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="3" Grid.Column="2" Margin="4">
-                            <TextBlock Text="Counting Time" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="زمن العدّ" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="3" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Counting Unit" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="وحدة العدّ" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="4" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Calibration Mode" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نمط المعايرة" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Margin="4">
-                            <TextBlock Text="Instrumentation" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الأجهزة المستعملة في المعايرة" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Margin="4">
-                            <TextBlock Text="Calibration Standard" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
-                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="60"
-                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                     FontFamily="{StaticResource CairoFont}"
-                                     helpers:WatermarkHelper.Watermark="المرجع الإجرائي للمعايرة" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="5" Grid.Column="2" Margin="4">
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
                             <TextBlock Text="Calibration Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding CalibrationDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
-                        <StackPanel Grid.Row="5" Grid.Column="3" Margin="4">
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
                             <TextBlock Text="Issue Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding IssueDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
@@ -305,54 +259,9 @@
                         </StackPanel>
                     </Grid>
 
-                    <!-- ═══ ٣. المنهجية — قسم مشروط بـ MethodologyEnabled ═══ -->
-                    <StackPanel Visibility="{Binding MethodologyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <StackPanel Margin="0,10,0,0">
-                            <TextBlock Text="3. Calibration Methodology" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="منهجية المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
-                        </StackPanel>
-                        <Separator Margin="0,4,0,8" />
-
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
-                                <TextBlock Text="Radiation Source" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المصدر الإشعاعي المستخدم" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
-                                <TextBlock Text="Reference Geometry" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الهندسة المرجعية" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                                <TextBlock Text="Methodology" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
-                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                         FontFamily="{StaticResource CairoFont}"
-                                         helpers:WatermarkHelper.Watermark="وصف منهجية المعايرة" />
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                                <TextBlock Text="Traceability Reference" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding TraceabilityReference, UpdateSourceTrigger=PropertyChanged}"
-                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
-                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
-                                         FontFamily="{StaticResource CairoFont}"
-                                         helpers:WatermarkHelper.Watermark="مرجع القابلية للتتبّع" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-
-                    <!-- ═══ ٤. نتائج المعايرة ═══ -->
+                    <!-- ═══ ٣. نتائج المعايرة ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="4. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="3. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="نتائج المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -482,6 +391,108 @@
                             <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="حكم الامتثال النهائي" />
                         </StackPanel>
                     </Grid>
+
+                    <!-- ═══ ٤. المنهجية والمعلومات التقنية ═══ -->
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Separator Margin="0,4,0,8" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
+                            <TextBlock Text="Procedure No." Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم الإجراء" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
+                            <TextBlock Text="Calibration Location" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موقع إجراء المعايرة" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4">
+                            <TextBlock Text="Calibration Mode" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نمط المعايرة" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
+                            <TextBlock Text="Measurement Type" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع القياس" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
+                            <TextBlock Text="Distance" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المسافة بين المصدر والكاشف" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
+                            <TextBlock Text="Instrumentation" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الأجهزة المستعملة في المعايرة" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
+                            <TextBlock Text="Counting Time" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="زمن العدّ" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
+                            <TextBlock Text="Counting Unit" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="وحدة العدّ" />
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
+                            <TextBlock Text="Calibration Standard" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="60"
+                                     TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                     FontFamily="{StaticResource CairoFont}"
+                                     helpers:WatermarkHelper.Watermark="المرجع الإجرائي للمعايرة" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ═══ المنهجية — قسم مشروط بـ MethodologyEnabled ═══ -->
+                    <StackPanel Visibility="{Binding MethodologyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
+                                <TextBlock Text="Radiation Source" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المصدر الإشعاعي المستخدم" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
+                                <TextBlock Text="Reference Geometry" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الهندسة المرجعية" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
+                                <TextBlock Text="Methodology" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                         FontFamily="{StaticResource CairoFont}"
+                                         helpers:WatermarkHelper.Watermark="وصف منهجية المعايرة" />
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
+                                <TextBlock Text="Traceability Reference" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding TraceabilityReference, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
+                                         TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                         FontFamily="{StaticResource CairoFont}"
+                                         helpers:WatermarkHelper.Watermark="مرجع القابلية للتتبّع" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
 
                     <!-- ═══ ٥. ميزانية عدم اليقين — قسم مشروط بـ UncertaintyEnabled ═══ -->
                     <StackPanel Visibility="{Binding UncertaintyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">

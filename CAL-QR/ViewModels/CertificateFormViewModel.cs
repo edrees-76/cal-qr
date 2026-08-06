@@ -94,7 +94,7 @@ namespace CAL_QR.ViewModels
             });
         }
 
-        #region ١. بيانات الوثيقة والجهاز
+        #region ١. بيانات الجهة والجهاز
 
         private string _certificateTemplateType = string.Empty;
         public string CertificateTemplateType
@@ -159,74 +159,11 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _surveyMeterSerialNumber, value);
         }
 
-        private string _procedureNo = string.Empty;
-        public string ProcedureNo
-        {
-            get => _procedureNo;
-            set => SetProperty(ref _procedureNo, value);
-        }
-
-        private string _calibrationLocation = string.Empty;
-        public string CalibrationLocation
-        {
-            get => _calibrationLocation;
-            set => SetProperty(ref _calibrationLocation, value);
-        }
-
-        private string _instrumentation = string.Empty;
-        public string Instrumentation
-        {
-            get => _instrumentation;
-            set => SetProperty(ref _instrumentation, value);
-        }
-
         private string _detectorType = string.Empty;
         public string DetectorType
         {
             get => _detectorType;
             set => SetProperty(ref _detectorType, value);
-        }
-
-        private string _measurementType = string.Empty;
-        public string MeasurementType
-        {
-            get => _measurementType;
-            set => SetProperty(ref _measurementType, value);
-        }
-
-        private string _distance = string.Empty;
-        public string Distance
-        {
-            get => _distance;
-            set => SetProperty(ref _distance, value);
-        }
-
-        private string _countingTime = string.Empty;
-        public string CountingTime
-        {
-            get => _countingTime;
-            set => SetProperty(ref _countingTime, value);
-        }
-
-        private string _countingUnit = string.Empty;
-        public string CountingUnit
-        {
-            get => _countingUnit;
-            set => SetProperty(ref _countingUnit, value);
-        }
-
-        private string _calibrationMode = string.Empty;
-        public string CalibrationMode
-        {
-            get => _calibrationMode;
-            set => SetProperty(ref _calibrationMode, value);
-        }
-
-        private string _calibrationStandard = string.Empty;
-        public string CalibrationStandard
-        {
-            get => _calibrationStandard;
-            set => SetProperty(ref _calibrationStandard, value);
         }
 
         private DateTime _calibrationDate = DateTime.Today;
@@ -271,7 +208,94 @@ namespace CAL_QR.ViewModels
 
         #endregion
 
-        #region ٣. المنهجية (قسم مشروط)
+        #region ٣. النتائج والنويدات
+
+        public ObservableCollection<CertificateCalibrationResult> CalibrationResults { get; }
+            = new ObservableCollection<CertificateCalibrationResult>();
+
+        public ObservableCollection<CertificateNuclideSummary> NuclideSummaries { get; }
+            = new ObservableCollection<CertificateNuclideSummary>();
+
+        private string _correctedReadingFormula = string.Empty;
+        public string CorrectedReadingFormula
+        {
+            get => _correctedReadingFormula;
+            set => SetProperty(ref _correctedReadingFormula, value);
+        }
+
+        private string _complianceVerdict = string.Empty;
+        public string ComplianceVerdict
+        {
+            get => _complianceVerdict;
+            set => SetProperty(ref _complianceVerdict, value);
+        }
+
+        #endregion
+
+        #region ٤. المنهجية والمعلومات التقنية
+
+        private string _procedureNo = string.Empty;
+        public string ProcedureNo
+        {
+            get => _procedureNo;
+            set => SetProperty(ref _procedureNo, value);
+        }
+
+        private string _calibrationLocation = string.Empty;
+        public string CalibrationLocation
+        {
+            get => _calibrationLocation;
+            set => SetProperty(ref _calibrationLocation, value);
+        }
+
+        private string _instrumentation = string.Empty;
+        public string Instrumentation
+        {
+            get => _instrumentation;
+            set => SetProperty(ref _instrumentation, value);
+        }
+
+        private string _measurementType = string.Empty;
+        public string MeasurementType
+        {
+            get => _measurementType;
+            set => SetProperty(ref _measurementType, value);
+        }
+
+        private string _distance = string.Empty;
+        public string Distance
+        {
+            get => _distance;
+            set => SetProperty(ref _distance, value);
+        }
+
+        private string _countingTime = string.Empty;
+        public string CountingTime
+        {
+            get => _countingTime;
+            set => SetProperty(ref _countingTime, value);
+        }
+
+        private string _countingUnit = string.Empty;
+        public string CountingUnit
+        {
+            get => _countingUnit;
+            set => SetProperty(ref _countingUnit, value);
+        }
+
+        private string _calibrationMode = string.Empty;
+        public string CalibrationMode
+        {
+            get => _calibrationMode;
+            set => SetProperty(ref _calibrationMode, value);
+        }
+
+        private string _calibrationStandard = string.Empty;
+        public string CalibrationStandard
+        {
+            get => _calibrationStandard;
+            set => SetProperty(ref _calibrationStandard, value);
+        }
 
         private bool _methodologyEnabled;
         public bool MethodologyEnabled
@@ -306,30 +330,6 @@ namespace CAL_QR.ViewModels
         {
             get => _traceabilityReference;
             set => SetProperty(ref _traceabilityReference, value);
-        }
-
-        #endregion
-
-        #region ٤. النتائج والنويدات
-
-        public ObservableCollection<CertificateCalibrationResult> CalibrationResults { get; }
-            = new ObservableCollection<CertificateCalibrationResult>();
-
-        public ObservableCollection<CertificateNuclideSummary> NuclideSummaries { get; }
-            = new ObservableCollection<CertificateNuclideSummary>();
-
-        private string _correctedReadingFormula = string.Empty;
-        public string CorrectedReadingFormula
-        {
-            get => _correctedReadingFormula;
-            set => SetProperty(ref _correctedReadingFormula, value);
-        }
-
-        private string _complianceVerdict = string.Empty;
-        public string ComplianceVerdict
-        {
-            get => _complianceVerdict;
-            set => SetProperty(ref _complianceVerdict, value);
         }
 
         #endregion

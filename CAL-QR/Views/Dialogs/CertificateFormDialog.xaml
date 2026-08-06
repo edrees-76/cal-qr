@@ -184,8 +184,8 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Owner Organization" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الجهة المالكة للجهاز" />
+                            <TextBlock Text="Client Name" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="اسم الجهة / العميل" />
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
                             <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />
@@ -196,30 +196,30 @@
                             <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
                         </StackPanel>
                         <StackPanel Grid.Row="0" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Detector Type" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع الكاشف" />
+                            <TextBlock Text="Detector / Probe" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الكاشف / المجس" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Device Model" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موديل الجهاز" />
+                            <TextBlock Text="Instrument" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="اسم الجهاز ونوعه" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                            <TextBlock Text="Serial Number" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي" />
+                            <TextBlock Text="Serial Number (S/N)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي للجهاز" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
                             <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الشركة المصنّعة" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Survey Meter Model" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موديل جهاز المسح المرجعي" />
+                            <TextBlock Text="Survey Meter (Readout Unit)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="جهاز المسح (وحدة القراءة)" />
                         </StackPanel>
 
                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Survey Meter S/N" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="تسلسلي جهاز المسح المرجعي" />
+                            <TextBlock Text="Survey Meter Serial Number (S/N)" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي لجهاز المسح" />
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
                             <TextBlock Text="Calibration Date" Style="{StaticResource FieldLabel}" />
@@ -305,7 +305,7 @@
                             <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Scale" Binding="{Binding Scale}" Width="0.8*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Ref. Dose Level" Binding="{Binding ReferenceDoseLevel}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
-                            <DataGridTextColumn Header="Ref. Value" Binding="{Binding ReferenceValue}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Reference Value" Binding="{Binding ReferenceValue}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Measured Reading" Binding="{Binding MeasuredReading}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="CF" Binding="{Binding CorrectionFactor}" Width="0.9*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="AE %" Binding="{Binding RelativeError}" Width="0.9*" ElementStyle="{StaticResource CenteredCellElement}" />
@@ -362,7 +362,7 @@
                         </DataGrid.Resources>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
-                            <DataGridTextColumn Header="Average CF (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Average Correction Factor (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -387,7 +387,7 @@
                             <TextBox Text="{Binding CorrectedReadingFormula, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="معادلة القراءة المصحّحة" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
-                            <TextBlock Text="Compliance Verdict" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Final Compliance Verdict" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="حكم الامتثال النهائي" />
                         </StackPanel>
                     </Grid>
@@ -408,44 +408,22 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Procedure No." Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم الإجراء" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
-                            <TextBlock Text="Calibration Location" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="موقع إجراء المعايرة" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4">
                             <TextBlock Text="Calibration Mode" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نمط المعايرة" />
                         </StackPanel>
-
-                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Measurement Type" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="نوع القياس" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                            <TextBlock Text="Distance" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المسافة بين المصدر والكاشف" />
-                        </StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
-                            <TextBlock Text="Instrumentation" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الأجهزة المستعملة في المعايرة" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
                             <TextBlock Text="Counting Time" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="زمن العدّ" />
                         </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="4">
                             <TextBlock Text="Counting Unit" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="وحدة العدّ" />
                         </StackPanel>
-                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="4">
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="4">
                             <TextBlock Text="Calibration Standard" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="60"
@@ -476,7 +454,7 @@
                                 <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الهندسة المرجعية" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="4">
-                                <TextBlock Text="Methodology" Style="{StaticResource FieldLabel}" />
+                                <TextBlock Text="Calibration Methodology" Style="{StaticResource FieldLabel}" />
                                 <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                          TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
@@ -539,7 +517,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Component" Binding="{Binding ComponentName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTextColumn Header="Evaluation Type" Binding="{Binding EvaluationType}" Width="0.8*" ElementStyle="{StaticResource CenteredCellElement}" />
-                                <DataGridTextColumn Header="Std. Uncertainty" Binding="{Binding StandardUncertainty}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="Standard Uncertainty (%)" Binding="{Binding StandardUncertainty}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTextColumn Header="Contribution %" Binding="{Binding ContributionPercent}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTextColumn Header="Distribution" Binding="{Binding Distribution}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTemplateColumn Width="Auto">
@@ -560,19 +538,14 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="4">
-                                <TextBlock Text="Combined Uncertainty" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding CombinedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عدم اليقين المركّب" />
+                                <TextBlock Text="Combined Standard Uncertainty (uc)" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding CombinedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عدم اليقين القياسي المركّب" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Margin="4">
-                                <TextBlock Text="Expanded Uncertainty" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding ExpandedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عدم اليقين الموسّع" />
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Margin="4">
-                                <TextBlock Text="Coverage Factor (k)" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding CoverageFactor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="معامل التغطية" />
+                                <TextBlock Text="Expanded Uncertainty (U) (k = 2)" Style="{StaticResource FieldLabel}" />
+                                <TextBox Text="{Binding ExpandedUncertainty, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عدم اليقين الموسّع (U)" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -619,7 +592,7 @@
                             </Style>
                         </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Check Name" Binding="{Binding CheckName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Test / Check" Binding="{Binding CheckName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Requirement" Binding="{Binding Requirement}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
@@ -651,12 +624,12 @@
                                      helpers:WatermarkHelper.Watermark="معلومات إضافية عن المعايرة" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
-                            <TextBlock Text="Notes" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="Important Notes &amp; Conditions" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="70"
                                      TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
                                      FontFamily="{StaticResource CairoFont}"
-                                     helpers:WatermarkHelper.Watermark="ملاحظات ختامية" />
+                                     helpers:WatermarkHelper.Watermark="الملاحظات والشروط المهمة" />
                         </StackPanel>
                     </Grid>
 

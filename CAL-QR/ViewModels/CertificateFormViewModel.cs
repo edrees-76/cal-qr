@@ -170,8 +170,17 @@ namespace CAL_QR.ViewModels
         public DateTime CalibrationDate
         {
             get => _calibrationDate;
-            set => SetProperty(ref _calibrationDate, value);
+            set
+            {
+                if (SetProperty(ref _calibrationDate, value))
+                {
+                    OnPropertyChanged(nameof(DueDatePreview));
+                }
+            }
         }
+
+        /// <summary>عرض تقديري فقط للقراءة — DueDate الفعلي يُحسب حصراً داخل CertificateRepository.AddAsync.</summary>
+        public DateTime DueDatePreview => CalibrationDate.AddYears(1);
 
         /// <summary>تاريخ إداري مستقلّ عن IssuedAt (ختم النظام). افتراضه اليوم.</summary>
         private DateTime _issueDate = DateTime.Today;
@@ -710,6 +719,13 @@ namespace CAL_QR.ViewModels
                 : $"نوع الجهاز «{CertificateTemplateType}» لا يملك قالب شهادة. "
                   + "كل الحقول والجداول أدناه فارغة وتحتاج ملئاً يدوياً كاملاً. "
                   + "يمكنك المتابعة والحفظ، ويمكنك ضبط قالب لهذا النوع لاحقاً من شاشة أنواع الأجهزة.";
+
+            // نوع بلا قالب: كل الأقسام تُفتح ليملأها المستخدم يدوياً
+            if (!draft.HasTemplate)
+            {
+                MethodologyEnabled = true;
+                UncertaintyEnabled = true;
+            }
         }
 
         /// <summary>

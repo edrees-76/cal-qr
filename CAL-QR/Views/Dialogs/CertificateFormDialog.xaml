@@ -229,6 +229,10 @@
                             <TextBlock Text="Issue Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding IssueDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="3" Margin="4">
+                            <TextBlock Text="Calibration Due Date" Style="{StaticResource FieldLabel}" />
+                            <DatePicker SelectedDate="{Binding DueDatePreview, Mode=OneWay}" Style="{StaticResource FieldDate}" IsEnabled="False" />
+                        </StackPanel>
                     </Grid>
 
                     <!-- ═══ ٢. الظروف البيئية ═══ -->
@@ -393,9 +397,19 @@
                     </Grid>
 
                     <!-- ═══ ٤. المنهجية والمعلومات التقنية ═══ -->
-                    <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <CheckBox IsChecked="{Binding MethodologyEnabled}"
+                                  IsEnabled="{Binding HasNoTemplateWarning}"
+                                  Content="إظهار المنهجية"
+                                  VerticalAlignment="Center"
+                                  FontFamily="{StaticResource CairoFont}"
+                                  FontSize="11"
+                                  Foreground="#707070"
+                                  Margin="20,0,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -472,14 +486,25 @@
                         </Grid>
                     </StackPanel>
 
-                    <!-- ═══ ٥. ميزانية عدم اليقين — قسم مشروط بـ UncertaintyEnabled ═══ -->
-                    <StackPanel Visibility="{Binding UncertaintyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <StackPanel Margin="0,10,0,0">
+                    <!-- ═══ ٥. ميزانية عدم اليقين ═══ -->
+                    <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                        <StackPanel Orientation="Vertical">
                             <TextBlock Text="5. Uncertainty Budget" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="ميزانية عدم اليقين" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
-                        <Separator Margin="0,4,0,8" />
+                        <CheckBox IsChecked="{Binding UncertaintyEnabled}"
+                                  IsEnabled="{Binding HasNoTemplateWarning}"
+                                  Content="إظهار ميزانية عدم اليقين"
+                                  VerticalAlignment="Center"
+                                  FontFamily="{StaticResource CairoFont}"
+                                  FontSize="11"
+                                  Foreground="#707070"
+                                  Margin="20,0,0,0" />
+                    </StackPanel>
+                    <Separator Margin="0,4,0,8" />
 
+                    <!-- محتوى القسم مشروط بـ UncertaintyEnabled -->
+                    <StackPanel Visibility="{Binding UncertaintyEnabled, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
                         <StackPanel Orientation="Horizontal" Margin="4,0,4,6">
                             <Button Command="{Binding AddUncertaintyComponentCommand}" Content="إضافة مكوّن" Style="{StaticResource RowActionButton}" />
                         </StackPanel>

@@ -45,15 +45,44 @@
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
         </Style>
 
+        <!-- Row header style (# column) -->
+        <Style x:Key="GridRowHeader" TargetType="DataGridRowHeader">
+            <Setter Property="Background" Value="#ECEFF1" />
+            <Setter Property="Foreground" Value="#546E7A" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Width" Value="36" />
+            <Setter Property="BorderBrush" Value="#CFD8DC" />
+            <Setter Property="BorderThickness" Value="0,0,1,0" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+
+        <Style x:Key="CenteredCellElement" TargetType="TextBlock">
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
         <Style x:Key="GridStyle" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
             <Setter Property="AutoGenerateColumns" Value="False" />
             <Setter Property="CanUserAddRows" Value="False" />
             <Setter Property="CanUserDeleteRows" Value="False" />
-            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="HeadersVisibility" Value="All" />
             <Setter Property="MinHeight" Value="90" />
             <Setter Property="MaxHeight" Value="220" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0" />
+            <Setter Property="BorderBrush" Value="#CFD8DC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="AlternationCount" Value="2" />
+            <Setter Property="AlternatingRowBackground" Value="#F0F4F8" />
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="RowHeaderWidth" Value="36" />
+            <Setter Property="RowHeight" Value="36" />
+            <Setter Property="ColumnHeaderHeight" Value="38" />
+            <Setter Property="RowHeaderStyle" Value="{StaticResource GridRowHeader}" />
         </Style>
 
         <Style x:Key="RowActionButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
@@ -330,18 +359,47 @@
                         <Button Command="{Binding AddCalibrationResultCommand}" Content="إضافة صفّ نتيجة" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                    <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridColumnHeader">
+                                            <Border x:Name="HeaderBorder"
+                                                    Background="White"
+                                                    BorderBrush="#1A3A6B"
+                                                    BorderThickness="0,1,1,1"
+                                                    Padding="8,6">
+                                                <ContentPresenter
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    TextElement.Foreground="#1A3A6B" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="Content" Value="{x:Null}">
+                                                    <Setter TargetName="HeaderBorder" Property="Background" Value="White" />
+                                                    <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="FontSize" Value="11" />
+                                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+                            </Style>
+                        </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Source ID" Binding="{Binding SourceId}" Width="1*" />
-                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" />
-                            <DataGridTextColumn Header="Scale" Binding="{Binding Scale}" Width="0.8*" />
-                            <DataGridTextColumn Header="Ref. Dose Level" Binding="{Binding ReferenceDoseLevel}" Width="1*" />
-                            <DataGridTextColumn Header="Ref. Value" Binding="{Binding ReferenceValue}" Width="1*" />
-                            <DataGridTextColumn Header="Measured Reading" Binding="{Binding MeasuredReading}" Width="1*" />
-                            <DataGridTextColumn Header="CF" Binding="{Binding CorrectionFactor}" Width="0.9*" />
-                            <DataGridTextColumn Header="AE %" Binding="{Binding RelativeError}" Width="0.9*" />
-                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="0.7*" />
-                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1*" />
+                            <DataGridTextColumn Header="Source ID" Binding="{Binding SourceId}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Scale" Binding="{Binding Scale}" Width="0.8*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Ref. Dose Level" Binding="{Binding ReferenceDoseLevel}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Ref. Value" Binding="{Binding ReferenceValue}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Measured Reading" Binding="{Binding MeasuredReading}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="CF" Binding="{Binding CorrectionFactor}" Width="0.9*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="AE %" Binding="{Binding RelativeError}" Width="0.9*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Unit" Binding="{Binding Unit}" Width="0.7*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -361,10 +419,39 @@
                         <Button Command="{Binding AddNuclideSummaryCommand}" Content="إضافة صفّ نويدة" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10">
+                    <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridColumnHeader">
+                                            <Border x:Name="HeaderBorder"
+                                                    Background="White"
+                                                    BorderBrush="#1A3A6B"
+                                                    BorderThickness="0,1,1,1"
+                                                    Padding="8,6">
+                                                <ContentPresenter
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    TextElement.Foreground="#1A3A6B" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="Content" Value="{x:Null}">
+                                                    <Setter TargetName="HeaderBorder" Property="Background" Value="White" />
+                                                    <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="FontSize" Value="11" />
+                                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+                            </Style>
+                        </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" />
-                            <DataGridTextColumn Header="Average CF (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" />
+                            <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Average CF (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -406,13 +493,42 @@
                             <Button Command="{Binding AddUncertaintyComponentCommand}" Content="إضافة مكوّن" Style="{StaticResource RowActionButton}" />
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                        <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridColumnHeader">
+                                                <Border x:Name="HeaderBorder"
+                                                        Background="White"
+                                                        BorderBrush="#1A3A6B"
+                                                        BorderThickness="0,1,1,1"
+                                                        Padding="8,6">
+                                                    <ContentPresenter
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        TextElement.Foreground="#1A3A6B" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="Content" Value="{x:Null}">
+                                                        <Setter TargetName="HeaderBorder" Property="Background" Value="White" />
+                                                        <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="FontSize" Value="11" />
+                                    <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+                                </Style>
+                            </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Component" Binding="{Binding ComponentName}" Width="2*" />
-                                <DataGridTextColumn Header="Evaluation Type" Binding="{Binding EvaluationType}" Width="0.8*" />
-                                <DataGridTextColumn Header="Std. Uncertainty" Binding="{Binding StandardUncertainty}" Width="1.2*" />
-                                <DataGridTextColumn Header="Contribution %" Binding="{Binding ContributionPercent}" Width="1*" />
-                                <DataGridTextColumn Header="Distribution" Binding="{Binding Distribution}" Width="1*" />
+                                <DataGridTextColumn Header="Component" Binding="{Binding ComponentName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="Evaluation Type" Binding="{Binding EvaluationType}" Width="0.8*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="Std. Uncertainty" Binding="{Binding StandardUncertainty}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="Contribution %" Binding="{Binding ContributionPercent}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="Distribution" Binding="{Binding Distribution}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTemplateColumn Width="Auto">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -459,12 +575,41 @@
                         <Button Command="{Binding AddFunctionalCheckCommand}" Content="إضافة فحص" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10">
+                    <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridColumnHeader">
+                                            <Border x:Name="HeaderBorder"
+                                                    Background="White"
+                                                    BorderBrush="#1A3A6B"
+                                                    BorderThickness="0,1,1,1"
+                                                    Padding="8,6">
+                                                <ContentPresenter
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    TextElement.Foreground="#1A3A6B" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="Content" Value="{x:Null}">
+                                                    <Setter TargetName="HeaderBorder" Property="Background" Value="White" />
+                                                    <Setter TargetName="HeaderBorder" Property="BorderThickness" Value="0" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="FontSize" Value="11" />
+                                <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+                            </Style>
+                        </DataGrid.Resources>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Check Name" Binding="{Binding CheckName}" Width="2*" />
-                            <DataGridTextColumn Header="Requirement" Binding="{Binding Requirement}" Width="1.5*" />
-                            <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="1*" />
-                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1.2*" />
+                            <DataGridTextColumn Header="Check Name" Binding="{Binding CheckName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Requirement" Binding="{Binding Requirement}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>

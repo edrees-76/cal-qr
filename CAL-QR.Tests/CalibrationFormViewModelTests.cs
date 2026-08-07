@@ -76,5 +76,83 @@ namespace CAL_QR.Tests
             // Verify SaveCommand.CanExecute returns false when _isSaving is true (logical lock preventing double clicks)
             Assert.False(vm.SaveCommand.CanExecute(null));
         }
+
+        [Fact]
+        public async Task PersistCertificateNumberAsync_SavesNumberToDatabase()
+        {
+            // Arrange
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_FormVM_PersistCertNo_" + Guid.NewGuid().ToString())
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+            var ownerRepo = new OwnerRepository(factory);
+            var typeRepo = new DeviceTypeRepository(factory);
+            var deviceRepo = new DeviceRepository(factory);
+            var calRepo = new CalibrationRepository(factory);
+            var attachmentRepo = new AttachmentRepository(factory);
+            var authService = new TestCurrentUserService();
+            var auditRepo = new AuditLogRepository(factory, authService);
+
+            CalibrationRecord record;
+            using (var context = factory.CreateDbContext())
+            {
+                var owner = new Owner { Name = "Owner A", CreatedAt = DateTime.UtcNow };
+                context.Owners.Add(owner);
+                await context.SaveChangesAsync();
+
+                var deviceType = new DeviceType { Name = "Type A", CreatedAt = DateTime.UtcNow };
+                context.DeviceTypes.Add(deviceType);
+                await context.SaveChangesAsync();
+
+                var device = new Device
+                {
+                    OwnerId = owner.Id,
+                    DeviceTypeId = deviceType.Id,
+                    Model = "Model A",
+                    SerialNumber = "SN123",
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Devices.Add(device);
+                await context.SaveChangesAsync();
+
+                record = new CalibrationRecord
+                {
+                    DeviceId = device.Id,
+                    CertificateNumber = string.Empty,
+                    CalibrationDate = DateTime.Today,
+                    ExpiryDate = DateTime.Today.AddYears(1),
+                    EngineerName = "Edrees",
+                    Result = "Passed",
+                    HmacSignature = string.Empty,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                context.CalibrationRecords.Add(record);
+                await context.SaveChangesAsync();
+            }
+
+            var vm = new CalibrationFormViewModel(
+                factory,
+                ownerRepo,
+                typeRepo,
+                deviceRepo,
+                calRepo,
+                attachmentRepo,
+                auditRepo,
+                () => throw new NotSupportedException("لا يُنشأ حوار الشهادة في هذا الاختبار.")
+            );
+
+            // Act
+            await vm.PersistCertificateNumberAsync(record.Id, "TNRC-SSDL-2026-TEST");
+
+            // Assert
+            using (var context = factory.CreateDbContext())
+            {
+                var reloaded = await context.CalibrationRecords.FindAsync(record.Id);
+                Assert.NotNull(reloaded);
+                Assert.Equal("TNRC-SSDL-2026-TEST", reloaded!.CertificateNumber);
+            }
+        }
     }
 }

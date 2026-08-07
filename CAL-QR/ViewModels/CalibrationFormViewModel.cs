@@ -418,12 +418,34 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void OnCertificateIssued(object? sender, CertificateIssuedEventArgs e)
+        private async void OnCertificateIssued(object? sender, CertificateIssuedEventArgs e)
         {
             CertificateNumber = e.CertificateNumber;
             HasCertificate = true;
+
+            try
+            {
+                await PersistCertificateNumberAsync(e.CalibrationRecordId, e.CertificateNumber);
+            }
+            catch
+            {
+                // الشهادة حُفظت بالفعل في جدول Certificates —
+                // فشل ربط الرقم بـ CalibrationRecord لا يُعطّل العملية.
+            }
+
             Saved?.Invoke(this, EventArgs.Empty);
             CloseWindowAction?.Invoke();
+        }
+
+        internal async Task PersistCertificateNumberAsync(int recordId, string certificateNumber)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var record = await context.CalibrationRecords.FindAsync(recordId);
+            if (record != null)
+            {
+                record.CertificateNumber = certificateNumber;
+                await context.SaveChangesAsync();
+            }
         }
 
         private void EditCertificate()

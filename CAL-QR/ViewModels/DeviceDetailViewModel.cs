@@ -223,7 +223,8 @@ namespace CAL_QR.ViewModels
 
         private bool CanPrintRecord()
         {
-            return SelectedRecord != null;
+            return SelectedRecord != null
+                && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
         }
 
         private MessageBoxResult ShowMessageBox(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon)

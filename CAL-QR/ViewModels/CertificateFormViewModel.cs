@@ -28,6 +28,13 @@ namespace CAL_QR.ViewModels
         }
     }
 
+    public class TemplateWarning
+    {
+        public required string Message { get; init; }
+        public bool CanAutoFix { get; init; }
+        public Action? FixAction { get; init; }
+    }
+
     /// <summary>
     /// نموذج إنشاء شهادة من سجل معايرة قائم.
     ///
@@ -92,6 +99,13 @@ namespace CAL_QR.ViewModels
             {
                 if (p is CertificateFunctionalCheck row) FunctionalChecks.Remove(row);
             });
+
+            FixWarningCommand = new RelayCommand(p =>
+            {
+                if (p is TemplateWarning w) w.FixAction?.Invoke();
+            });
+
+            CalibrationResults.CollectionChanged += (_, _) => RunTemplateConsistencyChecks();
         }
 
         #region ١. بيانات الجهة والجهاز
@@ -275,7 +289,11 @@ namespace CAL_QR.ViewModels
         public string Distance
         {
             get => _distance;
-            set => SetProperty(ref _distance, value);
+            set
+            {
+                if (SetProperty(ref _distance, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _countingTime = string.Empty;
@@ -324,14 +342,22 @@ namespace CAL_QR.ViewModels
         public string ReferenceGeometry
         {
             get => _referenceGeometry;
-            set => SetProperty(ref _referenceGeometry, value);
+            set
+            {
+                if (SetProperty(ref _referenceGeometry, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _methodologyText = string.Empty;
         public string MethodologyText
         {
             get => _methodologyText;
-            set => SetProperty(ref _methodologyText, value);
+            set
+            {
+                if (SetProperty(ref _methodologyText, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _traceabilityReference = string.Empty;
@@ -536,6 +562,79 @@ namespace CAL_QR.ViewModels
         public ICommand RemoveUncertaintyComponentCommand { get; }
         public ICommand AddFunctionalCheckCommand { get; }
         public ICommand RemoveFunctionalCheckCommand { get; }
+        public ICommand FixWarningCommand { get; }
+
+        #endregion
+
+        #region تحذيرات تطابق القالب
+
+        public ObservableCollection<TemplateWarning> TemplateWarnings { get; } = new();
+
+        public void RunTemplateConsistencyChecks()
+        {
+            TemplateWarnings.Clear();
+
+            // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──
+            if (MethodologyEnabled && !string.IsNullOrWhiteSpace(MethodologyText))
+            {
+                var textNuclides = TemplateFieldChecker.ExtractRadionuclides(MethodologyText);
+                var resultNuclides = CalibrationResults
+                    .Select(r => r.Radionuclide?.Trim())
+                    .Where(r => !string.IsNullOrWhiteSpace(r))
+                    .Select(r => r!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                if (textNuclides.Count > 0
+                    && resultNuclides.Count > 0
+                    && !textNuclides.SetEquals(resultNuclides))
+                {
+                    bool canFix = textNuclides.Count == 1 && resultNuclides.Count == 1;
+
+                    TemplateWarnings.Add(new TemplateWarning
+                    {
+                        Message = "النويدة في نص المنهجية ("
+                            + string.Join(", ", textNuclides)
+                            + ") لا تطابق نتائج المعايرة ("
+                            + string.Join(", ", resultNuclides) + ")",
+                        CanAutoFix = canFix,
+                        FixAction = canFix ? () =>
+                        {
+                            MethodologyText = TemplateFieldChecker.ReplaceRadionuclide(
+                                MethodologyText, textNuclides.First(), resultNuclides.First());
+                            RunTemplateConsistencyChecks();
+                        } : null
+                    });
+                }
+            }
+
+            // ── Case 2: Distance in ReferenceGeometry vs Distance field ──
+            if (!string.IsNullOrWhiteSpace(ReferenceGeometry)
+                && !string.IsNullOrWhiteSpace(Distance))
+            {
+                var textDistNum = TemplateFieldChecker.ExtractDistanceNumber(ReferenceGeometry);
+                var fieldDistNum = TemplateFieldChecker.ExtractDistanceNumberFromField(Distance);
+
+                if (textDistNum != null
+                    && fieldDistNum != null
+                    && !textDistNum.Equals(fieldDistNum, StringComparison.Ordinal))
+                {
+                    TemplateWarnings.Add(new TemplateWarning
+                    {
+                        Message = "المسافة في الهندسة المرجعية ("
+                            + textDistNum
+                            + ") لا تطابق حقل المسافة (" + fieldDistNum + ")",
+                        CanAutoFix = true,
+                        FixAction = () =>
+                        {
+                            ReferenceGeometry = TemplateFieldChecker.ReplaceDistanceNumber(
+                                ReferenceGeometry, textDistNum, fieldDistNum);
+                            RunTemplateConsistencyChecks();
+                        }
+                    });
+                }
+            }
+        }
 
         #endregion
 
@@ -726,6 +825,8 @@ namespace CAL_QR.ViewModels
                 MethodologyEnabled = true;
                 UncertaintyEnabled = true;
             }
+
+            RunTemplateConsistencyChecks();
         }
 
         /// <summary>

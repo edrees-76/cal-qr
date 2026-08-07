@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using CAL_QR.ViewModels;
 
 namespace CAL_QR.Views.Dialogs
@@ -64,6 +65,15 @@ namespace CAL_QR.Views.Dialogs
         private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
         {
             e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+        }
+
+        private void CalibrationResults_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (DataContext is CertificateFormViewModel vm)
+                    vm.RunTemplateConsistencyChecks();
+            }), DispatcherPriority.Background);
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

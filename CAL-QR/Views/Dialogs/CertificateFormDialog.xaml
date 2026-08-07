@@ -274,7 +274,7 @@
                         <Button Command="{Binding AddCalibrationResultCommand}" Content="إضافة صفّ نتيجة" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                    <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="CalibrationResults_CellEditEnding">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Template">
@@ -709,25 +709,76 @@
             </ScrollViewer>
 
             <!-- التذييل -->
-            <Grid Grid.Row="2" Margin="0,14,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="2" Margin="0,14,0,0">
 
-                <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12"
-                           VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}"
-                           Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                <!-- ═══ شريط تحذير تطابق القالب ═══ -->
+                <ItemsControl ItemsSource="{Binding TemplateWarnings}" Margin="8,4,8,4">
+                    <ItemsControl.Style>
+                        <Style TargetType="ItemsControl">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding TemplateWarnings.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.Style>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#FFF8E1" BorderBrush="#F9A825"
+                                    BorderThickness="1" CornerRadius="4"
+                                    Padding="10,8" Margin="0,2">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right"
+                                            Content="إصلاح تلقائي"
+                                            Command="{Binding DataContext.FixWarningCommand,
+                                                RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding CanAutoFix,
+                                                Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Style="{StaticResource MaterialDesignFlatButton}"
+                                            Foreground="#E65100"
+                                            FontFamily="{StaticResource CairoFont}"
+                                            FontSize="12"
+                                            Margin="8,0,0,0"
+                                            Padding="8,2" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <materialDesign:PackIcon Kind="AlertOutline"
+                                            Foreground="#F9A825" Width="18" Height="18"
+                                            Margin="0,0,6,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Message}"
+                                                   FontFamily="{StaticResource CairoFont}"
+                                                   FontSize="12" Foreground="#5D4037"
+                                                   TextWrapping="Wrap"
+                                                   FlowDirection="RightToLeft"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Command="{Binding SaveCommand}" Content="حفظ وإصدار الشهادة"
-                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B"
-                            Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
-                            BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click"
-                            FontFamily="{StaticResource CairoFont}" />
-                </StackPanel>
-            </Grid>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12"
+                               VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}"
+                               Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Command="{Binding SaveCommand}" Content="حفظ وإصدار الشهادة"
+                                Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B"
+                                Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                        <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
+                                BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click"
+                                FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
         </Grid>
     </Border>
 </Window>

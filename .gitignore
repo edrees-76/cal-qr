@@ -44,6 +44,9 @@ Desktop.ini
 
 ## Local scratch / non-project working files
 .tmp/
+graphify-out/
+preview/
+CAL-QR.Tests/_TempVisualPreview.cs
 CAL-QR_ISO17025_Presentation.pptx
 CAL-QR_ISO17025_Presentation.pptx.inspect.ndjson
 CAL-QR_Manus_Final_Review_Prompt_AR.txt

@@ -20,6 +20,12 @@ namespace CAL_QR.Services
         }
         public BitmapSource GenerateQrCodeImage(string content, int sizePx)
         {
+            byte[] pngBytes = GenerateQrCodePngBytes(content, sizePx);
+            return ConvertToBitmapSource(pngBytes);
+        }
+
+        public byte[] GenerateQrCodePngBytes(string content, int sizePx)
+        {
             string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Logo", "nuclear-center-logo.png");
             if (!File.Exists(logoPath))
             {
@@ -42,9 +48,9 @@ namespace CAL_QR.Services
             using var qrGenerator = new QRCodeGenerator();
             using var qrCodeData = qrGenerator.CreateQrCode(content, QRCodeGenerator.ECCLevel.H);
             using var qrCode = new QRCode(qrCodeData);
-            
+
             int pixelsPerModule = Math.Max(1, sizePx / 33);
-            
+
             using Bitmap qrBitmap = qrCode.GetGraphic(
                 pixelsPerModule: pixelsPerModule,
                 darkColor: Color.Black,
@@ -54,10 +60,12 @@ namespace CAL_QR.Services
             );
 
             using Bitmap resizedBitmap = new Bitmap(qrBitmap, new Size(sizePx, sizePx));
-            
+
             logoImage?.Dispose();
 
-            return ConvertToBitmapSource(resizedBitmap);
+            using var ms = new MemoryStream();
+            resizedBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            return ms.ToArray();
         }
 
         public string GenerateVerificationText(
@@ -161,11 +169,9 @@ namespace CAL_QR.Services
             SaveQrCodeImage(content, certNo);
         }
 
-        private BitmapSource ConvertToBitmapSource(Bitmap bitmap)
+        private BitmapSource ConvertToBitmapSource(byte[] pngBytes)
         {
-            using var memory = new MemoryStream();
-            bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Png);
-            memory.Position = 0;
+            using var memory = new MemoryStream(pngBytes);
             var bitmapImage = new BitmapImage();
             bitmapImage.BeginInit();
             bitmapImage.StreamSource = memory;

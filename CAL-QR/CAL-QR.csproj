@@ -37,6 +37,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\Fonts\Cairo.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Logo\nuclear-center-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Fonts\Cairo-Regular.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Fonts\Cairo-ExtraBold.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Logo\logo_original_enhanced_1024.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\Logo\establishment-logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Assets/Design مجلد مراجع بصرية: تصميم الشهادة والشعارات.
          net_8.cs مرجع بصريّ للمرحلة ٥، لا كود يُترجَم — وهو ملف C#
          كامل فيه Main، فتركه في الترجمة يُنتج نقطة دخول ثانية

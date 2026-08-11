@@ -88,6 +88,7 @@ namespace CAL_QR
             services.AddSingleton<IQrService, QrService>();
             services.AddSingleton<IPrintService, PrintService>();
             services.AddSingleton<IExportService, ExportService>();
+            services.AddSingleton<ICertificatePdfService, CertificatePdfService>();
             services.AddSingleton<IBackupService, BackupService>();
             services.AddSingleton<ISearchService, SearchService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();

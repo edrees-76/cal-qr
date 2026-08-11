@@ -5,7 +5,10 @@ namespace CAL_QR.Services
     public interface IQrService
     {
         BitmapSource GenerateQrCodeImage(string content, int sizePx);
-        
+
+        /// <summary>بايتات PNG للرمز — لمستهلكين خارج WPF مثل QuestPDF.</summary>
+        byte[] GenerateQrCodePngBytes(string content, int sizePx);
+
         string GenerateVerificationText(
             string ownerName,
             string deviceType,

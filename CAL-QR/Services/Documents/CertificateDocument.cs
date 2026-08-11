@@ -1,0 +1,509 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+using CAL_QR.Data;
+using CAL_QR.Models;
+
+namespace CAL_QR.Services.Documents
+{
+    /// <summary>
+    /// قالب شهادة المعايرة. صنف نقيّ: يستقبل Certificate و CertificateDocumentAssets
+    /// فقط، ولا يقرأ ملفاً ولا قاعدة بيانات ولا يلمس WPF.
+    /// </summary>
+    public sealed class CertificateDocument : IDocument
+    {
+        private const string NavyColor = "#1A3A6B";
+        private const string GoldColor = "#C9A227";
+        private const string HeaderBgColor = "#F0F4F8";
+
+        private const float HeaderLogoSize = 62f;
+        private const float HeaderLine12FontSize = 10f;
+        private const float HeaderLine3FontSize = 12f;
+        private const float HeaderLine45FontSize = 9f;
+
+        // الجسم إنجليزي بالكامل بخط Arial. العربية محصورة في ست كتل ثابتة
+        // فقط (أربعة أسطر ترويسة + بيان المطابقة العربي + سطرا التذييل)،
+        // وتلك وحدها تُبدَّل إلى ArabicFont. اسم عائلة الخط العربي هنا هو
+        // الاسم الصريح المسجَّل به الملفان الثابتان عبر RegisterFontWithCustomName
+        // في CertificatePdfEnvironment — لا الاسم الداخلي الفعلي لأي من الملفين
+        // (والاسمان الداخليان مختلفان أصلاً بين Regular وExtraBold).
+        private const string LatinFont = "Arial";
+        private const string ArabicFont = CertificatePdfEnvironment.ArabicFontFamily;
+
+        private readonly Certificate _certificate;
+        private readonly CertificateDocumentAssets _assets;
+
+        public CertificateDocument(Certificate certificate, CertificateDocumentAssets assets)
+        {
+            _certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
+            _assets = assets ?? throw new ArgumentNullException(nameof(assets));
+        }
+
+        // IDocument يتطلب ثلاثة أعضاء لا اثنين كما في المسوَّدة المقترحة:
+        // GetMetadata و GetSettings و Compose. تحقّقتُ من ذلك بالانعكاس على
+        // QuestPDF.dll 2024.3.10 قبل الكتابة (توقيع Document نفسها في QuestPDF.Fluent
+        // ينفّذ الأعضاء الثلاثة بنفس القيم الافتراضية أدناه).
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(1.2f, Unit.Centimetre);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontFamily(LatinFont).FontSize(9));
+
+                page.Header().Element(ComposeHeader);
+                page.Content().Element(ComposeContent);
+                page.Footer().Element(ComposeFooter);
+            });
+        }
+
+        private void ComposeHeader(IContainer container)
+        {
+            container.Column(column =>
+            {
+                column.Item().Row(row =>
+                {
+                    row.ConstantItem(HeaderLogoSize).Element(e =>
+                    {
+                        if (_assets.EstablishmentLogoPng != null) e.Image(_assets.EstablishmentLogoPng);
+                    });
+
+                    row.RelativeItem().Column(c =>
+                    {
+                        c.Item().AlignCenter().Text("دولة ليبيا").FontFamily(ArabicFont).DirectionFromRightToLeft().FontSize(HeaderLine12FontSize);
+                        c.Item().AlignCenter().Text("مؤسسة الطاقة الذرية").FontFamily(ArabicFont).DirectionFromRightToLeft().FontSize(HeaderLine12FontSize);
+                        c.Item().AlignCenter().Text("مركز البحوث النووية - تاجوراء").FontFamily(ArabicFont).DirectionFromRightToLeft().Bold().FontSize(HeaderLine3FontSize).FontColor(NavyColor);
+                        c.Item().AlignCenter().Text("Secondary Standard Dosimetry Laboratory (SSDL)").FontFamily(LatinFont).FontSize(HeaderLine45FontSize);
+                        c.Item().AlignCenter().Text("وحدة المعايرة").FontFamily(ArabicFont).DirectionFromRightToLeft().FontSize(HeaderLine45FontSize);
+                    });
+
+                    row.ConstantItem(HeaderLogoSize).Element(e =>
+                    {
+                        if (_assets.CenterLogoPng != null) e.Image(_assets.CenterLogoPng);
+                    });
+                });
+
+                column.Item().PaddingTop(6).BorderBottom(1).BorderColor(NavyColor);
+
+                if (!string.IsNullOrWhiteSpace(_certificate.ReferenceNo))
+                    column.Item().PaddingTop(3).AlignLeft()
+                        .Text($"Ref: {_certificate.ReferenceNo}")
+                        .FontSize(8).FontColor(Colors.Grey.Darken1);
+            });
+        }
+
+        private void ComposeContent(IContainer container)
+        {
+            container.PaddingVertical(10).Column(column =>
+            {
+                column.Spacing(8);
+
+                ComposeTitleBlock(column);
+                ComposeClientInstrumentSection(column);
+                ComposeEnvironmentalSection(column);
+                ComposeTechnicalSection(column);
+                ComposeMethodologySection(column);
+                ComposeResultsSection(column);
+                ComposeUncertaintySection(column);
+                ComposeFunctionalChecksSection(column);
+                ComposeAdditionalInfoSection(column);
+                ComposeComplianceBox(column);
+                ComposeApprovalBlock(column);
+                ComposeFinalBlock(column);
+            });
+        }
+
+        private void ComposeTitleBlock(ColumnDescriptor column)
+        {
+            column.Item().AlignCenter().Text("CALIBRATION CERTIFICATE").Bold().FontSize(14).FontColor(NavyColor);
+
+            if (!string.IsNullOrWhiteSpace(_certificate.CertificateTemplateType))
+                column.Item().AlignCenter().Text($"CERTIFICATE FOR {_certificate.CertificateTemplateType}").FontSize(10);
+
+            column.Item().AlignCenter().Text($"CERTIFICATE NO. {_certificate.CertificateNumber}").Bold().FontSize(10);
+        }
+
+        private void ComposeClientInstrumentSection(ColumnDescriptor column)
+        {
+            var fields = new List<(string Label, string? Value)>
+            {
+                ("CLIENT NAME", _certificate.ClientName),
+                ("CLIENT ADDRESS", _certificate.ClientAddress),
+                ("DEVICE MODEL", _certificate.DeviceModel),
+                ("DEVICE SERIAL NUMBER", _certificate.DeviceSerialNumber),
+                ("DEVICE MANUFACTURER", _certificate.DeviceManufacturer),
+                ("DETECTOR TYPE", _certificate.DetectorType),
+                ("SURVEY METER MODEL", _certificate.SurveyMeterModel),
+                ("SURVEY METER SERIAL NUMBER", _certificate.SurveyMeterSerialNumber),
+                ("PROCEDURE NO.", _certificate.ProcedureNo),
+                ("CALIBRATION LOCATION", _certificate.CalibrationLocation),
+                ("INSTRUMENTATION", _certificate.Instrumentation),
+                ("MEASUREMENT TYPE", _certificate.MeasurementType),
+                ("DISTANCE", _certificate.Distance),
+                ("CALIBRATION DATE", _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                ("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                ("DUE DATE", _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                ("CALIBRATION STANDARD", _certificate.CalibrationStandard),
+                ("COMPLIANCE VERDICT", _certificate.ComplianceVerdict),
+            };
+
+            if (!HasAnyValue(fields)) return;
+
+            SectionTitle(column, "CLIENT & INSTRUMENT SPECIFICATIONS");
+            RenderFieldTable(column, fields);
+        }
+
+        private void ComposeEnvironmentalSection(ColumnDescriptor column)
+        {
+            var fields = new List<(string Label, string? Value)>
+            {
+                ("TEMPERATURE", _certificate.Temperature),
+                ("RELATIVE HUMIDITY", _certificate.RelativeHumidity),
+                ("ATMOSPHERIC PRESSURE", _certificate.AtmosphericPressure),
+            };
+
+            if (!HasAnyValue(fields)) return;
+
+            SectionTitle(column, "ENVIRONMENTAL CONDITIONS");
+            RenderFieldTable(column, fields);
+        }
+
+        private void ComposeTechnicalSection(ColumnDescriptor column)
+        {
+            var fields = new List<(string Label, string? Value)>
+            {
+                ("COUNTING TIME", _certificate.CountingTime),
+                ("COUNTING UNIT", _certificate.CountingUnit),
+                ("CALIBRATION MODE", _certificate.CalibrationMode),
+            };
+
+            if (!HasAnyValue(fields)) return;
+
+            SectionTitle(column, "TECHNICAL INFORMATION");
+            RenderFieldTable(column, fields);
+        }
+
+        private void ComposeMethodologySection(ColumnDescriptor column)
+        {
+            if (!_certificate.MethodologyEnabled) return;
+
+            var fields = new List<(string Label, string? Value)>
+            {
+                ("RADIATION SOURCE", _certificate.RadiationSource),
+                ("REFERENCE GEOMETRY", _certificate.ReferenceGeometry),
+                ("METHODOLOGY", _certificate.MethodologyText),
+                ("TRACEABILITY REFERENCE", _certificate.TraceabilityReference),
+            };
+
+            if (!HasAnyValue(fields)) return;
+
+            SectionTitle(column, "CALIBRATION METHODOLOGY");
+            RenderFieldTable(column, fields);
+        }
+
+        private void ComposeResultsSection(ColumnDescriptor column)
+        {
+            var rows = (_certificate.CalibrationResults ?? new List<CertificateCalibrationResult>())
+                .OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
+
+            if (rows.Count == 0) return;
+
+            var resultColumns = CertificateResultColumns.Select(rows);
+            if (resultColumns.Count == 0) return;
+
+            SectionTitle(column, "CALIBRATION RESULTS");
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columnsDef =>
+                {
+                    foreach (var _ in resultColumns) columnsDef.RelativeColumn();
+                });
+
+                table.Header(header =>
+                {
+                    foreach (var col in resultColumns)
+                    {
+                        header.Cell().Background(NavyColor).Padding(4).AlignCenter()
+                            .Text(CertificateResultColumns.GetHeader(col)).Bold().FontSize(7.5f).FontColor(Colors.White);
+                    }
+                });
+
+                foreach (var row in rows)
+                {
+                    foreach (var col in resultColumns)
+                    {
+                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter()
+                            .Text(CertificateResultColumns.GetValue(col, row)).FontSize(7.5f);
+                    }
+                }
+            });
+
+            var summaries = (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
+                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id);
+
+            foreach (var summary in summaries)
+            {
+                if (string.IsNullOrWhiteSpace(summary.AverageCorrectionFactor)) continue;
+                column.Item().Text($"Average Correction Factor (CFavg) — {summary.Radionuclide} = {summary.AverageCorrectionFactor}").Bold().FontSize(8);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_certificate.CorrectedReadingFormula))
+                column.Item().Text(_certificate.CorrectedReadingFormula!).FontSize(8);
+        }
+
+        private void ComposeUncertaintySection(ColumnDescriptor column)
+        {
+            if (!_certificate.UncertaintyEnabled) return;
+
+            var components = (_certificate.UncertaintyComponents ?? new List<CertificateUncertaintyComponent>())
+                .OrderBy(c => c.SortOrder).ThenBy(c => c.Id).ToList();
+
+            bool hasSummary = !string.IsNullOrWhiteSpace(_certificate.CombinedUncertainty)
+                || !string.IsNullOrWhiteSpace(_certificate.ExpandedUncertainty);
+
+            if (components.Count == 0 && !hasSummary) return;
+
+            SectionTitle(column, "UNCERTAINTY BUDGET");
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2f);
+                    columns.RelativeColumn(1f);
+                    columns.RelativeColumn(1f);
+                    columns.RelativeColumn(1f);
+                    columns.RelativeColumn(1f);
+                });
+
+                table.Header(header =>
+                {
+                    void AddHeaderCell(string text) =>
+                        header.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(Colors.White);
+
+                    AddHeaderCell("Component");
+                    AddHeaderCell("Evaluation Type");
+                    AddHeaderCell("Distribution");
+                    AddHeaderCell("Standard Uncertainty");
+                    AddHeaderCell("Contribution %");
+                });
+
+                foreach (var comp in components)
+                {
+                    void AddCell(string? text) =>
+                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter().Text(text ?? string.Empty).FontSize(7.5f);
+
+                    AddCell(comp.ComponentName);
+                    AddCell(comp.EvaluationType);
+                    AddCell(comp.Distribution);
+                    AddCell(comp.StandardUncertainty);
+                    AddCell(comp.ContributionPercent);
+                }
+
+                string coverageFactor = string.IsNullOrWhiteSpace(_certificate.CoverageFactor) ? "2" : _certificate.CoverageFactor!;
+
+                table.Cell().ColumnSpan(4).Background(HeaderBgColor).Padding(4)
+                    .Text("Combined Standard Uncertainty (uc)").Bold().FontSize(8).FontColor(NavyColor);
+                table.Cell().Background(HeaderBgColor).Padding(4).AlignCenter()
+                    .Text(_certificate.CombinedUncertainty ?? string.Empty).Bold().FontSize(8);
+
+                table.Cell().ColumnSpan(4).Background(HeaderBgColor).Padding(4)
+                    .Text($"Expanded Uncertainty (U) (k = {coverageFactor})").Bold().FontSize(8).FontColor(NavyColor);
+                table.Cell().Background(HeaderBgColor).Padding(4).AlignCenter()
+                    .Text(_certificate.ExpandedUncertainty ?? string.Empty).Bold().FontSize(8);
+            });
+        }
+
+        private void ComposeFunctionalChecksSection(ColumnDescriptor column)
+        {
+            var checks = (_certificate.FunctionalChecks ?? new List<CertificateFunctionalCheck>())
+                .OrderBy(c => c.SortOrder).ThenBy(c => c.Id).ToList();
+
+            if (checks.Count == 0) return;
+
+            bool hasRemarks = checks.Any(c => !string.IsNullOrWhiteSpace(c.Remarks));
+
+            SectionTitle(column, "FUNCTIONAL CHECKS");
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(25);
+                    columns.RelativeColumn(2f);
+                    columns.RelativeColumn(2f);
+                    columns.RelativeColumn(1f);
+                    if (hasRemarks) columns.RelativeColumn(2f);
+                });
+
+                table.Header(header =>
+                {
+                    void AddHeaderCell(string text) =>
+                        header.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(8).FontColor(Colors.White);
+
+                    AddHeaderCell("#");
+                    AddHeaderCell("Check Name");
+                    AddHeaderCell("Requirement");
+                    AddHeaderCell("Result");
+                    if (hasRemarks) AddHeaderCell("Remarks");
+                });
+
+                int idx = 1;
+                foreach (var check in checks)
+                {
+                    void AddCell(string text) =>
+                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter().Text(text).FontSize(8);
+
+                    AddCell(idx.ToString(CultureInfo.InvariantCulture));
+                    AddCell(check.CheckName);
+                    AddCell(check.Requirement ?? string.Empty);
+                    AddCell(check.Result ?? string.Empty);
+                    if (hasRemarks) AddCell(check.Remarks ?? string.Empty);
+                    idx++;
+                }
+            });
+        }
+
+        private void ComposeAdditionalInfoSection(ColumnDescriptor column)
+        {
+            bool hasInfo = !string.IsNullOrWhiteSpace(_certificate.AdditionalInformation);
+            bool hasNotes = !string.IsNullOrWhiteSpace(_certificate.Notes);
+
+            if (!hasInfo && !hasNotes) return;
+
+            SectionTitle(column, "ADDITIONAL INFORMATION & NOTES");
+
+            if (hasInfo) column.Item().Text(_certificate.AdditionalInformation!).FontSize(8);
+            if (hasNotes) column.Item().Text(_certificate.Notes!).FontSize(8);
+        }
+
+        private void ComposeComplianceBox(ColumnDescriptor column)
+        {
+            column.Item().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
+            {
+                box.Item().Text(CertificateTexts.ComplianceStatementEn).FontSize(8);
+                // ContentFromRightToLeft على الحاوية يرتّب عناصرها لا اتجاه الفقرة
+                // نفسها — لهذا انقلبت الجملة رغم استعماله سابقاً. الإصلاح على
+                // مستوى TextStyle عبر DirectionFromRightToLeft على النص ذاته، مع عزل
+                // المقاطع اللاتينية (IAEA وISO/IEC 17025:2017) بمحارف LRI/PDI كي لا
+                // ينكسر ترتيب bidi للجملة العربية حولها.
+                box.Item().PaddingTop(4).AlignRight()
+                    .Text(IsolateLatinRuns(CertificateTexts.ComplianceStatementAr, '⁦', '⁩'))
+                    .FontFamily(ArabicFont).DirectionFromRightToLeft().FontSize(8);
+            });
+        }
+
+        private static string IsolateLatinRuns(string text, char open, char close) =>
+            System.Text.RegularExpressions.Regex.Replace(
+                text,
+                @"[A-Za-z0-9/:().\-]+(?:\s[A-Za-z0-9/:().\-]+)*",
+                m => System.Text.RegularExpressions.Regex.IsMatch(m.Value, "[A-Za-z0-9]")
+                     ? open + m.Value + close : m.Value);
+
+        private void ComposeApprovalBlock(ColumnDescriptor column)
+        {
+            column.Item().PaddingTop(10).Row(row =>
+            {
+                void AddBox(string title, string? name, string? position, DateTime? date)
+                {
+                    row.RelativeItem().Padding(4).Column(col =>
+                    {
+                        col.Item().Text(title).Bold().FontSize(8).FontColor(NavyColor);
+                        if (!string.IsNullOrWhiteSpace(name)) col.Item().Text(name!).FontSize(8);
+                        if (!string.IsNullOrWhiteSpace(position)) col.Item().Text(position!).FontSize(7).FontColor(Colors.Grey.Darken1);
+                        if (date.HasValue) col.Item().Text($"Date: {date.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}").FontSize(7);
+                        col.Item().PaddingTop(15).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
+                    });
+                }
+
+                AddBox("Calibrated By", _certificate.CalibratedByName, _certificate.CalibratedByTitle, _certificate.CalibratedByDate);
+                AddBox("Reviewed By", _certificate.ReviewedByName, _certificate.ReviewedByTitle, _certificate.ReviewedByDate);
+                AddBox("Approved By", _certificate.ApprovedByName, _certificate.ApprovedByTitle, _certificate.ApprovedByDate);
+                AddBox("Authorized By", _certificate.AuthorizedByName, _certificate.AuthorizedByTitle, _certificate.AuthorizedByDate);
+
+                // خانة ختم رسمي فارغة إلى اليسار
+                row.RelativeItem().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Height(60);
+            });
+        }
+
+        private void ComposeFinalBlock(ColumnDescriptor column)
+        {
+            column.Item().ShowEntire().PaddingTop(10).Row(row =>
+            {
+                row.ConstantItem(60).Column(qr =>
+                {
+                    if (_assets.QrPng != null)
+                    {
+                        qr.Item().Width(50).Image(_assets.QrPng);
+                        qr.Item().AlignCenter().Text(_certificate.CertificateNumber).FontSize(6);
+                        qr.Item().AlignCenter().Text("Verify Certificate").FontSize(6);
+                        qr.Item().AlignCenter().Text("تحقق من الشهادة").FontFamily(ArabicFont).DirectionFromRightToLeft().FontSize(6);
+                    }
+                });
+
+                row.RelativeItem().Column(info =>
+                {
+                    info.Item().Text($"Verify Code: {_certificate.VerifyCode}").FontSize(7);
+
+                    if (_certificate.AmendedAt.HasValue)
+                    {
+                        info.Item().Text($"⚠ This certificate was amended on {_certificate.AmendedAt.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}")
+                            .Bold().FontSize(8).FontColor("#C62828");
+                        info.Item().Text("عُدّلت هذه الشهادة")
+                            .FontFamily(ArabicFont).DirectionFromRightToLeft().Bold().FontSize(8).FontColor("#C62828");
+                    }
+                });
+            });
+        }
+
+        private void ComposeFooter(IContainer container)
+        {
+            container.AlignRight().Text(x =>
+            {
+                x.Span("Page ").FontSize(7);
+                x.CurrentPageNumber().FontSize(7);
+                x.Span(" of ").FontSize(7);
+                x.TotalPages().FontSize(7);
+            });
+        }
+
+        private static void SectionTitle(ColumnDescriptor column, string text) =>
+            column.Item().PaddingTop(4).Text(text).Bold().FontSize(11).FontColor(NavyColor);
+
+        private static bool HasAnyValue(IEnumerable<(string Label, string? Value)> fields) =>
+            fields.Any(f => !string.IsNullOrWhiteSpace(f.Value));
+
+        private static void RenderFieldTable(ColumnDescriptor column, IEnumerable<(string Label, string? Value)> fields)
+        {
+            var visible = fields.Where(f => !string.IsNullOrWhiteSpace(f.Value)).ToList();
+            if (visible.Count == 0) return;
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(150);
+                    columns.RelativeColumn();
+                });
+
+                foreach (var field in visible)
+                {
+                    table.Cell().Background(HeaderBgColor).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2)
+                        .Padding(4).Text(field.Label).Bold().FontSize(8).FontColor(NavyColor);
+                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2)
+                        .Padding(4).Text(field.Value!).FontSize(8);
+                }
+            });
+        }
+    }
+}

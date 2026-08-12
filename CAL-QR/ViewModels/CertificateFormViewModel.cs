@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Input;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
+using CAL_QR.Enums;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
@@ -54,6 +55,7 @@ namespace CAL_QR.ViewModels
         private bool _isLoaded;
         private bool _isEditMode;
         private int _certificateId;
+        private CertificateDocumentType _documentType = CertificateDocumentType.CalibrationCertificate;
 
         public event EventHandler<CertificateIssuedEventArgs>? CertificateIssued;
 
@@ -517,6 +519,33 @@ namespace CAL_QR.ViewModels
 
         public string FormTitle => _isEditMode ? "تعديل الشهادة" : "إصدار شهادة جديدة";
 
+        public CertificateDocumentType DocumentType
+        {
+            get => _documentType;
+            set
+            {
+                if (SetProperty(ref _documentType, value))
+                    OnPropertyChanged(nameof(IsStatusReport));
+            }
+        }
+
+        /// <summary>علَم عرض مشتقّ: يقود الرؤية الشرطيّة في الواجهة (المرحلة القادمة).</summary>
+        public bool IsStatusReport => _documentType == CertificateDocumentType.CalibrationStatusReport;
+
+        private string _remarks = string.Empty;
+        public string Remarks
+        {
+            get => _remarks;
+            set => SetProperty(ref _remarks, value);
+        }
+
+        private string _statusReason = string.Empty;
+        public string StatusReason
+        {
+            get => _statusReason;
+            set => SetProperty(ref _statusReason, value);
+        }
+
         /// <summary>شريط ظاهر غير حاجب. لا أثر له على إمكان الحفظ.</summary>
         private bool _hasNoTemplateWarning;
         public bool HasNoTemplateWarning
@@ -573,6 +602,9 @@ namespace CAL_QR.ViewModels
         public void RunTemplateConsistencyChecks()
         {
             TemplateWarnings.Clear();
+
+            // تقرير الحالة بلا نتائج عمداً — تحذيرات النويدات/النتائج لا معنى لها فيه.
+            if (IsStatusReport) return;
 
             // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──
             if (MethodologyEnabled && !string.IsNullOrWhiteSpace(MethodologyText))
@@ -688,6 +720,17 @@ namespace CAL_QR.ViewModels
         }
 
         /// <summary>
+        /// دخول مسار تقرير الحالة: يبني نفس مسوّدة السجل ثم يثبّت النوع.
+        /// الوضع يُثبَّت هنا لحظة الفتح لا عبر مفتاح داخل النافذة — قرار معماريّ
+        /// يمنع سهو المستخدم في إصدار النوع الخطأ.
+        /// </summary>
+        public void LoadForStatusReport(int calibrationRecordId)
+        {
+            LoadForRecord(calibrationRecordId);
+            DocumentType = CertificateDocumentType.CalibrationStatusReport;
+        }
+
+        /// <summary>
         /// يقرأ شهادة موجودة (مع كل صفوفها الأبناء بأرقامها الحقيقية) ويملأ النموذج
         /// لتعديلها. ApplyDraft لا تضبط حقول الموقّعين — تُضبط هنا يدوياً من الشهادة
         /// المخزَّنة، لا من الإعدادات الافتراضية.
@@ -728,6 +771,10 @@ namespace CAL_QR.ViewModels
 
                 // ApplyDraft يضبط IssueDate = DateTime.Today. في التعديل نريد التاريخ المخزَّن.
                 IssueDate = certificate.IssueDate;
+
+                DocumentType = certificate.DocumentType;
+                Remarks = certificate.Remarks ?? string.Empty;
+                StatusReason = certificate.StatusReason ?? string.Empty;
 
                 CalibratedByName = certificate.CalibratedByName ?? string.Empty;
                 CalibratedByTitle = certificate.CalibratedByTitle ?? string.Empty;
@@ -994,6 +1041,7 @@ namespace CAL_QR.ViewModels
             var certificate = new Certificate
             {
                 CalibrationRecordId = _calibrationRecordId,
+                DocumentType = DocumentType,
                 CertificateTemplateType = Nullify(CertificateTemplateType),
                 ReferenceNo = Nullify(ReferenceNo),
 
@@ -1036,6 +1084,8 @@ namespace CAL_QR.ViewModels
 
                 AdditionalInformation = Nullify(AdditionalInformation),
                 Notes = Nullify(Notes),
+                Remarks = Nullify(Remarks),
+                StatusReason = Nullify(StatusReason),
 
                 CalibrationDate = CalibrationDate.Date,
                 IssueDate = IssueDate.Date,

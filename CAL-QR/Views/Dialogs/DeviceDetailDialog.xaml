@@ -234,6 +234,12 @@
                                         <TextBlock Text="🖨️ طباعة ملصق المعايرة" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
+                                <Button Command="{Binding ExportPdfCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="36" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="FilePdfBox" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="تصدير PDF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
                             </StackPanel>
                         </ScrollViewer>
 

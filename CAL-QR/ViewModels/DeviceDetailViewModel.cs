@@ -24,6 +24,8 @@ namespace CAL_QR.ViewModels
         private readonly IDeviceRepository _deviceRepository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly ICertificateRepository _certificateRepository;
+        private readonly ICertificatePdfService _certificatePdfService;
 
         private Device? _device;
         private ObservableCollection<CalibrationRecord> _calibrations = new();
@@ -39,20 +41,26 @@ namespace CAL_QR.ViewModels
             ICalibrationRepository calibrationRepository,
             IDeviceRepository deviceRepository,
             ICurrentUserService currentUserService,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            ICertificateRepository certificateRepository,
+            ICertificatePdfService certificatePdfService)
         {
             _contextFactory = contextFactory;
             _calibrationRepository = calibrationRepository;
             _deviceRepository = deviceRepository;
             _currentUserService = currentUserService;
             _auditLogRepository = auditLogRepository;
+            _certificateRepository = certificateRepository;
+            _certificatePdfService = certificatePdfService;
 
             OpenAttachmentCommand = new RelayCommand(OpenAttachment);
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
+            ExportPdfCommand = new RelayCommand(async () => await ExportPdfAsync(), CanExportPdf);
             DeleteRecordCommand = new RelayCommand(DeleteRecord, CanDeleteRecord);
         }
 
         public ICommand PrintRecordCommand { get; }
+        public ICommand ExportPdfCommand { get; }
         public ICommand DeleteRecordCommand { get; }
 
         #region Properties
@@ -225,6 +233,52 @@ namespace CAL_QR.ViewModels
         {
             return SelectedRecord != null
                 && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
+        }
+
+        private bool CanExportPdf()
+        {
+            return SelectedRecord != null
+                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber)
+                && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
+        }
+
+        private async Task ExportPdfAsync()
+        {
+            if (SelectedRecord == null || string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber))
+                return;
+
+            try
+            {
+                var certificate = await _certificateRepository
+                    .GetByCertificateNumberAsync(SelectedRecord.CertificateNumber);
+
+                if (certificate == null)
+                {
+                    ShowMessageBox("لم يُعثر على شهادة مرتبطة بهذا السجلّ.", "تصدير PDF",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var folder = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    "CAL-QR Certificates");
+                System.IO.Directory.CreateDirectory(folder);
+
+                var safeName = certificate.CertificateNumber;
+                foreach (var ch in System.IO.Path.GetInvalidFileNameChars())
+                    safeName = safeName.Replace(ch, '-');
+
+                var filePath = System.IO.Path.Combine(folder, safeName + ".pdf");
+
+                await _certificatePdfService.GenerateFileAsync(certificate, filePath);
+
+                Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ShowMessageBox($"فشل تصدير الشهادة: {ex.Message}", "تصدير PDF",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private MessageBoxResult ShowMessageBox(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon)

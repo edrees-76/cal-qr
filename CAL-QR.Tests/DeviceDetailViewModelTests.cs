@@ -49,7 +49,7 @@ namespace CAL_QR.Tests
             // User is not admin (role = User)
             authService.SetCurrentUser(new User { Username = "editor", Role = UserRole.User });
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
 
             // Act
             bool canDelete = vm.DeleteRecordCommand.CanExecute(new CalibrationRecord());
@@ -75,7 +75,7 @@ namespace CAL_QR.Tests
             // User is admin
             authService.SetCurrentUser(new User { Username = "admin", Role = UserRole.Admin });
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
 
             // Act
             bool canDelete = vm.DeleteRecordCommand.CanExecute(new CalibrationRecord());
@@ -129,7 +129,7 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
             vm.LoadDeviceDetails(deviceId);
 
             bool dialogShown = false;
@@ -210,7 +210,7 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
             vm.LoadDeviceDetails(deviceId);
 
             bool savedEventRaised = false;
@@ -289,7 +289,7 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
 
             // 1. Without preferredRecordId -> defaults to FirstOrDefault (latest)
             vm.LoadDeviceDetails(deviceId);

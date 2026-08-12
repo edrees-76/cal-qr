@@ -229,7 +229,7 @@ namespace CAL_QR.Tests
             // 5. Check Delete capability in DeviceDetailViewModel
             var calRepo = new CalibrationRepository(factory);
             var devRepo = new DeviceRepository(factory);
-            var detailVm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo);
+            var detailVm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
 
             // Prepare device and multiple calibration records
             int deviceId;

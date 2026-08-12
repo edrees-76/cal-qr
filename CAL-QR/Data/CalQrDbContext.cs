@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using CAL_QR.Enums;
 using CAL_QR.Models;
 
 namespace CAL_QR.Data
@@ -213,6 +214,9 @@ namespace CAL_QR.Data
                 entity.HasIndex(e => e.IssuedAt);
 
                 entity.Property(e => e.CertificateNumber).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.DocumentType).HasDefaultValue(CertificateDocumentType.CalibrationCertificate);
+                entity.Property(e => e.Remarks).HasMaxLength(2000);
+                entity.Property(e => e.StatusReason).HasMaxLength(500);
                 entity.Property(e => e.ReferenceNo).HasMaxLength(100);
 
                 entity.Property(e => e.ClientName).IsRequired().HasMaxLength(200);

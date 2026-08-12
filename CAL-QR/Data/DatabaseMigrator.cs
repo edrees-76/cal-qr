@@ -287,6 +287,14 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "Certificates", "SignedCopyConfirmedAt",
                     "ALTER TABLE Certificates ADD COLUMN SignedCopyConfirmedAt TEXT NULL;");
 
+                // النوع السادس (CALIBRATION STATUS REPORT) — أساس الطبقة السفلى
+                ExecuteSqlIfColumnMissing(context, "Certificates", "DocumentType",
+                    "ALTER TABLE Certificates ADD COLUMN DocumentType INTEGER NOT NULL DEFAULT 0;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "Remarks",
+                    "ALTER TABLE Certificates ADD COLUMN Remarks TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "StatusReason",
+                    "ALTER TABLE Certificates ADD COLUMN StatusReason TEXT NULL;");
+
                 // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
                 context.Database.ExecuteSqlRaw(@"
                     CREATE TABLE IF NOT EXISTS CertificateNuclideSummaries (

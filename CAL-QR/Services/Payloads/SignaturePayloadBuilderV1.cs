@@ -22,6 +22,7 @@ namespace CAL_QR.Services.Payloads
     /// عُدّلت هذه الصيغة مرتين وهي مسوّدة:
     ///   • المرحلة ١: إضافة TT و RE و Remarks في ذيل R و F قبل أول التزام.
     ///   • المرحلة ٢: حذف AF، وإضافة PN و LO و IN و DT، وإضافة كتلة النويدات NC/N.
+    ///   • المرحلة ٣: إضافة DK وRM وSR قبل كتلة النويدات — قبل أول إصدار.
     /// يُسجَّل هذا صراحةً لأن تعليقاً يقول «مجمَّد إلى الأبد» ثم يُعدَّل مرتين
     /// يفقد قيمته كتحذير: القارئ التالي يتعلم أن التحذير لا يُؤخذ حرفياً.
     /// التحذير الدقيق يُطاع؛ التحذير المبالَغ يُتجاوز.
@@ -107,6 +108,10 @@ namespace CAL_QR.Services.Payloads
             Add("UC", PayloadNormalizer.Text(c.CombinedUncertainty));
             Add("UX", PayloadNormalizer.Text(c.ExpandedUncertainty));
             Add("UK", PayloadNormalizer.Text(c.CoverageFactor));
+
+            Add("DK", PayloadNormalizer.Text(c.DocumentType.ToString()));
+            Add("RM", PayloadNormalizer.Text(c.Remarks));
+            Add("SR", PayloadNormalizer.Text(c.StatusReason));
 
             // كتلة النويدات: الطبقة التي يقرأ منها الملصق. تسبق صفوف النتائج
             // الخام لأنها أعلى منها في التجريد.

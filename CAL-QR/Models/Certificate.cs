@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CAL_QR.Enums;
 
 namespace CAL_QR.Models
 {
@@ -15,6 +16,9 @@ namespace CAL_QR.Models
         public int Id { get; set; }
         public int CalibrationRecordId { get; set; }
         public string CertificateNumber { get; set; } = string.Empty;
+
+        // نوع الوثيقة: شهادة معايرة (0) أو تقرير حالة معايرة (1). DEFAULT 0.
+        public CertificateDocumentType DocumentType { get; set; } = CertificateDocumentType.CalibrationCertificate;
         public string? ReferenceNo { get; set; }
 
         // نوع النموذج المطبوع (مثل "Pancake Probe")، منسوخ نصاً وقت الإصدار من
@@ -89,6 +93,10 @@ namespace CAL_QR.Models
         // نصوص حرة
         public string? AdditionalInformation { get; set; }
         public string? Notes { get; set; }
+
+        // خاصّان بتقرير الحالة (النوع السادس). محتوى رسميّ يدخل نصّ التوقيع.
+        public string? Remarks { get; set; }
+        public string? StatusReason { get; set; }
 
         // التواريخ الثلاثة. CalibrationDate و DueDate منسوخان نصياً وقت الإصدار
         // تطبيقاً لمبدأ الوثيقة المجمّدة — الملصق والشهادة يقرآن منهما لا من

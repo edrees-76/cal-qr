@@ -391,7 +391,7 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeComplianceBox(ColumnDescriptor column)
         {
-            column.Item().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
+            column.Item().ShowEntire().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
             {
                 box.Item().Text(CertificateTexts.ComplianceStatementEn).FontSize(8);
                 // ContentFromRightToLeft على الحاوية يرتّب عناصرها لا اتجاه الفقرة
@@ -414,7 +414,7 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeApprovalBlock(ColumnDescriptor column)
         {
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().ShowEntire().PaddingTop(10).Row(row =>
             {
                 void AddBox(string title, string? name, string? position, DateTime? date)
                 {
@@ -434,7 +434,11 @@ namespace CAL_QR.Services.Documents
                 AddBox("Authorized By", _certificate.AuthorizedByName, _certificate.AuthorizedByTitle, _certificate.AuthorizedByDate);
 
                 // خانة ختم رسمي فارغة إلى اليسار
-                row.RelativeItem().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Height(60);
+                row.RelativeItem(1.5f).Padding(4).Column(stamp =>
+                {
+                    stamp.Item().Text("Official Stamp").Bold().FontSize(8).FontColor(NavyColor);
+                    stamp.Item().PaddingTop(2).Border(0.5f).BorderColor(Colors.Grey.Lighten2).Height(60);
+                });
             });
         }
 

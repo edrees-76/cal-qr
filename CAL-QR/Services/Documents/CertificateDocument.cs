@@ -34,6 +34,8 @@ namespace CAL_QR.Services.Documents
         private const string LatinFont = "Arial";
         private const string ArabicFont = CertificatePdfEnvironment.ArabicFontFamily;
 
+        private readonly record struct Field(string Label, string? Value, bool FullWidth = false);
+
         private readonly Certificate _certificate;
         private readonly CertificateDocumentAssets _assets;
 
@@ -134,26 +136,26 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeClientInstrumentSection(ColumnDescriptor column)
         {
-            var fields = new List<(string Label, string? Value)>
+            var fields = new List<Field>
             {
-                ("CLIENT NAME", _certificate.ClientName),
-                ("CLIENT ADDRESS", _certificate.ClientAddress),
-                ("DEVICE MODEL", _certificate.DeviceModel),
-                ("DEVICE SERIAL NUMBER", _certificate.DeviceSerialNumber),
-                ("DEVICE MANUFACTURER", _certificate.DeviceManufacturer),
-                ("DETECTOR TYPE", _certificate.DetectorType),
-                ("SURVEY METER MODEL", _certificate.SurveyMeterModel),
-                ("SURVEY METER SERIAL NUMBER", _certificate.SurveyMeterSerialNumber),
-                ("PROCEDURE NO.", _certificate.ProcedureNo),
-                ("CALIBRATION LOCATION", _certificate.CalibrationLocation),
-                ("INSTRUMENTATION", _certificate.Instrumentation),
-                ("MEASUREMENT TYPE", _certificate.MeasurementType),
-                ("DISTANCE", _certificate.Distance),
-                ("CALIBRATION DATE", _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                ("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                ("DUE DATE", _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                ("CALIBRATION STANDARD", _certificate.CalibrationStandard),
-                ("COMPLIANCE VERDICT", _certificate.ComplianceVerdict),
+                new Field("CLIENT NAME", _certificate.ClientName),
+                new Field("CLIENT ADDRESS", _certificate.ClientAddress, FullWidth: true),
+                new Field("DEVICE MODEL", _certificate.DeviceModel),
+                new Field("DEVICE SERIAL NUMBER", _certificate.DeviceSerialNumber),
+                new Field("DEVICE MANUFACTURER", _certificate.DeviceManufacturer),
+                new Field("DETECTOR TYPE", _certificate.DetectorType),
+                new Field("SURVEY METER MODEL", _certificate.SurveyMeterModel),
+                new Field("SURVEY METER SERIAL NUMBER", _certificate.SurveyMeterSerialNumber),
+                new Field("PROCEDURE NO.", _certificate.ProcedureNo),
+                new Field("CALIBRATION LOCATION", _certificate.CalibrationLocation),
+                new Field("INSTRUMENTATION", _certificate.Instrumentation),
+                new Field("MEASUREMENT TYPE", _certificate.MeasurementType),
+                new Field("DISTANCE", _certificate.Distance),
+                new Field("CALIBRATION DATE", _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                new Field("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                new Field("DUE DATE", _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard),
+                new Field("COMPLIANCE VERDICT", _certificate.ComplianceVerdict),
             };
 
             if (!HasAnyValue(fields)) return;
@@ -164,11 +166,11 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeEnvironmentalSection(ColumnDescriptor column)
         {
-            var fields = new List<(string Label, string? Value)>
+            var fields = new List<Field>
             {
-                ("TEMPERATURE", _certificate.Temperature),
-                ("RELATIVE HUMIDITY", _certificate.RelativeHumidity),
-                ("ATMOSPHERIC PRESSURE", _certificate.AtmosphericPressure),
+                new Field("TEMPERATURE", _certificate.Temperature),
+                new Field("RELATIVE HUMIDITY", _certificate.RelativeHumidity),
+                new Field("ATMOSPHERIC PRESSURE", _certificate.AtmosphericPressure),
             };
 
             if (!HasAnyValue(fields)) return;
@@ -179,11 +181,11 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeTechnicalSection(ColumnDescriptor column)
         {
-            var fields = new List<(string Label, string? Value)>
+            var fields = new List<Field>
             {
-                ("COUNTING TIME", _certificate.CountingTime),
-                ("COUNTING UNIT", _certificate.CountingUnit),
-                ("CALIBRATION MODE", _certificate.CalibrationMode),
+                new Field("COUNTING TIME", _certificate.CountingTime),
+                new Field("COUNTING UNIT", _certificate.CountingUnit),
+                new Field("CALIBRATION MODE", _certificate.CalibrationMode),
             };
 
             if (!HasAnyValue(fields)) return;
@@ -196,12 +198,12 @@ namespace CAL_QR.Services.Documents
         {
             if (!_certificate.MethodologyEnabled) return;
 
-            var fields = new List<(string Label, string? Value)>
+            var fields = new List<Field>
             {
-                ("RADIATION SOURCE", _certificate.RadiationSource),
-                ("REFERENCE GEOMETRY", _certificate.ReferenceGeometry),
-                ("METHODOLOGY", _certificate.MethodologyText),
-                ("TRACEABILITY REFERENCE", _certificate.TraceabilityReference),
+                new Field("RADIATION SOURCE", _certificate.RadiationSource),
+                new Field("REFERENCE GEOMETRY", _certificate.ReferenceGeometry),
+                new Field("METHODOLOGY", _certificate.MethodologyText, FullWidth: true),
+                new Field("TRACEABILITY REFERENCE", _certificate.TraceabilityReference),
             };
 
             if (!HasAnyValue(fields)) return;
@@ -480,10 +482,10 @@ namespace CAL_QR.Services.Documents
         private static void SectionTitle(ColumnDescriptor column, string text) =>
             column.Item().PaddingTop(4).Text(text).Bold().FontSize(11).FontColor(NavyColor);
 
-        private static bool HasAnyValue(IEnumerable<(string Label, string? Value)> fields) =>
+        private static bool HasAnyValue(IEnumerable<Field> fields) =>
             fields.Any(f => !string.IsNullOrWhiteSpace(f.Value));
 
-        private static void RenderFieldTable(ColumnDescriptor column, IEnumerable<(string Label, string? Value)> fields)
+        private static void RenderFieldTable(ColumnDescriptor column, IEnumerable<Field> fields)
         {
             var visible = fields.Where(f => !string.IsNullOrWhiteSpace(f.Value)).ToList();
             if (visible.Count == 0) return;
@@ -492,16 +494,40 @@ namespace CAL_QR.Services.Documents
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(150);
+                    columns.RelativeColumn();
+                    columns.RelativeColumn();
                     columns.RelativeColumn();
                 });
 
-                foreach (var field in visible)
+                int col = 0;
+
+                foreach (var f in visible)
                 {
-                    table.Cell().Background(HeaderBgColor).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2)
-                        .Padding(4).Text(field.Label).Bold().FontSize(8).FontColor(NavyColor);
-                    table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2)
-                        .Padding(4).Text(field.Value!).FontSize(8);
+                    if (f.FullWidth)
+                    {
+                        while (col != 0)
+                        {
+                            table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2);
+                            col = (col + 1) % 3;
+                        }
+
+                        table.Cell().ColumnSpan(3)
+                            .Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Column(c =>
+                            {
+                                c.Item().Text(f.Label).Bold().FontSize(7.5f).FontColor(NavyColor);
+                                c.Item().Text(f.Value!).FontSize(8);
+                            });
+
+                        continue;
+                    }
+
+                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).Column(c =>
+                    {
+                        c.Item().Text(f.Label).Bold().FontSize(7.5f).FontColor(NavyColor);
+                        c.Item().Text(f.Value!).FontSize(8);
+                    });
+
+                    col = (col + 1) % 3;
                 }
             });
         }

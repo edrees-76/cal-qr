@@ -6,6 +6,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using CAL_QR.Data;
+using CAL_QR.Enums;
 using CAL_QR.Models;
 
 namespace CAL_QR.Services.Documents
@@ -38,11 +39,13 @@ namespace CAL_QR.Services.Documents
 
         private readonly Certificate _certificate;
         private readonly CertificateDocumentAssets _assets;
+        private readonly bool _isStatusReport;
 
         public CertificateDocument(Certificate certificate, CertificateDocumentAssets assets)
         {
             _certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
             _assets = assets ?? throw new ArgumentNullException(nameof(assets));
+            _isStatusReport = _certificate.DocumentType == CertificateDocumentType.CalibrationStatusReport;
         }
 
         // IDocument يتطلب ثلاثة أعضاء لا اثنين كما في المسوَّدة المقترحة:
@@ -117,6 +120,8 @@ namespace CAL_QR.Services.Documents
                 ComposeResultsSection(column);
                 ComposeUncertaintySection(column);
                 ComposeFunctionalChecksSection(column);
+                ComposeRemarksSection(column);
+                ComposeCalibrationStatusSection(column);
                 ComposeAdditionalInfoSection(column);
                 ComposeComplianceBox(column);
                 ComposeApprovalBlock(column);
@@ -126,10 +131,16 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeTitleBlock(ColumnDescriptor column)
         {
-            column.Item().AlignCenter().Text("CALIBRATION CERTIFICATE").Bold().FontSize(14).FontColor(NavyColor);
+            column.Item().AlignCenter()
+                .Text(_isStatusReport ? "CALIBRATION STATUS REPORT" : "CALIBRATION CERTIFICATE")
+                .Bold().FontSize(14).FontColor(NavyColor);
 
             if (!string.IsNullOrWhiteSpace(_certificate.CertificateTemplateType))
-                column.Item().AlignCenter().Text($"CERTIFICATE FOR {_certificate.CertificateTemplateType}").FontSize(10);
+                column.Item().AlignCenter()
+                    .Text(_isStatusReport
+                        ? $"FOR {_certificate.CertificateTemplateType}"
+                        : $"CERTIFICATE FOR {_certificate.CertificateTemplateType}")
+                    .FontSize(10);
 
             column.Item().AlignCenter().Text($"CERTIFICATE NO. {_certificate.CertificateNumber}").Bold().FontSize(10);
         }
@@ -151,12 +162,22 @@ namespace CAL_QR.Services.Documents
                 new Field("INSTRUMENTATION", _certificate.Instrumentation),
                 new Field("MEASUREMENT TYPE", _certificate.MeasurementType),
                 new Field("DISTANCE", _certificate.Distance),
-                new Field("CALIBRATION DATE", _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                new Field("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                new Field("DUE DATE", _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                new Field(
+                    _isStatusReport ? "FUNCTIONAL INSPECTION DATE" : "CALIBRATION DATE",
+                    _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
+                new Field(
+                    _isStatusReport ? "RECALIBRATION AFTER REPAIR" : "DUE DATE",
+                    _isStatusReport
+                        ? CertificateTexts.StatusReportRecalibrationValue
+                        : _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
                 new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard),
-                new Field("COMPLIANCE VERDICT", _certificate.ComplianceVerdict),
+                new Field(
+                    _isStatusReport ? "STATUS / VERDICT" : "COMPLIANCE VERDICT",
+                    _certificate.ComplianceVerdict),
             };
+
+            if (!_isStatusReport)
+                fields.Insert(14, new Field("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
 
             if (!HasAnyValue(fields)) return;
 
@@ -214,6 +235,14 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeResultsSection(ColumnDescriptor column)
         {
+            if (_isStatusReport)
+            {
+                SectionTitle(column, "CALIBRATION RESULTS");
+                column.Item().Text(CertificateTexts.StatusReportNoResultsTitle).Bold().FontSize(9).FontColor(NavyColor);
+                column.Item().Text(CertificateTexts.StatusReportNoResultsBody).FontSize(8);
+                return;
+            }
+
             var rows = (_certificate.CalibrationResults ?? new List<CertificateCalibrationResult>())
                 .OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
 
@@ -369,11 +398,42 @@ namespace CAL_QR.Services.Documents
                     AddCell(idx.ToString(CultureInfo.InvariantCulture));
                     AddCell(check.CheckName);
                     AddCell(check.Requirement ?? string.Empty);
-                    AddCell(check.Result ?? string.Empty);
+
+                    // خليّة النتيجة — حمراء غامقة للفاشل/غير المنفَّذ
+                    var resultText = check.Result ?? string.Empty;
+                    if (IsFailedResult(resultText))
+                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter()
+                            .Text(resultText).Bold().FontSize(8).FontColor("#C62828");
+                    else
+                        AddCell(resultText);
+
                     if (hasRemarks) AddCell(check.Remarks ?? string.Empty);
                     idx++;
                 }
             });
+        }
+
+        private void ComposeRemarksSection(ColumnDescriptor column)
+        {
+            if (!_isStatusReport || string.IsNullOrWhiteSpace(_certificate.Remarks)) return;
+
+            SectionTitle(column, "REMARKS");
+            column.Item().Text(_certificate.Remarks!).FontSize(8);
+        }
+
+        private void ComposeCalibrationStatusSection(ColumnDescriptor column)
+        {
+            if (!_isStatusReport) return;
+
+            bool hasVerdict = !string.IsNullOrWhiteSpace(_certificate.ComplianceVerdict);
+            bool hasReason = !string.IsNullOrWhiteSpace(_certificate.StatusReason);
+            if (!hasVerdict && !hasReason) return;
+
+            SectionTitle(column, "CALIBRATION STATUS");
+            if (hasVerdict)
+                column.Item().Text(_certificate.ComplianceVerdict!).Bold().FontSize(9).FontColor(NavyColor);
+            if (hasReason)
+                column.Item().Text($"Reason: {_certificate.StatusReason}").FontSize(8);
         }
 
         private void ComposeAdditionalInfoSection(ColumnDescriptor column)
@@ -391,6 +451,18 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeComplianceBox(ColumnDescriptor column)
         {
+            if (_isStatusReport)
+            {
+                column.Item().ShowEntire().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
+                {
+                    box.Item().Text(CertificateTexts.StatusReportNotPerformedTitle).Bold().FontSize(9).FontColor("#C62828");
+                    box.Item().PaddingTop(3).Text(CertificateTexts.StatusReportNotPerformedLine1).Bold().FontSize(8);
+                    box.Item().PaddingTop(2).Text(CertificateTexts.StatusReportNotPerformedLine2).Bold().FontSize(8);
+                    box.Item().PaddingTop(2).Text(CertificateTexts.StatusReportNotPerformedLine3).Bold().FontSize(8);
+                });
+                return;
+            }
+
             column.Item().ShowEntire().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
             {
                 box.Item().Text(CertificateTexts.ComplianceStatementEn).FontSize(8);
@@ -488,6 +560,14 @@ namespace CAL_QR.Services.Documents
 
         private static bool HasAnyValue(IEnumerable<Field> fields) =>
             fields.Any(f => !string.IsNullOrWhiteSpace(f.Value));
+
+        private static bool IsFailedResult(string? result)
+        {
+            if (string.IsNullOrWhiteSpace(result)) return false;
+            var normalized = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"\s+", " ");
+            return normalized.Equals("Failed", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("Not Performed", StringComparison.OrdinalIgnoreCase);
+        }
 
         private static void RenderFieldTable(ColumnDescriptor column, IEnumerable<Field> fields)
         {

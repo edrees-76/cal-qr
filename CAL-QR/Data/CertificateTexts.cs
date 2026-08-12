@@ -39,5 +39,32 @@ namespace CAL_QR.Data
         public const string ComplianceStatementAr =
             "أُجريت المعايرة وفقًا لإجراءات العمل الفنية المعتمدة من الوكالة الدولية للطاقة الذرية (IAEA)، " +
             "وبما يتوافق مع المبادئ والمتطلبات الفنية ذات الصلة للمواصفة الدولية ISO/IEC 17025:2017";
+
+        // ─── نصوص تقرير الحالة (النوع السادس) — إنجليزية فقط، خارج SIG1 بنفس مبرّر بيان المطابقة ───
+
+        /// <summary>قيمة ثابتة تحلّ محلّ تاريخ الاستحقاق في تقرير الحالة.</summary>
+        public const string StatusReportRecalibrationValue =
+            "To be determined after successful calibration";
+
+        /// <summary>عنوان البيان الذي يحلّ محلّ جدول النتائج في تقرير الحالة.</summary>
+        public const string StatusReportNoResultsTitle =
+            "CALIBRATION COULD NOT BE PERFORMED";
+
+        /// <summary>نصّ البيان الذي يحلّ محلّ جدول النتائج في تقرير الحالة.</summary>
+        public const string StatusReportNoResultsBody =
+            "No calibration results are reported because the instrument failed the pre-calibration functional inspection.";
+
+        /// <summary>صندوق ختام تقرير الحالة — يحلّ محلّ صندوق بيان المطابقة. إنجليزية فقط، خارج SIG1.</summary>
+        public const string StatusReportNotPerformedTitle =
+            "CALIBRATION WAS NOT PERFORMED";
+
+        public const string StatusReportNotPerformedLine1 =
+            "This report documents the results of the pre-calibration functional inspection only.";
+
+        public const string StatusReportNotPerformedLine2 =
+            "The instrument failed the functional checks; therefore, calibration could not be completed.";
+
+        public const string StatusReportNotPerformedLine3 =
+            "The instrument shall be repaired and successfully pass the functional inspection before being submitted for recalibration.";
     }
 }

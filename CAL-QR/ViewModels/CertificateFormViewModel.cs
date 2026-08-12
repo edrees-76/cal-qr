@@ -525,12 +525,18 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _documentType, value))
+                {
                     OnPropertyChanged(nameof(IsStatusReport));
+                    OnPropertyChanged(nameof(IsCalibrationCertificate));
+                }
             }
         }
 
         /// <summary>علَم عرض مشتقّ: يقود الرؤية الشرطيّة في الواجهة (المرحلة القادمة).</summary>
         public bool IsStatusReport => _documentType == CertificateDocumentType.CalibrationStatusReport;
+
+        /// <summary>معكوس IsStatusReport — يقود إظهار الأقسام الخاصّة بالمعايرة (النتائج، عدم اليقين).</summary>
+        public bool IsCalibrationCertificate => !IsStatusReport;
 
         private string _remarks = string.Empty;
         public string Remarks

@@ -31,6 +31,8 @@ namespace CAL_QR.Views.Dialogs
 
         public void LoadForRecord(int calibrationRecordId) => _viewModel.LoadForRecord(calibrationRecordId);
 
+        public void LoadForStatusReport(int calibrationRecordId) => _viewModel.LoadForStatusReport(calibrationRecordId);
+
         public void LoadForEdit(int certificateId) => _viewModel.LoadForEdit(certificateId);
 
         protected override void OnSourceInitialized(System.EventArgs e)

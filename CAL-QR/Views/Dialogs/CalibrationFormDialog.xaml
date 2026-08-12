@@ -256,6 +256,17 @@
                             <TextBlock Text="إنشاء شهادة" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
+                    <!-- مسار النوع السادس: تقرير حالة معايرة، لسجلّ تعذّرت معايرته -->
+                    <Button Command="{Binding IssueStatusReportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Height="40" Margin="0,0,10,0" Foreground="#B71C1C" BorderBrush="#B71C1C"
+                            FontFamily="{StaticResource CairoFont}"
+                            ToolTip="إصدار تقرير حالة لسجل تعذّرت معايرته (بدل شهادة معايرة)"
+                            Visibility="{Binding CanIssueCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileAlert" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock Text="إصدار تقرير حالة" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
                     <!-- مكمّل لزر الإنشاء أعلاه: يظهر بدلاً منه حين توجد شهادة صادرة -->
                     <Button Command="{Binding EditCertificateCommand}" Style="{StaticResource MaterialDesignRaisedButton}"
                             Background="#1A3A6B" BorderBrush="#1A3A6B"

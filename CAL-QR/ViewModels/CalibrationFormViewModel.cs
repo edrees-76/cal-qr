@@ -99,6 +99,7 @@ namespace CAL_QR.ViewModels
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
             IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
+            IssueStatusReportCommand = new RelayCommand(IssueStatusReport, () => CanIssueCertificate);
             EditCertificateCommand = new RelayCommand(EditCertificate, () => HasCertificate && _existingCertificateId > 0);
             
             LoadFormSources();
@@ -387,6 +388,7 @@ namespace CAL_QR.ViewModels
         public ICommand AddAttachmentCommand { get; }
         public ICommand RemoveAttachmentCommand { get; }
         public ICommand IssueCertificateCommand { get; }
+        public ICommand IssueStatusReportCommand { get; }
         public ICommand EditCertificateCommand { get; }
         #endregion
 
@@ -414,6 +416,34 @@ namespace CAL_QR.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"خطأ في فتح نموذج الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void IssueStatusReport()
+        {
+            if (!CanIssueCertificate) return;
+
+            try
+            {
+                var dialog = _certificateFormDialogFactory();
+                dialog.ViewModel.CertificateIssued += OnCertificateIssued;
+                try
+                {
+                    dialog.LoadForStatusReport(_calibrationRecordId);
+                    dialog.Owner = Application.Current?.Windows
+                        .OfType<Window>()
+                        .FirstOrDefault(w => w.IsActive);
+                    dialog.ShowDialog();
+                }
+                finally
+                {
+                    dialog.ViewModel.CertificateIssued -= OnCertificateIssued;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ في فتح نموذج تقرير الحالة: {ex.Message}", "خطأ",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

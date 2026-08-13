@@ -1,379 +1,204 @@
-using Xunit;
 using System;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Xunit;
 using CAL_QR.Data;
 using CAL_QR.Models;
+using CAL_QR.Repositories;
 using CAL_QR.Services;
 using CAL_QR.ViewModels;
 
 namespace CAL_QR.Tests
 {
+    /// <summary>
+    /// يحرس مسار التحقق الحالي: QrVerifyViewModel → ICertificateRepository.VerifyByCodeAsync.
+    /// SQLite حقيقي عبر DatabaseMigrator، لأن CertificateNumberService.AllocateAsync
+    /// ينفّذ SQL خام (INSERT ... ON CONFLICT ... RETURNING) لا يدعمه مزوّد InMemory.
+    /// </summary>
     public class QrVerifyViewModelTests
     {
-        [Fact]
-        public async Task VerifyPastedText_LegacyBilingualFormat_ParsesFieldsCorrectlyAndVerifiesSignature()
-        {
-            // 1. Arrange
-            var options = new DbContextOptionsBuilder<CalQrDbContext>()
-                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Verify_Bilingual_" + Guid.NewGuid().ToString())
-                .Options;
-
-            var factory = new TestDbContextFactory(options);
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-
-            string ownerName = "Nuclear Research Center";
-            string deviceTypeName = "Geiger Counter";
-            string model = "Model-99";
-            string serial = "SN-12345";
-            string certNo = "CERT-999-OLD";
-            string calDate = "2026-06-30";
-            string expDate = "2027-06-30";
-            string engineer = "Edrees";
-            string description = "Annual Calibration";
-            string result = "Passed";
-
-            // Compute legacy 8-char signature (manually using legacy key for Arrange phase)
-            string rawData = $"{certNo}|{model}|{serial}|{ownerName}|{calDate}|{expDate}|{result}|{engineer}";
-            using var legacyHmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes("CalQR-Nuclear-Center-2026-SecretKey"));
-            byte[] hashBytes = legacyHmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawData));
-            string computedLegacy = Convert.ToHexString(hashBytes).Substring(0, 16).ToUpper();
-            string verifyCode = computedLegacy.Substring(0, 8); // legacy is 8 chars
-
-            using (var context = new CalQrDbContext(options))
-            {
-                var owner = new Owner { Name = ownerName };
-                context.Owners.Add(owner);
-
-                var deviceType = new DeviceType { Name = deviceTypeName };
-                context.DeviceTypes.Add(deviceType);
-                await context.SaveChangesAsync();
-
-                var device = new Device
-                {
-                    Model = model,
-                    SerialNumber = serial,
-                    OwnerId = owner.Id,
-                    DeviceTypeId = deviceType.Id,
-                    IsDeleted = false
-                };
-                context.Devices.Add(device);
-                await context.SaveChangesAsync();
-
-                var record = new CalibrationRecord
-                {
-                    DeviceId = device.Id,
-                    CertificateNumber = certNo,
-                    CalibrationDate = DateTime.Parse(calDate),
-                    ExpiryDate = DateTime.Parse(expDate),
-                    Result = "Passed",
-                    EngineerName = engineer,
-                    HmacSignature = verifyCode,
-                    CreatedAt = new DateTime(2026, 6, 30, 12, 0, 0, DateTimeKind.Utc),
-                    IsDeleted = false
-                };
-                context.CalibrationRecords.Add(record);
-                await context.SaveChangesAsync();
-            }
-
-            string qrText = "=== شهادة معايرة | Calibration Certificate ===\n" +
-                            $"الجهة / Owner: {ownerName}\n" +
-                            $"النوع / Type: {deviceTypeName}\n" +
-                            $"الموديل / Model: {model}\n" +
-                            $"الرقم التسلسلي / S/N: {serial}\n" +
-                            $"رقم الشهادة / Cert No: {certNo}\n" +
-                            $"تاريخ المعايرة / Cal. Date: {calDate}\n" +
-                            $"تاريخ الانتهاء / Exp. Date: {expDate}\n" +
-                            $"المهندس / Engineer: {engineer}\n" +
-                            $"نوع المعايرة / Cal. Type: {description}\n" +
-                            "النتيجة / Result: ✅ ناجح Passed\n" +
-                            $"كود التحقق / Verify Code: {verifyCode}\n" +
-                            "─────────────────────────────────\n" +
-                            "الجهة المعايِرة / Calibrated by:\n" +
-                            "مركز البحوث النووية | Nuclear Research Center\n" +
-                            "وحدة المعايرة | Calibration Unit";
-
-            var viewModel = new QrVerifyViewModel(hmacService, factory);
-            viewModel.ConcatenatedText = qrText;
-
-            // 2. Act
-            await viewModel.VerifyPastedTextAsync();
-
-            // 3. Assert
-            Assert.Equal(ownerName, viewModel.Owner);
-            Assert.Equal(deviceTypeName, viewModel.DeviceType);
-            Assert.Equal(model, viewModel.Model);
-            Assert.Equal(serial, viewModel.Serial);
-            Assert.Equal(certNo, viewModel.CertNo);
-            Assert.Equal(calDate, viewModel.CalDate);
-            Assert.Equal(expDate, viewModel.ExpDate);
-            Assert.Equal(engineer, viewModel.Engineer);
-            Assert.Equal(description, viewModel.CalType);
-            Assert.Equal("Passed", viewModel.Result);
-            Assert.Equal(verifyCode, viewModel.ReadVerifyCode);
-            Assert.True(viewModel.IsSuccess);
-        }
-
-        [Fact]
-        public async Task VerifyPastedText_SimplifiedArabicFormat_ParsesFieldsCorrectlyAndVerifiesSignature()
-        {
-            // 1. Arrange
-            var options = new DbContextOptionsBuilder<CalQrDbContext>()
-                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Verify_Simplified_" + Guid.NewGuid().ToString())
-                .Options;
-
-            var factory = new TestDbContextFactory(options);
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-
-            string ownerName = "المركز الوطني";
-            string deviceTypeName = "كاشف إشعاعي";
-            string model = "Model-ABC";
-            string serial = "SN-8888";
-            string certNo = "CERT-2026-NEW";
-            string calDate = "2026-07-15";
-            string expDate = "2027-07-15";
-            string engineer = "علي";
-            string result = "Passed";
-
-            string verifyCode = hmacService.ComputeSignature(
-                certNo: certNo,
-                model: model,
-                serial: serial,
-                ownerName: ownerName,
-                calDate: calDate,
-                expDate: expDate,
-                result: result,
-                engineerName: engineer
-            );
-
-            using (var context = new CalQrDbContext(options))
-            {
-                var owner = new Owner { Name = ownerName };
-                context.Owners.Add(owner);
-
-                var deviceType = new DeviceType { Name = deviceTypeName };
-                context.DeviceTypes.Add(deviceType);
-                await context.SaveChangesAsync();
-
-                var device = new Device
-                {
-                    Model = model,
-                    SerialNumber = serial,
-                    OwnerId = owner.Id,
-                    DeviceTypeId = deviceType.Id,
-                    IsDeleted = false
-                };
-                context.Devices.Add(device);
-                await context.SaveChangesAsync();
-
-                var record = new CalibrationRecord
-                {
-                    DeviceId = device.Id,
-                    CertificateNumber = certNo,
-                    CalibrationDate = DateTime.Parse(calDate),
-                    ExpiryDate = DateTime.Parse(expDate),
-                    Result = "Passed",
-                    EngineerName = engineer,
-                    HmacSignature = verifyCode,
-                    CreatedAt = new DateTime(2026, 7, 15, 12, 0, 0, DateTimeKind.Utc),
-                    IsDeleted = false
-                };
-                context.CalibrationRecords.Add(record);
-                await context.SaveChangesAsync();
-            }
-
-            string qrText = "=== شهادة معايرة ===\n" +
-                            $"الجهة: {ownerName}\n" +
-                            $"النوع / Type: {deviceTypeName}\n" +
-                            $"الموديل / Model: {model}\n" +
-                            $"الرقم التسلسلي / S/N: {serial}\n" +
-                            $"رقم الشهادة: {certNo}\n" +
-                            $"تاريخ المعايرة: {calDate}\n" +
-                            $"تاريخ انتهاء المعايرة / Exp. Date: {expDate}\n" +
-                            $"المهندس: {engineer}\n" +
-                            "النتيجة / Result: ✅ ناجح Passed\n" +
-                            $"كود التحقق / Verify Code: {verifyCode}\n" +
-                            "─────────────────────────────────\n" +
-                            "الجهة المعايِرة / Calibrated by:\n" +
-                            "مركز البحوث النووية\n" +
-                            "إدارة الوقاية من الاشعاع\n" +
-                            "قسم قياس وتقدير الجرعات الشخصية والمعايرة\n" +
-                            "وحدة المعايرة";
-
-            var viewModel = new QrVerifyViewModel(hmacService, factory);
-            viewModel.ConcatenatedText = qrText;
-
-            // 2. Act
-            await viewModel.VerifyPastedTextAsync();
-
-            // 3. Assert
-            Assert.Equal(ownerName, viewModel.Owner);
-            Assert.Equal(deviceTypeName, viewModel.DeviceType);
-            Assert.Equal(model, viewModel.Model);
-            Assert.Equal(serial, viewModel.Serial);
-            Assert.Equal(certNo, viewModel.CertNo);
-            Assert.Equal(calDate, viewModel.CalDate);
-            Assert.Equal(expDate, viewModel.ExpDate);
-            Assert.Equal(engineer, viewModel.Engineer);
-            Assert.Equal("Passed", viewModel.Result);
-            Assert.Equal(verifyCode, viewModel.ReadVerifyCode);
-            Assert.True(viewModel.IsSuccess);
-        }
-
-        [Fact]
-        public async Task VerifyPastedText_And_QuickVerify_ProduceIdenticalParsedResults()
-        {
-            // Arrange
-            var options = new DbContextOptionsBuilder<CalQrDbContext>()
-                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Verify_Comparison_" + Guid.NewGuid().ToString())
-                .Options;
-
-            var factory = new TestDbContextFactory(options);
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-
-            string ownerName = "Research Center";
-            string deviceTypeName = "Gamma Sensor";
-            string model = "GS-100";
-            string serial = "SN-54321";
-            string certNo = "CERT-2026-COMP";
-            string calDate = "2026-07-16";
-            string expDate = "2027-07-16";
-            string engineer = "Edrees";
-            string description = "Standard Calibration";
-            string result = "Passed";
-
-            string verifyCode = hmacService.ComputeSignature(
-                certNo: certNo,
-                model: model,
-                serial: serial,
-                ownerName: ownerName,
-                calDate: calDate,
-                expDate: expDate,
-                result: result,
-                engineerName: engineer
-            );
-
-            using (var context = new CalQrDbContext(options))
-            {
-                var owner = new Owner { Name = ownerName };
-                context.Owners.Add(owner);
-
-                var deviceType = new DeviceType { Name = deviceTypeName };
-                context.DeviceTypes.Add(deviceType);
-                await context.SaveChangesAsync();
-
-                var device = new Device
-                {
-                    Model = model,
-                    SerialNumber = serial,
-                    OwnerId = owner.Id,
-                    DeviceTypeId = deviceType.Id,
-                    IsDeleted = false
-                };
-                context.Devices.Add(device);
-                await context.SaveChangesAsync();
-
-                var record = new CalibrationRecord
-                {
-                    DeviceId = device.Id,
-                    CertificateNumber = certNo,
-                    CalibrationDate = DateTime.Parse(calDate),
-                    ExpiryDate = DateTime.Parse(expDate),
-                    Result = result,
-                    EngineerName = engineer,
-                    CalibrationDescription = description,
-                    HmacSignature = verifyCode,
-                    CreatedAt = DateTime.UtcNow,
-                    IsDeleted = false
-                };
-                context.CalibrationRecords.Add(record);
-                await context.SaveChangesAsync();
-            }
-
-            var qrService = new QrService(factory);
-            string qrText = qrService.GenerateVerificationText(
-                ownerName: ownerName,
-                deviceType: deviceTypeName,
-                model: model,
-                serial: serial,
-                certNo: certNo,
-                calDate: calDate,
-                expDate: expDate,
-                engineerName: engineer,
-                description: description,
-                result: result,
-                verifyCode: verifyCode
-            );
-
-            var viewModel = new QrVerifyViewModel(hmacService, factory);
-            
-            // Act: Run Paste-based Verification
-            viewModel.ConcatenatedText = qrText;
-            await viewModel.VerifyPastedTextAsync();
-
-            // Store results from Paste Verification
-            string pasteOwner = viewModel.Owner;
-            string pasteDeviceType = viewModel.DeviceType;
-            string pasteModel = viewModel.Model;
-            string pasteSerial = viewModel.Serial;
-            string pasteCertNo = viewModel.CertNo;
-            string pasteCalDate = viewModel.CalDate;
-            string pasteExpDate = viewModel.ExpDate;
-            string pasteEngineer = viewModel.Engineer;
-            string pasteCalType = viewModel.CalType;
-            string pasteResult = viewModel.Result;
-            string pasteVerifyCode = viewModel.ReadVerifyCode;
-            bool pasteSuccess = viewModel.IsSuccess;
-
-            // Clear viewModel and run Quick-Code Verification
-            viewModel.QuickVerifyCode = verifyCode;
-            await viewModel.QuickVerifyByCodeAsync();
-
-            // Assert: Verify results are identical between the two flows
-            Assert.True(pasteSuccess);
-            Assert.True(viewModel.IsSuccess);
-
-            Assert.Equal(pasteOwner, viewModel.Owner);
-            Assert.Equal(pasteDeviceType, viewModel.DeviceType);
-            Assert.Equal(pasteModel, viewModel.Model);
-            Assert.Equal(pasteSerial, viewModel.Serial);
-            Assert.Equal(pasteCertNo, viewModel.CertNo);
-            Assert.Equal(pasteCalDate, viewModel.CalDate);
-            Assert.Equal(pasteExpDate, viewModel.ExpDate);
-            Assert.Equal(pasteEngineer, viewModel.Engineer);
-            Assert.Equal(pasteResult, viewModel.Result);
-            Assert.Equal(pasteVerifyCode, viewModel.ReadVerifyCode);
-            
-            // Also assert the parsed values match original record values
-            Assert.Equal(ownerName, viewModel.Owner);
-            Assert.Equal(deviceTypeName, viewModel.DeviceType);
-            Assert.Equal(model, viewModel.Model);
-            Assert.Equal(serial, viewModel.Serial);
-            Assert.Equal(certNo, viewModel.CertNo);
-            Assert.Equal(calDate, viewModel.CalDate);
-            Assert.Equal(expDate, viewModel.ExpDate);
-            Assert.Equal(engineer, viewModel.Engineer);
-            Assert.Equal(result, viewModel.Result);
-            Assert.Equal(verifyCode, viewModel.ReadVerifyCode);
-        }
-
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;
+            public TestDbContextFactory(DbContextOptions<CalQrDbContext> options) => _options = options;
+            public CalQrDbContext CreateDbContext() => new CalQrDbContext(_options);
+        }
 
-            public TestDbContextFactory(DbContextOptions<CalQrDbContext> options)
+        private static string NewDbPath(string tag) =>
+            Path.Combine(Path.GetTempPath(), $"cal_qr_verify_vm_{tag}_{Guid.NewGuid():N}.db");
+
+        private static DbContextOptions<CalQrDbContext> OptionsFor(string dbPath) =>
+            new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={dbPath}")
+                .Options;
+
+        private static void CleanUp(string dbPath)
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(dbPath))
             {
-                _options = options;
+                try { File.Delete(dbPath); } catch { }
+            }
+        }
+
+        private sealed class Harness : IDisposable
+        {
+            public string DbPath { get; }
+            public DbContextOptions<CalQrDbContext> Options { get; }
+            public TestDbContextFactory Factory { get; }
+            public CertificateRepository Repository { get; }
+            public CertificateSignatureService SignatureService { get; }
+            public int CalibrationRecordId { get; }
+
+            public Harness(string tag)
+            {
+                DbPath = NewDbPath(tag);
+                Options = OptionsFor(DbPath);
+                Factory = new TestDbContextFactory(Options);
+
+                using (var context = new CalQrDbContext(Options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    CalibrationRecordId = SeedCalibrationRecord(context, "REC-" + tag);
+                }
+
+                var hmac = new HmacService(Factory);
+                hmac.Initialize();
+                SignatureService = new CertificateSignatureService(hmac);
+
+                Repository = new CertificateRepository(
+                    Factory,
+                    new CertificateNumberService(Factory),
+                    SignatureService);
             }
 
-            public CalQrDbContext CreateDbContext()
+            public void Dispose() => CleanUp(DbPath);
+        }
+
+        private static int SeedCalibrationRecord(CalQrDbContext context, string tag)
+        {
+            var owner = new Owner { Name = "مركز البحوث النووية" };
+            var deviceType = new DeviceType { Name = "Pancake Probe" };
+            context.Owners.Add(owner);
+            context.DeviceTypes.Add(deviceType);
+            context.SaveChanges();
+
+            var device = new Device
             {
-                return new CalQrDbContext(_options);
-            }
+                Model = "Ludlum 44-9",
+                SerialNumber = "SN-" + tag,
+                OwnerId = owner.Id,
+                DeviceTypeId = deviceType.Id
+            };
+            context.Devices.Add(device);
+            context.SaveChanges();
+
+            var record = new CalibrationRecord
+            {
+                DeviceId = device.Id,
+                CertificateNumber = tag,
+                CalibrationDate = new DateTime(2026, 1, 15),
+                ExpiryDate = new DateTime(2027, 1, 15),
+                EngineerName = "م. أحمد الشريف",
+                Result = "Passed",
+                HmacSignature = "SIG-" + tag
+            };
+            context.CalibrationRecords.Add(record);
+            context.SaveChanges();
+
+            return record.Id;
+        }
+
+        private static Certificate NewCertificate(int calibrationRecordId) => new Certificate
+        {
+            CalibrationRecordId = calibrationRecordId,
+            CertificateTemplateType = "Pancake Probe",
+            ClientName = "مركز البحوث النووية",
+            DeviceModel = "Ludlum 44-9",
+            DeviceSerialNumber = "PR-777",
+            CalibrationDate = new DateTime(2026, 1, 15),
+            IssueDate = new DateTime(2026, 1, 20)
+        };
+
+        [Fact]
+        public async Task QuickVerify_AuthenticCertificate_ReturnsAuthenticAndDisplaysItsData()
+        {
+            using var harness = new Harness("quick");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.QuickVerifyCode = issued!.VerifyCode!;
+
+            await viewModel.QuickVerifyAsync();
+
+            Assert.True(viewModel.IsValidated);
+            Assert.True(viewModel.IsAuthentic);
+            Assert.True(viewModel.IsSuccess);
+            Assert.False(viewModel.IsAmended);
+            Assert.False(viewModel.IsNotFound);
+            Assert.False(viewModel.IsUnverifiable);
+
+            Assert.Equal(issued.ClientName, viewModel.Owner);
+            Assert.Equal(issued.CertificateNumber, viewModel.CertNo);
+            Assert.Equal(issued.DeviceModel, viewModel.Model);
+            Assert.Equal(issued.DeviceSerialNumber, viewModel.Serial);
+        }
+
+        [Fact]
+        public async Task VerifyPastedText_ExtractsVLineFromQrPayload_ReturnsAuthentic()
+        {
+            using var harness = new Harness("paste");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.NotNull(issued);
+
+            string qrText = harness.SignatureService.BuildQrPayload(issued);
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.ConcatenatedText = qrText;
+
+            await viewModel.VerifyPastedTextAsync();
+
+            Assert.True(viewModel.IsValidated);
+            Assert.True(viewModel.IsAuthentic);
+            Assert.Equal(issued.CertificateNumber, viewModel.CertNo);
+        }
+
+        [Fact]
+        public async Task QuickVerify_UnknownCode_ReturnsNotFoundNotAuthentic()
+        {
+            using var harness = new Harness("unknown");
+
+            await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.QuickVerifyCode = "ZZZZZZZZ";
+
+            await viewModel.QuickVerifyAsync();
+
+            Assert.True(viewModel.IsValidated);
+            Assert.True(viewModel.IsNotFound);
+            Assert.False(viewModel.IsSuccess);
+            Assert.False(viewModel.IsAuthentic);
+        }
+
+        [Fact]
+        public async Task VerifyPastedText_NoVLine_ReportsUnverifiableNotSuccess()
+        {
+            using var harness = new Harness("noVline");
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.ConcatenatedText = "L:TNRC-SSDL\nC:مركز البحوث النووية\nSN:PR-777";
+
+            await viewModel.VerifyPastedTextAsync();
+
+            Assert.True(viewModel.IsValidated);
+            Assert.True(viewModel.IsUnverifiable);
+            Assert.False(viewModel.IsSuccess);
         }
     }
 }

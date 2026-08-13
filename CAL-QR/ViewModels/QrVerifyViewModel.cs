@@ -1,60 +1,48 @@
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.EntityFrameworkCore;
-using CAL_QR.Data;
+using CAL_QR.Models;
+using CAL_QR.Repositories;
 using CAL_QR.ViewModels.Base;
-using CAL_QR.Services;
 
 namespace CAL_QR.ViewModels
 {
+    public enum VerificationDisplayState
+    {
+        None,
+        Authentic,
+        Amended,
+        NotFound,
+        Unverifiable
+    }
+
     public class QrVerifyViewModel : BaseViewModel
     {
-        private readonly IHmacService _hmacService;
-        private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly ICertificateRepository _certificateRepository;
 
         private string _concatenatedText = string.Empty;
         private string _quickVerifyCode = string.Empty;
-        
+
         private string _owner = string.Empty;
-        private string _deviceType = string.Empty;
         private string _model = string.Empty;
         private string _serial = string.Empty;
         private string _certNo = string.Empty;
         private string _calDate = string.Empty;
         private string _expDate = string.Empty;
-        private string _engineer = string.Empty;
-        private string _calType = string.Empty;
         private string _result = string.Empty;
-        private string _readVerifyCode = string.Empty;
-
-        private string _manualOwner = string.Empty;
-        private string _manualDeviceType = string.Empty;
-        private string _manualModel = string.Empty;
-        private string _manualSerial = string.Empty;
-        private string _manualCertNo = string.Empty;
-        private DateTime? _manualCalDate = DateTime.Today;
-        private DateTime? _manualExpDate = DateTime.Today.AddYears(1);
-        private string _manualEngineer = string.Empty;
-        private string _manualResult = "Passed";
-        private string _manualVerifyCode = string.Empty;
+        private string _amendedAt = string.Empty;
 
         private bool _isValidated;
-        private bool _isSuccess;
+        private VerificationDisplayState _displayState = VerificationDisplayState.None;
         private string _message = string.Empty;
-        private string _computedVerifyCode = string.Empty;
         private string _verificationSource = "لم يتم التحقق بعد";
 
-        public QrVerifyViewModel(IHmacService hmacService, IDbContextFactory<CalQrDbContext> contextFactory)
+        public QrVerifyViewModel(ICertificateRepository certificateRepository)
         {
-            _hmacService = hmacService;
-            _contextFactory = contextFactory;
+            _certificateRepository = certificateRepository;
 
             VerifyPastedTextCommand = new RelayCommand(async () => await VerifyPastedTextAsync());
-            VerifyManualCommand = new RelayCommand(async () => await VerifyManualAsync());
             ClearCommand = new RelayCommand(Clear);
-            QuickVerifyCommand = new RelayCommand(async () => await QuickVerifyByCodeAsync());
+            QuickVerifyCommand = new RelayCommand(async () => await QuickVerifyAsync());
         }
 
         #region Properties
@@ -64,34 +52,20 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _concatenatedText, value);
         }
 
-        public string Owner { get => _owner; set => SetProperty(ref _owner, value); }
-        public string DeviceType { get => _deviceType; set => SetProperty(ref _deviceType, value); }
-        public string Model { get => _model; set => SetProperty(ref _model, value); }
-        public string Serial { get => _serial; set => SetProperty(ref _serial, value); }
-        public string CertNo { get => _certNo; set => SetProperty(ref _certNo, value); }
-        public string CalDate { get => _calDate; set => SetProperty(ref _calDate, value); }
-        public string ExpDate { get => _expDate; set => SetProperty(ref _expDate, value); }
-        public string Engineer { get => _engineer; set => SetProperty(ref _engineer, value); }
-        public string CalType { get => _calType; set => SetProperty(ref _calType, value); }
-        public string Result { get => _result; set => SetProperty(ref _result, value); }
-        public string ReadVerifyCode { get => _readVerifyCode; set => SetProperty(ref _readVerifyCode, value); }
-
-        public string ManualOwner { get => _manualOwner; set => SetProperty(ref _manualOwner, value); }
-        public string ManualDeviceType { get => _manualDeviceType; set => SetProperty(ref _manualDeviceType, value); }
-        public string ManualModel { get => _manualModel; set => SetProperty(ref _manualModel, value); }
-        public string ManualSerial { get => _manualSerial; set => SetProperty(ref _manualSerial, value); }
-        public string ManualCertNo { get => _manualCertNo; set => SetProperty(ref _manualCertNo, value); }
-        public DateTime? ManualCalDate { get => _manualCalDate; set => SetProperty(ref _manualCalDate, value); }
-        public DateTime? ManualExpDate { get => _manualExpDate; set => SetProperty(ref _manualExpDate, value); }
-        public string ManualEngineer { get => _manualEngineer; set => SetProperty(ref _manualEngineer, value); }
-        public string ManualResult { get => _manualResult; set => SetProperty(ref _manualResult, value); }
-        public string ManualVerifyCode { get => _manualVerifyCode; set => SetProperty(ref _manualVerifyCode, value); }
-
         public string QuickVerifyCode
         {
             get => _quickVerifyCode;
             set => SetProperty(ref _quickVerifyCode, value);
         }
+
+        public string Owner { get => _owner; set => SetProperty(ref _owner, value); }
+        public string Model { get => _model; set => SetProperty(ref _model, value); }
+        public string Serial { get => _serial; set => SetProperty(ref _serial, value); }
+        public string CertNo { get => _certNo; set => SetProperty(ref _certNo, value); }
+        public string CalDate { get => _calDate; set => SetProperty(ref _calDate, value); }
+        public string ExpDate { get => _expDate; set => SetProperty(ref _expDate, value); }
+        public string Result { get => _result; set => SetProperty(ref _result, value); }
+        public string AmendedAt { get => _amendedAt; set => SetProperty(ref _amendedAt, value); }
 
         public string VerificationSource
         {
@@ -100,313 +74,163 @@ namespace CAL_QR.ViewModels
         }
 
         public bool IsValidated { get => _isValidated; set => SetProperty(ref _isValidated, value); }
-        public bool IsSuccess { get => _isSuccess; set => SetProperty(ref _isSuccess, value); }
+
+        public VerificationDisplayState DisplayState
+        {
+            get => _displayState;
+            set
+            {
+                if (SetProperty(ref _displayState, value))
+                {
+                    OnPropertyChanged(nameof(IsAuthentic));
+                    OnPropertyChanged(nameof(IsAmended));
+                    OnPropertyChanged(nameof(IsNotFound));
+                    OnPropertyChanged(nameof(IsUnverifiable));
+                    OnPropertyChanged(nameof(IsSuccess));
+                }
+            }
+        }
+
+        public bool IsAuthentic => DisplayState == VerificationDisplayState.Authentic;
+        public bool IsAmended => DisplayState == VerificationDisplayState.Amended;
+        public bool IsNotFound => DisplayState == VerificationDisplayState.NotFound;
+        public bool IsUnverifiable => DisplayState == VerificationDisplayState.Unverifiable;
+        public bool IsSuccess => IsAuthentic || IsAmended;
+
         public string Message { get => _message; set => SetProperty(ref _message, value); }
-        public string ComputedVerifyCode { get => _computedVerifyCode; set => SetProperty(ref _computedVerifyCode, value); }
         #endregion
 
         #region Commands
         public ICommand VerifyPastedTextCommand { get; }
-        public ICommand VerifyManualCommand { get; }
         public ICommand ClearCommand { get; }
         public ICommand QuickVerifyCommand { get; }
         #endregion
 
-        internal async Task VerifyPastedTextAsync()
+        internal async System.Threading.Tasks.Task VerifyPastedTextAsync()
         {
-            IsValidated = false;
-            Message = string.Empty;
             VerificationSource = "عبر لصق نص QR";
 
             if (string.IsNullOrWhiteSpace(ConcatenatedText))
             {
-                Message = "تنبيه: يرجى لصق نص كود QR أولاً.";
-                IsSuccess = false;
-                IsValidated = true;
+                SetUnverifiable("تنبيه: يرجى لصق نص كود QR أولاً.");
                 return;
             }
 
-            try
+            string? code = null;
+            var lines = ConcatenatedText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in lines)
             {
-                var lines = ConcatenatedText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines)
+                if (line.StartsWith("V:"))
                 {
-                    if (line.StartsWith("الجهة: ")) Owner = line.Substring("الجهة: ".Length).Trim();
-                    else if (line.StartsWith("الجهة / Owner: ")) Owner = line.Substring("الجهة / Owner: ".Length).Trim();
-                    else if (line.StartsWith("النوع / Type: ")) DeviceType = line.Substring("النوع / Type: ".Length).Trim();
-                    else if (line.StartsWith("الموديل / Model: ")) Model = line.Substring("الموديل / Model: ".Length).Trim();
-                    else if (line.StartsWith("الرقم التسلسلي / S/N: ")) Serial = line.Substring("الرقم التسلسلي / S/N: ".Length).Trim();
-                    else if (line.StartsWith("رقم الشهادة: ")) CertNo = line.Substring("رقم الشهادة: ".Length).Trim();
-                    else if (line.StartsWith("رقم الشهادة / Cert No: ")) CertNo = line.Substring("رقم الشهادة / Cert No: ".Length).Trim();
-                    else if (line.StartsWith("تاريخ المعايرة: ")) CalDate = line.Substring("تاريخ المعايرة: ".Length).Trim();
-                    else if (line.StartsWith("تاريخ المعايرة / Cal. Date: ")) CalDate = line.Substring("تاريخ المعايرة / Cal. Date: ".Length).Trim();
-                    else if (line.StartsWith("تاريخ انتهاء المعايرة / Exp. Date: ")) ExpDate = line.Substring("تاريخ انتهاء المعايرة / Exp. Date: ".Length).Trim();
-                    else if (line.StartsWith("تاريخ الانتهاء / Exp. Date: ")) ExpDate = line.Substring("تاريخ الانتهاء / Exp. Date: ".Length).Trim();
-                    else if (line.StartsWith("المهندس: ")) Engineer = line.Substring("المهندس: ".Length).Trim();
-                    else if (line.StartsWith("المهندس / Engineer: ")) Engineer = line.Substring("المهندس / Engineer: ".Length).Trim();
-                    else if (line.StartsWith("نوع المعايرة / Cal. Type: ")) CalType = line.Substring("نوع المعايرة / Cal. Type: ".Length).Trim();
-                    else if (line.StartsWith("النتيجة / Result: "))
-                    {
-                        var resText = line.Substring("النتيجة / Result: ".Length).Trim();
-                        if (resText.Contains("Passed") || resText.Contains("ناجح")) Result = "Passed";
-                        else if (resText.Contains("Failed") || resText.Contains("راسب")) Result = "Failed";
-                        else if (resText.Contains("Conditional") || resText.Contains("مشروط")) Result = "Conditional";
-                        else Result = resText;
-                    }
-                    else if (line.StartsWith("كود التحقق / Verify Code: ")) ReadVerifyCode = line.Substring("كود التحقق / Verify Code: ".Length).Trim();
+                    code = line.Substring("V:".Length).Trim();
+                    break;
                 }
-
-                ComputedVerifyCode = _hmacService.ComputeSignature(
-                    certNo: CertNo,
-                    model: Model,
-                    serial: Serial,
-                    ownerName: Owner,
-                    calDate: CalDate,
-                    expDate: ExpDate,
-                    result: Result,
-                    engineerName: Engineer
-                );
-
-                DateTime? recordCreatedAt = null;
-                using (var context = await _contextFactory.CreateDbContextAsync())
-                {
-                    var dbRecord = await context.CalibrationRecords
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(r => r.CertificateNumber == CertNo.Trim() && !r.IsDeleted);
-                    if (dbRecord != null)
-                    {
-                        recordCreatedAt = dbRecord.CreatedAt;
-                    }
-                }
-
-                IsSuccess = _hmacService.VerifySignature(
-                    certNo: CertNo,
-                    model: Model,
-                    serial: Serial,
-                    ownerName: Owner,
-                    calDate: CalDate,
-                    expDate: ExpDate,
-                    result: Result,
-                    engineerName: Engineer,
-                    signature: ReadVerifyCode,
-                    recordCreatedAt: recordCreatedAt
-                );
-
-                if (IsSuccess)
-                {
-                    Message = "✅ شهادة أصلية ومطابقة لمركز البحوث النووية.";
-                }
-                else
-                {
-                    Message = "❌ تحذير: التوقيع الرقمي غير مطابق! الشهادة معدّلة أو مزوّرة!";
-                }
-
-                IsValidated = true;
             }
-            catch (Exception ex)
+
+            if (code == null)
             {
-                Message = $"خطأ أثناء تحليل النص: {ex.Message}";
-                IsSuccess = false;
-                IsValidated = true;
+                SetUnverifiable("لم يُعثر على كود تحقق في النص الملصوق.");
+                return;
             }
+
+            await VerifyAsync(code);
         }
 
-        internal async Task VerifyManualAsync()
+        internal async System.Threading.Tasks.Task QuickVerifyAsync()
         {
-            IsValidated = false;
-            Message = string.Empty;
-            VerificationSource = "عبر الإدخال اليدوي";
+            VerificationSource = "عبر الكود السريع";
 
-            if (string.IsNullOrWhiteSpace(ManualCertNo) ||
-                string.IsNullOrWhiteSpace(ManualModel) ||
-                string.IsNullOrWhiteSpace(ManualSerial) ||
-                string.IsNullOrWhiteSpace(ManualOwner) ||
-                !ManualCalDate.HasValue ||
-                !ManualExpDate.HasValue ||
-                string.IsNullOrWhiteSpace(ManualEngineer) ||
-                string.IsNullOrWhiteSpace(ManualVerifyCode))
+            if (string.IsNullOrWhiteSpace(QuickVerifyCode))
             {
-                Message = "تنبيه: يرجى ملء كافة حقول التحقق اليدوي مع كود التحقق.";
-                IsSuccess = false;
-                IsValidated = true;
+                SetUnverifiable("تنبيه: يرجى إدخال كود التحقق أولاً.");
                 return;
             }
 
-            try
+            await VerifyAsync(QuickVerifyCode.Trim());
+        }
+
+        private async System.Threading.Tasks.Task VerifyAsync(string code)
+        {
+            var result = await _certificateRepository.VerifyByCodeAsync(code);
+
+            switch (result.Status)
             {
-                string calDateStr = ManualCalDate.Value.ToString("yyyy-MM-dd");
-                string expDateStr = ManualExpDate.Value.ToString("yyyy-MM-dd");
+                case CertificateVerificationStatus.Authentic:
+                    FillCertificateDisplay(result.Certificate);
+                    DisplayState = VerificationDisplayState.Authentic;
+                    Message = "✅ شهادة أصلية ومطابقة لمركز البحوث النووية.";
+                    break;
 
-                ComputedVerifyCode = _hmacService.ComputeSignature(
-                    certNo: ManualCertNo.Trim(),
-                    model: ManualModel.Trim(),
-                    serial: ManualSerial.Trim(),
-                    ownerName: ManualOwner.Trim(),
-                    calDate: calDateStr,
-                    expDate: expDateStr,
-                    result: ManualResult,
-                    engineerName: ManualEngineer.Trim()
-                );
+                case CertificateVerificationStatus.AuthenticAmended:
+                    FillCertificateDisplay(result.Certificate);
+                    AmendedAt = result.AmendedAt?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    DisplayState = VerificationDisplayState.Amended;
+                    Message = $"⚠️ شهادة أصلية، لكنها عُدِّلت بعد إصدارها بتاريخ {AmendedAt}.";
+                    break;
 
-                DateTime? recordCreatedAt = null;
-                using (var context = await _contextFactory.CreateDbContextAsync())
-                {
-                    var dbRecord = await context.CalibrationRecords
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(r => r.CertificateNumber == ManualCertNo.Trim() && !r.IsDeleted);
-                    if (dbRecord != null)
-                    {
-                        recordCreatedAt = dbRecord.CreatedAt;
-                    }
-                }
+                case CertificateVerificationStatus.NotFound:
+                    ClearCertificateDisplay();
+                    DisplayState = VerificationDisplayState.NotFound;
+                    Message = "❌ الكود غير موجود — الشهادة قد تكون مزوّرة أو الكود مُدخل خطأً.";
+                    break;
 
-                IsSuccess = _hmacService.VerifySignature(
-                    certNo: ManualCertNo.Trim(),
-                    model: ManualModel.Trim(),
-                    serial: ManualSerial.Trim(),
-                    ownerName: ManualOwner.Trim(),
-                    calDate: calDateStr,
-                    expDate: expDateStr,
-                    result: ManualResult,
-                    engineerName: ManualEngineer.Trim(),
-                    signature: ManualVerifyCode.Trim(),
-                    recordCreatedAt: recordCreatedAt
-                );
-
-                if (IsSuccess)
-                {
-                    Message = "✅ شهادة أصلية ومطابقة لمركز البحوث النووية (التحقق اليدوي).";
-                }
-                else
-                {
-                    Message = "❌ تحذير: التوقيع الرقمي غير مطابق! البيانات المُدخلة معدّلة أو مزوّرة!";
-                }
-
-                IsValidated = true;
+                case CertificateVerificationStatus.UnsupportedVersion:
+                    ClearCertificateDisplay();
+                    DisplayState = VerificationDisplayState.Unverifiable;
+                    Message = "ℹ️ تعذّر التحقّق: إصدار توقيع غير مدعوم. يرجى مراجعة المنظومة.";
+                    break;
             }
-            catch (Exception ex)
+
+            IsValidated = true;
+        }
+
+        private void SetUnverifiable(string message)
+        {
+            ClearCertificateDisplay();
+            DisplayState = VerificationDisplayState.Unverifiable;
+            Message = message;
+            IsValidated = true;
+        }
+
+        private void FillCertificateDisplay(Certificate? certificate)
+        {
+            if (certificate == null)
             {
-                Message = $"خطأ أثناء التحقق اليدوي: {ex.Message}";
-                IsSuccess = false;
-                IsValidated = true;
+                ClearCertificateDisplay();
+                return;
             }
+
+            Owner = certificate.ClientName;
+            Model = certificate.DeviceModel;
+            Serial = certificate.DeviceSerialNumber;
+            CertNo = certificate.CertificateNumber;
+            CalDate = certificate.CalibrationDate.ToString("yyyy-MM-dd");
+            ExpDate = certificate.DueDate.ToString("yyyy-MM-dd");
+            Result = certificate.ComplianceVerdict ?? string.Empty;
+        }
+
+        private void ClearCertificateDisplay()
+        {
+            Owner = string.Empty;
+            Model = string.Empty;
+            Serial = string.Empty;
+            CertNo = string.Empty;
+            CalDate = string.Empty;
+            ExpDate = string.Empty;
+            Result = string.Empty;
+            AmendedAt = string.Empty;
         }
 
         private void Clear()
         {
             ConcatenatedText = string.Empty;
             QuickVerifyCode = string.Empty;
-            Owner = string.Empty;
-            DeviceType = string.Empty;
-            Model = string.Empty;
-            Serial = string.Empty;
-            CertNo = string.Empty;
-            CalDate = string.Empty;
-            ExpDate = string.Empty;
-            Engineer = string.Empty;
-            CalType = string.Empty;
-            Result = string.Empty;
-            ReadVerifyCode = string.Empty;
-
-            ManualOwner = string.Empty;
-            ManualDeviceType = string.Empty;
-            ManualModel = string.Empty;
-            ManualSerial = string.Empty;
-            ManualCertNo = string.Empty;
-            ManualCalDate = DateTime.Today;
-            ManualExpDate = DateTime.Today.AddYears(1);
-            ManualEngineer = string.Empty;
-            ManualResult = "Passed";
-            ManualVerifyCode = string.Empty;
+            ClearCertificateDisplay();
 
             IsValidated = false;
-            IsSuccess = false;
+            DisplayState = VerificationDisplayState.None;
             Message = string.Empty;
-            ComputedVerifyCode = string.Empty;
             VerificationSource = "لم يتم التحقق بعد";
-        }
-
-        internal async Task QuickVerifyByCodeAsync()
-        {
-            IsValidated = false;
-            Message = string.Empty;
-            VerificationSource = "عبر الكود السريع";
-
-            if (string.IsNullOrWhiteSpace(QuickVerifyCode))
-            {
-                Message = "تنبيه: يرجى إدخال كود التحقق أولاً.";
-                IsSuccess = false;
-                IsValidated = true;
-                return;
-            }
-
-            try
-            {
-                string searchCode = QuickVerifyCode.Trim().ToUpper();
-
-                using var context = await _contextFactory.CreateDbContextAsync();
-
-                var record = await context.CalibrationRecords
-                    .AsNoTracking()
-                    .Include(r => r.Device)
-                        .ThenInclude(d => d!.Owner)
-                    .Include(r => r.Device)
-                        .ThenInclude(d => d!.DeviceType)
-                    .FirstOrDefaultAsync(r => r.HmacSignature == searchCode && !r.IsDeleted);
-
-                if (record != null)
-                {
-                    Owner = record.Device?.Owner?.Name ?? "غير محدد";
-                    DeviceType = record.Device?.DeviceType?.Name ?? "غير محدد";
-                    Model = record.Device?.Model ?? "غير محدد";
-                    Serial = record.Device?.SerialNumber ?? "غير محدد";
-                    CertNo = record.CertificateNumber ?? "غير محدد";
-                    CalDate = record.CalibrationDate.ToString("yyyy-MM-dd");
-                    ExpDate = record.ExpiryDate.ToString("yyyy-MM-dd");
-                    Engineer = record.EngineerName ?? "غير محدد";
-                    CalType = record.CalibrationDescription ?? "غير محدد";
-                    
-                    Result = record.Result switch
-                    {
-                        "Passed" => "Passed",
-                        "Failed" => "Failed",
-                        "Conditional" => "Conditional",
-                        _ => record.Result
-                    };
-
-                    ReadVerifyCode = record.HmacSignature ?? string.Empty;
-                    ComputedVerifyCode = record.HmacSignature ?? string.Empty;
-                    
-                    IsSuccess = true;
-                    Message = "✅ شهادة أصلية ومطابقة لمركز البحوث النووية.";
-                }
-                else
-                {
-                    Owner = string.Empty;
-                    DeviceType = string.Empty;
-                    Model = string.Empty;
-                    Serial = string.Empty;
-                    CertNo = string.Empty;
-                    CalDate = string.Empty;
-                    ExpDate = string.Empty;
-                    Engineer = string.Empty;
-                    CalType = string.Empty;
-                    Result = string.Empty;
-                    ReadVerifyCode = string.Empty;
-                    ComputedVerifyCode = string.Empty;
-
-                    IsSuccess = false;
-                    Message = "❌ كود التحقق غير موجود في قاعدة البيانات - الشهادة قد تكون مزوّرة أو الكود مُدخل بشكل خاطئ.";
-                }
-
-                IsValidated = true;
-            }
-            catch (Exception ex)
-            {
-                Message = $"خطأ أثناء التحقق السريع: {ex.Message}";
-                IsSuccess = false;
-                IsValidated = true;
-            }
         }
     }
 }

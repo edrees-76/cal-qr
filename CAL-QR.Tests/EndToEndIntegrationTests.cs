@@ -81,15 +81,15 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            // 2. Register Calibration Record with valid HMAC signature
-            string certNo = "CERT-E2E-101";
+            // 2. Register Calibration Record (legacy HMAC signature, unrelated to certificate verification below)
+            string legacyCertNo = "CERT-E2E-101";
             string calDateStr = "2026-07-18";
             string expDateStr = "2027-07-18";
             string result = "Passed";
             string engineer = "Edrees";
 
-            string signature = hmacService.ComputeSignature(
-                certNo: certNo,
+            string legacySignature = hmacService.ComputeSignature(
+                certNo: legacyCertNo,
                 model: device.Model,
                 serial: device.SerialNumber,
                 ownerName: owner.Name,
@@ -99,65 +99,72 @@ namespace CAL_QR.Tests
                 engineerName: engineer
             );
 
+            int calibrationRecordId;
             using (var context = new CalQrDbContext(options))
             {
                 var record = new CalibrationRecord
                 {
                     DeviceId = device.Id,
-                    CertificateNumber = certNo,
+                    CertificateNumber = legacyCertNo,
                     CalibrationDate = DateTime.Parse(calDateStr),
                     ExpiryDate = DateTime.Parse(expDateStr),
                     Result = result,
                     EngineerName = engineer,
-                    HmacSignature = signature
+                    HmacSignature = legacySignature
                 };
                 context.CalibrationRecords.Add(record);
                 await context.SaveChangesAsync();
+                calibrationRecordId = record.Id;
             }
 
-            // 3. Generate QR code text via QrService
-            var qrService = new QrService(factory);
-            string qrText = qrService.GenerateVerificationText(
-                ownerName: owner.Name,
-                deviceType: type.Name,
-                model: device.Model,
-                serial: device.SerialNumber,
-                certNo: certNo,
-                calDate: calDateStr,
-                expDate: expDateStr,
-                engineerName: engineer,
-                description: "",
-                result: result,
-                verifyCode: signature
-            );
+            // 3. Issue a real Certificate (current signature path) via CertificateRepository
+            var signatureService = new CertificateSignatureService(hmacService);
+            var certificateRepository = new CertificateRepository(
+                factory,
+                new CertificateNumberService(factory),
+                signatureService);
+
+            var certificate = new Certificate
+            {
+                CalibrationRecordId = calibrationRecordId,
+                ClientName = owner.Name,
+                DeviceModel = device.Model,
+                DeviceSerialNumber = device.SerialNumber,
+                CalibrationDate = DateTime.Parse(calDateStr),
+                IssueDate = DateTime.Parse(calDateStr)
+            };
+
+            string certNo = await certificateRepository.AddAsync(certificate);
+            var issued = await certificateRepository.GetByCertificateNumberAsync(certNo);
 
             // 4. Verify via QrVerifyViewModel (Paste path)
-            var verifyVm = new QrVerifyViewModel(hmacService, factory);
+            string qrText = signatureService.BuildQrPayload(issued!);
+
+            var verifyVm = new QrVerifyViewModel(certificateRepository);
             verifyVm.ConcatenatedText = qrText;
             await verifyVm.VerifyPastedTextAsync();
 
             Assert.True(verifyVm.IsValidated);
+            Assert.True(verifyVm.IsAuthentic);
             Assert.True(verifyVm.IsSuccess);
-            Assert.Equal("Nuclear Research Center", verifyVm.Owner);
-            Assert.Equal("Geiger Counter", verifyVm.DeviceType);
-            Assert.Equal("Ludlum-12", verifyVm.Model);
-            Assert.Equal("SN-E2E-1", verifyVm.Serial);
+            Assert.Equal(owner.Name, verifyVm.Owner);
+            Assert.Equal(device.Model, verifyVm.Model);
+            Assert.Equal(device.SerialNumber, verifyVm.Serial);
             Assert.Equal(certNo, verifyVm.CertNo);
-            Assert.Equal("Passed", verifyVm.Result);
-            Assert.Equal(signature, verifyVm.ReadVerifyCode);
 
             // 5. Verify via QrVerifyViewModel (Quick Verify code path)
             verifyVm.ClearCommand.Execute(null);
             Assert.Empty(verifyVm.CertNo);
 
-            verifyVm.QuickVerifyCode = signature;
-            await verifyVm.QuickVerifyByCodeAsync();
+            verifyVm.QuickVerifyCode = issued!.VerifyCode!;
+            await verifyVm.QuickVerifyAsync();
 
             Assert.True(verifyVm.IsValidated);
+            Assert.True(verifyVm.IsAuthentic);
             Assert.True(verifyVm.IsSuccess);
             Assert.Equal(certNo, verifyVm.CertNo);
-            Assert.Equal("Nuclear Research Center", verifyVm.Owner);
-            Assert.Equal("Ludlum-12", verifyVm.Model);
+            Assert.Equal(owner.Name, verifyVm.Owner);
+            Assert.Equal(device.Model, verifyVm.Model);
 
             // Cleanup
             try { Directory.Delete(testDir, true); } catch {}

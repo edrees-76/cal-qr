@@ -1,14 +1,10 @@
 using System.Collections.Generic;
-using System.Windows.Media.Imaging;
 using CAL_QR.Models;
 
 namespace CAL_QR.Services
 {
     public class QrPrintJob
     {
-        // ── يبقى مؤقّتًا حتى الالتزام ٢ (العقل ما زال يملؤه) ──
-        public BitmapSource? QrImage { get; set; }
-
         // ── تخطيط الورق (بلا تغيير) ──
         public PaperTemplate? Template { get; set; }
         public string PrinterName { get; set; } = string.Empty;
@@ -29,8 +25,5 @@ namespace CAL_QR.Services
 
         // ── سطور CFavg لكلّ نويدة، جاهزة للطباعة (مثل "Co-60 = 1.02"). قد تكون فارغة للمبسّطة. ──
         public List<string> NuclideLines { get; set; } = new List<string>();
-
-        // ── يبقى مؤقّتًا للتوافق؛ لم يعد يُرسَم (يُنظَّف في الالتزام ٢) ──
-        public string DeviceInfoText { get; set; } = string.Empty;
     }
 }

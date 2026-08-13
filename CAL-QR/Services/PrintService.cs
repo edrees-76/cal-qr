@@ -27,7 +27,7 @@ namespace CAL_QR.Services
 
         public void PrintQrLabel(QrPrintJob job)
         {
-            if (job.Template == null || job.QrImage == null) return;
+            if (job.Template == null) return;
 
             var printDialog = new PrintDialog();
             if (!string.IsNullOrWhiteSpace(job.PrinterName))

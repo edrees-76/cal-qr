@@ -238,8 +238,7 @@ namespace CAL_QR.ViewModels
         private bool CanExportPdf()
         {
             return SelectedRecord != null
-                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber)
-                && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
+                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber);
         }
 
         private async Task ExportPdfAsync()

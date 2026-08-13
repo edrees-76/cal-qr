@@ -232,7 +232,7 @@ namespace CAL_QR.ViewModels
         private bool CanPrintRecord()
         {
             return SelectedRecord != null
-                && !string.IsNullOrWhiteSpace(SelectedRecord.HmacSignature);
+                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber);
         }
 
         private bool CanExportPdf()

@@ -22,6 +22,7 @@ namespace CAL_QR.ViewModels
         private readonly IQrService _qrService;
         private readonly IPrintService _printService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly ICertificateRepository _certificateRepository;
 
         private CalibrationRecord? _calibrationRecord;
         private ObservableCollection<string> _printers = new();
@@ -41,13 +42,15 @@ namespace CAL_QR.ViewModels
             IPaperTemplateRepository templateRepository,
             IQrService qrService,
             IPrintService printService,
-            IAuditLogRepository auditLogRepository)
+            IAuditLogRepository auditLogRepository,
+            ICertificateRepository certificateRepository)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
             _qrService = qrService;
             _printService = printService;
             _auditLogRepository = auditLogRepository;
+            _certificateRepository = certificateRepository;
 
             Printers = new ObservableCollection<string>(_printService.GetAvailablePrinters());
             
@@ -264,32 +267,41 @@ namespace CAL_QR.ViewModels
                 var jobs = new List<QrPrintJob>();
                 foreach (var record in CalibrationRecords)
                 {
-                    string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}\nتاريخ المعايرة: {record.CalibrationDate:yyyy-MM-dd}\nتاريخ الانتهاء: {record.ExpiryDate:yyyy-MM-dd}\nكود التحقق: {record.HmacSignature}";
-                    string qrContent = _qrService.GenerateVerificationText(
-                        ownerName: record.Device?.Owner?.Name ?? "",
-                        deviceType: record.Device?.DeviceType?.Name ?? "",
-                        model: record.Device?.Model ?? "",
-                        serial: record.Device?.SerialNumber ?? "",
-                        certNo: record.CertificateNumber,
-                        calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
-                        expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
-                        engineerName: record.EngineerName,
-                        description: record.CalibrationDescription ?? "",
-                        result: record.Result,
-                        verifyCode: record.HmacSignature
-                    );
+                    // ── السجلّ بلا رقم شهادة → لا ملصق (لا كود تحقّق يُطبع) ──
+                    if (string.IsNullOrWhiteSpace(record.CertificateNumber))
+                        continue;
 
-                    var qrPrintImage = _qrService.GenerateQrCodeImage(qrContent, 600);
+                    // ── العقل يقرأ من الشهادة لا من CalibrationRecord/HmacSignature ──
+                    var certificate = await _certificateRepository
+                        .GetByCertificateNumberAsync(record.CertificateNumber);
 
+                    // ── لا شهادة مرتبطة → تخطَّ هذا السجلّ ──
+                    if (certificate == null)
+                        continue;
+
+                    // ── سطور CFavg لكلّ نويدة، جاهزة للطباعة (تُحذف الفارغة) ──
+                    var nuclideLines = (certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
+                        .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+                        .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
+                        .Select(s => $"{s.Radionuclide} = {s.AverageCorrectionFactor}")
+                        .ToList();
+
+                    // ── التواريخ من الشهادة (مبدأ الوثيقة المجمّدة) لا من record ──
                     jobs.Add(new QrPrintJob
                     {
-                        QrImage = qrPrintImage,
                         Template = SelectedTemplate,
                         PrinterName = SelectedPrinter,
                         StartColumn = currentColumn,
                         StartRow = currentRow,
-                        CertificateNumber = record.CertificateNumber,
-                        DeviceInfoText = infoText
+                        CertificateNumber = certificate.CertificateNumber,
+                        ClientName = certificate.ClientName,
+                        DeviceType = certificate.CertificateTemplateType ?? "",
+                        Model = certificate.DeviceModel,
+                        SerialNumber = certificate.DeviceSerialNumber,
+                        CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd"),
+                        ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
+                        VerifyCode = certificate.VerifyCode ?? "",
+                        NuclideLines = nuclideLines
                     });
 
                     if (SelectedTemplate.PaperType != "Roll")

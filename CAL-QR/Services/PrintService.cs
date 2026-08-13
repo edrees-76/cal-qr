@@ -94,10 +94,13 @@ namespace CAL_QR.Services
                 double paperHeightPx = (double)template.PaperHeightMm * MmToPx;
                 dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, paperWidthPx, paperHeightPx));
 
+                var typefaceBold = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+                var typefaceRegular = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+                var brushDark = Brushes.Black;
+                var brushBody = Brushes.DarkSlateGray;
+
                 foreach (var job in jobs)
                 {
-                    if (job.QrImage == null) continue;
-
                     double xMm = (double)template.MarginLeftMm + (job.StartColumn - 1) * ((double)template.LabelWidthMm + (double)template.HorizontalGapMm);
                     double yMm = (double)template.MarginTopMm + (job.StartRow - 1) * ((double)template.LabelHeightMm + (double)template.VerticalGapMm);
 
@@ -106,44 +109,50 @@ namespace CAL_QR.Services
                     double widthPx = (double)template.LabelWidthMm * MmToPx;
                     double heightPx = (double)template.LabelHeightMm * MmToPx;
 
-                    double qrSizePx = Math.Min(widthPx, heightPx) * 0.85;
-                    double qrXPx = xPx + (heightPx - qrSizePx) / 2;
-                    double qrYPx = yPx + (heightPx - qrSizePx) / 2;
+                    double padPx = 8;
+                    double innerWidth = widthPx - padPx * 2;
+                    double cursorX = xPx + padPx;
+                    double cursorY = yPx + padPx;
 
-                    dc.DrawImage(job.QrImage, new Rect(qrXPx, qrYPx, qrSizePx, qrSizePx));
+                    // ── العنوان: رقم الشهادة (عريض) ──
+                    var certText = new FormattedText(
+                        job.CertificateNumber,
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        FlowDirection.LeftToRight, typefaceBold, 11, brushDark, 96.0)
+                    { MaxTextWidth = innerWidth };
+                    dc.DrawText(certText, new Point(cursorX, cursorY));
+                    cursorY += certText.Height + 4;
 
-                    if (widthPx > qrSizePx + 50)
+                    // ── جسد الحقول: تسمية + قيمة، سطرًا سطرًا ──
+                    var bodyLines = new List<string>();
+                    if (!string.IsNullOrWhiteSpace(job.ClientName))    bodyLines.Add($"Client: {job.ClientName}");
+                    if (!string.IsNullOrWhiteSpace(job.DeviceType))    bodyLines.Add($"Type: {job.DeviceType}");
+                    if (!string.IsNullOrWhiteSpace(job.Model))         bodyLines.Add($"Model: {job.Model}");
+                    if (!string.IsNullOrWhiteSpace(job.SerialNumber))  bodyLines.Add($"S/N: {job.SerialNumber}");
+                    if (!string.IsNullOrWhiteSpace(job.CalibrationDate)) bodyLines.Add($"Cal. Date: {job.CalibrationDate}");
+                    if (!string.IsNullOrWhiteSpace(job.ExpiryDate))    bodyLines.Add($"Due Date: {job.ExpiryDate}");
+                    foreach (var nuclide in job.NuclideLines)
+                        if (!string.IsNullOrWhiteSpace(nuclide)) bodyLines.Add($"CFavg {nuclide}");
+
+                    if (bodyLines.Count > 0)
                     {
-                        double textXPx = qrXPx + qrSizePx + 10;
-                        double textYPx = yPx + 10;
-                        double textWidth = widthPx - (qrSizePx + 20);
-
-                        var typeface = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
-                        
-                        var formattedTextCert = new FormattedText(
-                            $"Cert: {job.CertificateNumber}",
+                        var bodyText = new FormattedText(
+                            string.Join("\n", bodyLines),
                             System.Globalization.CultureInfo.CurrentCulture,
-                            FlowDirection.LeftToRight,
-                            typeface,
-                            10,
-                            Brushes.Black,
-                            96.0
-                        );
-                        dc.DrawText(formattedTextCert, new Point(textXPx, textYPx));
+                            FlowDirection.LeftToRight, typefaceRegular, 8, brushBody, 96.0)
+                        { MaxTextWidth = innerWidth, MaxTextHeight = heightPx - (cursorY - yPx) - padPx - 14 };
+                        dc.DrawText(bodyText, new Point(cursorX, cursorY));
+                    }
 
-                        var typefaceRegular = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-                        var formattedTextInfo = new FormattedText(
-                            job.DeviceInfoText,
+                    // ── كود التحقّق: أسفل الملصق، عريض ──
+                    if (!string.IsNullOrWhiteSpace(job.VerifyCode))
+                    {
+                        var codeText = new FormattedText(
+                            $"Verify: {job.VerifyCode}",
                             System.Globalization.CultureInfo.CurrentCulture,
-                            FlowDirection.LeftToRight,
-                            typefaceRegular,
-                            7.5,
-                            Brushes.DarkSlateGray,
-                            96.0
-                        );
-                        formattedTextInfo.MaxTextWidth = textWidth;
-                        formattedTextInfo.MaxTextHeight = heightPx - 25;
-                        dc.DrawText(formattedTextInfo, new Point(textXPx, textYPx + 15));
+                            FlowDirection.LeftToRight, typefaceBold, 8, brushDark, 96.0)
+                        { MaxTextWidth = innerWidth };
+                        dc.DrawText(codeText, new Point(cursorX, yPx + heightPx - padPx - codeText.Height));
                     }
                 }
             }

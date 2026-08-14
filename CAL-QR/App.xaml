@@ -129,6 +129,11 @@
                         <Setter Property="Background" Value="{StaticResource PrimaryNavy}" />
                         <Setter Property="Foreground" Value="White" />
                     </MultiTrigger>
+                    <!-- الصفّ المُحدَّد يطابق مظهر الصفّ الممرور عليه: كحليّ + كتابة بيضاء -->
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{StaticResource PrimaryNavy}" />
+                        <Setter Property="Foreground" Value="White" />
+                    </Trigger>
                 </Style.Triggers>
             </Style>
 

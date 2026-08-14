@@ -9,7 +9,8 @@ using System.Linq;
 
 namespace CAL_QR.Tests
 {
-    public class PaperTemplateViewModelTests
+    [Collection("MessageBoxMock")]
+    public class PaperTemplateViewModelTests : IDisposable
     {
         public PaperTemplateViewModelTests()
         {
@@ -157,6 +158,11 @@ namespace CAL_QR.Tests
             {
                 return new CalQrDbContext(_options);
             }
+        }
+
+        public void Dispose()
+        {
+            PaperTemplateViewModel.MessageBoxShowMock = null;
         }
     }
 }

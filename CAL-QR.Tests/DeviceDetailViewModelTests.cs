@@ -14,7 +14,8 @@ using CAL_QR.Services;
 
 namespace CAL_QR.Tests
 {
-    public class DeviceDetailViewModelTests
+    [Collection("MessageBoxMock")]
+    public class DeviceDetailViewModelTests : IDisposable
     {
         public DeviceDetailViewModelTests()
         {
@@ -298,6 +299,11 @@ namespace CAL_QR.Tests
             // 2. With preferredRecordId -> sets SelectedRecord to the specific older record requested
             vm.LoadDeviceDetails(deviceId, recordOlder.Id);
             Assert.Equal("CERT-OLDER", vm.SelectedRecord?.CertificateNumber);
+        }
+
+        public void Dispose()
+        {
+            DeviceDetailViewModel.MessageBoxShowMock = null;
         }
     }
 }

@@ -16,7 +16,8 @@ using CAL_QR.ViewModels;
 
 namespace CAL_QR.Tests
 {
-    public class EndToEndIntegrationTests
+    [Collection("MessageBoxMock")]
+    public class EndToEndIntegrationTests : IDisposable
     {
         public EndToEndIntegrationTests()
         {
@@ -337,6 +338,11 @@ namespace CAL_QR.Tests
 
             // Cleanup
             try { Directory.Delete(testDir, true); } catch {}
+        }
+
+        public void Dispose()
+        {
+            DeviceDetailViewModel.MessageBoxShowMock = null;
         }
     }
 }

@@ -271,6 +271,9 @@ namespace CAL_QR.ViewModels
 
                 await _certificatePdfService.GenerateFileAsync(certificate, filePath);
 
+                // Phase 5-b: تسجيل أوّل طباعة/إصدار. MarkPrintedAsync idempotent — لا تدهس أوّل تاريخ.
+                await _certificateRepository.MarkPrintedAsync(certificate.Id);
+
                 Process.Start(new ProcessStartInfo(filePath) { UseShellExecute = true });
             }
             catch (Exception ex)

@@ -6,6 +6,7 @@ using CAL_QR.Enums;
 using CAL_QR.Models;
 using CAL_QR.Services;
 using CAL_QR.Services.Documents;
+using UglyToad.PdfPig;
 
 namespace CAL_QR.Tests
 {
@@ -335,16 +336,16 @@ namespace CAL_QR.Tests
                 c.UncertaintyComponents.Add(new CertificateUncertaintyComponent { SortOrder = 1, ComponentName = "Repeatability", EvaluationType = "A", Distribution = "Normal", StandardUncertainty = "0.01", ContributionPercent = "10" });
                 c.FunctionalChecks.Add(new CertificateFunctionalCheck { SortOrder = 1, CheckName = "Battery Check", Requirement = "> 20%", Result = "Pass" });
                 return c;
-            }) };
-            yield return new object[] { "Simplified", (Func<Certificate>)BuildSimplifiedStabilityCertificate };
-            yield return new object[] { "StatusReport", (Func<Certificate>)BuildStatusReportCertificate };
-            yield return new object[] { "EmptyOptionalFields", (Func<Certificate>)BuildEmptyOptionalFieldsCertificate };
-            yield return new object[] { "LongArabic", (Func<Certificate>)BuildLongArabicCertificate };
+            }), 2 };
+            yield return new object[] { "Simplified", (Func<Certificate>)BuildSimplifiedStabilityCertificate, 1 };
+            yield return new object[] { "StatusReport", (Func<Certificate>)BuildStatusReportCertificate, 2 };
+            yield return new object[] { "EmptyOptionalFields", (Func<Certificate>)BuildEmptyOptionalFieldsCertificate, 1 };
+            yield return new object[] { "LongArabic", (Func<Certificate>)BuildLongArabicCertificate, 1 };
         }
 
         [Theory]
         [MemberData(nameof(StabilityFamilies))]
-        public void GenerateBytes_StabilityAcrossFamilies_ProducesValidPdf(string familyName, Func<Certificate> build)
+        public void GenerateBytes_StabilityAcrossFamilies_ProducesValidPdf(string familyName, Func<Certificate> build, int expectedPages)
         {
             var certificate = build();
 
@@ -352,6 +353,73 @@ namespace CAL_QR.Tests
 
             AssertLooksLikePdf(bytes);
             Assert.True(bytes.Length > 1000, $"[{familyName}] الناتج أصغر من المتوقّع: {bytes.Length} بايت");
+
+            using var ms = new System.IO.MemoryStream(bytes);
+            using var doc = UglyToad.PdfPig.PdfDocument.Open(ms);
+            Assert.True(doc.NumberOfPages == expectedPages,
+                $"[{familyName}] متوقّع {expectedPages} صفحة، فعليّ {doc.NumberOfPages}");
+        }
+
+        private static Certificate BuildOversizedCertificate()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.ComplianceVerdict = "Passed";
+            certificate.UncertaintyEnabled = true;
+            certificate.MethodologyEnabled = true;
+            certificate.CombinedUncertainty = "0.05";
+            certificate.ExpandedUncertainty = "0.10";
+            certificate.CoverageFactor = "2";
+            certificate.MethodologyText = string.Concat(System.Linq.Enumerable.Repeat("نصّ منهجيّة مطوّل جدًّا لإجبار التمدّد. ", 20));
+
+            for (int i = 1; i <= 40; i++)
+                certificate.CalibrationResults.Add(new CertificateCalibrationResult
+                {
+                    SortOrder = i, SourceId = $"SRC-{i:00}", Radionuclide = "Cs-137",
+                    Scale = "x1.0", ReferenceValue = "10.00 mSv", MeasuredReading = "10.15 mSv",
+                    CorrectionFactor = "0.985", Unit = "mSv", Remarks = "Within acceptable limits"
+                });
+            for (int i = 1; i <= 15; i++)
+                certificate.UncertaintyComponents.Add(new CertificateUncertaintyComponent
+                {
+                    SortOrder = i, ComponentName = $"Component {i}", EvaluationType = "A",
+                    Distribution = "Normal", StandardUncertainty = "0.01", ContributionPercent = "5"
+                });
+            for (int i = 1; i <= 15; i++)
+                certificate.FunctionalChecks.Add(new CertificateFunctionalCheck
+                {
+                    SortOrder = i, CheckName = $"Functional Check {i}",
+                    Requirement = "> 20%", Result = "Pass", Remarks = "No issues observed"
+                });
+
+            return certificate;
+        }
+
+        [Fact]
+        public void GenerateBytes_OversizedCertificate_SpillsToMultiplePages_WithRepeatedHeaderFooter()
+        {
+            var certificate = BuildOversizedCertificate();
+
+            byte[] bytes = _service.GenerateBytes(certificate);
+
+            AssertLooksLikePdf(bytes);
+
+            using var ms = new System.IO.MemoryStream(bytes);
+            using var doc = UglyToad.PdfPig.PdfDocument.Open(ms);
+
+            // 1) التمدّد المشروع مسموح: بيانات ضخمة تتجاوز صفحتين دون اقتصاص
+            Assert.True(doc.NumberOfPages >= 3,
+                $"متوقّع 3 صفحات فأكثر لبيانات ضخمة، فعليّ {doc.NumberOfPages}");
+
+            // 2) الترويسة/التذييل يتكرّران: رقم الشهادة يظهر في نصّ الصفحة الأخيرة كما الأولى
+            var pages = System.Linq.Enumerable.ToList(doc.GetPages());
+            string firstPageText = pages[0].Text;
+            string lastPageText = pages[pages.Count - 1].Text;
+            string certNo = certificate.CertificateNumber;
+
+            Assert.True(firstPageText.Contains(certNo),
+                $"رقم الشهادة غير موجود في نصّ الصفحة الأولى. نصّ الصفحة:\n{firstPageText}");
+            Assert.True(lastPageText.Contains(certNo),
+                $"رقم الشهادة غير موجود في نصّ الصفحة الأخيرة (الترويسة لم تتكرّر؟). نصّ الصفحة:\n{lastPageText}");
         }
     }
 }

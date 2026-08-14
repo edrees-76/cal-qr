@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
+using CAL_QR.Enums;
 using CAL_QR.Models;
 using CAL_QR.Services;
 using CAL_QR.Services.Documents;
@@ -262,6 +263,95 @@ namespace CAL_QR.Tests
         {
             CertificatePdfEnvironment.EnsureInitialized();
             CertificatePdfEnvironment.EnsureInitialized();
+        }
+
+        private static Certificate BuildStatusReportCertificate()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.DocumentType = CertificateDocumentType.CalibrationStatusReport;
+            certificate.ComplianceVerdict = "NOT PERFORMED";
+            certificate.StatusReason = "Device failed initial functional inspection; calibration could not proceed.";
+            certificate.Remarks = "Contamination detected on the probe window. Returned to client for repair.";
+
+            certificate.FunctionalChecks.Add(new CertificateFunctionalCheck
+            {
+                SortOrder = 1, CheckName = "Battery Check", Requirement = "> 20%", Result = "Pass"
+            });
+            certificate.FunctionalChecks.Add(new CertificateFunctionalCheck
+            {
+                SortOrder = 2, CheckName = "Response Test", Requirement = "Within ±10%", Result = "Failed",
+                Remarks = "No response to reference source"
+            });
+            certificate.FunctionalChecks.Add(new CertificateFunctionalCheck
+            {
+                SortOrder = 3, CheckName = "Contamination Check", Requirement = "Clean", Result = "Not Performed"
+            });
+
+            return certificate;
+        }
+
+        private static Certificate BuildSimplifiedStabilityCertificate()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.UncertaintyEnabled = false;
+            certificate.MethodologyEnabled = false;
+            certificate.ComplianceVerdict = "Passed";
+            return certificate;
+        }
+
+        private static Certificate BuildEmptyOptionalFieldsCertificate()
+        {
+            // كلّ الحقول الاختياريّة فارغة/فاذّة — نتأكّد أنّ القالب لا ينهار على الحدّ الأدنى
+            var certificate = BuildBaseCertificate();
+            certificate.UncertaintyEnabled = false;
+            certificate.MethodologyEnabled = false;
+            return certificate;
+        }
+
+        private static Certificate BuildLongArabicCertificate()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.ClientName = "شركة الواحة للنفط — قسم الوقاية من الإشعاع والسلامة النوويّة";
+            certificate.ClientAddress = "طرابلس، ليبيا — المنطقة الصناعيّة، مبنى رقم ٤٧، الطابق الثالث";
+            certificate.MethodologyEnabled = true;
+            certificate.MethodologyText = string.Concat(System.Linq.Enumerable.Repeat("نصّ منهجيّة مطوّل للتأكّد من عدم انهيار التخطيط عند إدخال عربيّ كثيف. ", 12));
+            certificate.ComplianceVerdict = "Passed";
+            return certificate;
+        }
+
+        public static System.Collections.Generic.IEnumerable<object[]> StabilityFamilies()
+        {
+            yield return new object[] { "FullFamily", (Func<Certificate>)(() =>
+            {
+                var c = BuildBaseCertificate();
+                c.UncertaintyEnabled = true;
+                c.MethodologyEnabled = true;
+                c.CombinedUncertainty = "0.05";
+                c.ExpandedUncertainty = "0.10";
+                c.CoverageFactor = "2";
+                c.ComplianceVerdict = "Passed";
+                c.CalibrationResults.Add(new CertificateCalibrationResult { SortOrder = 1, SourceId = "SRC-1", Radionuclide = "Cs-137", MeasuredReading = "10.1", CorrectionFactor = "1.02", Unit = "µSv/h" });
+                c.NuclideSummaries.Add(new CertificateNuclideSummary { SortOrder = 1, Radionuclide = "Cs-137", AverageCorrectionFactor = "1.02" });
+                c.UncertaintyComponents.Add(new CertificateUncertaintyComponent { SortOrder = 1, ComponentName = "Repeatability", EvaluationType = "A", Distribution = "Normal", StandardUncertainty = "0.01", ContributionPercent = "10" });
+                c.FunctionalChecks.Add(new CertificateFunctionalCheck { SortOrder = 1, CheckName = "Battery Check", Requirement = "> 20%", Result = "Pass" });
+                return c;
+            }) };
+            yield return new object[] { "Simplified", (Func<Certificate>)BuildSimplifiedStabilityCertificate };
+            yield return new object[] { "StatusReport", (Func<Certificate>)BuildStatusReportCertificate };
+            yield return new object[] { "EmptyOptionalFields", (Func<Certificate>)BuildEmptyOptionalFieldsCertificate };
+            yield return new object[] { "LongArabic", (Func<Certificate>)BuildLongArabicCertificate };
+        }
+
+        [Theory]
+        [MemberData(nameof(StabilityFamilies))]
+        public void GenerateBytes_StabilityAcrossFamilies_ProducesValidPdf(string familyName, Func<Certificate> build)
+        {
+            var certificate = build();
+
+            byte[] bytes = _service.GenerateBytes(certificate);
+
+            AssertLooksLikePdf(bytes);
+            Assert.True(bytes.Length > 1000, $"[{familyName}] الناتج أصغر من المتوقّع: {bytes.Length} بايت");
         }
     }
 }

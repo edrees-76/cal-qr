@@ -232,6 +232,47 @@ namespace CAL_QR.Data
                 // لا جدول مكوّنات عدم يقين في هذا النموذج — UncertaintyEnabled = false
             },
 
+            // ──────────────────────────── Teletector ────────────────────────────
+            // مجس جاما على ذراع تمديد (AUTOMESS 6150 AD-T). عائلة أ (وحدة قراءة + مجس)،
+            // نمط مبسّط بنويدة Cs-137. نصوص المنهجية/التتبّع مطابقة لنصّ Dose Rate Meter
+            // لكنها **مكرَّرة عمداً لا مشتركة** التزاماً بسياسة الكتالوج. الفحوص خاصّة بـTELETECTOR.
+            new DeviceTypeDefinition
+            {
+                Name = "Teletector Gamma Probe",
+                ReferenceGeometry = "Distance = 1.0 meter (Axis configuration)",
+                ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE",
+                CorrectedReadingFormula = "Corrected Reading = Measured Reading × CF",
+                TraceabilityReference =
+                    "Measurement traceability is established through a calibrated Farmer ionization chamber " +
+                    "referenced to the International Atomic Energy Agency (IAEA).",
+                UncertaintyEnabled = false,
+                MethodologyEnabled = true,
+                MethodologyText =
+                    "The calibration was performed using an instrument-specific validated method. " +
+                    "The calibration was carried out using a Cs-137 point gamma source. " +
+                    "Reference dose rates were determined using a calibrated Farmer ionization chamber " +
+                    "traceable to the International Atomic Energy Agency (IAEA). " +
+                    "The inverse square law was applied for distance calculation. " +
+                    "Results are expressed as calibration factor (CF) and absolute relative error (AE).",
+                Notes =
+                    "The calibration results relate to the instrument configuration listed above.\n" +
+                    "The calibration results are valid only for the conditions and geometry specified.\n" +
+                    "Traceability is maintained to the International Atomic Energy Agency (IAEA).",
+                AdditionalInformation =
+                    "Calibration performed at reference distance of 1.0 meter (axis configuration).\n" +
+                    "The instrument performance is within acceptable limits in accordance with laboratory procedures.\n" +
+                    "This certificate is valid only for the instrument configuration and conditions specified.\n" +
+                    "Measurements are traceable to the International Atomic Energy Agency (IAEA).",
+                FunctionalChecks = new[]
+                {
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Survey Meter Power & Display Check", Requirement = "Display operational and survey meter powers on normally", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "Survey Meter Operating Check", Requirement = "Survey meter operates normally with connected TELETECTOR probe", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Survey Meter Audio / Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to the survey meter and TELETECTOR probe", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "TELETECTOR Probe Response Check", Requirement = "Probe response within acceptable range when exposed to reference gamma radiation", DefaultResult = "Acceptable" }
+                }
+            },
+
             // ──────────────────────────────── ٤ ────────────────────────────────
             // العائلة البسيطة. «عائلة ب» المنفصلة لـPED **ملغاة**: قالب رضا الفعلي
             // بلا عدم يقين إطلاقاً ⇒ UncertaintyEnabled = false.

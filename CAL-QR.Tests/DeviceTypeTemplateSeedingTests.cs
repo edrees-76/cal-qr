@@ -37,7 +37,7 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public void Seed_OnEmptyDatabase_CreatesExactlyFiveCanonicalTypes()
+        public void Seed_OnEmptyDatabase_CreatesExactlySixCanonicalTypes()
         {
             string dbPath = NewDbPath("fresh");
             var options = OptionsFor(dbPath);
@@ -52,7 +52,7 @@ namespace CAL_QR.Tests
                 {
                     var names = context.DeviceTypes.Select(t => t.Name).OrderBy(n => n).ToList();
 
-                    Assert.Equal(5, names.Count);
+                    Assert.Equal(6, names.Count);
                     Assert.Equal(
                         DeviceTypeCatalog.CanonicalNames.OrderBy(n => n).ToArray(),
                         names.ToArray());
@@ -119,8 +119,8 @@ namespace CAL_QR.Tests
 
                 using (var context = new CalQrDbContext(options))
                 {
-                    // خمسة بالضبط — لا ثمانية
-                    Assert.Equal(5, context.DeviceTypes.Count());
+                    // ستة بالضبط — لا ثمانية
+                    Assert.Equal(6, context.DeviceTypes.Count());
 
                     Assert.Equal(
                         DeviceTypeCatalog.CanonicalNames.OrderBy(n => n).ToArray(),
@@ -161,12 +161,12 @@ namespace CAL_QR.Tests
 
                 using (var context = new CalQrDbContext(options))
                 {
-                    Assert.Equal(5, context.DeviceTypes.Count());
+                    Assert.Equal(6, context.DeviceTypes.Count());
                     // العائلة الكاملة وحدها تحمل مكوّنات عدم يقين: Pancake و Beta
                     // خمسةً لكلٍّ. الثلاثة الباقية UncertaintyEnabled = false.
                     Assert.Equal(10, context.DeviceTypeUncertaintyComponentTemplates.Count());
-                    // خمسة فحوص لكل نوع من الخمسة
-                    Assert.Equal(25, context.DeviceTypeFunctionalCheckTemplates.Count());
+                    // خمسة فحوص لكل نوع من الستة
+                    Assert.Equal(30, context.DeviceTypeFunctionalCheckTemplates.Count());
                 }
             }
             finally { CleanUp(dbPath); }
@@ -278,7 +278,7 @@ namespace CAL_QR.Tests
                         c => c.Contains("Gamma Scintillation Probe") && c.Contains("Gamma Probe"));
 
                     // لم يُدمج شيء ولم تُعد تسمية شيء
-                    Assert.Equal(6, context.DeviceTypes.Count());
+                    Assert.Equal(7, context.DeviceTypes.Count());
                 }
 
                 // الأثر باقٍ في القاعدة بعد انتهاء البذر
@@ -316,7 +316,7 @@ namespace CAL_QR.Tests
 
                     Assert.Contains("Pancake Probe", result.HiddenTypes);
                     // لم يُنشأ توأم للاسم المحجوز
-                    Assert.Equal(5, context.DeviceTypes.Count());
+                    Assert.Equal(6, context.DeviceTypes.Count());
                     // ولم يُسترجع تلقائياً
                     Assert.True(context.DeviceTypes.Single(t => t.Name == "Pancake Probe").IsDeleted);
                 }

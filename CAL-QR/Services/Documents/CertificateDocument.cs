@@ -149,7 +149,7 @@ namespace CAL_QR.Services.Documents
         {
             var fields = new List<Field>
             {
-                new Field("CLIENT NAME", _certificate.ClientName),
+                new Field("CLIENT NAME", _certificate.ClientName, FullWidth: true),
                 new Field("CLIENT ADDRESS", _certificate.ClientAddress, FullWidth: true),
                 new Field("DEVICE MODEL", _certificate.DeviceModel),
                 new Field("DEVICE SERIAL NUMBER", _certificate.DeviceSerialNumber),

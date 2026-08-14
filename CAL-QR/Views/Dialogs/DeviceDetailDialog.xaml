@@ -225,10 +225,8 @@
                                 <TextBlock Text="الملاحظات:" FontSize="10" Foreground="#718096" Margin="0,0,0,2" FontFamily="{StaticResource CairoFont}" />
                                 <TextBlock Text="{Binding SelectedRecord.CalibrationDescription}" FontSize="11" TextWrapping="Wrap" Foreground="#4A5568" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
-                                <!-- الملصق يُبنى من CertificateNumber و HmacSignature، وكلاهما
-                                     فارغ للسجل الجديد ⇒ يُخفى معه لا يُعطَّل. -->
-                                <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="36" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}"
-                                        Visibility="{Binding ShowLegacySignature, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <!-- ظاهر دائمًا مثل زرّ PDF؛ يُفعَّل/يُعطَّل عبر CanPrintRecord (CertificateNumber). -->
+                                <Button Command="{Binding PrintRecordCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="36" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}">
                                     <StackPanel Orientation="Horizontal">
                                         <materialDesign:PackIcon Kind="Printer" Margin="0,0,5,0" VerticalAlignment="Center" />
                                         <TextBlock Text="🖨️ طباعة ملصق المعايرة" VerticalAlignment="Center" />

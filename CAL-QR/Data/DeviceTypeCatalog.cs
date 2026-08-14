@@ -61,6 +61,15 @@ namespace CAL_QR.Data
         public bool UncertaintyEnabled { get; init; }
         public bool MethodologyEnabled { get; init; }
 
+        // ── تسميات قسم CLIENT & INSTRUMENT (مدفوعة بالبيانات، verbatim من قوالب رضا) ──
+        // null في تسمية = «لا صفّ لهذا الحقل في هذا النوع» ⟵ RenderFieldTable يُخفيه تلقائياً.
+        public string? ClientSectionTitle { get; init; }
+        public string? PrimaryInstrumentLabel { get; init; }
+        public string? PrimaryInstrumentSerialLabel { get; init; }
+        public string? ReadoutUnitLabel { get; init; }
+        public string? ReadoutUnitSerialLabel { get; init; }
+        public bool ClientBoxShowsStandardTraceabilityStatus { get; init; }
+
         public CatalogFunctionalCheck[] FunctionalChecks { get; init; } = Array.Empty<CatalogFunctionalCheck>();
         public CatalogUncertaintyComponent[] UncertaintyComponents { get; init; } = Array.Empty<CatalogUncertaintyComponent>();
     }
@@ -113,6 +122,12 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Pancake Probe",
+                ClientSectionTitle = "CLIENT & INSTRUMENT INFORMATION",
+                PrimaryInstrumentLabel = "Detector / Probe",
+                PrimaryInstrumentSerialLabel = "Detector Serial Number (S/N)",
+                ReadoutUnitLabel = "Survey Meter (Readout Unit)",
+                ReadoutUnitSerialLabel = "Survey Meter Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = true,
                 CalibrationStandard = "Certified Sr-90/Y-90 Reference Beta Sources",
                 ReferenceGeometry = "Direct Contact Geometry",
                 CalibrationMode = "Direct Contact Geometry",
@@ -158,6 +173,12 @@ namespace CAL_QR.Data
             {
                 Name = "Beta Scintillation Probe",
                 Aliases = new[] { "Beta Scintillator Probe" },
+                ClientSectionTitle = "CLIENT & INSTRUMENT INFORMATION",
+                PrimaryInstrumentLabel = "Detector / Probe",
+                PrimaryInstrumentSerialLabel = "Detector Serial Number (S/N)",
+                ReadoutUnitLabel = "Survey Meter (Readout Unit)",
+                ReadoutUnitSerialLabel = "Survey Meter Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = true,
                 CalibrationStandard = "Certified Sr-90/Y-90 Reference Beta Sources",
                 ReferenceGeometry = "Direct Contact Geometry",
                 CalibrationMode = "Direct Contact Geometry",
@@ -197,6 +218,12 @@ namespace CAL_QR.Data
             {
                 Name = "Gamma Scintillation Probe",
                 Aliases = new[] { "Gamma Probe" },
+                ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
+                PrimaryInstrumentLabel = "Detector / Probe",
+                PrimaryInstrumentSerialLabel = "Probe Serial Number (S/N)",
+                ReadoutUnitLabel = "Survey Meter (Readout Unit)",
+                ReadoutUnitSerialLabel = "Survey Meter Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = false,
                 ReferenceGeometry = "Distance = 1.0 meter (Axis configuration)",
                 ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE",
                 CorrectedReadingFormula = "Corrected Reading = Measured Reading × CF",
@@ -239,6 +266,12 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Teletector Gamma Probe",
+                ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
+                PrimaryInstrumentLabel = "TELETECTOR / Probe",
+                PrimaryInstrumentSerialLabel = "Probe Serial Number (S/N)",
+                ReadoutUnitLabel = "Survey Meter (Readout Unit)",
+                ReadoutUnitSerialLabel = "Survey Meter Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = false,
                 ReferenceGeometry = "Distance = 1.0 meter (Axis configuration)",
                 ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE",
                 CorrectedReadingFormula = "Corrected Reading = Measured Reading × CF",
@@ -282,6 +315,10 @@ namespace CAL_QR.Data
             {
                 Name = "Personal Electronic Dosimeter (PED)",
                 Aliases = new[] { "PED" },
+                ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
+                PrimaryInstrumentLabel = "Personal Electronic Dosimeter(PED)",
+                PrimaryInstrumentSerialLabel = "PED Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = false,
                 ReferenceGeometry = "Distance = 1.0 meter (Axis configuration)",
                 ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE",
                 CorrectedReadingFormula = "Corrected Reading = Measured Reading × CF",
@@ -323,6 +360,10 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Dose Rate Meter",
+                ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
+                PrimaryInstrumentLabel = "Dose Rate Meter",
+                PrimaryInstrumentSerialLabel = "Dose Rate Meter Serial Number (S/N)",
+                ClientBoxShowsStandardTraceabilityStatus = false,
                 ReferenceGeometry = "Distance = 1.0 meter (Axis configuration)",
                 ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE",
                 CorrectedReadingFormula = "Corrected Reading = Measured Reading × CF",

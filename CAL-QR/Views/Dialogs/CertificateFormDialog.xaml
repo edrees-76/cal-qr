@@ -205,20 +205,22 @@
                             <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="اسم الجهاز ونوعه" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="4">
-                            <TextBlock Text="Serial Number (S/N)" Style="{StaticResource FieldLabel}" />
+                            <TextBlock Text="{Binding PrimaryInstrumentSerialLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي للجهاز" />
                         </StackPanel>
                         <StackPanel Grid.Row="1" Grid.Column="2" Margin="4">
                             <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الشركة المصنّعة" />
                         </StackPanel>
-                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="4">
-                            <TextBlock Text="Survey Meter (Readout Unit)" Style="{StaticResource FieldLabel}" />
+                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="4"
+                                    Visibility="{Binding ShowReadoutFields, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ReadoutUnitLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="جهاز المسح (وحدة القراءة)" />
                         </StackPanel>
 
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4">
-                            <TextBlock Text="Survey Meter Serial Number (S/N)" Style="{StaticResource FieldLabel}" />
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="4"
+                                    Visibility="{Binding ShowReadoutFields, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="{Binding ReadoutUnitSerialLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي لجهاز المسح" />
                         </StackPanel>
                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="4">

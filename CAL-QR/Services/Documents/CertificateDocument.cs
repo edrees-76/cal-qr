@@ -145,43 +145,67 @@ namespace CAL_QR.Services.Documents
             column.Item().AlignCenter().Text($"CERTIFICATE NO. {_certificate.CertificateNumber}").Bold().FontSize(10);
         }
 
+        private static DeviceTypeDefinition? ResolveDeviceType(string? templateType)
+        {
+            if (string.IsNullOrWhiteSpace(templateType)) return null;
+            var key = templateType.Trim();
+            foreach (var def in DeviceTypeCatalog.All)
+            {
+                if (string.Equals(def.Name, key, StringComparison.OrdinalIgnoreCase))
+                    return def;
+                foreach (var alias in def.Aliases)
+                    if (string.Equals(alias, key, StringComparison.OrdinalIgnoreCase))
+                        return def;
+            }
+            return null;
+        }
+
         private void ComposeClientInstrumentSection(ColumnDescriptor column)
         {
+            var def = ResolveDeviceType(_certificate.CertificateTemplateType);
+
+            var readoutLabel       = def?.ReadoutUnitLabel;
+            var readoutSerialLabel = def?.ReadoutUnitSerialLabel;
+            var primaryLabel       = def?.PrimaryInstrumentLabel       ?? "DEVICE MODEL";
+            var primarySerialLabel = def?.PrimaryInstrumentSerialLabel ?? "DEVICE SERIAL NUMBER";
+            var sectionTitle       = def?.ClientSectionTitle           ?? "CLIENT & INSTRUMENT SPECIFICATIONS";
+            var showStandardBox    = def?.ClientBoxShowsStandardTraceabilityStatus ?? false;
+
             var fields = new List<Field>
             {
                 new Field("CLIENT NAME", _certificate.ClientName, FullWidth: true),
                 new Field("CLIENT ADDRESS", _certificate.ClientAddress, FullWidth: true),
-                new Field("DEVICE MODEL", _certificate.DeviceModel),
-                new Field("DEVICE SERIAL NUMBER", _certificate.DeviceSerialNumber),
-                new Field("DEVICE MANUFACTURER", _certificate.DeviceManufacturer),
-                new Field("DETECTOR TYPE", _certificate.DetectorType),
-                new Field("SURVEY METER MODEL", _certificate.SurveyMeterModel),
-                new Field("SURVEY METER SERIAL NUMBER", _certificate.SurveyMeterSerialNumber),
-                new Field("PROCEDURE NO.", _certificate.ProcedureNo),
-                new Field("CALIBRATION LOCATION", _certificate.CalibrationLocation),
-                new Field("INSTRUMENTATION", _certificate.Instrumentation),
-                new Field("MEASUREMENT TYPE", _certificate.MeasurementType),
-                new Field("DISTANCE", _certificate.Distance),
-                new Field(
-                    _isStatusReport ? "FUNCTIONAL INSPECTION DATE" : "CALIBRATION DATE",
-                    _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                new Field(
-                    _isStatusReport ? "RECALIBRATION AFTER REPAIR" : "DUE DATE",
-                    _isStatusReport
-                        ? CertificateTexts.StatusReportRecalibrationValue
-                        : _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)),
-                new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard),
-                new Field(
-                    _isStatusReport ? "STATUS / VERDICT" : "COMPLIANCE VERDICT",
-                    _certificate.ComplianceVerdict),
             };
 
-            if (!_isStatusReport)
-                fields.Insert(14, new Field("ISSUE DATE", _certificate.IssueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
+            if (!string.IsNullOrWhiteSpace(readoutLabel))
+                fields.Add(new Field(readoutLabel, _certificate.SurveyMeterModel));
+            if (!string.IsNullOrWhiteSpace(readoutSerialLabel))
+                fields.Add(new Field(readoutSerialLabel, _certificate.SurveyMeterSerialNumber));
+
+            fields.Add(new Field(primaryLabel, _certificate.DeviceModel));
+            fields.Add(new Field(primarySerialLabel, _certificate.DeviceSerialNumber));
+            fields.Add(new Field("MANUFACTURER", _certificate.DeviceManufacturer));
+
+            fields.Add(new Field(
+                _isStatusReport ? "FUNCTIONAL INSPECTION DATE" : "CALIBRATION DATE",
+                _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
+            fields.Add(new Field(
+                _isStatusReport ? "RECALIBRATION AFTER REPAIR" : "DUE DATE",
+                _isStatusReport
+                    ? CertificateTexts.StatusReportRecalibrationValue
+                    : _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
+
+            if (showStandardBox)
+            {
+                fields.Add(new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard));
+                fields.Add(new Field(
+                    _isStatusReport ? "STATUS / VERDICT" : "COMPLIANCE VERDICT",
+                    _certificate.ComplianceVerdict));
+            }
 
             if (!HasAnyValue(fields)) return;
 
-            SectionTitle(column, "CLIENT & INSTRUMENT SPECIFICATIONS");
+            SectionTitle(column, sectionTitle);
             RenderFieldTable(column, fields);
         }
 

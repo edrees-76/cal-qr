@@ -421,5 +421,60 @@ namespace CAL_QR.Tests
             Assert.True(lastPageText.Contains(certNo),
                 $"رقم الشهادة غير موجود في نصّ الصفحة الأخيرة (الترويسة لم تتكرّر؟). نصّ الصفحة:\n{lastPageText}");
         }
+
+        private static string ExtractAllText(byte[] bytes)
+        {
+            using var ms = new System.IO.MemoryStream(bytes);
+            using var doc = UglyToad.PdfPig.PdfDocument.Open(ms);
+            var sb = new StringBuilder();
+            foreach (var page in doc.GetPages())
+                sb.Append(page.Text);
+            return sb.ToString();
+        }
+
+        [Fact]
+        public void ClientSection_FamilyA_ShowsReadoutLabel_AndDropsRemovedFields()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.CertificateTemplateType = "Pancake Probe";
+            certificate.SurveyMeterModel = "SM-Model";
+            certificate.SurveyMeterSerialNumber = "SM-SN-1";
+            certificate.DetectorType = "GM Tube";
+            certificate.ProcedureNo = "SSDL-CP-01";
+            certificate.CalibrationLocation = "SSDL Lab";
+            certificate.Instrumentation = "Reference chamber";
+            certificate.MeasurementType = "Dose Rate";
+            certificate.Distance = "1.0 meter";
+
+            string text = ExtractAllText(_service.GenerateBytes(certificate));
+
+            // تسمية Readout تظهر (عائلة-أ)
+            Assert.Contains("Readout Unit", text);
+            // عنوان القسم من الكتالوج
+            Assert.Contains("CLIENT & INSTRUMENT INFORMATION", text);
+            // الحقول السبعة المحذوفة لم تعد تُطبع في هذا القسم
+            Assert.DoesNotContain("DETECTOR TYPE", text);
+            Assert.DoesNotContain("PROCEDURE NO", text);
+            Assert.DoesNotContain("CALIBRATION LOCATION", text);
+            Assert.DoesNotContain("INSTRUMENTATION", text);
+            Assert.DoesNotContain("MEASUREMENT TYPE", text);
+            Assert.DoesNotContain("DISTANCE", text);
+            Assert.DoesNotContain("ISSUE DATE", text);
+        }
+
+        [Fact]
+        public void ClientSection_FamilyB_HidesReadoutLabel()
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.CertificateTemplateType = "Dose Rate Meter";
+            certificate.SurveyMeterModel = "SHOULD-NOT-APPEAR";
+            certificate.SurveyMeterSerialNumber = "SHOULD-NOT-APPEAR-SN";
+
+            string text = ExtractAllText(_service.GenerateBytes(certificate));
+
+            // عائلة-ب: لا وحدة قراءة ⇒ تسمية Readout غائبة وقيمتها لا تُطبع
+            Assert.DoesNotContain("Readout Unit", text);
+            Assert.DoesNotContain("SHOULD-NOT-APPEAR", text);
+        }
     }
 }

@@ -219,13 +219,6 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _surveyMeterSerialNumber, value);
         }
 
-        private string _detectorType = string.Empty;
-        public string DetectorType
-        {
-            get => _detectorType;
-            set => SetProperty(ref _detectorType, value);
-        }
-
         private DateTime _calibrationDate = DateTime.Today;
         public DateTime CalibrationDate
         {
@@ -866,7 +859,6 @@ namespace CAL_QR.ViewModels
             ProcedureNo = c.ProcedureNo ?? string.Empty;
             CalibrationLocation = c.CalibrationLocation ?? string.Empty;
             Instrumentation = c.Instrumentation ?? string.Empty;
-            DetectorType = c.DetectorType ?? string.Empty;
             MeasurementType = c.MeasurementType ?? string.Empty;
             Distance = c.Distance ?? string.Empty;
             CountingTime = c.CountingTime ?? string.Empty;
@@ -1106,7 +1098,6 @@ namespace CAL_QR.ViewModels
                 ProcedureNo = Nullify(ProcedureNo),
                 CalibrationLocation = Nullify(CalibrationLocation),
                 Instrumentation = Nullify(Instrumentation),
-                DetectorType = Nullify(DetectorType),
                 MeasurementType = Nullify(MeasurementType),
                 Distance = Nullify(Distance),
                 CountingTime = Nullify(CountingTime),

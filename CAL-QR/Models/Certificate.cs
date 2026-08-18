@@ -21,6 +21,11 @@ namespace CAL_QR.Models
         public CertificateDocumentType DocumentType { get; set; } = CertificateDocumentType.CalibrationCertificate;
         public string? ReferenceNo { get; set; }
 
+        // رقم الإيصال الماليّ — بيانات إداريّة اختياريّة، خارج نص التوقيع (كـ ReferenceNo).
+        // يُملأ يدويًّا بعد الطباعة الأولى (توقيع/ختم/مسح) دون تدوير VerifyCode. قد يتكرّر
+        // النصّ نفسه عبر عدّة شهادات إن غطّى إيصال واحد أجهزة متعدّدة — لا قيد فريد عليه.
+        public string? FinancialReceiptNo { get; set; }
+
         // نوع النموذج المطبوع (مثل "Pancake Probe")، منسوخ نصاً وقت الإصدار من
         // DeviceType.Name. لا يُقرأ حياً عبر CalibrationRecord → Device → DeviceType:
         // إعادة تصنيف الجهاز بعد الإصدار كانت ستُغيّر عنوان شهادة صادرة وموقّعة

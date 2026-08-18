@@ -403,5 +403,26 @@ namespace CAL_QR.Data
         /// <summary>الأسماء المعتمدة الخمسة بترتيب الكتالوج.</summary>
         public static IReadOnlyList<string> CanonicalNames { get; } =
             All.Select(d => d.Name).ToList();
+
+        /// <summary>
+        /// يحلّ اسمَ نوع (منسوخًا في Certificate.CertificateTemplateType) إلى تعريفه في الكتالوج.
+        /// المطابقة على الاسم المعتمد ثمّ المرادفات، Trim + OrdinalIgnoreCase — نفس دلالة
+        /// NameEquals في DeviceTypeSeeder. مصدر حقيقة واحد يقرأ منه الـPDF والنموذج.
+        /// null ⇒ اسم فارغ أو غير محلول (يسقط المستهلِك إلى تسمياته العامّة).
+        /// </summary>
+        public static DeviceTypeDefinition? Resolve(string? templateType)
+        {
+            if (string.IsNullOrWhiteSpace(templateType)) return null;
+            var key = templateType.Trim();
+            foreach (var def in All)
+            {
+                if (string.Equals(def.Name, key, StringComparison.OrdinalIgnoreCase))
+                    return def;
+                foreach (var alias in def.Aliases)
+                    if (string.Equals(alias, key, StringComparison.OrdinalIgnoreCase))
+                        return def;
+            }
+            return null;
+        }
     }
 }

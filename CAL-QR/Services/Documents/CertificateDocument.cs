@@ -145,24 +145,9 @@ namespace CAL_QR.Services.Documents
             column.Item().AlignCenter().Text($"CERTIFICATE NO. {_certificate.CertificateNumber}").Bold().FontSize(10);
         }
 
-        private static DeviceTypeDefinition? ResolveDeviceType(string? templateType)
-        {
-            if (string.IsNullOrWhiteSpace(templateType)) return null;
-            var key = templateType.Trim();
-            foreach (var def in DeviceTypeCatalog.All)
-            {
-                if (string.Equals(def.Name, key, StringComparison.OrdinalIgnoreCase))
-                    return def;
-                foreach (var alias in def.Aliases)
-                    if (string.Equals(alias, key, StringComparison.OrdinalIgnoreCase))
-                        return def;
-            }
-            return null;
-        }
-
         private void ComposeClientInstrumentSection(ColumnDescriptor column)
         {
-            var def = ResolveDeviceType(_certificate.CertificateTemplateType);
+            var def = DeviceTypeCatalog.Resolve(_certificate.CertificateTemplateType);
 
             var readoutLabel       = def?.ReadoutUnitLabel;
             var readoutSerialLabel = def?.ReadoutUnitSerialLabel;

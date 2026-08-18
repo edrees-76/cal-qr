@@ -38,6 +38,7 @@ namespace CAL_QR.Helpers
             textBox.GotFocus -= OnFocusChanged;
             textBox.LostFocus -= OnFocusChanged;
             textBox.TextChanged -= OnTextChanged;
+            textBox.IsVisibleChanged -= OnVisibilityChanged;
 
             if (e.NewValue is string text && !string.IsNullOrEmpty(text))
             {
@@ -45,6 +46,7 @@ namespace CAL_QR.Helpers
                 textBox.GotFocus += OnFocusChanged;
                 textBox.LostFocus += OnFocusChanged;
                 textBox.TextChanged += OnTextChanged;
+                textBox.IsVisibleChanged += OnVisibilityChanged;
 
                 // إذا كان الحقل محمّلاً فعلاً (تعديل ديناميكي)
                 if (textBox.IsLoaded)
@@ -66,6 +68,13 @@ namespace CAL_QR.Helpers
         private static void OnTextChanged(object sender, TextChangedEventArgs e) =>
             UpdateAdorner((TextBox)sender);
 
+        // حقل يُخفى شرطيًّا (Collapsed) لا يُطلق أيًّا من الأحداث أعلاه، فيبقى
+        // adorner الـwatermark عالقًا في الطبقة المشتركة ويتراكب فوق جاره بعد
+        // إعادة تدفّق WrapPanel. تتبّع الرؤية يستدعي UpdateAdorner عند كل تغيّر،
+        // وشرط IsVisible في UpdateAdorner يزيل الـadorner عند الإخفاء.
+        private static void OnVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e) =>
+            UpdateAdorner((TextBox)sender);
+
         private static void UpdateAdorner(TextBox textBox)
         {
             var layer = AdornerLayer.GetAdornerLayer(textBox);
@@ -75,7 +84,9 @@ namespace CAL_QR.Helpers
             RemoveAdornerFromLayer(layer, textBox);
 
             // أظهر فقط إذا: الحقل فارغ + غير مركَّز
-            bool shouldShow = string.IsNullOrEmpty(textBox.Text) && !textBox.IsFocused;
+            // IsVisible شرط لازم: حقل مخفيّ فارغ غير مركَّز كان سيمرّ بدونه فيُرسَم
+            // له adorner شبح يتراكب فوق الحقول الظاهرة.
+            bool shouldShow = string.IsNullOrEmpty(textBox.Text) && !textBox.IsFocused && textBox.IsVisible;
             if (shouldShow)
             {
                 string watermarkText = GetWatermark(textBox);

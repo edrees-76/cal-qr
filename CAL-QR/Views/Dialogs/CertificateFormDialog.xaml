@@ -170,50 +170,50 @@
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
-                    <WrapPanel Orientation="Horizontal">
-                        <StackPanel Width="200" Margin="4">
+                    <WrapPanel Orientation="Horizontal" ItemWidth="205">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Client Name" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="اسم الجهة / العميل" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Reference No." Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عنوان الجهة" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4"
+                        <StackPanel Margin="4"
                                     Visibility="{Binding ShowReadoutFields, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="{Binding ReadoutUnitLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="جهاز المسح (وحدة القراءة)" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4"
+                        <StackPanel Margin="4"
                                     Visibility="{Binding ShowReadoutFields, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Text="{Binding ReadoutUnitSerialLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding SurveyMeterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي لجهاز المسح" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="{Binding PrimaryInstrumentLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="اسم الجهاز ونوعه" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="{Binding PrimaryInstrumentSerialLabel}" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الرقم التسلسلي للجهاز" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Manufacturer" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding DeviceManufacturer, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="الشركة المصنّعة" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Calibration Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding CalibrationDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Issue Date" Style="{StaticResource FieldLabel}" ToolTip="يحدّد هذا التاريخ سنة رقم الشهادة" />
                             <DatePicker SelectedDate="{Binding IssueDate}" Style="{StaticResource FieldDate}" />
                         </StackPanel>
-                        <StackPanel Width="200" Margin="4">
+                        <StackPanel Margin="4">
                             <TextBlock Text="Calibration Due Date" Style="{StaticResource FieldLabel}" />
                             <DatePicker SelectedDate="{Binding DueDatePreview, Mode=OneWay}" Style="{StaticResource FieldDate}" IsEnabled="False" />
                         </StackPanel>

@@ -71,6 +71,7 @@ namespace CAL_QR.Data
                         ""CalibrationRecordId"" INTEGER NOT NULL,
                         ""CertificateNumber"" TEXT NOT NULL,
                         ""ReferenceNo"" TEXT NULL,
+                        ""FinancialReceiptNo"" TEXT NULL,
                         ""ClientName"" TEXT NOT NULL,
                         ""ClientAddress"" TEXT NULL,
                         ""DeviceModel"" TEXT NOT NULL,
@@ -294,6 +295,12 @@ namespace CAL_QR.Data
                     "ALTER TABLE Certificates ADD COLUMN Remarks TEXT NULL;");
                 ExecuteSqlIfColumnMissing(context, "Certificates", "StatusReason",
                     "ALTER TABLE Certificates ADD COLUMN StatusReason TEXT NULL;");
+
+                // ── المرحلة (هـ): رقم الإيصال المالي ──
+                // بيانات إداريّة اختياريّة، خارج التوقيع (كـ ReferenceNo): يُملأ يدويًّا
+                // بعد الطباعة الأولى دون تدوير VerifyCode. لا يدخل SignaturePayloadBuilderV1.
+                ExecuteSqlIfColumnMissing(context, "Certificates", "FinancialReceiptNo",
+                    "ALTER TABLE Certificates ADD COLUMN FinancialReceiptNo TEXT NULL;");
 
                 // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
                 context.Database.ExecuteSqlRaw(@"

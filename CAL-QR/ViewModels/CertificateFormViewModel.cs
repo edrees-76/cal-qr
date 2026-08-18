@@ -116,8 +116,52 @@ namespace CAL_QR.ViewModels
         public string CertificateTemplateType
         {
             get => _certificateTemplateType;
-            set => SetProperty(ref _certificateTemplateType, value);
+            set
+            {
+                if (SetProperty(ref _certificateTemplateType, value))
+                    RefreshResolvedDeviceType();
+            }
         }
+
+        // النوع المحلول: مفهوم واحد صريح يُحدَّث مرّة عند تغيّر اسم النوع،
+        // وكل تسميات قسم العميل وأعلام رؤيته مجرّد عرض له. null ⇒ اسم فارغ أو
+        // غير محلول ⇒ التسميات تسقط إلى نصوصها العامّة (نفس fallback الـPDF).
+        private DeviceTypeDefinition? _resolvedDeviceType;
+
+        private void RefreshResolvedDeviceType()
+        {
+            _resolvedDeviceType = DeviceTypeCatalog.Resolve(_certificateTemplateType);
+
+            OnPropertyChanged(nameof(ClientSectionTitleLabel));
+            OnPropertyChanged(nameof(PrimaryInstrumentLabel));
+            OnPropertyChanged(nameof(PrimaryInstrumentSerialLabel));
+            OnPropertyChanged(nameof(ReadoutUnitLabel));
+            OnPropertyChanged(nameof(ReadoutUnitSerialLabel));
+            OnPropertyChanged(nameof(ShowReadoutFields));
+        }
+
+        // ── تسميات قسم العميل وأعلام رؤيته (للقراءة فقط، مشتقّة من النوع المحلول) ──
+        // مصدرها DeviceTypeCatalog عبر Resolve — نفس مصدر الـPDF بالضبط، فيتطابق
+        // النموذج والوثيقة المطبوعة end-to-end. الـfallback هنا مطابق لنظيره في
+        // ComposeClientInstrumentSection حرفيًّا.
+
+        public string ClientSectionTitleLabel =>
+            _resolvedDeviceType?.ClientSectionTitle ?? "CLIENT & INSTRUMENT SPECIFICATIONS";
+
+        public string PrimaryInstrumentLabel =>
+            _resolvedDeviceType?.PrimaryInstrumentLabel ?? "DEVICE MODEL";
+
+        public string PrimaryInstrumentSerialLabel =>
+            _resolvedDeviceType?.PrimaryInstrumentSerialLabel ?? "DEVICE SERIAL NUMBER";
+
+        // تسميتا وحدة القراءة: null في التعريف = «لا وحدة قراءة لهذا النوع»
+        // (عائلة ب: PED و Dose Rate) ⇒ ShowReadoutFields=false ⇒ الحقلان يُخفيان.
+        public string? ReadoutUnitLabel => _resolvedDeviceType?.ReadoutUnitLabel;
+
+        public string? ReadoutUnitSerialLabel => _resolvedDeviceType?.ReadoutUnitSerialLabel;
+
+        public bool ShowReadoutFields =>
+            !string.IsNullOrWhiteSpace(_resolvedDeviceType?.ReadoutUnitLabel);
 
         private string _referenceNo = string.Empty;
         public string ReferenceNo

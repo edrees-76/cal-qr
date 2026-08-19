@@ -14,6 +14,47 @@ namespace CAL_QR.Tests
     [Collection("SharedDiskFolders")]
     public class SystemResetServiceTests
     {
+        // تهيئة يدويّة بديلة عن DevTestDataSeeder: تبني حالة معروفة صغيرة مباشرةً
+        // عبر السياق. فُصل الاختبار عن السيدر عمداً تمهيداً لإزالة السيدر — الجوهر
+        // المُختبَر (رفض العبارة الخاطئة، ومسح العبارة الصحيحة لكل شيء مع إعادة بذر
+        // الأنواع وتنظيف القرص) لا يعتمد على حجم بيانات السيدر ولا على وسمها.
+        // يبني: 3 جهات، 3 أجهزة (نوع 1)، 3 سجلات، وتنبيهاً واحداً. يعيد آخر معرّف سجل.
+        private static async Task SeedManualDataAsync(IDbContextFactory<CalQrDbContext> factory)
+        {
+            using var context = await factory.CreateDbContextAsync();
+
+            for (int i = 1; i <= 3; i++)
+            {
+                var owner = new Owner { Name = $"جهة {i}", IsSeedTestData = false };
+                context.Owners.Add(owner);
+                await context.SaveChangesAsync();
+
+                var device = new Device
+                {
+                    Model = $"Model {i}",
+                    SerialNumber = $"SN-{i:0000}",
+                    OwnerId = owner.Id,
+                    DeviceTypeId = 1,
+                    IsSeedTestData = false
+                };
+                context.Devices.Add(device);
+                await context.SaveChangesAsync();
+
+                var record = new CalibrationRecord
+                {
+                    DeviceId = device.Id,
+                    CertificateNumber = $"CERT-{i:0000}",
+                    CalibrationDate = DateTime.Today.AddDays(-10),
+                    ExpiryDate = DateTime.Today.AddDays(355),
+                    EngineerName = $"مهندس {i}",
+                    Result = "Passed",
+                    IsSeedTestData = false
+                };
+                context.CalibrationRecords.Add(record);
+                await context.SaveChangesAsync();
+            }
+        }
+
         [Fact]
         public async Task FactoryResetAsync_WrongConfirmationPhrase_DoesNothing()
         {
@@ -27,30 +68,23 @@ namespace CAL_QR.Tests
             using (var context = new CalQrDbContext(options))
             {
                 DatabaseMigrator.RunMigrations(context);
-                context.Owners.Add(new Owner { Name = "جهة حقيقية مهمة جداً", IsSeedTestData = false });
-                context.SaveChanges();
             }
-
-            var hmacService = new HmacService(factory);
 
             try
             {
-                // Seed test data
-                var seedResult = await DevTestDataSeeder.SeedTestDataAsync(factory, hmacService);
-                Assert.True(seedResult.Success);
+                await SeedManualDataAsync(factory);
 
-                // Call FactoryResetAsync with wrong phrase
+                // عبارة خاطئة ⇒ لا شيء يُمسّ
                 var resetResult = await SystemResetService.FactoryResetAsync(factory, "INVALID-PHRASE");
 
                 Assert.False(resetResult.Success);
                 Assert.Contains("تأكيد غير صحيح", resetResult.Message);
 
-                // Verify database records remain 100% intact
                 using (var context = await factory.CreateDbContextAsync())
                 {
-                    Assert.Equal(11, await context.Owners.CountAsync());
-                    Assert.Equal(100, await context.Devices.CountAsync());
-                    Assert.Equal(200, await context.CalibrationRecords.CountAsync());
+                    Assert.Equal(3, await context.Owners.CountAsync());
+                    Assert.Equal(3, await context.Devices.CountAsync());
+                    Assert.Equal(3, await context.CalibrationRecords.CountAsync());
                 }
             }
             finally
@@ -73,8 +107,6 @@ namespace CAL_QR.Tests
 
             var factory = new TestDbContextFactory(options);
 
-            // Isolated disk paths: the shared QR/Attachments folders under BaseDirectory are
-            // written and wiped by other tests in the same run.
             string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_factoryreset_qr_{Guid.NewGuid():N}");
             string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_factoryreset_att_{Guid.NewGuid():N}");
             Directory.CreateDirectory(qrFolder);
@@ -83,90 +115,57 @@ namespace CAL_QR.Tests
             using (var context = new CalQrDbContext(options))
             {
                 DatabaseMigrator.RunMigrations(context);
-
                 context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
                 context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
                 context.SaveChanges();
             }
 
-            var hmacService = new HmacService(factory);
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
 
             try
             {
-                // 1. Seed test data
-                var seedResult = await DevTestDataSeeder.SeedTestDataAsync(factory, hmacService);
-                Assert.True(seedResult.Success);
+                // بيانات معروفة: 3 جهات/أجهزة/سجلات + تنبيه واحد على آخر سجل
+                await SeedManualDataAsync(factory);
 
-                // 2. Add real production data (IsSeedTestData = false)
-                int realOwnerId;
-                int realDeviceId;
-                int realRecordId;
-                string realCertNo = "REAL-CERT-2026-9999";
-
+                string realCertNo;
                 using (var context = await factory.CreateDbContextAsync())
                 {
-                    var realOwner = new Owner { Name = "جهة حقيقية رقم 1", IsSeedTestData = false };
-                    context.Owners.Add(realOwner);
-                    await context.SaveChangesAsync();
-                    realOwnerId = realOwner.Id;
-
-                    var realDevice = new Device { Model = "Real Model", SerialNumber = "REAL-SN-1234", OwnerId = realOwnerId, DeviceTypeId = 1, IsSeedTestData = false };
-                    context.Devices.Add(realDevice);
-                    await context.SaveChangesAsync();
-                    realDeviceId = realDevice.Id;
-
-                    var realRecord = new CalibrationRecord
-                    {
-                        DeviceId = realDeviceId,
-                        CertificateNumber = realCertNo,
-                        CalibrationDate = DateTime.Today.AddDays(-10),
-                        ExpiryDate = DateTime.Today.AddDays(355),
-                        EngineerName = "مهندس مكسور",
-                        Result = "Passed",
-                        IsSeedTestData = false
-                    };
-                    context.CalibrationRecords.Add(realRecord);
-                    await context.SaveChangesAsync();
-                    realRecordId = realRecord.Id;
-
+                    var lastRecord = await context.CalibrationRecords.OrderBy(r => r.Id).LastAsync();
+                    realCertNo = lastRecord.CertificateNumber;
                     context.AcknowledgedExpiredDevices.Add(new AcknowledgedExpiredDevice
                     {
-                        DeviceId = realDeviceId,
-                        CalibrationRecordId = realRecordId,
+                        DeviceId = lastRecord.DeviceId,
+                        CalibrationRecordId = lastRecord.Id,
                         AcknowledgedDate = DateTime.UtcNow
                     });
                     await context.SaveChangesAsync();
 
-                    // Pre-verification
-                    Assert.Equal(11, await context.Owners.CountAsync());
-                    Assert.Equal(101, await context.Devices.CountAsync());
-                    Assert.Equal(201, await context.CalibrationRecords.CountAsync());
+                    Assert.Equal(3, await context.Owners.CountAsync());
+                    Assert.Equal(3, await context.Devices.CountAsync());
+                    Assert.Equal(3, await context.CalibrationRecords.CountAsync());
                     Assert.Equal(1, await context.AcknowledgedExpiredDevices.CountAsync());
                 }
 
-                // 3. Create sample QR file and attachment folder on disk
+                // ملف QR ومجلد مرفقات على القرص
                 string realQrPath = Path.Combine(qrFolder, $"{realCertNo}.png");
-                File.WriteAllText(realQrPath, "REAL_QR_IMAGE_BYTES");
+                File.WriteAllText(realQrPath, "QR_IMAGE_BYTES");
                 Assert.True(File.Exists(realQrPath));
 
                 string realAttFolder = Path.Combine(attachmentsFolder, realCertNo);
                 Directory.CreateDirectory(realAttFolder);
-                string realAttFilePath = Path.Combine(realAttFolder, "report.pdf");
-                File.WriteAllText(realAttFilePath, "REAL_PDF_REPORT_BYTES");
+                File.WriteAllText(Path.Combine(realAttFolder, "report.pdf"), "PDF_REPORT_BYTES");
                 Assert.True(Directory.Exists(realAttFolder));
 
-                // 4. Run FactoryResetAsync with correct phrase
+                // التصفير بالعبارة الصحيحة
                 var resetResult = await SystemResetService.FactoryResetAsync(factory, "RESET-ALL-DATA", auditLogRepo);
 
                 Assert.True(resetResult.Success);
-                Assert.Equal(11, resetResult.OwnersRemoved);
-                Assert.Equal(101, resetResult.DevicesRemoved);
-                Assert.Equal(201, resetResult.RecordsRemoved);
+                Assert.Equal(3, resetResult.OwnersRemoved);
+                Assert.Equal(3, resetResult.DevicesRemoved);
+                Assert.Equal(3, resetResult.RecordsRemoved);
                 Assert.True(resetResult.QrFilesRemoved >= 1);
                 Assert.True(resetResult.AttachmentFoldersRemoved >= 1);
 
-                // 5. Verify database wiped to fresh install state
                 using (var context = await factory.CreateDbContextAsync())
                 {
                     Assert.Equal(0, await context.Owners.CountAsync());
@@ -174,30 +173,21 @@ namespace CAL_QR.Tests
                     Assert.Equal(0, await context.CalibrationRecords.CountAsync());
                     Assert.Equal(0, await context.AcknowledgedExpiredDevices.CountAsync());
 
-                    // DeviceTypes must be exactly the 6 re-seeded defaults.
-                    // الأسماء تُقارَن بـ DeviceTypeCatalog لا بسلسلة مكتوبة هنا:
-                    // نسخة مكتوبة يدوياً في الاختبار كانت ستُبقي الازدواج الذي
-                    // عالجه مصدر الحقيقة الواحد، وتمرّ حتى لو تباعد التصفير عن الهجرة.
                     var deviceTypes = await context.DeviceTypes.Where(t => !t.IsDeleted).ToListAsync();
                     Assert.Equal(6, deviceTypes.Count);
                     Assert.Equal(
                         DeviceTypeCatalog.CanonicalNames.OrderBy(n => n).ToArray(),
                         deviceTypes.Select(t => t.Name).OrderBy(n => n).ToArray());
 
-                    // والقوالب أُعيد بناؤها معها لا الأسماء وحدها
                     Assert.True(await context.DeviceTypeFunctionalCheckTemplates.CountAsync() > 0);
 
-                    // AppSettings preserved (except Snapshot key removed)
                     Assert.True(await context.AppSettings.CountAsync() > 0);
-                    Assert.Null(await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "DevSeededDataSnapshot"));
 
-                    // AuditLog preserved and contains FactoryReset entry
                     var auditLogs = await context.AuditLogs.ToListAsync();
                     Assert.NotEmpty(auditLogs);
                     Assert.Contains(auditLogs, log => log.Action == "تصفير كامل للنظام");
                 }
 
-                // 6. Verify files/folders removed from disk, but root folders exist
                 Assert.False(File.Exists(realQrPath), "Production QR code file must be deleted");
                 Assert.False(Directory.Exists(realAttFolder), "Production Attachment folder must be deleted");
                 Assert.True(Directory.Exists(qrFolder), "QR root directory itself should remain intact");

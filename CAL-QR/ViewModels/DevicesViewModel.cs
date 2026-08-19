@@ -336,12 +336,14 @@ namespace CAL_QR.ViewModels
                             r.Device!.Model.ToLower().Contains(simple) ||
                             r.Device!.SerialNumber.ToLower().Contains(simple) ||
                             r.Device!.Owner!.Name.ToLower().Contains(simple) ||
-                            // الرقم يُطابَق على الشهادة لا على العمود المهجور، وإلا عرض
-                            // العمودُ رقماً لا يجده البحث عنه.
+                            // الرقم ورقم الإيصال يُطابَقان على الشهادة لا على العمود المهجور.
+                            // FinancialReceiptNo قد يكون NULL ⇒ الفحص عبر != null قبل Contains.
+                            // نفس نمط SearchService (البحث العلويّ) — اتّساق بين البحثين.
                             context.Certificates.Any(c =>
                                 c.CalibrationRecordId == r.Id &&
                                 !c.IsDeleted &&
-                                c.CertificateNumber.ToLower().Contains(simple))
+                                (c.CertificateNumber.ToLower().Contains(simple) ||
+                                 (c.FinancialReceiptNo != null && c.FinancialReceiptNo.ToLower().Contains(simple))))
                         );
                     }
 

@@ -99,10 +99,14 @@ namespace CAL_QR.Services
                     .AsNoTracking()
                     .Include(r => r.Device)
                         .ThenInclude(d => d!.Owner)
+                    // المطابقة على رقم الشهادة أو رقم الإيصال المالي: البحث بإيصال واحد
+                    // يُرجع كل سجلّات المعايرة التي شهاداتها تحمله (كل شهادات الدفعة الواحدة).
+                    // FinancialReceiptNo قد يكون NULL ⇒ الفحص عبر != null قبل Contains.
                     .Where(r => !r.IsDeleted && context.Certificates.Any(c =>
                         c.CalibrationRecordId == r.Id &&
                         !c.IsDeleted &&
-                        c.CertificateNumber.ToLower().Contains(normalizedQuery)))
+                        (c.CertificateNumber.ToLower().Contains(normalizedQuery) ||
+                         (c.FinancialReceiptNo != null && c.FinancialReceiptNo.ToLower().Contains(normalizedQuery)))))
                     .Select(r => new
                     {
                         r.Id,

@@ -180,6 +180,10 @@
                             <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
                         </StackPanel>
                         <StackPanel Margin="4">
+                            <TextBlock Text="Financial Receipt No" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding FinancialReceiptNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم الإيصال المالي" />
+                        </StackPanel>
+                        <StackPanel Margin="4">
                             <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="عنوان الجهة" />
                         </StackPanel>

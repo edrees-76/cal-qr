@@ -239,6 +239,54 @@ namespace CAL_QR.Data
         }
 
         /// <summary>
+        /// مزامنة الإضافات الجديدة للكتالوج مع القواعد القائمة — بحارس محتوى بلا عَلَم.
+        ///
+        /// السبب: SeedIfNeeded و RepairCatalogTypesIfNeeded كلتاهما محروستان بعَلَم
+        /// مضبوط سلفاً على كل قاعدة عاملة، فحين يكبر الكتالوج بنوع جديد لا يستدعي
+        /// أيّ مسار Apply ثانيةً، فيبقى النوع غائباً عن القائمة الحيّة. ربطُ كل إضافة
+        /// مستقبلية بعَلَم جديد كان سيفرض تعديل هذا الملف عند كل نوع، وهو ما تتجنّبه
+        /// سياسة «الأنواع الجديدة لا تتطلّب تغيير كود القالب».
+        ///
+        /// الحارس بالمحتوى: إن كان كل اسم معتمد في الكتالوج موجوداً أصلاً (بمطابقة
+        /// NameEquals، على كل الصفوف بما فيها المحذوف ناعماً كما تقرأ Apply تماماً،
+        /// كي لا يُبعث اسم أُخفي عمداً) ⇒ خروج فوريّ بعد استعلام واحد. وإلّا تُستدعى
+        /// Apply مرّة — وهي idempotent: تُطابِق القائم وتفرض أعلامه وتملأ الفارغ فقط،
+        /// وتُنشئ الغائب وحده. فتُشفى القاعدة تلقائياً لأيّ إضافة بلا تعديل هذا الملف.
+        ///
+        /// بلا عَلَم عمداً: الحارس يتصفّر بذاته حالما تُوجد الأسماء، وفشلٌ عابر يُعاد
+        /// في الإقلاع التالي. محروسة كنظيرتيها: لا تُصعِّد استثناءً أبداً كي لا تحجب
+        /// الإقلاع. وفشلٌ دائم هنا يعني فشل نفس مسار Apply في البذر، وذاك مسجَّل تحت
+        /// FailureKey — فلا حاجة إلى مفتاح فشل ثالث.
+        /// </summary>
+        public static DeviceTypeSeedResult SyncMissingCatalogTypesIfNeeded(CalQrDbContext context)
+        {
+            var result = new DeviceTypeSeedResult();
+
+            try
+            {
+                var existingNames = context.DeviceTypes.Select(t => t.Name).ToList();
+
+                bool anyMissing = DeviceTypeCatalog.CanonicalNames
+                    .Any(canonical => !existingNames.Any(n => NameEquals(n, canonical)));
+
+                if (!anyMissing)
+                {
+                    return result;
+                }
+
+                Apply(context, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Failure = ex;
+                System.Diagnostics.Debug.WriteLine(
+                    $"[DeviceTypeSeeder] فشلت مزامنة إضافات الكتالوج: {ex.GetType().Name} — {ex.Message}");
+                return result;
+            }
+        }
+
+        /// <summary>
         /// تسجيل سبب فشل الترقية التصحيحية. نظيرة RecordFailure ومبنية على نفس
         /// المبدأ: تُسقط ما تتبّعه المحاولة الفاشلة قبل أي كتابة، ولا تُصعِّد شيئاً.
         /// </summary>

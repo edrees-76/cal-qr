@@ -442,6 +442,19 @@ namespace CAL_QR.Data
                     "[DeviceTypeSeeder] حصيلة الترقية التصحيحية:\n" + repairResult.ToDiagnosticsText());
             }
 
+            // مزامنة إضافات الكتالوج — حارس بالمحتوى بلا عَلَم.
+            //
+            // موضعها بعد الإصلاح v1: القاعدة القائمة التي تخطّاها البذر والإصلاح
+            // (علماهما مضبوطان) وينقصها نوع جديد أُضيف للكتالوج تُشفى هنا. القاعدة
+            // الجديدة يكون كل أنواعها حاضرة بعد البذر، فتخرج هذه فوراً. بلا تصعيد
+            // استثناء (انظر تعليقها)، فلا معالج هنا.
+            var syncResult = DeviceTypeSeeder.SyncMissingCatalogTypesIfNeeded(context);
+            if (syncResult.HasDiagnostics)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    "[DeviceTypeSeeder] حصيلة مزامنة إضافات الكتالوج:\n" + syncResult.ToDiagnosticsText());
+            }
+
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
             try
             {

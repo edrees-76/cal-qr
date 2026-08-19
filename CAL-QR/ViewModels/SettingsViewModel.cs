@@ -24,7 +24,6 @@ namespace CAL_QR.ViewModels
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly IBackupService _backupService;
         private readonly IAuditLogRepository _auditLogRepository;
-        private readonly IHmacService _hmacService;
 
         // Security Fields
         private string _currentPassword = string.Empty;
@@ -69,8 +68,7 @@ namespace CAL_QR.ViewModels
             IBackupService backupService,
             IAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
-            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory,
-            IHmacService hmacService)
+            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
@@ -78,7 +76,6 @@ namespace CAL_QR.ViewModels
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
             _paperTemplateDialogFactory = paperTemplateDialogFactory;
-            _hmacService = hmacService;
 
             ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
             SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit);
@@ -94,8 +91,6 @@ namespace CAL_QR.ViewModels
             OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
             EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
-            SeedTestDataCommand = new RelayCommand(async () => await SeedTestDataAsync(), () => CanEdit);
-            ClearSeedTestDataCommand = new RelayCommand(async () => await ClearSeedTestDataAsync(), () => CanEdit);
             FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
             SaveHelpSectionPasswordCommand = new RelayCommand(
                 async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword());
@@ -219,8 +214,6 @@ namespace CAL_QR.ViewModels
         public ICommand OpenTemplatesDialogCommand { get; }
         public ICommand EditTemplateCommand { get; }
         public ICommand NewTemplateCommand { get; }
-        public ICommand SeedTestDataCommand { get; }
-        public ICommand ClearSeedTestDataCommand { get; }
         #endregion
 
         private async Task LoadSettingsAsync()
@@ -837,27 +830,6 @@ namespace CAL_QR.ViewModels
             _ = LoadSettingsAsync(); // Reload templates after dialog closes
         }
 
-        private async Task SeedTestDataAsync()
-        {
-            try
-            {
-                var result = await DevTestDataSeeder.SeedTestDataAsync(_contextFactory, _hmacService, _auditLogRepository);
-                if (result.Success)
-                {
-                    CalibrationEvents.RaiseCalibrationChanged();
-                    MessageBox.Show(result.Message, "توليد البيانات التجريبية", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"حدث خطأ أثناء توليد البيانات التجريبية: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
         private string _factoryResetConfirmationText = string.Empty;
         public string FactoryResetConfirmationText
         {
@@ -1016,35 +988,6 @@ namespace CAL_QR.ViewModels
         }
 
         #endregion
-
-        private async Task ClearSeedTestDataAsync()
-        {
-            var confirm = MessageBox.Show(
-                "هل أنت تأكد من رغبتك في حذف كافة البيانات التجريبية المُنشأة نهائياً من قاعدة البيانات؟",
-                "تأكيد حذف البيانات التجريبية",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (confirm != MessageBoxResult.Yes) return;
-
-            try
-            {
-                var result = await DevTestDataSeeder.ClearSeedTestDataAsync(_contextFactory, _auditLogRepository);
-                if (result.Success)
-                {
-                    CalibrationEvents.RaiseCalibrationChanged();
-                    MessageBox.Show(result.Message, "حذف البيانات التجريبية", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"حدث خطأ أثناء حذف البيانات التجريبية: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         private async Task FactoryResetAsync()
         {

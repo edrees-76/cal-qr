@@ -76,13 +76,6 @@ namespace CAL_QR.Services
                 // والتصفير يجب أن يُعيد البناء رغمه.
                 DeviceTypeSeeder.Apply(context);
 
-                // 7. إزالة سجل الـ Snapshot المتبقي في AppSettings إن وجد (مع الحفاظ الكامل على بقية الإعدادات وسجل AuditLog)
-                var snapshotSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "DevSeededDataSnapshot");
-                if (snapshotSetting != null)
-                {
-                    context.AppSettings.Remove(snapshotSetting);
-                }
-
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }

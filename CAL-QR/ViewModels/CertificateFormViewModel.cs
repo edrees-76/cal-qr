@@ -170,6 +170,14 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _referenceNo, value);
         }
 
+        // رقم الإيصال الماليّ — خارج التوقيع، يُملأ غالبًا بعد الإصدار (تحرير لاحق).
+        private string _financialReceiptNo = string.Empty;
+        public string FinancialReceiptNo
+        {
+            get => _financialReceiptNo;
+            set => SetProperty(ref _financialReceiptNo, value);
+        }
+
         private string _clientName = string.Empty;
         public string ClientName
         {
@@ -849,6 +857,7 @@ namespace CAL_QR.ViewModels
 
             CertificateTemplateType = c.CertificateTemplateType ?? string.Empty;
             ReferenceNo = c.ReferenceNo ?? string.Empty;
+            FinancialReceiptNo = c.FinancialReceiptNo ?? string.Empty;
             ClientName = c.ClientName;
             ClientAddress = c.ClientAddress ?? string.Empty;
             DeviceModel = c.DeviceModel;
@@ -1086,6 +1095,7 @@ namespace CAL_QR.ViewModels
                 DocumentType = DocumentType,
                 CertificateTemplateType = Nullify(CertificateTemplateType),
                 ReferenceNo = Nullify(ReferenceNo),
+                FinancialReceiptNo = Nullify(FinancialReceiptNo),
 
                 ClientName = ClientName.Trim(),
                 ClientAddress = Nullify(ClientAddress),

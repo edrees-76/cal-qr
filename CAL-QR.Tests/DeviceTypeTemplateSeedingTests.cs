@@ -666,5 +666,106 @@ namespace CAL_QR.Tests
             }
             finally { CleanUp(dbPath); }
         }
+
+        [Fact]
+        public void MigrateExistingDb_MissingNewCatalogType_IsHealedKeepingSeedFlags()
+        {
+            // يُحاكي قاعدة حيّة بُذِرت قبل إضافة نوع للكتالوج: كل الأعلام (البذر
+            // والإصلاح) مضبوطة، لكن نوعاً معتمداً غائب. الحارس بالمحتوى وحده يشفيها.
+            // Teletector Gamma Probe هو النوع المحذوف محاكاةً — بلا مرادفات فلا التباس.
+            string dbPath = NewDbPath("healmissing");
+            var options = OptionsFor(dbPath);
+            try
+            {
+                const string missingName = "Teletector Gamma Probe";
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    // بذر كامل: الستة حاضرة، وعلما البذر والإصلاح مضبوطان.
+                    DatabaseMigrator.RunMigrations(context);
+
+                    // حذف النوع وأبنائه مع إبقاء العلمين مضبوطين — هذا هو محاكاة
+                    // «قاعدة بُذِرت قبل إضافة هذا النوع». لا يُنزع أيّ علم عمداً:
+                    // فنُثبِت أن الشفاء جاء من المزامنة بلا علم لا من البذر/الإصلاح.
+                    var teletector = context.DeviceTypes.Single(t => t.Name == missingName);
+                    var children = context.DeviceTypeFunctionalCheckTemplates
+                        .Where(c => c.DeviceTypeId == teletector.Id).ToList();
+                    context.DeviceTypeFunctionalCheckTemplates.RemoveRange(children);
+                    context.DeviceTypes.Remove(teletector);
+                    context.SaveChanges();
+
+                    // تأكيد الحالة المُحاكاة: خمسة أنواع، والعلمان ما زالا مضبوطين.
+                    Assert.Equal(5, context.DeviceTypes.Count());
+                    Assert.Equal("true", context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.SeedFlagKey).Value);
+                    Assert.Equal("true", context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.RepairFlagKey).Value);
+                }
+
+                // إقلاع تالٍ: المزامنة بالمحتوى ترى الاسم غائباً فتستدعي Apply مرّة.
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    // عاد النوع: ستة بالضبط، بالأسماء المعتمدة كاملة.
+                    Assert.Equal(6, context.DeviceTypes.Count());
+                    Assert.Equal(
+                        DeviceTypeCatalog.CanonicalNames.OrderBy(n => n).ToArray(),
+                        context.DeviceTypes.Select(t => t.Name).OrderBy(n => n).ToArray());
+
+                    // النوع المُستعاد يحمل فحوصه الخمسة من الكتالوج.
+                    var restored = context.DeviceTypes.Single(t => t.Name == missingName);
+                    Assert.Equal(5, context.DeviceTypeFunctionalCheckTemplates.Count(c => c.DeviceTypeId == restored.Id));
+
+                    // لا ازدواج على مستوى المجموع: ستة أنواع × خمسة فحوص.
+                    Assert.Equal(30, context.DeviceTypeFunctionalCheckTemplates.Count());
+                }
+            }
+            finally { CleanUp(dbPath); }
+        }
+
+        [Fact]
+        public void MigrateExistingDb_AfterHealing_RunAgainIsNoOp()
+        {
+            // بعد شفاء نوع غائب، الإقلاع التالي يجب أن يخرج من المزامنة بلا عمل:
+            // كل الأسماء حاضرة ⇒ خروج فوريّ، لا إنشاء ولا ازدواج.
+            string dbPath = NewDbPath("healnoop");
+            var options = OptionsFor(dbPath);
+            try
+            {
+                const string missingName = "Teletector Gamma Probe";
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    var teletector = context.DeviceTypes.Single(t => t.Name == missingName);
+                    var children = context.DeviceTypeFunctionalCheckTemplates
+                        .Where(c => c.DeviceTypeId == teletector.Id).ToList();
+                    context.DeviceTypeFunctionalCheckTemplates.RemoveRange(children);
+                    context.DeviceTypes.Remove(teletector);
+                    context.SaveChanges();
+                }
+
+                // إقلاع الشفاء
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+                // إقلاع ثالث — يجب أن يكون بلا أثر
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                }
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.Equal(6, context.DeviceTypes.Count());
+                    Assert.Equal(30, context.DeviceTypeFunctionalCheckTemplates.Count());
+                    Assert.Equal(10, context.DeviceTypeUncertaintyComponentTemplates.Count());
+                }
+            }
+            finally { CleanUp(dbPath); }
+        }
     }
 }

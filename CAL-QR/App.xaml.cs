@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,10 +16,31 @@ namespace CAL_QR
     {
         public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
+        // قفل النسخة الواحدة: يُبقى static ليعيش طوال عمر التطبيق (وإلا جمعه GC
+        // فأُفرِج القفل باكراً). الاسم ثابت وفريد للمنظومة. الغرض انضباط تشغيليّ
+        // لا حماية بيانات — تخصيص الأرقام ذرّيّ وآمن للتزامن أصلاً (AllocateAsync).
+        private static Mutex? _singleInstanceMutex;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             try
             {
+                // قبل أيّ بناء: إن كانت نسخة تعمل، أبلِغ المستخدم وأغلِق هذه النسخة.
+                // createdNew=false ⇒ الـMutex مملوك لنسخة أخرى حيّة.
+                _singleInstanceMutex = new Mutex(initiallyOwned: true, "CAL-QR-SingleInstance-Mutex", out bool createdNew);
+                if (!createdNew)
+                {
+                    MessageBox.Show(
+                        "المنظومة تعمل بالفعل في نافذة أخرى.",
+                        "تنبيه",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information,
+                        MessageBoxResult.OK,
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                    Shutdown();
+                    return;
+                }
+
                 base.OnStartup(e);
 
                 // Prevent app from auto-closing when transitioning between windows

@@ -99,10 +99,22 @@ namespace CAL_QR.Services.Documents
 
                 column.Item().PaddingTop(6).BorderBottom(1).BorderColor(NavyColor);
 
-                if (!string.IsNullOrWhiteSpace(_certificate.ReferenceNo))
-                    column.Item().PaddingTop(3).AlignLeft()
-                        .Text($"Ref: {_certificate.ReferenceNo}")
+                // Ref يسارًا، Financial Receipt No يمينًا، بينهما فاصل مطّاط يدفعهما
+                // للحافّتين. AutoItem يتقلّص حول نصّه، وRelativeItem الأوسط الفارغ
+                // يمتصّ العرض المتبقّي فيفترق الطرفان. يظهران دائمًا (استثناء من إخفاء
+                // الفارغ، بقرار Edrees): القيمة إن وُجدت، وإلا خطّ سفليّ للكتابة اليدويّة.
+                column.Item().PaddingTop(14).Row(row =>
+                {
+                    row.AutoItem()
+                        .Text($"Ref: {(string.IsNullOrWhiteSpace(_certificate.ReferenceNo) ? "________" : _certificate.ReferenceNo)}")
                         .FontSize(8).FontColor(Colors.Grey.Darken1);
+
+                    row.RelativeItem();
+
+                    row.AutoItem()
+                        .Text($"Financial Receipt No: {(string.IsNullOrWhiteSpace(_certificate.FinancialReceiptNo) ? "________" : _certificate.FinancialReceiptNo)}")
+                        .FontSize(8).FontColor(Colors.Grey.Darken1);
+                });
             });
         }
 

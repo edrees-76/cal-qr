@@ -706,6 +706,10 @@ namespace CAL_QR.ViewModels
                     // Clear connection pools to release sqlite files
                     SqliteConnection.ClearAllPools();
 
+                    // تحرير قفل النسخة الواحدة قبل إطلاق النسخة الجديدة، وإلا رأت
+                    // القفل محجوزاً من هذه العملية ورفضت العمل.
+                    App.ReleaseSingleInstanceMutex();
+
                     var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
                     if (!string.IsNullOrEmpty(exePath))
                     {
@@ -1187,6 +1191,11 @@ namespace CAL_QR.ViewModels
                 try
                 {
                     SqliteConnection.ClearAllPools();
+
+                    // تحرير قفل النسخة الواحدة قبل إطلاق النسخة الجديدة، وإلا رأت
+                    // القفل محجوزاً من هذه العملية ورفضت العمل.
+                    App.ReleaseSingleInstanceMutex();
+
                     var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
                     if (!string.IsNullOrEmpty(exePath))
                     {

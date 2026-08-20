@@ -84,6 +84,30 @@ namespace CAL_QR
             }
         }
 
+        /// <summary>
+        /// يُحرّر قفل النسخة الواحدة صراحةً قبل إعادة تشغيل التطبيق لنفسه
+        /// (بعد تغيير المسارات أو التصفير الكامل). بدونه تُقلع النسخة الجديدة
+        /// بينما لا يزال القفل محجوزاً من العملية القديمة التي لم تُغلق بعد،
+        /// فتظهر «المنظومة تعمل بالفعل» وتُغلق النسخة الجديدة فوراً.
+        ///
+        /// آمن: يُستدعى من خيط الواجهة نفسه الذي أنشأ الـMutex في OnStartup،
+        /// و ReleaseMutex يتطلّب المالك نفسه. مغلّف بـ try لأن التحرير المتكرر
+        /// أو على mutex غير مملوك يُلقي، ولا نريد كسر إعادة التشغيل بسبب ذلك.
+        /// </summary>
+        public static void ReleaseSingleInstanceMutex()
+        {
+            try
+            {
+                _singleInstanceMutex?.ReleaseMutex();
+                _singleInstanceMutex?.Dispose();
+                _singleInstanceMutex = null;
+            }
+            catch
+            {
+                // تحرير على mutex غير مملوك/مُتخلَّص منه — لا يضر، نتجاهله.
+            }
+        }
+
         private void ConfigureServices(IServiceCollection services)
         {
             string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr-simulation.db");

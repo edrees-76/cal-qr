@@ -99,7 +99,6 @@ namespace CAL_QR.Views
             BtnRevealPassword.IsEnabled = false;
 
             bool loginSuccess = false;
-            bool isBridgeLogin = false;
             Models.User? targetUser = null;
 
             try
@@ -130,41 +129,6 @@ namespace CAL_QR.Views
                         }
                     }
                 }
-
-                // Bridge path: check legacy AppSettings PasswordHash (SHA256)
-                if (!loginSuccess)
-                {
-                    using (var context = _contextFactory.CreateDbContext())
-                    {
-                        var hashSetting = context.AppSettings.FirstOrDefault(s => s.Key == "PasswordHash");
-                        string storedHash = hashSetting?.Value ?? string.Empty;
-
-                        if (!string.IsNullOrEmpty(storedHash) && PasswordHelper.VerifyPassword(password, storedHash))
-                        {
-                            // Retrieve the seeded admin user
-                            var seededAdmin = context.Users.FirstOrDefault(u => u.Username == "admin");
-                            if (seededAdmin != null)
-                            {
-                                if (seededAdmin.IsActive)
-                                {
-                                    targetUser = seededAdmin;
-                                    loginSuccess = true;
-                                    isBridgeLogin = true;
-                                }
-                                else
-                                {
-                                    ShowError("هذا الحساب موقوف حالياً. يرجى مراجعة مدير النظام.");
-                                    BtnLogin.IsEnabled = true;
-                                    TxtUsername.IsEnabled = true;
-                                    TxtPassword.IsEnabled = true;
-                                    TxtPasswordReveal.IsEnabled = true;
-                                    BtnRevealPassword.IsEnabled = true;
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
             }
             catch (Exception)
             {
@@ -174,17 +138,6 @@ namespace CAL_QR.Views
             if (loginSuccess && targetUser != null)
             {
                 _currentUserService.SetCurrentUser(targetUser);
-
-                if (isBridgeLogin)
-                {
-                    MessageBox.Show(this, 
-                        "تم تسجيل دخولك بحساب المدير المؤقت. يرجى تغيير كلمة المرور فوراً من تبويب المستخدمين.",
-                        "تنبيه أمني", 
-                        MessageBoxButton.OK, 
-                        MessageBoxImage.Warning, 
-                        MessageBoxResult.OK, 
-                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
-                }
 
                 var mainWindow = App.ServiceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();

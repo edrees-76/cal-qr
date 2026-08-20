@@ -163,15 +163,15 @@ namespace CAL_QR.Services.Documents
 
             var readoutLabel       = def?.ReadoutUnitLabel;
             var readoutSerialLabel = def?.ReadoutUnitSerialLabel;
-            var primaryLabel       = def?.PrimaryInstrumentLabel       ?? "DEVICE MODEL";
-            var primarySerialLabel = def?.PrimaryInstrumentSerialLabel ?? "DEVICE SERIAL NUMBER";
+            var primaryLabel       = def?.PrimaryInstrumentLabel       ?? "Device Model";
+            var primarySerialLabel = def?.PrimaryInstrumentSerialLabel ?? "Device Serial Number";
             var sectionTitle       = def?.ClientSectionTitle           ?? "CLIENT & INSTRUMENT SPECIFICATIONS";
             var showStandardBox    = def?.ClientBoxShowsStandardTraceabilityStatus ?? false;
 
             var fields = new List<Field>
             {
-                new Field("CLIENT NAME", _certificate.ClientName, FullWidth: true),
-                new Field("CLIENT ADDRESS", _certificate.ClientAddress, FullWidth: true),
+                new Field("Client Name", _certificate.ClientName, FullWidth: true),
+                new Field("Client Address", _certificate.ClientAddress, FullWidth: true),
             };
 
             if (!string.IsNullOrWhiteSpace(readoutLabel))
@@ -181,13 +181,13 @@ namespace CAL_QR.Services.Documents
 
             fields.Add(new Field(primaryLabel, _certificate.DeviceModel));
             fields.Add(new Field(primarySerialLabel, _certificate.DeviceSerialNumber));
-            fields.Add(new Field("MANUFACTURER", _certificate.DeviceManufacturer));
+            fields.Add(new Field("Manufacturer", _certificate.DeviceManufacturer));
 
             fields.Add(new Field(
-                _isStatusReport ? "FUNCTIONAL INSPECTION DATE" : "CALIBRATION DATE",
+                _isStatusReport ? "Functional Inspection Date" : "Calibration Date",
                 _certificate.CalibrationDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
             fields.Add(new Field(
-                _isStatusReport ? "RECALIBRATION AFTER REPAIR" : "DUE DATE",
+                _isStatusReport ? "Recalibration After Repair" : "Calibration Due Date",
                 _isStatusReport
                     ? CertificateTexts.StatusReportRecalibrationValue
                     : _certificate.DueDate.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)));
@@ -195,9 +195,7 @@ namespace CAL_QR.Services.Documents
             if (showStandardBox)
             {
                 fields.Add(new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard));
-                fields.Add(new Field(
-                    _isStatusReport ? "STATUS / VERDICT" : "COMPLIANCE VERDICT",
-                    _certificate.ComplianceVerdict));
+                fields.Add(new Field("STATUS / VERDICT", _certificate.ComplianceVerdict));
             }
 
             if (!HasAnyValue(fields)) return;

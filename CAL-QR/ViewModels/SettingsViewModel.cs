@@ -24,6 +24,7 @@ namespace CAL_QR.ViewModels
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly IBackupService _backupService;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly IUserRepository _userRepository;
 
         // Security Fields
         private string _currentPassword = string.Empty;
@@ -68,6 +69,7 @@ namespace CAL_QR.ViewModels
             IBackupService backupService,
             IAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
+            IUserRepository userRepository,
             Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory)
         {
             _contextFactory = contextFactory;
@@ -75,6 +77,7 @@ namespace CAL_QR.ViewModels
             _backupService = backupService;
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
+            _userRepository = userRepository;
             _paperTemplateDialogFactory = paperTemplateDialogFactory;
 
             ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
@@ -844,6 +847,20 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        private string _factoryResetPassword = string.Empty;
+        public string FactoryResetPassword
+        {
+            get => _factoryResetPassword;
+            set
+            {
+                if (_factoryResetPassword != value)
+                {
+                    _factoryResetPassword = value;
+                    OnPropertyChanged(nameof(FactoryResetPassword));
+                }
+            }
+        }
+
         public ICommand FactoryResetCommand { get; }
 
         #region كلمة سرّ قسم «مفتاح التوقيع»
@@ -991,6 +1008,19 @@ namespace CAL_QR.ViewModels
 
         private async Task FactoryResetAsync()
         {
+            // المرحلة 0: الصلاحية — المدير وحده. حدّ أضيق من CanEdit عمداً:
+            // التصفير الكامل قرار مصيري لا يُترك لأي محرّر.
+            if (_currentUserService.CurrentUser?.Role != UserRole.Admin)
+            {
+                MessageBox.Show(
+                    "التصفير الكامل للنظام متاح لمدير النظام وحده.",
+                    "صلاحية غير كافية",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            // المرحلة 1: عبارة التأكيد النصّية.
             if (FactoryResetConfirmationText.Trim() != SystemResetService.RequiredConfirmationPhrase)
             {
                 MessageBox.Show(
@@ -1001,32 +1031,162 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
+            // المرحلة 2: كلمة سرّ المستخدم الحالي نفسه.
+            // يُتحقّق منها بـ BCrypt.Verify تماماً كما في LoginWindow — لا PasswordHelper،
+            // فكلمات مرور المستخدمين في جدول Users مُجزّأة بـ BCrypt.
+            if (string.IsNullOrEmpty(FactoryResetPassword))
+            {
+                MessageBox.Show(
+                    "يرجى إدخال كلمة سرّك لتأكيد التصفير.",
+                    "كلمة السرّ مطلوبة",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            var currentUserId = _currentUserService.CurrentUser?.Id;
+            if (currentUserId == null)
+            {
+                MessageBox.Show(
+                    "تعذّر تحديد المستخدم الحالي. أعد تسجيل الدخول وحاول مجدداً.",
+                    "خطأ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            bool passwordValid;
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(currentUserId.Value);
+                passwordValid = user != null && BCrypt.Net.BCrypt.Verify(FactoryResetPassword, user.PasswordHash);
+            }
+            catch
+            {
+                passwordValid = false;
+            }
+
+            if (!passwordValid)
+            {
+                FactoryResetPassword = string.Empty;
+                MessageBox.Show(
+                    "كلمة السرّ غير صحيحة. لم يُنفَّذ أي تصفير.",
+                    "كلمة سرّ خاطئة",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            // المرحلة 3: التأكيد النهائي.
             var confirm = MessageBox.Show(
-                "⚠️ تحذير شديد الخطورة!\n\nأنت على وشك مسح جميع البيانات الفعلية والتجريبية والملفات في النظام نهائياً وإعادتها لحالة التثبيت النظيفة الأولية.\n\nهل أنت تأكد 100% من تنفيذ التصفير الكامل للنظام؟",
+                "⚠️ تحذير شديد الخطورة!\n\nأنت على وشك مسح جميع البيانات والملفات في النظام نهائياً وإعادته لحالة التثبيت النظيفة. هذه العملية لا يمكن التراجع عنها.\n\nهل أنت متأكد 100% من تنفيذ التصفير الكامل؟",
                 "تأكيد التصفير الكامل للنظام (Factory Reset)",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
-            if (confirm != MessageBoxResult.Yes) return;
+            if (confirm != MessageBoxResult.Yes)
+            {
+                FactoryResetPassword = string.Empty;
+                return;
+            }
 
+            // شرط حزام الأمان: لا تصفير بلا مسار نسخ احتياطي مضبوط.
+            if (string.IsNullOrWhiteSpace(BackupPath))
+            {
+                MessageBox.Show(
+                    "لا يمكن التصفير قبل تحديد مسار النسخ الاحتياطي. اضبط «مجلد حفظ النسخ الاحتياطية» أولاً من بطاقة النسخ الاحتياطي، ثم أعد المحاولة.",
+                    "مطلوب مسار نسخ احتياطي",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                FactoryResetPassword = string.Empty;
+                return;
+            }
+
+            // نسخة احتياطية إجبارية قبل أي حذف: تنجح وإلّا نتوقف.
+            // استثناء = فشل حقيقي ⇒ توقف تام. إرجاع false = المحلي نجح والسحابي فشل
+            // فقط ⇒ نُنبّه ونترك القرار للمستخدم (المحلي كافٍ كشبكة أمان).
+            try
+            {
+                bool backupOk = await _backupService.BackupNowAsync(BackupPath);
+                if (!backupOk)
+                {
+                    var proceed = MessageBox.Show(
+                        "تم إنشاء النسخة الاحتياطية المحلية بنجاح، لكن فشل نسخها إلى المسار السحابي. النسخة المحلية كافية كشبكة أمان.\n\nهل تريد متابعة التصفير؟",
+                        "تحذير النسخ السحابي",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (proceed != MessageBoxResult.Yes)
+                    {
+                        FactoryResetPassword = string.Empty;
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                FactoryResetPassword = string.Empty;
+                MessageBox.Show(
+                    $"فشلت النسخة الاحتياطية الإلزامية، لذا أُلغي التصفير حفاظاً على بياناتك.\n\nالتفاصيل: {ex.Message}",
+                    "توقّف: فشل النسخ الاحتياطي",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
+            // التصفير الفعلي.
             try
             {
                 var result = await SystemResetService.FactoryResetAsync(_contextFactory, FactoryResetConfirmationText.Trim(), _auditLogRepository);
                 FactoryResetConfirmationText = string.Empty;
+                FactoryResetPassword = string.Empty;
 
-                if (result.Success)
-                {
-                    CalibrationEvents.RaiseCalibrationChanged();
-                    MessageBox.Show(result.Message, "التصفير الكامل للنظام", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
+                if (!result.Success)
                 {
                     MessageBox.Show(result.Message, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                MessageBox.Show(
+                    result.Message + "\n\nسيُعاد تشغيل البرنامج الآن على قاعدة نظيفة.",
+                    "اكتمل التصفير الكامل",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // إعادة تشغيل — نفس نمط SavePathsAsync المُثبَت: تحرير أقفال SQLite
+                // ثم تشغيل نسخة جديدة وإغلاق الحالية، فتُعاد كل الحالة من قاعدة نظيفة.
+                try
+                {
+                    SqliteConnection.ClearAllPools();
+                    var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                    if (!string.IsNullOrEmpty(exePath))
+                    {
+                        var startInfo = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = exePath,
+                            WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                            UseShellExecute = true
+                        };
+                        System.Diagnostics.Process.Start(startInfo);
+                        Application.Current.Shutdown();
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("تعذر العثور على المسار التنفيذي للتطبيق.");
+                    }
+                }
+                catch (Exception restartEx)
+                {
+                    MessageBox.Show(
+                        $"تمّ التصفير بنجاح، لكن تعذّرت إعادة التشغيل التلقائي: {restartEx.Message}\nيرجى إغلاق البرنامج وفتحه يدوياً.",
+                        "تنبيه",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)
             {
                 FactoryResetConfirmationText = string.Empty;
+                FactoryResetPassword = string.Empty;
                 MessageBox.Show($"حدث خطأ أثناء التصفير الكامل للنظام: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

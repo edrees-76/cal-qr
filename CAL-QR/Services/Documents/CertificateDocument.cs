@@ -567,12 +567,20 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeFooter(IContainer container)
         {
-            container.AlignRight().Text(x =>
+            container.Column(footer =>
             {
-                x.Span("Page ").FontSize(7);
-                x.CurrentPageNumber().FontSize(7);
-                x.Span(" of ").FontSize(7);
-                x.TotalPages().FontSize(7);
+                // سطر جهة الاتصال المؤسّسي — ثابت في كل شهادة، فوق فاصل رفيع.
+                footer.Item().PaddingTop(3).BorderTop(0.5f).BorderColor(NavyColor);
+                footer.Item().PaddingTop(2).AlignCenter()
+                    .Text(CertificateTexts.FooterContact).FontSize(6.5f).FontColor(Colors.Grey.Darken1);
+
+                footer.Item().AlignRight().Text(x =>
+                {
+                    x.Span("Page ").FontSize(7);
+                    x.CurrentPageNumber().FontSize(7);
+                    x.Span(" of ").FontSize(7);
+                    x.TotalPages().FontSize(7);
+                });
             });
         }
 

@@ -66,5 +66,12 @@ namespace CAL_QR.Data
 
         public const string StatusReportNotPerformedLine3 =
             "The instrument shall be repaired and successfully pass the functional inspection before being submitted for recalibration.";
+
+        /// <summary>
+        /// سطر جهة الاتصال المؤسّسي في تذييل كل شهادة. ثابت لا يتغيّر بين الشهادات،
+        /// ولا عمود له في القاعدة ⇒ هنا، خارج SIG1 — بنفس مبرّر بيان المطابقة.
+        /// </summary>
+        public const string FooterContact =
+            "Tel: +218 21 3705824   Tel: +218 21 3690962   Fax: +218 21 3690961   Email: gdoffice@tnrc.ly   P.O.Box: 30878";
     }
 }

@@ -1062,11 +1062,34 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
-            bool passwordValid;
+            // التحقّق من كلمة سرّ المستخدم الحالي بنفس مسارَي LoginWindow — لأن من
+            // دخل عبر «الجسر» تكون كلمته في AppSettings["PasswordHash"] بـ SHA256 لا
+            // في Users.PasswordHash بـ BCrypt. الاكتفاء بـ BCrypt كان يرفض كلمة سرّ
+            // صحيحة لحساب دخل عبر الجسر (مثل admin الأوّلي).
+            bool passwordValid = false;
             try
             {
                 var user = await _userRepository.GetByIdAsync(currentUserId.Value);
-                passwordValid = user != null && BCrypt.Net.BCrypt.Verify(FactoryResetPassword, user.PasswordHash);
+                if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
+                {
+                    try
+                    {
+                        passwordValid = BCrypt.Net.BCrypt.Verify(FactoryResetPassword, user.PasswordHash);
+                    }
+                    catch
+                    {
+                        passwordValid = false;
+                    }
+                }
+
+                if (!passwordValid)
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    var hashSetting = await context.AppSettings.AsNoTracking()
+                        .FirstOrDefaultAsync(s => s.Key == "PasswordHash");
+                    string storedHash = hashSetting?.Value ?? string.Empty;
+                    passwordValid = PasswordHelper.VerifyPassword(FactoryResetPassword, storedHash);
+                }
             }
             catch
             {

@@ -172,6 +172,7 @@ namespace CAL_QR.Views
 
                 SetAppSetting(context, "DatabasePath", _databasePath);
                 SetAppSetting(context, "SecurityQuestion", _securityQuestion);
+                SetAppSetting(context, "SecurityAnswer", PasswordHelper.HashPassword(_securityAnswer));
                 SetAppSetting(context, "FirstRunCompleted", "true");
 
                 // Create the admin user

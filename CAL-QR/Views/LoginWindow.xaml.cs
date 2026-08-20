@@ -393,7 +393,7 @@ namespace CAL_QR.Views
             }
         }
 
-        private void BtnSaveNewPassword_Click(object sender, RoutedEventArgs e)
+        private async void BtnSaveNewPassword_Click(object sender, RoutedEventArgs e)
         {
             string newPassword = TxtNewPassword.Visibility == Visibility.Visible 
                 ? TxtNewPassword.Password 
@@ -424,25 +424,18 @@ namespace CAL_QR.Views
 
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                var adminUser = await _userRepository.GetByUsernameAsync("admin");
+                if (adminUser == null)
                 {
-                    var hashSetting = context.AppSettings.FirstOrDefault(s => s.Key == "PasswordHash");
-                    string newHash = PasswordHelper.HashPassword(newPassword);
-
-                    if (hashSetting != null)
-                    {
-                        hashSetting.Value = newHash;
-                    }
-                    else
-                    {
-                        context.AppSettings.Add(new Models.AppSetting { Key = "PasswordHash", Value = newHash });
-                    }
-
-                    context.SaveChanges();
+                    MessageBox.Show("تعذّر العثور على حساب المدير (admin) لإعادة الضبط. يرجى مراجعة مدير آخر من تبويب المستخدمين.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
 
-                MessageBox.Show("تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بها.", "تم بنجاح", MessageBoxButton.OK, MessageBoxImage.Information);
-                
+                adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                await _userRepository.UpdateAsync(adminUser);
+
+                MessageBox.Show("تم تغيير كلمة مرور حساب admin بنجاح. يمكنك الآن تسجيل الدخول بها.", "تم بنجاح", MessageBoxButton.OK, MessageBoxImage.Information);
+
                 // Go back to login screen
                 GridForgotPassword.Visibility = Visibility.Collapsed;
                 GridLoginContent.Visibility = Visibility.Visible;
@@ -456,7 +449,7 @@ namespace CAL_QR.Views
 
         private void ShowRecoverySupportMessage()
         {
-            MessageBox.Show("لاسترداد كلمة المرور، يرجى استخدام كلمة المرور الماستر الخاصة بالنظام أو الاتصال بالدعم الفني.", "استرداد كلمة المرور", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("لاسترداد كلمة المرور، تأكّد من إجابة السؤال السري، أو اطلب من مدير آخر إعادة ضبط كلمتك من تبويب المستخدمين.", "استرداد كلمة المرور", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

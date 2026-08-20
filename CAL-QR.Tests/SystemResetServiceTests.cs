@@ -183,9 +183,12 @@ namespace CAL_QR.Tests
 
                     Assert.True(await context.AppSettings.CountAsync() > 0);
 
+                    // سجل التدقيق مُسِح ضمن التصفير، ثم كُتب سطر التصفير وحيداً بعد
+                    // الـcommit. فالسجل النظيف يحوي سطراً واحداً بالضبط هو التصفير —
+                    // تأكيد أقوى من NotEmpty: يكشف أي تسرّب لأسطر قديمة لم تُمسَح.
                     var auditLogs = await context.AuditLogs.ToListAsync();
-                    Assert.NotEmpty(auditLogs);
-                    Assert.Contains(auditLogs, log => log.Action == "تصفير كامل للنظام");
+                    Assert.Single(auditLogs);
+                    Assert.Equal("تصفير كامل للنظام", auditLogs[0].Action);
                 }
 
                 Assert.False(File.Exists(realQrPath), "Production QR code file must be deleted");

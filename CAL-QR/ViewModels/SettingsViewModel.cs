@@ -312,30 +312,34 @@ namespace CAL_QR.ViewModels
         {
             try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
-                var dbPassSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "MasterPassword");
-                
-                string currentDbHash = dbPassSetting?.Value ?? string.Empty;
-                if (!PasswordHelper.VerifyPassword(CurrentPassword, currentDbHash))
+                var currentUserId = _currentUserService.CurrentUser?.Id;
+                if (currentUserId == null)
+                {
+                    MessageBox.Show("تعذّر تحديد المستخدم الحالي. أعد تسجيل الدخول وحاول مجدداً.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var user = await _userRepository.GetByIdAsync(currentUserId.Value);
+                if (user == null)
+                {
+                    MessageBox.Show("تعذّر العثور على حساب المستخدم الحالي.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                bool currentValid = false;
+                try { currentValid = BCrypt.Net.BCrypt.Verify(CurrentPassword, user.PasswordHash); }
+                catch { currentValid = false; }
+
+                if (!currentValid)
                 {
                     MessageBox.Show("كلمة المرور الحالية غير صحيحة.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                string newHash = PasswordHelper.HashPassword(NewPassword);
-                if (dbPassSetting == null)
-                {
-                    dbPassSetting = new AppSetting { Key = "MasterPassword", Value = newHash };
-                    context.AppSettings.Add(dbPassSetting);
-                }
-                else
-                {
-                    dbPassSetting.Value = newHash;
-                }
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword);
+                await _userRepository.UpdateAsync(user);
 
-                await context.SaveChangesAsync();
-                
-                await _auditLogRepository.LogAsync("تغيير كلمة المرور", "نظام", "Security", "تم تعديل كلمة مرور النظام بنجاح.");
+                await _auditLogRepository.LogAsync("تغيير كلمة المرور", "نظام", "Security", "تم تعديل كلمة مرور المستخدم الحالي بنجاح.");
                 MessageBox.Show("تم تغيير كلمة المرور بنجاح.", "تم التغيير", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 CurrentPassword = string.Empty;

@@ -114,7 +114,14 @@ namespace CAL_QR.ViewModels
         /// </summary>
         public bool IsHelpSectionPasswordVisible =>
             _currentUserService.CurrentUser?.Role == UserRole.Admin;
-        public bool CanEdit => _currentUserService.CurrentUser != null && 
+
+        /// <summary>
+        /// منطقة الخطر (التصفير الكامل) تظهر لمدير النظام وحده. حدّ أضيق من CanEdit
+        /// عمداً — لا يراها محرّر ولا مشاهد أصلاً، لا تُعطَّل فحسب.
+        /// </summary>
+        public bool IsFactoryResetVisible =>
+            _currentUserService.CurrentUser?.Role == UserRole.Admin;
+        public bool CanEdit => _currentUserService.CurrentUser != null &&
                                (_currentUserService.CurrentUser.Role == UserRole.Admin || _currentUserService.CurrentUser.IsEditor);
 
         #region Properties

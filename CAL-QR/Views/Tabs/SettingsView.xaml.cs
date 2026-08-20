@@ -55,5 +55,13 @@ namespace CAL_QR.Views.Tabs
                 vm.ConfirmPassword = ((PasswordBox)sender).Password;
             }
         }
+
+        private void TxtFactoryResetPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.FactoryResetPassword = ((PasswordBox)sender).Password;
+            }
+        }
     }
 }

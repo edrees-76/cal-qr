@@ -196,6 +196,7 @@ namespace CAL_QR.Services.Documents
             if (showStandardBox)
             {
                 fields.Add(new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard));
+                fields.Add(new Field("Traceability Reference", _certificate.TraceabilityReference, FullWidth: true));
                 fields.Add(new Field("STATUS / VERDICT", _certificate.ComplianceVerdict));
             }
 
@@ -237,6 +238,11 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeMethodologySection(ColumnDescriptor column)
         {
+            // قسم المنهجيّة للأنواع المبسّطة فقط (قرار رضا ب٤). العائلة الكاملة وتقرير
+            // الحالة: لا قسم منفصل، والتتبّع يُعرض داخل صندوق العميل (ب٩).
+            var def = DeviceTypeCatalog.Resolve(_certificate.CertificateTemplateType);
+            if (def?.SimplifiedResults != true) return;
+
             if (!_certificate.MethodologyEnabled) return;
 
             var fields = new List<Field>

@@ -440,9 +440,16 @@ namespace CAL_QR.Services.Documents
                 HeaderCell("Combined Standard Uncertainty (uc)");
                 HeaderCell($"Expanded Uncertainty (U) (k = {coverageFactor}) (95% confidence level)");
 
+                // uc and U are shown with a "%" suffix in this strip to match Reda's
+                // template (the budget table below keeps them bare). CFavg is a
+                // dimensionless factor and stays unchanged.
+                static string Pct(string? v) =>
+                    string.IsNullOrWhiteSpace(v) ? string.Empty
+                    : (v!.TrimEnd().EndsWith("%") ? v.Trim() : v.Trim() + " %");
+
                 ValueCell(cfavg);
-                ValueCell(uc);
-                ValueCell(u);
+                ValueCell(Pct(uc));
+                ValueCell(Pct(u));
             });
         }
 
@@ -680,7 +687,7 @@ namespace CAL_QR.Services.Documents
                 return;
             }
 
-            column.Item().ShowEntire().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
+            column.Item().PaddingTop(8).ShowEntire().Border(0.5f).BorderColor(GoldColor).Padding(6).Column(box =>
             {
                 box.Item().Text(CertificateTexts.ComplianceStatementEn).FontSize(8);
                 // ContentFromRightToLeft على الحاوية يرتّب عناصرها لا اتجاه الفقرة

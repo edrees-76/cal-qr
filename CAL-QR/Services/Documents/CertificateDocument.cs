@@ -422,17 +422,18 @@ namespace CAL_QR.Services.Documents
 
             if (components.Count == 0 && !hasSummary) return;
 
-            SectionTitle(column, "UNCERTAINTY BUDGET");
+            SectionTitle(column, "Uncertainty Budget (per GUM — Type A / Type B Evaluation)");
 
             column.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.RelativeColumn(2f);
-                    columns.RelativeColumn(1f);
-                    columns.RelativeColumn(1f);
-                    columns.RelativeColumn(1f);
-                    columns.RelativeColumn(1f);
+                    columns.ConstantColumn(25);   // No.
+                    columns.RelativeColumn(2.5f); // Component
+                    columns.RelativeColumn(1f);   // Evaluation Type
+                    columns.RelativeColumn(1f);   // Standard Uncertainty (%)
+                    columns.RelativeColumn(1f);   // Contribution (%)
+                    columns.RelativeColumn(1f);   // Distribution
                 });
 
                 table.Header(header =>
@@ -440,36 +441,49 @@ namespace CAL_QR.Services.Documents
                     void AddHeaderCell(string text) =>
                         header.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(Colors.White);
 
+                    AddHeaderCell("No.");
                     AddHeaderCell("Component");
                     AddHeaderCell("Evaluation Type");
+                    AddHeaderCell("Standard Uncertainty (%)");
+                    AddHeaderCell("Contribution (%)");
                     AddHeaderCell("Distribution");
-                    AddHeaderCell("Standard Uncertainty");
-                    AddHeaderCell("Contribution %");
                 });
 
+                int idx = 1;
                 foreach (var comp in components)
                 {
                     void AddCell(string? text) =>
                         table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter().Text(text ?? string.Empty).FontSize(7.5f);
 
+                    AddCell(idx.ToString(CultureInfo.InvariantCulture));
                     AddCell(comp.ComponentName);
                     AddCell(comp.EvaluationType);
-                    AddCell(comp.Distribution);
                     AddCell(comp.StandardUncertainty);
                     AddCell(comp.ContributionPercent);
+                    AddCell(comp.Distribution);
+                    idx++;
                 }
 
                 string coverageFactor = string.IsNullOrWhiteSpace(_certificate.CoverageFactor) ? "2" : _certificate.CoverageFactor!;
 
-                table.Cell().ColumnSpan(4).Background(HeaderBgColor).Padding(4)
+                // صفّ uc: التسمية تمتدّ على (No · Component · Evaluation)، القيمة تحت
+                // Standard Uncertainty، إجمالي المساهمة 100 (%)، وخانة Distribution فارغة.
+                table.Cell().ColumnSpan(3).Background(HeaderBgColor).Padding(4)
                     .Text("Combined Standard Uncertainty (uc)").Bold().FontSize(8).FontColor(NavyColor);
                 table.Cell().Background(HeaderBgColor).Padding(4).AlignCenter()
                     .Text(_certificate.CombinedUncertainty ?? string.Empty).Bold().FontSize(8);
+                table.Cell().Background(HeaderBgColor).Padding(4).AlignCenter()
+                    .Text("100 (%)").Bold().FontSize(8);
+                table.Cell().Background(HeaderBgColor);
 
-                table.Cell().ColumnSpan(4).Background(HeaderBgColor).Padding(4)
+                // صفّ U: التسمية تمتدّ على (No · Component · Evaluation)، القيمة تحت
+                // Standard Uncertainty، وخانتا Contribution و Distribution فارغتان.
+                table.Cell().ColumnSpan(3).Background(HeaderBgColor).Padding(4)
                     .Text($"Expanded Uncertainty (U) (k = {coverageFactor})").Bold().FontSize(8).FontColor(NavyColor);
                 table.Cell().Background(HeaderBgColor).Padding(4).AlignCenter()
                     .Text(_certificate.ExpandedUncertainty ?? string.Empty).Bold().FontSize(8);
+                table.Cell().Background(HeaderBgColor);
+                table.Cell().Background(HeaderBgColor);
             });
         }
 

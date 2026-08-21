@@ -354,17 +354,53 @@ namespace CAL_QR.Services.Documents
                 }
             });
 
-            var summaries = (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
-                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id);
-
-            foreach (var summary in summaries)
-            {
-                if (string.IsNullOrWhiteSpace(summary.AverageCorrectionFactor)) continue;
-                column.Item().Text($"Average Correction Factor (CFavg) — {summary.Radionuclide} = {summary.AverageCorrectionFactor}").Bold().FontSize(8);
-            }
-
             if (!string.IsNullOrWhiteSpace(_certificate.CorrectedReadingFormula))
                 column.Item().Text(_certificate.CorrectedReadingFormula!).FontSize(8);
+
+            ComposeResultsSummaryStrip(column);
+        }
+
+        // شريط ملخّص بعد جدول النتائج (العائلة الكاملة) مطابق لقالب رضا: ثلاثة أعمدة
+        // رأس + قيمة — CFavg (من ملخّصات النويدات) · uc · U. القيم uc/U مكرّرة عمداً
+        // هنا وفي جدول الميزانية، كما في B401. يعيد بلا رسم إن لا بيانات.
+        private void ComposeResultsSummaryStrip(ColumnDescriptor column)
+        {
+            var cfavg = string.Join(", ",
+                (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
+                    .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+                    .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
+                    .Select(s => s.AverageCorrectionFactor!.Trim()));
+
+            var uc = _certificate.CombinedUncertainty;
+            var u = _certificate.ExpandedUncertainty;
+
+            if (string.IsNullOrWhiteSpace(cfavg) && string.IsNullOrWhiteSpace(uc) && string.IsNullOrWhiteSpace(u))
+                return;
+
+            string coverageFactor = string.IsNullOrWhiteSpace(_certificate.CoverageFactor) ? "2" : _certificate.CoverageFactor!;
+
+            column.Item().PaddingTop(2).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn();
+                    columns.RelativeColumn();
+                    columns.RelativeColumn();
+                });
+
+                void HeaderCell(string text) =>
+                    table.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(Colors.White);
+                void ValueCell(string? text) =>
+                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(text ?? string.Empty).Bold().FontSize(8);
+
+                HeaderCell("Average Correction Factor (CFavg)");
+                HeaderCell("Combined Standard Uncertainty (uc)");
+                HeaderCell($"Expanded Uncertainty (U) (k = {coverageFactor}) (95% confidence level)");
+
+                ValueCell(cfavg);
+                ValueCell(uc);
+                ValueCell(u);
+            });
         }
 
         // العرض المبسّط (Gamma · Teletector · PED · Dose Rate): كتلة رأسيّة مطابقة

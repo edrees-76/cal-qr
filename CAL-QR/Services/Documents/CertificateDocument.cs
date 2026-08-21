@@ -230,10 +230,51 @@ namespace CAL_QR.Services.Documents
                 new Field("CALIBRATION MODE", _certificate.CalibrationMode),
             };
 
+            // خليّة Radiation Traceability للعائلة الكاملة فقط (شهادة معايرة، لا تقرير
+            // حالة، لا نوع مبسّط) — قرار رضا ب٣. تُركَّب من بيانات جدول النتائج.
+            var def = DeviceTypeCatalog.Resolve(_certificate.CertificateTemplateType);
+            if (!_isStatusReport && def?.SimplifiedResults != true)
+            {
+                var radiationTraceability = BuildRadiationTraceability();
+                if (!string.IsNullOrWhiteSpace(radiationTraceability))
+                    fields.Add(new Field("Radiation Traceability", radiationTraceability, FullWidth: true));
+            }
+
             if (!HasAnyValue(fields)) return;
 
             SectionTitle(column, "TECHNICAL INFORMATION");
             RenderFieldTable(column, fields);
+        }
+
+        // يُركّب سطر Radiation Traceability من جدول النتائج: أرقام المصادر المميَّزة،
+        // ثمّ النويدات المميَّزة، ثمّ جهة التتبّع الثابتة SSDL (نصّ قالب رضا). يعيد ""
+        // إن لم يوجد مصدر ولا نويدة، فلا تظهر الخليّة على شهادة بلا بيانات مصدر.
+        private string BuildRadiationTraceability()
+        {
+            var results = _certificate.CalibrationResults ?? new List<CertificateCalibrationResult>();
+
+            var sourceIds = results
+                .Select(r => r.SourceId)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var nuclides = results
+                .Select(r => r.Radionuclide)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (sourceIds.Count == 0 && nuclides.Count == 0) return string.Empty;
+
+            var parts = new List<string>();
+            if (sourceIds.Count > 0) parts.Add($"Reference Source ID: {string.Join(", ", sourceIds)}");
+            if (nuclides.Count > 0) parts.Add($"Radionuclide: {string.Join(", ", nuclides)}");
+            parts.Add("Traceability: SSDL");
+
+            return string.Join("    ", parts);
         }
 
         private void ComposeMethodologySection(ColumnDescriptor column)

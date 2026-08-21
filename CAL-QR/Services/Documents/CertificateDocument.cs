@@ -134,7 +134,8 @@ namespace CAL_QR.Services.Documents
                 ComposeFunctionalChecksSection(column);
                 ComposeRemarksSection(column);
                 ComposeCalibrationStatusSection(column);
-                ComposeAdditionalInfoSection(column);
+                ComposeImportantNotesSection(column);
+                ComposeAdditionalInformationSection(column);
                 ComposeComplianceBox(column);
                 ComposeApprovalBlock(column);
                 ComposeFinalBlock(column);
@@ -506,17 +507,23 @@ namespace CAL_QR.Services.Documents
                 column.Item().Text($"Reason: {_certificate.StatusReason}").FontSize(8);
         }
 
-        private void ComposeAdditionalInfoSection(ColumnDescriptor column)
+        // منفصلان بقرار رضا (ب١١): «IMPORTANT NOTES & CONDITIONS» (الملاحظات) ثمّ
+        // «ADDITIONAL INFORMATION» (المعلومات) — كلٌّ بحارس وجود تحت عنوانه. الموضع
+        // النهائيّ لكلٍّ حسب العائلة يُحدَّد في ترتيب ComposeContent (PORD).
+        private void ComposeImportantNotesSection(ColumnDescriptor column)
         {
-            bool hasInfo = !string.IsNullOrWhiteSpace(_certificate.AdditionalInformation);
-            bool hasNotes = !string.IsNullOrWhiteSpace(_certificate.Notes);
+            if (string.IsNullOrWhiteSpace(_certificate.Notes)) return;
 
-            if (!hasInfo && !hasNotes) return;
+            SectionTitle(column, "IMPORTANT NOTES & CONDITIONS");
+            column.Item().Text(_certificate.Notes!).FontSize(8);
+        }
 
-            SectionTitle(column, "ADDITIONAL INFORMATION & NOTES");
+        private void ComposeAdditionalInformationSection(ColumnDescriptor column)
+        {
+            if (string.IsNullOrWhiteSpace(_certificate.AdditionalInformation)) return;
 
-            if (hasInfo) column.Item().Text(_certificate.AdditionalInformation!).FontSize(8);
-            if (hasNotes) column.Item().Text(_certificate.Notes!).FontSize(8);
+            SectionTitle(column, "ADDITIONAL INFORMATION");
+            column.Item().Text(_certificate.AdditionalInformation!).FontSize(8);
         }
 
         private void ComposeComplianceBox(ColumnDescriptor column)

@@ -125,21 +125,64 @@ namespace CAL_QR.Services.Documents
                 column.Spacing(8);
 
                 ComposeTitleBlock(column);
-                ComposeClientInstrumentSection(column);
-                ComposeEnvironmentalSection(column);
-                ComposeTechnicalSection(column);
-                ComposeMethodologySection(column);
-                ComposeResultsSection(column);
-                ComposeUncertaintySection(column);
-                ComposeFunctionalChecksSection(column);
-                ComposeRemarksSection(column);
-                ComposeCalibrationStatusSection(column);
-                ComposeImportantNotesSection(column);
-                ComposeAdditionalInformationSection(column);
+
+                // ترتيب الأقسام يختلف بين العائلات (قرارات رضا ب٣/ب٥ ومواضع ب٤/ب٩/ب١١):
+                // لكلٍّ تسلسلها المطابق لقالبها. الذيل (بيان المطابقة · التواقيع · QR)
+                // مشترك. الأقسام تحرس نفسها بالمحتوى، فغير المنطبق يسقط تلقائياً.
+                if (_isStatusReport)
+                    ComposeStatusReportBody(column);
+                else if (IsSimplifiedLayout())
+                    ComposeSimplifiedBody(column);
+                else
+                    ComposeDetailedBody(column);
+
                 ComposeComplianceBox(column);
                 ComposeApprovalBlock(column);
                 ComposeFinalBlock(column);
             });
+        }
+
+        private bool IsSimplifiedLayout() =>
+            DeviceTypeCatalog.Resolve(_certificate.CertificateTemplateType)?.SimplifiedResults == true;
+
+        // العائلة الكاملة (Pancake · Beta): Client → Environmental → Results →
+        // Uncertainty → Functional Checks → Technical → Important Notes.
+        private void ComposeDetailedBody(ColumnDescriptor column)
+        {
+            ComposeClientInstrumentSection(column);
+            ComposeEnvironmentalSection(column);
+            ComposeResultsSection(column);
+            ComposeUncertaintySection(column);
+            ComposeFunctionalChecksSection(column);
+            ComposeTechnicalSection(column);
+            ComposeImportantNotesSection(column);
+        }
+
+        // العائلة المبسّطة (Gamma · Teletector · PED · Dose Rate): Client →
+        // Environmental → Results → Important Notes → Methodology → Functional
+        // Checks → Additional Information.
+        private void ComposeSimplifiedBody(ColumnDescriptor column)
+        {
+            ComposeClientInstrumentSection(column);
+            ComposeEnvironmentalSection(column);
+            ComposeResultsSection(column);
+            ComposeImportantNotesSection(column);
+            ComposeMethodologySection(column);
+            ComposeFunctionalChecksSection(column);
+            ComposeAdditionalInformationSection(column);
+        }
+
+        // تقرير الحالة: Client → Environmental → Results (تعذّر) → Remarks →
+        // Calibration Status → Functional Checks. لا Technical ولا Uncertainty
+        // ولا Methodology ولا Notes/Additional — مطابقةً لقالب رضا للحالة.
+        private void ComposeStatusReportBody(ColumnDescriptor column)
+        {
+            ComposeClientInstrumentSection(column);
+            ComposeEnvironmentalSection(column);
+            ComposeResultsSection(column);
+            ComposeRemarksSection(column);
+            ComposeCalibrationStatusSection(column);
+            ComposeFunctionalChecksSection(column);
         }
 
         private void ComposeTitleBlock(ColumnDescriptor column)

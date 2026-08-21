@@ -779,12 +779,19 @@ namespace CAL_QR.Services.Documents
                 footer.Item().PaddingTop(2).AlignCenter()
                     .Text(CertificateTexts.FooterContact).FontSize(6.5f).FontColor(Colors.Grey.Darken1);
 
-                footer.Item().AlignRight().Text(x =>
+                // رقم الشهادة يساراً مقابل عدّاد الصفحة يميناً، في كل صفحة - يربط كل
+                // ورقة بالشهادة عند فصل الأوراق.
+                footer.Item().Row(row =>
                 {
-                    x.Span("Page ").FontSize(7);
-                    x.CurrentPageNumber().FontSize(7);
-                    x.Span(" of ").FontSize(7);
-                    x.TotalPages().FontSize(7);
+                    row.AutoItem().Text(_certificate.CertificateNumber).FontSize(7).FontColor(Colors.Grey.Darken1);
+                    row.RelativeItem();
+                    row.AutoItem().Text(x =>
+                    {
+                        x.Span("Page ").FontSize(7);
+                        x.CurrentPageNumber().FontSize(7);
+                        x.Span(" of ").FontSize(7);
+                        x.TotalPages().FontSize(7);
+                    });
                 });
             });
         }

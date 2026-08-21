@@ -476,5 +476,87 @@ namespace CAL_QR.Tests
             Assert.DoesNotContain("Readout Unit", text);
             Assert.DoesNotContain("SHOULD-NOT-APPEAR", text);
         }
+
+        // ===== T1: اختبارات محتوى للبنود الحسّاسة الجديدة (قرارات رضا + إصلاح أ1) =====
+        // نوع مبسّط حقيقي (SimplifiedResults) لضمان سلوك مسار المبسّط، لا مجرّد UncertaintyEnabled=false.
+
+        private Certificate BuildSimplifiedTypeCertificate()
+        {
+            var c = BuildBaseCertificate();
+            c.CertificateTemplateType = "Dose Rate Meter";
+            c.UncertaintyEnabled = false;
+            c.MethodologyEnabled = false;
+            c.ComplianceVerdict = "APPROVED FOR OPERATIONAL RADIATION SAFETY USE";
+            c.CorrectedReadingFormula = "Corrected Reading = Measured Reading x CF";
+            c.CalibrationResults.Add(new CertificateCalibrationResult
+            {
+                SortOrder = 1,
+                CorrectionFactor = "1.04",
+                AbsoluteRelativeError = "3.85 %",
+            });
+            return c;
+        }
+
+        private Certificate BuildDetailedTypeCertificate()
+        {
+            var c = BuildBaseCertificate();
+            c.CertificateTemplateType = "Pancake Probe";
+            c.UncertaintyEnabled = true;
+            c.CombinedUncertainty = "5.40";
+            c.ExpandedUncertainty = "10.80";
+            c.CoverageFactor = "2";
+            c.CountingTime = "60 Sec";
+            c.CalibrationResults.Add(new CertificateCalibrationResult
+            {
+                SortOrder = 1, SourceId = "122", Radionuclide = "Sr-90 / Y-90",
+                MeasuredReading = "2.250", CorrectionFactor = "1.08",
+            });
+            c.NuclideSummaries.Add(new CertificateNuclideSummary
+            {
+                SortOrder = 1, Radionuclide = "Sr-90 / Y-90", AverageCorrectionFactor = "1.16",
+            });
+            c.UncertaintyComponents.Add(new CertificateUncertaintyComponent
+            {
+                SortOrder = 1, ComponentName = "Source", EvaluationType = "Type B",
+                Distribution = "Normal", StandardUncertainty = "5.00", ContributionPercent = "85.6",
+            });
+            return c;
+        }
+
+        [Fact]
+        public void T1_Simplified_RendersFinalComplianceVerdict()
+        {
+            // حارس إصلاح أ1: الحكم كان يسقط من الأنواع المبسّطة.
+            string text = ExtractAllText(_service.GenerateBytes(BuildSimplifiedTypeCertificate()));
+            Assert.Contains("Final Compliance Verdict", text);
+            Assert.Contains("APPROVED FOR OPERATIONAL RADIATION SAFETY USE", text);
+        }
+
+        [Fact]
+        public void T1_Simplified_RendersCfAndAeLabels()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(BuildSimplifiedTypeCertificate()));
+            Assert.Contains("Calibration Factor (CF)", text);
+            Assert.Contains("Absolute Relative Error (AE)", text);
+        }
+
+        [Fact]
+        public void T1_Detailed_RendersStripBudgetAndRadiationTraceability()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(BuildDetailedTypeCertificate()));
+            Assert.Contains("Combined Standard Uncertainty", text);
+            Assert.Contains("Uncertainty Budget", text);
+            Assert.Contains("Radiation Traceability", text);
+        }
+
+        [Fact]
+        public void T1_Detailed_UncertaintyBudgetPrecedesTechnicalInformation()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(BuildDetailedTypeCertificate()));
+            int budget = text.IndexOf("Uncertainty Budget", System.StringComparison.Ordinal);
+            int technical = text.IndexOf("TECHNICAL INFORMATION", System.StringComparison.Ordinal);
+            Assert.True(budget >= 0 && technical >= 0, "both sections present");
+            Assert.True(budget < technical, "Uncertainty Budget must precede TECHNICAL INFORMATION");
+        }
     }
 }

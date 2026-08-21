@@ -262,8 +262,16 @@ namespace CAL_QR.Services.Documents
                 return;
             }
 
+            var def = DeviceTypeCatalog.Resolve(_certificate.CertificateTemplateType);
+
             var rows = (_certificate.CalibrationResults ?? new List<CertificateCalibrationResult>())
                 .OrderBy(r => r.SortOrder).ThenBy(r => r.Id).ToList();
+
+            if (def?.SimplifiedResults == true)
+            {
+                ComposeSimplifiedResults(column, rows);
+                return;
+            }
 
             if (rows.Count == 0) return;
 
@@ -309,6 +317,49 @@ namespace CAL_QR.Services.Documents
 
             if (!string.IsNullOrWhiteSpace(_certificate.CorrectedReadingFormula))
                 column.Item().Text(_certificate.CorrectedReadingFormula!).FontSize(8);
+        }
+
+        // العرض المبسّط (Gamma · Teletector · PED · Dose Rate): كتلة رأسيّة مطابقة
+        // لقوالب رضا — CF ثمّ AE% لكل صفّ نتيجة، ثمّ الحكم النهائيّ، ثمّ الصيغة.
+        // الحكم يظهر هنا لهذه الأنواع لأنّ صندوق العميل لا يعرضه (showStandardBox=false).
+        private void ComposeSimplifiedResults(ColumnDescriptor column, List<CertificateCalibrationResult> rows)
+        {
+            bool hasResults = rows.Any(r =>
+                !string.IsNullOrWhiteSpace(r.CorrectionFactor) ||
+                !string.IsNullOrWhiteSpace(r.AbsoluteRelativeError));
+            bool hasVerdict = !string.IsNullOrWhiteSpace(_certificate.ComplianceVerdict);
+            if (!hasResults && !hasVerdict) return;
+
+            SectionTitle(column, "CALIBRATION RESULTS");
+
+            column.Item().Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.RelativeColumn(2f);
+                    columns.RelativeColumn(3f);
+                });
+
+                void Row(string label, string? value)
+                {
+                    if (string.IsNullOrWhiteSpace(value)) return;
+                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4)
+                        .Text(label).Bold().FontSize(8).FontColor(NavyColor);
+                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4)
+                        .Text(value!).Bold().FontSize(8);
+                }
+
+                foreach (var r in rows)
+                {
+                    Row("Calibration Factor (CF)", r.CorrectionFactor);
+                    Row("Absolute Relative Error (AE)(%)", r.AbsoluteRelativeError);
+                }
+
+                Row("Final Compliance Verdict", _certificate.ComplianceVerdict);
+            });
+
+            if (!string.IsNullOrWhiteSpace(_certificate.CorrectedReadingFormula))
+                column.Item().PaddingTop(2).Text(_certificate.CorrectedReadingFormula!).FontSize(8);
         }
 
         private void ComposeUncertaintySection(ColumnDescriptor column)

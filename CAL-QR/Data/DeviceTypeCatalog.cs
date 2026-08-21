@@ -61,6 +61,13 @@ namespace CAL_QR.Data
         public bool UncertaintyEnabled { get; init; }
         public bool MethodologyEnabled { get; init; }
 
+        /// <summary>
+        /// نمط عرض النتائج: true ⟵ كتلة رأسيّة مبسّطة (CF · AE% · الحكم) كما في
+        /// قوالب رضا للأنواع البسيطة؛ false (الافتراضي) ⟵ جدول مصادر أفقيّ للعائلة
+        /// الكاملة. يُشتقّ وقت العرض من CertificateTemplateType المجمَّد، بلا عمود قاعدة.
+        /// </summary>
+        public bool SimplifiedResults { get; init; }
+
         // ── تسميات قسم CLIENT & INSTRUMENT (مدفوعة بالبيانات، verbatim من قوالب رضا) ──
         // null في تسمية = «لا صفّ لهذا الحقل في هذا النوع» ⟵ RenderFieldTable يُخفيه تلقائياً.
         public string? ClientSectionTitle { get; init; }
@@ -217,6 +224,7 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Gamma Scintillation Probe",
+                SimplifiedResults = true,
                 Aliases = new[] { "Gamma Probe" },
                 ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
                 PrimaryInstrumentLabel = "Detector / Probe",
@@ -266,6 +274,7 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Teletector Gamma Probe",
+                SimplifiedResults = true,
                 ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
                 PrimaryInstrumentLabel = "TELETECTOR / Probe",
                 PrimaryInstrumentSerialLabel = "Probe Serial Number (S/N)",
@@ -314,6 +323,7 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Personal Electronic Dosimeter (PED)",
+                SimplifiedResults = true,
                 Aliases = new[] { "PED" },
                 ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
                 PrimaryInstrumentLabel = "Personal Electronic Dosimeter(PED)",
@@ -360,6 +370,7 @@ namespace CAL_QR.Data
             new DeviceTypeDefinition
             {
                 Name = "Dose Rate Meter",
+                SimplifiedResults = true,
                 ClientSectionTitle = "CLIENT & INSTRUMENT SPECIFICATIONS",
                 PrimaryInstrumentLabel = "Dose Rate Meter",
                 PrimaryInstrumentSerialLabel = "Dose Rate Meter Serial Number (S/N)",

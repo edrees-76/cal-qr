@@ -103,7 +103,9 @@ namespace CAL_QR.Services.Documents
                 // للحافّتين. AutoItem يتقلّص حول نصّه، وRelativeItem الأوسط الفارغ
                 // يمتصّ العرض المتبقّي فيفترق الطرفان. يظهران دائمًا (استثناء من إخفاء
                 // الفارغ، بقرار Edrees): القيمة إن وُجدت، وإلا خطّ سفليّ للكتابة اليدويّة.
-                column.Item().PaddingTop(14).Row(row =>
+                // Ref و Financial Receipt No: الصفحة الأولى فقط (ShowOnce) - لا يتكرران
+                // في بقية صفحات الشهادة متعددة الصفحات.
+                column.Item().ShowOnce().PaddingTop(14).Row(row =>
                 {
                     row.AutoItem()
                         .Text($"Ref: {(string.IsNullOrWhiteSpace(_certificate.ReferenceNo) ? "________" : _certificate.ReferenceNo)}")

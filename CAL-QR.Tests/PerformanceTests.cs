@@ -50,7 +50,7 @@ namespace CAL_QR.Tests
             var authService = new TestCurrentUserService();
             authService.SetCurrentUser(new User { Username = "admin", Role = UserRole.Admin });
             var auditRepo = new AuditLogRepository(factory, authService);
-            var qrService = new QrService(factory);
+            var qrService = new QrService();
             var templateRepo = new PaperTemplateRepository(factory);
 
             var vm = new DevicesViewModel(

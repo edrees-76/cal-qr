@@ -22,19 +22,5 @@ namespace CAL_QR.Services
             string result,
             string verifyCode);
 
-        void SaveQrCodeImage(string content, string certificateNumber);
-
-        void GenerateAndSaveQrForRecord(
-            string ownerName,
-            string deviceType,
-            string model,
-            string serial,
-            string certNo,
-            string calDate,
-            string expDate,
-            string engineerName,
-            string description,
-            string result,
-            string verifyCode);
     }
 }

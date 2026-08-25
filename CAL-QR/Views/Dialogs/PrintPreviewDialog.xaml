@@ -45,14 +45,6 @@
                             <Button Grid.Column="1" Click="NewTemplate_Click" Content="قالب جديد" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1A3A6B" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
                         </Grid>
 
-                        <TextBlock Text="حجم حفظ صورة QR" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox SelectedValue="{Binding SelectedQrSaveSize}" SelectedValuePath="Tag" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" Margin="0,0,0,20" FontFamily="{StaticResource CairoFont}">
-                            <ComboBoxItem Content="صغير (200px)" Tag="Small" />
-                            <ComboBoxItem Content="متوسط (400px)" Tag="Medium" />
-                            <ComboBoxItem Content="كبير (600px)" Tag="Large" />
-                            <ComboBoxItem Content="دقة طباعة (1200px)" Tag="Print" />
-                        </ComboBox>
-
                         <Border Background="#F9F9F9" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="5" Padding="10">
                             <StackPanel HorizontalAlignment="Center">
                                 <TextBlock Text="معاينة الملصق الفردي" FontSize="11" FontWeight="Bold" Foreground="#707070" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
@@ -69,13 +61,6 @@
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <TextBlock Text="🖨️ طباعة الملصق" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
-
-                    <Button Command="{Binding SaveQrImageCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#2E7D32" BorderBrush="#2E7D32" Height="40" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="Image" Margin="0,0,8,0" VerticalAlignment="Center" />
-                            <TextBlock Text="💾 حفظ QR كصورة" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 

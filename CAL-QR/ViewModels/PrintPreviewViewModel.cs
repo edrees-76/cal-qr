@@ -19,7 +19,6 @@ namespace CAL_QR.ViewModels
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IPaperTemplateRepository _templateRepository;
-        private readonly IQrService _qrService;
         private readonly IPrintService _printService;
         private readonly IAuditLogRepository _auditLogRepository;
         private readonly ICertificateRepository _certificateRepository;
@@ -29,7 +28,6 @@ namespace CAL_QR.ViewModels
         private ObservableCollection<PaperTemplate> _templates = new();
         private string _selectedPrinter = string.Empty;
         private PaperTemplate? _selectedTemplate;
-        private string _selectedQrSaveSize = "Large";
         private BitmapSource? _qrImagePreview;
 
         private int _startColumn = 1;
@@ -43,14 +41,12 @@ namespace CAL_QR.ViewModels
         public PrintPreviewViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
             IPaperTemplateRepository templateRepository,
-            IQrService qrService,
             IPrintService printService,
             IAuditLogRepository auditLogRepository,
             ICertificateRepository certificateRepository)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
-            _qrService = qrService;
             _printService = printService;
             _auditLogRepository = auditLogRepository;
             _certificateRepository = certificateRepository;
@@ -58,7 +54,6 @@ namespace CAL_QR.ViewModels
             Printers = new ObservableCollection<string>(_printService.GetAvailablePrinters());
             
             PrintCommand = new RelayCommand(Print);
-            SaveQrImageCommand = new RelayCommand(SaveQrImage);
         }
 
         #region Properties
@@ -99,12 +94,6 @@ namespace CAL_QR.ViewModels
                     RefreshLabelPreviews();
                 }
             }
-        }
-
-        public string SelectedQrSaveSize
-        {
-            get => _selectedQrSaveSize;
-            set => SetProperty(ref _selectedQrSaveSize, value);
         }
 
         public BitmapSource? QrImagePreview
@@ -150,7 +139,6 @@ namespace CAL_QR.ViewModels
         #endregion
 
         public ICommand PrintCommand { get; }
-        public ICommand SaveQrImageCommand { get; }
 
         public List<CalibrationRecord> CalibrationRecords { get; private set; } = new();
 
@@ -345,34 +333,6 @@ namespace CAL_QR.ViewModels
             catch (Exception ex)
             {
                 MessageBox.Show($"خطأ أثناء الطباعة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SaveQrImage()
-        {
-            if (CalibrationRecord == null) return;
-
-            try
-            {
-                _qrService.GenerateAndSaveQrForRecord(
-                    ownerName: CalibrationRecord.Device?.Owner?.Name ?? "",
-                    deviceType: CalibrationRecord.Device?.DeviceType?.Name ?? "",
-                    model: CalibrationRecord.Device?.Model ?? "",
-                    serial: CalibrationRecord.Device?.SerialNumber ?? "",
-                    certNo: CalibrationRecord.CertificateNumber,
-                    calDate: CalibrationRecord.CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: CalibrationRecord.ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: CalibrationRecord.EngineerName,
-                    description: CalibrationRecord.CalibrationDescription ?? "",
-                    result: CalibrationRecord.Result,
-                    verifyCode: CalibrationRecord.HmacSignature
-                );
-
-                MessageBox.Show("تم حفظ ملف صورة كود QR بنجاح في مجلد التطبيق.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"خطأ أثناء حفظ الصورة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

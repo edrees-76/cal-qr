@@ -17,7 +17,7 @@ namespace CAL_QR.Tests
         public CertificatePdfServiceTests()
         {
             CertificatePdfEnvironment.EnsureInitialized();
-            _service = new CertificatePdfService(new QrService(null!));
+            _service = new CertificatePdfService(new QrService());
         }
 
         private static void AssertLooksLikePdf(byte[] bytes)

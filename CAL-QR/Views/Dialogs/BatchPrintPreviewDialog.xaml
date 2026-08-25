@@ -48,14 +48,6 @@
                             <Button Grid.Column="1" Click="NewTemplate_Click" Content="قالب جديد" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1A3A6B" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
                         </Grid>
 
-                        <TextBlock Text="حجم حفظ صورة QR" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                        <ComboBox SelectedValue="{Binding SelectedQrSaveSize}" SelectedValuePath="Tag" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" Margin="0,0,0,20" FontFamily="{StaticResource CairoFont}">
-                            <ComboBoxItem Content="صغير (200px)" Tag="Small" />
-                            <ComboBoxItem Content="متوسط (400px)" Tag="Medium" />
-                            <ComboBoxItem Content="كبير (600px)" Tag="Large" />
-                            <ComboBoxItem Content="دقة طباعة (1200px)" Tag="Print" />
-                        </ComboBox>
-
                         <!-- Batch Preview List -->
                         <TextBlock Text="قائمة الملصقات المحددة للطباعة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,10" FontFamily="{StaticResource CairoFont}" />
                         <Border Background="#F9F9F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="8">

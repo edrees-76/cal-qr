@@ -10,7 +10,7 @@ namespace CAL_QR.Tests
 
         public QrServiceTests()
         {
-            _qrService = new QrService(null!);
+            _qrService = new QrService();
         }
 
         [Fact]

@@ -5,7 +5,7 @@ using CAL_QR.Models;
 namespace CAL_QR.Services.Documents
 {
     /// <summary>
-    /// أعمدة جدول § CALIBRATION RESULTS الأحد عشر الممكنة. الأنواع الخمسة
+    /// أعمدة جدول § CALIBRATION RESULTS الأحد عشر الممكنة. الأنواع الستّة
     /// تملأ مجموعات مختلفة منها، والقاعدة (Select) تطبع فقط ما حمله صفٌّ
     /// واحد على الأقل — دون بناء منطق مزدوج لكل نوع جهاز.
     /// </summary>

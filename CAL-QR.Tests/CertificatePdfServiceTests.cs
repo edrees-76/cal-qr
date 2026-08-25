@@ -558,5 +558,98 @@ namespace CAL_QR.Tests
             Assert.True(budget >= 0 && technical >= 0, "both sections present");
             Assert.True(budget < technical, "Uncertainty Budget must precede TECHNICAL INFORMATION");
         }
+
+        // ===== T2: حرّاس تمييز تسميات قسم CLIENT & INSTRUMENT لكلّ نوع =====
+        // يحرسون الفروق البايتيّة بين الأنواع مقابل قوالب رضا: التسمية الصحيحة
+        // موجودة، وتسمية النوع المجاور غائبة. لا يلمسون منطق الإنتاج.
+
+        private static Certificate BuildClientSectionCertificate(string templateType)
+        {
+            var c = BuildBaseCertificate();
+            c.CertificateTemplateType = templateType;
+            c.SurveyMeterModel = "SM-Model";
+            c.SurveyMeterSerialNumber = "SM-SN-1";
+            c.DeviceModel = "DEV-Model";
+            c.DeviceSerialNumber = "DEV-SN-1";
+            c.DeviceManufacturer = "ACME";
+            return c;
+        }
+
+        [Fact]
+        public void ClientSection_Gamma_UsesProbeSerialLabel_NotDetectorSerial()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Gamma Scintillation Probe")));
+
+            Assert.Contains("CLIENT & INSTRUMENT SPECIFICATIONS", text);
+            Assert.Contains("Detector / Probe", text);
+            Assert.Contains("Probe Serial Number (S/N)", text);
+            // الفرق الجوهريّ عن Pancake: سيريال المجس لا الكاشف
+            Assert.DoesNotContain("Detector Serial Number", text);
+        }
+
+        [Fact]
+        public void ClientSection_Teletector_UsesTeletectorPrimaryLabel_NotDetector()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Teletector Gamma Probe")));
+
+            Assert.Contains("CLIENT & INSTRUMENT SPECIFICATIONS", text);
+            Assert.Contains("TELETECTOR / Probe", text);
+            Assert.Contains("Probe Serial Number (S/N)", text);
+            // الفرق الجوهريّ: التسمية الأساسيّة TELETECTOR لا Detector
+            Assert.DoesNotContain("Detector / Probe", text);
+        }
+
+        [Fact]
+        public void ClientSection_Ped_UsesPedPrimaryLabel_AndHidesReadout()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Personal Electronic Dosimeter (PED)")));
+
+            Assert.Contains("CLIENT & INSTRUMENT SPECIFICATIONS", text);
+            // منقولة حرفيًّا من قالب رضا: لا مسافة قبل القوس
+            Assert.Contains("Personal Electronic Dosimeter(PED)", text);
+            Assert.Contains("PED Serial Number (S/N)", text);
+            // جهاز قائم بذاته: لا وحدة قراءة
+            Assert.DoesNotContain("Readout Unit", text);
+        }
+
+        [Fact]
+        public void ClientSection_Beta_MatchesPancakeLabelSet()
+        {
+            // الاسم المعتمد صراحةً (لا "Beta Probe" غير المحلول).
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Beta Scintillation Probe")));
+
+            Assert.Contains("CLIENT & INSTRUMENT INFORMATION", text);
+            Assert.Contains("Detector / Probe", text);
+            Assert.Contains("Detector Serial Number (S/N)", text);
+            Assert.Contains("Survey Meter (Readout Unit)", text);
+        }
+
+        [Fact]
+        public void ClientSection_Pancake_UsesDetectorSerialLabel()
+        {
+            // تعزيز للحارس القائم: يؤكّد التسمية الأساسيّة والسيريال حرفيًّا.
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Pancake Probe")));
+
+            Assert.Contains("Detector / Probe", text);
+            Assert.Contains("Detector Serial Number (S/N)", text);
+            // فرقها عن Gamma/Teletector: سيريال الكاشف لا المجس
+            Assert.DoesNotContain("Probe Serial Number", text);
+        }
+
+        [Fact]
+        public void ClientSection_DoseRate_UsesDoseRatePrimaryLabel()
+        {
+            // تعزيز لحارس عائلة-ب: يؤكّد التسمية الأساسيّة حرفيًّا لا مجرّد غياب Readout.
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildClientSectionCertificate("Dose Rate Meter")));
+
+            Assert.Contains("Dose Rate Meter Serial Number (S/N)", text);
+            Assert.DoesNotContain("Readout Unit", text);
+        }
     }
 }

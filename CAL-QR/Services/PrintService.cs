@@ -94,11 +94,6 @@ namespace CAL_QR.Services
                 double paperHeightPx = (double)template.PaperHeightMm * MmToPx;
                 dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, paperWidthPx, paperHeightPx));
 
-                var typefaceBold = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
-                var typefaceRegular = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-                var brushDark = Brushes.Black;
-                var brushBody = Brushes.DarkSlateGray;
-
                 foreach (var job in jobs)
                 {
                     double xMm = (double)template.MarginLeftMm + (job.StartColumn - 1) * ((double)template.LabelWidthMm + (double)template.HorizontalGapMm);
@@ -106,57 +101,88 @@ namespace CAL_QR.Services
 
                     double xPx = xMm * MmToPx;
                     double yPx = yMm * MmToPx;
-                    double widthPx = (double)template.LabelWidthMm * MmToPx;
-                    double heightPx = (double)template.LabelHeightMm * MmToPx;
 
-                    double padPx = 8;
-                    double innerWidth = widthPx - padPx * 2;
-                    double cursorX = xPx + padPx;
-                    double cursorY = yPx + padPx;
-
-                    // ── العنوان: رقم الشهادة (عريض) ──
-                    var certText = new FormattedText(
-                        job.CertificateNumber,
-                        System.Globalization.CultureInfo.CurrentCulture,
-                        FlowDirection.LeftToRight, typefaceBold, 11, brushDark, 96.0)
-                    { MaxTextWidth = innerWidth };
-                    dc.DrawText(certText, new Point(cursorX, cursorY));
-                    cursorY += certText.Height + 4;
-
-                    // ── جسد الحقول: تسمية + قيمة، سطرًا سطرًا ──
-                    var bodyLines = new List<string>();
-                    if (!string.IsNullOrWhiteSpace(job.ClientName))    bodyLines.Add($"Client: {job.ClientName}");
-                    if (!string.IsNullOrWhiteSpace(job.DeviceType))    bodyLines.Add($"Type: {job.DeviceType}");
-                    if (!string.IsNullOrWhiteSpace(job.Model))         bodyLines.Add($"Model: {job.Model}");
-                    if (!string.IsNullOrWhiteSpace(job.SerialNumber))  bodyLines.Add($"S/N: {job.SerialNumber}");
-                    if (!string.IsNullOrWhiteSpace(job.CalibrationDate)) bodyLines.Add($"Cal. Date: {job.CalibrationDate}");
-                    if (!string.IsNullOrWhiteSpace(job.ExpiryDate))    bodyLines.Add($"Due Date: {job.ExpiryDate}");
-                    foreach (var nuclide in job.NuclideLines)
-                        if (!string.IsNullOrWhiteSpace(nuclide)) bodyLines.Add($"CFavg {nuclide}");
-
-                    if (bodyLines.Count > 0)
-                    {
-                        var bodyText = new FormattedText(
-                            string.Join("\n", bodyLines),
-                            System.Globalization.CultureInfo.CurrentCulture,
-                            FlowDirection.LeftToRight, typefaceRegular, 8, brushBody, 96.0)
-                        { MaxTextWidth = innerWidth, MaxTextHeight = heightPx - (cursorY - yPx) - padPx - 14 };
-                        dc.DrawText(bodyText, new Point(cursorX, cursorY));
-                    }
-
-                    // ── كود التحقّق: أسفل الملصق، عريض ──
-                    if (!string.IsNullOrWhiteSpace(job.VerifyCode))
-                    {
-                        var codeText = new FormattedText(
-                            $"Verify: {job.VerifyCode}",
-                            System.Globalization.CultureInfo.CurrentCulture,
-                            FlowDirection.LeftToRight, typefaceBold, 8, brushDark, 96.0)
-                        { MaxTextWidth = innerWidth };
-                        dc.DrawText(codeText, new Point(cursorX, yPx + heightPx - padPx - codeText.Height));
-                    }
+                    DrawSingleLabel(dc, job, template, xPx, yPx);
                 }
             }
             return visual;
+        }
+
+        private void DrawSingleLabel(DrawingContext dc, QrPrintJob job, Models.PaperTemplate template, double xPx, double yPx)
+        {
+            double widthPx = (double)template.LabelWidthMm * MmToPx;
+            double heightPx = (double)template.LabelHeightMm * MmToPx;
+
+            var typefaceBold = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+            var typefaceRegular = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+            var brushDark = Brushes.Black;
+            var brushBody = Brushes.DarkSlateGray;
+
+            double padPx = 8;
+            double innerWidth = widthPx - padPx * 2;
+            double cursorX = xPx + padPx;
+            double cursorY = yPx + padPx;
+
+            // ── العنوان: رقم الشهادة (عريض) ──
+            var certText = new FormattedText(
+                job.CertificateNumber,
+                System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight, typefaceBold, 11, brushDark, 96.0)
+            { MaxTextWidth = innerWidth };
+            dc.DrawText(certText, new Point(cursorX, cursorY));
+            cursorY += certText.Height + 4;
+
+            // ── جسد الحقول: تسمية + قيمة، سطرًا سطرًا ──
+            var bodyLines = new List<string>();
+            if (!string.IsNullOrWhiteSpace(job.ClientName))    bodyLines.Add($"Client: {job.ClientName}");
+            if (!string.IsNullOrWhiteSpace(job.DeviceType))    bodyLines.Add($"Type: {job.DeviceType}");
+            if (!string.IsNullOrWhiteSpace(job.Model))         bodyLines.Add($"Model: {job.Model}");
+            if (!string.IsNullOrWhiteSpace(job.SerialNumber))  bodyLines.Add($"S/N: {job.SerialNumber}");
+            if (!string.IsNullOrWhiteSpace(job.CalibrationDate)) bodyLines.Add($"Cal. Date: {job.CalibrationDate}");
+            if (!string.IsNullOrWhiteSpace(job.ExpiryDate))    bodyLines.Add($"Due Date: {job.ExpiryDate}");
+            foreach (var nuclide in job.NuclideLines)
+                if (!string.IsNullOrWhiteSpace(nuclide)) bodyLines.Add($"CFavg {nuclide}");
+
+            if (bodyLines.Count > 0)
+            {
+                var bodyText = new FormattedText(
+                    string.Join("\n", bodyLines),
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight, typefaceRegular, 8, brushBody, 96.0)
+                { MaxTextWidth = innerWidth, MaxTextHeight = heightPx - (cursorY - yPx) - padPx - 14 };
+                dc.DrawText(bodyText, new Point(cursorX, cursorY));
+            }
+
+            // ── كود التحقّق: أسفل الملصق، عريض ──
+            if (!string.IsNullOrWhiteSpace(job.VerifyCode))
+            {
+                var codeText = new FormattedText(
+                    $"Verify: {job.VerifyCode}",
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight, typefaceBold, 8, brushDark, 96.0)
+                { MaxTextWidth = innerWidth };
+                dc.DrawText(codeText, new Point(cursorX, yPx + heightPx - padPx - codeText.Height));
+            }
+        }
+
+        public BitmapSource RenderLabelPreview(QrPrintJob job, Models.PaperTemplate template)
+        {
+            double widthPx = (double)template.LabelWidthMm * MmToPx;
+            double heightPx = (double)template.LabelHeightMm * MmToPx;
+
+            var visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, widthPx, heightPx));
+                DrawSingleLabel(dc, job, template, 0, 0);
+            }
+
+            int pxW = (int)Math.Ceiling(widthPx);
+            int pxH = (int)Math.Ceiling(heightPx);
+            var rtb = new RenderTargetBitmap(pxW, pxH, 96, 96, PixelFormats.Pbgra32);
+            rtb.Render(visual);
+            rtb.Freeze();
+            return rtb;
         }
     }
 }

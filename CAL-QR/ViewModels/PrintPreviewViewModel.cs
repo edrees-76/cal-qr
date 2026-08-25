@@ -35,6 +35,9 @@ namespace CAL_QR.ViewModels
         private int _startColumn = 1;
         private int _startRow = 1;
 
+        // ── كاش بيانات مهامّ المعاينة (بلا Template)، يُبنى مرّةً ويُصيَّر عند كلّ تغيير قالب ──
+        private readonly List<QrPrintJob> _previewJobs = new();
+
         public event EventHandler? RedrawGridRequested;
 
         public PrintPreviewViewModel(
@@ -93,6 +96,7 @@ namespace CAL_QR.ViewModels
                     StartColumn = 1;
                     StartRow = 1;
                     RedrawGridRequested?.Invoke(this, EventArgs.Empty);
+                    RefreshLabelPreviews();
                 }
             }
         }
@@ -177,52 +181,30 @@ namespace CAL_QR.ViewModels
             OnPropertyChanged(nameof(BatchStatusText));
 
             BatchItems.Clear();
+            _previewJobs.Clear();
             int idx = 1;
             foreach (var record in CalibrationRecords)
             {
-                string infoText = $"{record.Device?.DeviceType?.Name}\nModel: {record.Device?.Model}\nS/N: {record.Device?.SerialNumber}\nتاريخ المعايرة: {record.CalibrationDate:yyyy-MM-dd}\nتاريخ الانتهاء: {record.ExpiryDate:yyyy-MM-dd}\nكود التحقق: {record.HmacSignature}";
-                string qrContent = _qrService.GenerateVerificationText(
-                    ownerName: record.Device?.Owner?.Name ?? "",
-                    deviceType: record.Device?.DeviceType?.Name ?? "",
-                    model: record.Device?.Model ?? "",
-                    serial: record.Device?.SerialNumber ?? "",
-                    certNo: record.CertificateNumber,
-                    calDate: record.CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: record.ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: record.EngineerName,
-                    description: record.CalibrationDescription ?? "",
-                    result: record.Result,
-                    verifyCode: record.HmacSignature
-                );
-                var qrImg = _qrService.GenerateQrCodeImage(qrContent, 200);
+                // ── بيانات الملصق من المصدر الواحد (الشهادة المجمّدة) — تخطّي ما لا يُطبع ──
+                var job = await BuildJobDataAsync(record);
+                if (job == null)
+                    continue;
+
+                _previewJobs.Add(job);
+
+                string infoText = $"{job.DeviceType}\nModel: {job.Model}\nS/N: {job.SerialNumber}\nتاريخ المعايرة: {job.CalibrationDate}\nتاريخ الانتهاء: {job.ExpiryDate}\nكود التحقق: {job.VerifyCode}";
                 BatchItems.Add(new BatchPrintItem
                 {
                     Index = idx++,
-                    CertificateNumber = record.CertificateNumber,
-                    DeviceInfo = infoText,
-                    QrImage = qrImg
+                    CertificateNumber = job.CertificateNumber,
+                    DeviceInfo = infoText
+                    // ── QrImage يُملأ في RefreshLabelPreviews بصورة الملصق النصّيّ (WYSIWYG) ──
                 });
             }
 
             if (CalibrationRecords.Count > 0)
             {
                 CalibrationRecord = CalibrationRecords[0];
-
-                string qrContent = _qrService.GenerateVerificationText(
-                    ownerName: CalibrationRecord.Device?.Owner?.Name ?? "",
-                    deviceType: CalibrationRecord.Device?.DeviceType?.Name ?? "",
-                    model: CalibrationRecord.Device?.Model ?? "",
-                    serial: CalibrationRecord.Device?.SerialNumber ?? "",
-                    certNo: CalibrationRecord.CertificateNumber,
-                    calDate: CalibrationRecord.CalibrationDate.ToString("yyyy-MM-dd"),
-                    expDate: CalibrationRecord.ExpiryDate.ToString("yyyy-MM-dd"),
-                    engineerName: CalibrationRecord.EngineerName,
-                    description: CalibrationRecord.CalibrationDescription ?? "",
-                    result: CalibrationRecord.Result,
-                    verifyCode: CalibrationRecord.HmacSignature
-                );
-
-                QrImagePreview = _qrService.GenerateQrCodeImage(qrContent, 200);
             }
 
             OnPropertyChanged(nameof(BatchPrintingStatus));
@@ -255,6 +237,60 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        // ── المصدر الواحد لبناء بيانات المهمّة من الشهادة المجمّدة (طباعة ومعاينة) ──
+        // ── يملأ حقول البيانات فقط؛ Template/PrinterName/StartColumn/StartRow يضبطها المستدعي ──
+        private async Task<QrPrintJob?> BuildJobDataAsync(CalibrationRecord record)
+        {
+            if (string.IsNullOrWhiteSpace(record.CertificateNumber))
+                return null;
+
+            var certificate = await _certificateRepository
+                .GetByCertificateNumberAsync(record.CertificateNumber);
+
+            if (certificate == null)
+                return null;
+
+            var nuclideLines = (certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
+                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+                .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
+                .Select(s => $"{s.Radionuclide} = {s.AverageCorrectionFactor}")
+                .ToList();
+
+            return new QrPrintJob
+            {
+                CertificateNumber = certificate.CertificateNumber,
+                ClientName = certificate.ClientName,
+                DeviceType = certificate.CertificateTemplateType ?? "",
+                Model = certificate.DeviceModel,
+                SerialNumber = certificate.DeviceSerialNumber,
+                CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd"),
+                ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
+                VerifyCode = certificate.VerifyCode ?? "",
+                NuclideLines = nuclideLines
+            };
+        }
+
+        // ── تصيير صور المعاينة (الفردي + الدفعيّ) بالملصق النصّيّ نفسه عبر PrintService — WYSIWYG ──
+        private void RefreshLabelPreviews()
+        {
+            if (SelectedTemplate == null
+                || SelectedTemplate.LabelWidthMm <= 0
+                || SelectedTemplate.LabelHeightMm <= 0)
+            {
+                QrImagePreview = null;
+                foreach (var item in BatchItems)
+                    item.QrImage = null;
+                return;
+            }
+
+            QrImagePreview = _previewJobs.Count > 0
+                ? _printService.RenderLabelPreview(_previewJobs[0], SelectedTemplate)
+                : null;
+
+            for (int i = 0; i < BatchItems.Count && i < _previewJobs.Count; i++)
+                BatchItems[i].QrImage = _printService.RenderLabelPreview(_previewJobs[i], SelectedTemplate);
+        }
+
         private async void Print()
         {
             if (CalibrationRecords.Count == 0 || SelectedTemplate == null) return;
@@ -267,42 +303,16 @@ namespace CAL_QR.ViewModels
                 var jobs = new List<QrPrintJob>();
                 foreach (var record in CalibrationRecords)
                 {
-                    // ── السجلّ بلا رقم شهادة → لا ملصق (لا كود تحقّق يُطبع) ──
-                    if (string.IsNullOrWhiteSpace(record.CertificateNumber))
+                    // ── بيانات المهمّة من المصدر الواحد (الشهادة المجمّدة) ──
+                    var job = await BuildJobDataAsync(record);
+                    if (job == null)
                         continue;
 
-                    // ── العقل يقرأ من الشهادة لا من CalibrationRecord/HmacSignature ──
-                    var certificate = await _certificateRepository
-                        .GetByCertificateNumberAsync(record.CertificateNumber);
-
-                    // ── لا شهادة مرتبطة → تخطَّ هذا السجلّ ──
-                    if (certificate == null)
-                        continue;
-
-                    // ── سطور CFavg لكلّ نويدة، جاهزة للطباعة (تُحذف الفارغة) ──
-                    var nuclideLines = (certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
-                        .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-                        .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
-                        .Select(s => $"{s.Radionuclide} = {s.AverageCorrectionFactor}")
-                        .ToList();
-
-                    // ── التواريخ من الشهادة (مبدأ الوثيقة المجمّدة) لا من record ──
-                    jobs.Add(new QrPrintJob
-                    {
-                        Template = SelectedTemplate,
-                        PrinterName = SelectedPrinter,
-                        StartColumn = currentColumn,
-                        StartRow = currentRow,
-                        CertificateNumber = certificate.CertificateNumber,
-                        ClientName = certificate.ClientName,
-                        DeviceType = certificate.CertificateTemplateType ?? "",
-                        Model = certificate.DeviceModel,
-                        SerialNumber = certificate.DeviceSerialNumber,
-                        CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd"),
-                        ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
-                        VerifyCode = certificate.VerifyCode ?? "",
-                        NuclideLines = nuclideLines
-                    });
+                    job.Template = SelectedTemplate;
+                    job.PrinterName = SelectedPrinter;
+                    job.StartColumn = currentColumn;
+                    job.StartRow = currentRow;
+                    jobs.Add(job);
 
                     if (SelectedTemplate.PaperType != "Roll")
                     {
@@ -388,11 +398,17 @@ namespace CAL_QR.ViewModels
         public Action? CloseWindowAction { get; set; }
     }
 
-    public class BatchPrintItem
+    public class BatchPrintItem : BaseViewModel
     {
         public int Index { get; set; }
         public string CertificateNumber { get; set; } = string.Empty;
         public string DeviceInfo { get; set; } = string.Empty;
-        public BitmapSource? QrImage { get; set; }
+
+        private BitmapSource? _qrImage;
+        public BitmapSource? QrImage
+        {
+            get => _qrImage;
+            set => SetProperty(ref _qrImage, value);
+        }
     }
 }

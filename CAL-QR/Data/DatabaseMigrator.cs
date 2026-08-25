@@ -639,7 +639,6 @@ namespace CAL_QR.Data
                 new AppSetting { Key = "AlertDaysThreshold", Value = "30" },
                 new AppSetting { Key = "AutoLockMinutes", Value = "10" },
                 new AppSetting { Key = "DefaultTemplateId", Value = "0" },
-                new AppSetting { Key = "PasswordHash", Value = "" },
                 new AppSetting { Key = "LastPrinterName", Value = "" },
                 new AppSetting { Key = "LastTemplateId", Value = "0" },
                 new AppSetting { Key = "DateFormat", Value = "YYYY-MM-DD" },

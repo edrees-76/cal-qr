@@ -53,3 +53,6 @@ CAL-QR_Manus_Final_Review_Prompt_AR.txt
 CAL-QR_Manus_Prompt_AR.txt
 CAL-QR_NotebookLM_Generation_Prompt.txt
 CAL-QR_NotebookLM_Source.txt
+
+# IDE workspace files
+*.code-workspace

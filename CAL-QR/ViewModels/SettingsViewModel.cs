@@ -62,6 +62,7 @@ namespace CAL_QR.ViewModels
 
         private readonly ICurrentUserService _currentUserService;
         private readonly Func<Views.Dialogs.PaperTemplateDialog> _paperTemplateDialogFactory;
+        private readonly IdleLockService _idleLockService;
 
         public SettingsViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
@@ -70,7 +71,8 @@ namespace CAL_QR.ViewModels
             IAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
             IUserRepository userRepository,
-            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory)
+            Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory,
+            IdleLockService idleLockService)
         {
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
@@ -79,6 +81,7 @@ namespace CAL_QR.ViewModels
             _currentUserService = currentUserService;
             _userRepository = userRepository;
             _paperTemplateDialogFactory = paperTemplateDialogFactory;
+            _idleLockService = idleLockService;
 
             ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
             SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit);
@@ -412,6 +415,7 @@ namespace CAL_QR.ViewModels
                 }
 
                 await context.SaveChangesAsync();
+                _idleLockService.ReloadThreshold();
 
                 // Re-trigger global refresh
                 CalibrationEvents.RaiseCalibrationChanged();

@@ -47,12 +47,6 @@ namespace CAL_QR.ViewModels
         private DispatcherTimer? _searchDebounceTimer;
         private CancellationTokenSource? _searchCancellationTokenSource;
 
-        // Inactivity Timer
-        private DispatcherTimer? _inactivityTimer;
-        private DateTime _lastActivityTime;
-        private int _autoLockMinutes = 10;
-
-        public event EventHandler? LockRequested;
         public event EventHandler? SearchFocusRequested;
 
         /// <summary>
@@ -112,7 +106,6 @@ namespace CAL_QR.ViewModels
 
             _userName = _currentUserService.CurrentUser?.FullName ?? "مهندس المعايرة";
 
-            LoadSettingsAndStartInactivityTimer();
             SelectFirstAllowedTab();
         }
 
@@ -205,41 +198,6 @@ namespace CAL_QR.ViewModels
         }
 
         public ICommand AcknowledgeAllExpiredDevicesCommand { get; }
-
-        public int AutoLockMinutes
-        {
-            get => _autoLockMinutes;
-            set
-            {
-                if (SetProperty(ref _autoLockMinutes, value))
-                {
-                    SaveSetting("AutoLockMinutes", value.ToString());
-                }
-            }
-        }
-
-        private void SaveSetting(string key, string value)
-        {
-            try
-            {
-                using var context = _contextFactory.CreateDbContext();
-                var setting = context.AppSettings.FirstOrDefault(s => s.Key == key);
-                if (setting == null)
-                {
-                    setting = new AppSetting { Key = key, Value = value };
-                    context.AppSettings.Add(setting);
-                }
-                else
-                {
-                    setting.Value = value;
-                }
-                context.SaveChanges();
-            }
-            catch
-            {
-                // Suppress
-            }
-        }
 
         // Search Properties
         public string SearchText
@@ -384,55 +342,6 @@ namespace CAL_QR.ViewModels
             SearchFocusRequested?.Invoke(this, EventArgs.Empty);
         }
 
-        // Inactivity Timer Logic
-        private void LoadSettingsAndStartInactivityTimer()
-        {
-            try
-            {
-                using (var context = _contextFactory.CreateDbContext())
-                {
-                    var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AutoLockMinutes");
-                    if (setting != null && int.TryParse(setting.Value, out var minutes))
-                    {
-                        _autoLockMinutes = minutes;
-                    }
-                }
-            }
-            catch
-            {
-                _autoLockMinutes = 10; // Fallback
-            }
-
-            _lastActivityTime = DateTime.Now;
-
-            _inactivityTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(5) // Check every 5 seconds
-            };
-            _inactivityTimer.Tick += InactivityTimer_Tick;
-            _inactivityTimer.Start();
-        }
-
-        private void InactivityTimer_Tick(object? sender, EventArgs e)
-        {
-            var inactiveTime = DateTime.Now - _lastActivityTime;
-            if (inactiveTime.TotalMinutes >= _autoLockMinutes)
-            {
-                _inactivityTimer?.Stop();
-                LockRequested?.Invoke(this, EventArgs.Empty);
-            }
-        }
-
-        public void ResetInactivity()
-        {
-            _lastActivityTime = DateTime.Now;
-        }
-
-        public void StopInactivityTimer()
-        {
-            _inactivityTimer?.Stop();
-        }
-
         public async Task CheckAlertsAsync()
         {
             try
@@ -522,27 +431,7 @@ namespace CAL_QR.ViewModels
             Dispatcher.CurrentDispatcher.Invoke(async () =>
             {
                 await CheckAlertsAsync();
-                LoadAutoLockSetting();
             });
-        }
-
-        private void LoadAutoLockSetting()
-        {
-            try
-            {
-                using (var context = _contextFactory.CreateDbContext())
-                {
-                    var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AutoLockMinutes");
-                    if (setting != null && int.TryParse(setting.Value, out var minutes))
-                    {
-                        _autoLockMinutes = minutes;
-                    }
-                }
-            }
-            catch
-            {
-                // Suppress
-            }
         }
 
         public async Task AcknowledgeAllExpiredDevicesAsync()

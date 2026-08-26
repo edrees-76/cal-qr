@@ -16,15 +16,17 @@ namespace CAL_QR
         private readonly MainViewModel _viewModel;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IdleLockService _idleLockService;
 
         private bool _isLoggingOut = false;
 
-        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService)
+        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IdleLockService idleLockService)
         {
             InitializeComponent();
             _viewModel = viewModel;
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
+            _idleLockService = idleLockService;
             DataContext = _viewModel;
 
             Loaded += MainWindow_Loaded;
@@ -32,9 +34,8 @@ namespace CAL_QR
             Closing += MainWindow_Closing;
 
             // Inactivity timer event handlers
-            _viewModel.LockRequested += ViewModel_LockRequested;
-            this.PreviewMouseMove += (s, e) => _viewModel.ResetInactivity();
-            this.PreviewKeyDown += (s, e) => _viewModel.ResetInactivity();
+            _idleLockService.LockRequested += ViewModel_LockRequested;
+            _idleLockService.Start();
 
             // Search event handlers
             _viewModel.SearchFocusRequested += ViewModel_SearchFocusRequested;
@@ -85,9 +86,9 @@ namespace CAL_QR
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
             // Clean up to prevent leaks
-            _viewModel.LockRequested -= ViewModel_LockRequested;
+            _idleLockService.LockRequested -= ViewModel_LockRequested;
             _viewModel.SearchFocusRequested -= ViewModel_SearchFocusRequested;
-            _viewModel.StopInactivityTimer();
+            _idleLockService.Stop();
 
             // If no other windows are open (user closed via X), shut down app
             if (Application.Current.Windows.Count == 0)

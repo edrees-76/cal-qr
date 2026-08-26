@@ -58,6 +58,9 @@ namespace CAL_QR
 
                 ServiceProvider = serviceCollection.BuildServiceProvider();
 
+                // خطّاف نشاط عامّ لكلّ نوافذ التطبيق — يُسجَّل مرّة واحدة هنا.
+                ServiceProvider.GetRequiredService<IdleLockService>().AttachGlobalActivityHooks();
+
                 // Run database migrations and seed settings
                 using (var scope = ServiceProvider.CreateScope())
                 {
@@ -140,6 +143,7 @@ namespace CAL_QR
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<ICertificateNumberService, CertificateNumberService>();
             services.AddSingleton<ICertificateSignatureService, CertificateSignatureService>();
+            services.AddSingleton<IdleLockService>();
             // بانِي المسوّدة صرف بلا حالة ولا DbContext ⇒ Singleton آمن.
             services.AddSingleton<ICertificateDraftBuilder, CertificateDraftBuilder>();
 

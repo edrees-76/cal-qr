@@ -60,6 +60,7 @@ namespace CAL_QR
             }
             else
             {
+                CloseSecondaryWindows();
                 _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
@@ -67,8 +68,39 @@ namespace CAL_QR
             }
         }
 
+        /// <summary>
+        /// يغلق كلّ نافذة أخرى عند انتهاء الجلسة (خمول · خروج يدويّ · زرّ X).
+        /// بلا سؤال حفظ: مربّع حوار ينتظر إجابة من شخص غادر يُبطل القفل نفسه.
+        /// التعداد لا التتبّع بـ Owner — حوارات عدّة تُفتح بلا مالك.
+        /// عكسيًّا: الأحدث أوّلًا = الأعمق تعشيقًا أوّلًا، لتُفكّ حلقات ShowDialog بسلامة.
+        /// </summary>
+        private void CloseSecondaryWindows()
+        {
+            var windows = Application.Current.Windows.OfType<Window>().ToList();
+
+            for (int i = windows.Count - 1; i >= 0; i--)
+            {
+                var window = windows[i];
+
+                if (ReferenceEquals(window, this)) continue;
+                if (window is LoginWindow) continue;
+                if (window is Views.SplashWindow) continue;
+                if (window is Views.ScreensaverWindow) continue;
+
+                try
+                {
+                    window.Close();
+                }
+                catch
+                {
+                    // فشل إغلاق نافذة واحدة لا يمنع إغلاق البقيّة.
+                }
+            }
+        }
+
         private void ViewModel_LockRequested(object? sender, EventArgs e)
         {
+            CloseSecondaryWindows();
             _currentUserService.ClearCurrentUser();
             var screensaverWindow = App.ServiceProvider.GetRequiredService<Views.ScreensaverWindow>();
             screensaverWindow.Dismissed += (s, args) =>
@@ -114,6 +146,7 @@ namespace CAL_QR
             var result = MessageBox.Show(this, "هل تريد الخروج من المنظومة؟", "تأكيد الخروج", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             if (result == MessageBoxResult.Yes)
             {
+                CloseSecondaryWindows();
                 _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();

@@ -64,6 +64,17 @@ namespace CAL_QR.Views.Dialogs
             }
         }
 
+        /// <summary>
+        /// مغادرة أيّ حقل بيئيّ فارغًا تُعيد هيكل الكتابة (__ ± __ °C).
+        /// الحدث على الـGrid لا على كلّ TextBox: LostFocus صاعد فمعالِج واحد يكفي،
+        /// ولا يتكرّر الربط ثلاث مرّات في XAML.
+        /// </summary>
+        private void EnvironmentFields_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is CertificateFormViewModel vm)
+                vm.RestoreEnvironmentTemplatesIfEmpty();
+        }
+
         private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
         {
             e.Row.Header = (e.Row.GetIndex() + 1).ToString();

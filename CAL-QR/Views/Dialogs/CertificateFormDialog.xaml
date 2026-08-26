@@ -230,7 +230,7 @@
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
-                    <Grid>
+                    <Grid LostFocus="EnvironmentFields_LostFocus">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />

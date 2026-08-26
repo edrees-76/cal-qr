@@ -9,6 +9,17 @@ namespace CAL_QR.Services
     /// </summary>
     public class CertificateDraftBuilder : ICertificateDraftBuilder
     {
+        // ── هيكل الظروف البيئيّة ──
+        // ليس قيمة مرجعيّة بل قالب كتابة: يعفي المعايِر من كتابة ± والوحدة،
+        // ويجعل النسيان مرئيًّا بدل أن يكون فراغًا صامتًا. القيم نفسها قياس
+        // فعليّ لكلّ معايرة — لا تُبذَر أبدًا، فهي تدخل نصّ التوقيع (TP/RH/AP).
+        // EnvironmentPlaceholderMarker هو ما يفحصه حارس SaveAsync: أيّ حقل
+        // ما زال يحمله = لم يُملأ. الوحدات مطابقة لقوالب م. رضا الستّة.
+        public const string EnvironmentPlaceholderMarker = "__";
+        public const string TemperatureTemplate = "__ ± __ °C";
+        public const string RelativeHumidityTemplate = "__ ± __ % RH";
+        public const string AtmosphericPressureTemplate = "__ ± __ kPa";
+
         public CertificateDraftResult Build(
             DeviceType deviceType,
             CalibrationRecord record,
@@ -59,6 +70,10 @@ namespace CAL_QR.Services
 
                 // لا حقل مصنّع على Device — إدخال يدوي على الشهادة.
                 DeviceManufacturer = null,
+
+                Temperature = TemperatureTemplate,
+                RelativeHumidity = RelativeHumidityTemplate,
+                AtmosphericPressure = AtmosphericPressureTemplate,
 
                 CalibrationDate = record.CalibrationDate
 

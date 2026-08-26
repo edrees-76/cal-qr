@@ -957,6 +957,26 @@ namespace CAL_QR.ViewModels
             AuthorizedByTitle = Get("DefaultAuthorizedByTitle", "Radiation Protection Management - TNRC");
         }
 
+        /// <summary>
+        /// يعيد هيكل الكتابة إلى أيّ حقل بيئيّ تُرك فارغًا — بذر الباني يعمل مرّة
+        /// واحدة عند فتح النموذج، فمسحُ القيمة بعده كان يترك الحقل خاليًا ويعيد
+        /// على المعايِر كتابة ± والوحدة يدويًّا.
+        /// تُستدعى عند مغادرة الحقل لا عند كلّ حرف: الإعادة اللحظيّة تُظهر الهيكل
+        /// وأنت تمسح الحرف الأخير فتقفز بالمؤشّر وتقاوم الكتابة.
+        /// النصوص من CertificateDraftBuilder — نفس مصدر البذر والحارس، فلا تباعد.
+        /// </summary>
+        public void RestoreEnvironmentTemplatesIfEmpty()
+        {
+            if (string.IsNullOrWhiteSpace(Temperature))
+                Temperature = CertificateDraftBuilder.TemperatureTemplate;
+
+            if (string.IsNullOrWhiteSpace(RelativeHumidity))
+                RelativeHumidity = CertificateDraftBuilder.RelativeHumidityTemplate;
+
+            if (string.IsNullOrWhiteSpace(AtmosphericPressure))
+                AtmosphericPressure = CertificateDraftBuilder.AtmosphericPressureTemplate;
+        }
+
         private bool CanSave() => _isLoaded && !_isSaving && _calibrationRecordId > 0;
 
         private async Task SaveAsync()
@@ -980,6 +1000,26 @@ namespace CAL_QR.ViewModels
                 if (!validation.IsValid)
                 {
                     ValidationErrors = validation.ErrorMessage ?? "تاريخ غير صالح.";
+                    return;
+                }
+
+                // الظروف البيئيّة إلزاميّة: قياس فعليّ يدخل نصّ التوقيع (TP/RH/AP)،
+                // وحقلٌ فارغ يُسقط القسم كلّه من الـPDF (HasAnyValue في
+                // CertificateDocument) فتخرج شهادة بلا ظروف قياس صامتةً.
+                // المنع هنا لا في CanSave: الزرّ يبقى مفعّلًا والرسالة تشرح السبب،
+                // كنظيره في فحص التواريخ أعلاه. «لم يُملأ» يشمل الفارغ والهيكل
+                // المبذور معًا — انظر IsEnvironmentFieldUnfilled أدناه. وفحص
+                // الفراغ فيها هو IsNullOrWhiteSpace نفسها التي تستعملها Nullify،
+                // فلا يمرّ نصّ يعدّه الحارس مملوءًا ثم يُخزَّن null.
+                var missingEnvironment = new List<string>();
+                if (IsEnvironmentFieldUnfilled(Temperature)) missingEnvironment.Add("درجة الحرارة");
+                if (IsEnvironmentFieldUnfilled(RelativeHumidity)) missingEnvironment.Add("الرطوبة النسبية");
+                if (IsEnvironmentFieldUnfilled(AtmosphericPressure)) missingEnvironment.Add("الضغط الجوي");
+
+                if (missingEnvironment.Count > 0)
+                {
+                    ValidationErrors = "يجب إدخال الظروف البيئية: "
+                        + string.Join(" · ", missingEnvironment) + ".";
                     return;
                 }
 
@@ -1185,6 +1225,16 @@ namespace CAL_QR.ViewModels
 
             return certificate;
         }
+
+        /// <summary>
+        /// «لم يُملأ» = فارغ، أو ما زال يحمل شرطتَي الهيكل المبذور. الثانية هي
+        /// الحالة الغالبة عند النسيان: الحقل يبدو مكتوبًا وليس فيه قياس.
+        /// لا يفحص معقوليّة ما كُتب — ذلك شأن المراجعة والاعتماد.
+        /// </summary>
+        private static bool IsEnvironmentFieldUnfilled(string? value) =>
+            string.IsNullOrWhiteSpace(value)
+            || value.Contains(CertificateDraftBuilder.EnvironmentPlaceholderMarker,
+                              StringComparison.Ordinal);
 
         private static string? Nullify(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();

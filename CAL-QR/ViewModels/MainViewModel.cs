@@ -55,11 +55,42 @@ namespace CAL_QR.ViewModels
         public event EventHandler? LockRequested;
         public event EventHandler? SearchFocusRequested;
 
+        /// <summary>
+        /// قاعدة البيانات النشطة كما يراها EF فعلاً — تُشتقّ من نصّ الاتّصال الحيّ
+        /// لا من إعادة قراءة db_path.txt، فلا يمكن أن تعرض غير ما يُكتب فيه.
+        /// العرض = المجلّد الأخير + اسم الملفّ، لأنّ القاعدة الافتراضيّة والقاعدة
+        /// الحيّة تحملان الاسم نفسه (cal-qr-simulation.db) ويميّزهما المجلّد وحده.
+        /// </summary>
+        public string ActiveDatabaseLabel { get; } = "—";
+
+        /// <summary>المسار الكامل — يظهر في ToolTip الهيدر.</summary>
+        public string ActiveDatabaseFullPath { get; } = string.Empty;
+
         public MainViewModel(IDbContextFactory<CalQrDbContext> contextFactory, ISearchService searchService, ICurrentUserService currentUserService)
         {
             _contextFactory = contextFactory;
             _searchService = searchService;
             _currentUserService = currentUserService;
+
+            // قراءة نصّ الاتّصال فقط: لا استعلام ولا فتح اتّصال ⇒ آمنة في المُنشئ.
+            try
+            {
+                using var dbCtx = _contextFactory.CreateDbContext();
+                var csBuilder = new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder(
+                    dbCtx.Database.GetDbConnection().ConnectionString);
+                ActiveDatabaseFullPath = System.IO.Path.GetFullPath(csBuilder.DataSource);
+
+                string fileName = System.IO.Path.GetFileName(ActiveDatabaseFullPath);
+                string parentDir = System.IO.Path.GetFileName(
+                    System.IO.Path.GetDirectoryName(ActiveDatabaseFullPath) ?? string.Empty);
+                ActiveDatabaseLabel = string.IsNullOrEmpty(parentDir)
+                    ? fileName
+                    : System.IO.Path.Combine(parentDir, fileName);
+            }
+            catch
+            {
+                // فشل الاشتقاق لا يمنع إقلاع الواجهة؛ تبقى القيمة الافتراضيّة "—".
+            }
 
             ToggleTabHeaderCommand = new RelayCommand(ToggleTabHeader);
             ChangeTabCommand = new RelayCommand(ChangeTab);

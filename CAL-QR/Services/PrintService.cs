@@ -118,50 +118,90 @@ namespace CAL_QR.Services
             var brushDark = Brushes.Black;
             var brushBody = Brushes.DarkSlateGray;
 
-            double padPx = 8;
+            double padPx = Math.Max(4, Math.Min(widthPx, heightPx) * 0.06);
             double innerWidth = widthPx - padPx * 2;
+            double bodyFontSize = Math.Clamp(heightPx / 16.0, 6, 11);
+            double titleFontSize = Math.Clamp(bodyFontSize + 3, bodyFontSize, 16);
+
             double cursorX = xPx + padPx;
             double cursorY = yPx + padPx;
 
-            // ── العنوان: رقم الشهادة (عريض) ──
+            // ── العنوان: رقم الشهادة (عريض، مضمون دائمًا) ──
             var certText = new FormattedText(
-                job.CertificateNumber,
+                job.CertificateNumber ?? string.Empty,
                 System.Globalization.CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight, typefaceBold, 11, brushDark, 96.0)
+                FlowDirection.LeftToRight, typefaceBold, titleFontSize, brushDark, 96.0)
             { MaxTextWidth = innerWidth };
             dc.DrawText(certText, new Point(cursorX, cursorY));
-            cursorY += certText.Height + 4;
+            cursorY += certText.Height + padPx * 0.5;
 
-            // ── جسد الحقول: تسمية + قيمة، سطرًا سطرًا ──
-            var bodyLines = new List<string>();
-            if (!string.IsNullOrWhiteSpace(job.ClientName))    bodyLines.Add($"Client: {job.ClientName}");
-            if (!string.IsNullOrWhiteSpace(job.DeviceType))    bodyLines.Add($"Type: {job.DeviceType}");
-            if (!string.IsNullOrWhiteSpace(job.Model))         bodyLines.Add($"Model: {job.Model}");
-            if (!string.IsNullOrWhiteSpace(job.SerialNumber))  bodyLines.Add($"S/N: {job.SerialNumber}");
-            if (!string.IsNullOrWhiteSpace(job.CalibrationDate)) bodyLines.Add($"Cal. Date: {job.CalibrationDate}");
-            if (!string.IsNullOrWhiteSpace(job.ExpiryDate))    bodyLines.Add($"Due Date: {job.ExpiryDate}");
-            foreach (var nuclide in job.NuclideLines)
-                if (!string.IsNullOrWhiteSpace(nuclide)) bodyLines.Add($"CFavg {nuclide}");
-
-            if (bodyLines.Count > 0)
-            {
-                var bodyText = new FormattedText(
-                    string.Join("\n", bodyLines),
-                    System.Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight, typefaceRegular, 8, brushBody, 96.0)
-                { MaxTextWidth = innerWidth, MaxTextHeight = heightPx - (cursorY - yPx) - padPx - 14 };
-                dc.DrawText(bodyText, new Point(cursorX, cursorY));
-            }
-
-            // ── كود التحقّق: أسفل الملصق، عريض ──
+            // ── كود التحقّق: مضمون دائمًا، يُحجز له مكانه أسفل الملصق مسبقًا ──
+            FormattedText? verifyText = null;
+            double verifyBlockHeight = 0;
             if (!string.IsNullOrWhiteSpace(job.VerifyCode))
             {
-                var codeText = new FormattedText(
+                verifyText = new FormattedText(
                     $"Verify: {job.VerifyCode}",
                     System.Globalization.CultureInfo.CurrentCulture,
-                    FlowDirection.LeftToRight, typefaceBold, 8, brushDark, 96.0)
+                    FlowDirection.LeftToRight, typefaceBold, bodyFontSize, brushDark, 96.0)
                 { MaxTextWidth = innerWidth };
-                dc.DrawText(codeText, new Point(cursorX, yPx + heightPx - padPx - codeText.Height));
+                verifyBlockHeight = verifyText.Height + padPx * 0.5;
+            }
+
+            double bodyBottomY = yPx + heightPx - padPx - verifyBlockHeight;
+
+            // احتياط: ملصق ضيّق جدًّا لا يتّسع لأيّ سطر جسد — اكتفِ بالعنوان وVerify.
+            if (innerWidth <= 0 || bodyBottomY <= cursorY)
+            {
+                if (verifyText != null)
+                {
+                    dc.DrawText(verifyText, new Point(cursorX, yPx + heightPx - padPx - verifyText.Height));
+                }
+                return;
+            }
+
+            // يرسم السطر فقط إن اتّسع كاملًا ضمن المساحة المتبقية؛ بلا قصّ صامت.
+            bool TryDraw(string text, Typeface tf, Brush brush)
+            {
+                var ft = new FormattedText(
+                    text,
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight, tf, bodyFontSize, brush, 96.0)
+                { MaxTextWidth = innerWidth };
+                if (cursorY + ft.Height > bodyBottomY) return false;
+                dc.DrawText(ft, new Point(cursorX, cursorY));
+                cursorY += ft.Height;
+                return true;
+            }
+
+            // ── سلّم الأولويّة الاختياريّ ──
+            if (!string.IsNullOrWhiteSpace(job.SerialNumber))
+                TryDraw($"S/N: {job.SerialNumber}", typefaceRegular, brushBody);
+
+            var calDueParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(job.CalibrationDate)) calDueParts.Add($"Cal: {job.CalibrationDate}");
+            if (!string.IsNullOrWhiteSpace(job.ExpiryDate)) calDueParts.Add($"Due: {job.ExpiryDate}");
+            if (calDueParts.Count > 0)
+                TryDraw(string.Join(" | ", calDueParts), typefaceRegular, brushBody);
+
+            var cfLines = job.NuclideLines?.Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? new List<string>();
+            if (cfLines.Count > 0)
+            {
+                string fullCfText = string.Join("\n", cfLines.Select(l => $"CF {l}"));
+                if (!TryDraw(fullCfText, typefaceRegular, brushBody))
+                    TryDraw("CF: see certificate", typefaceRegular, brushBody);
+            }
+
+            if (!string.IsNullOrWhiteSpace(job.Model))
+                TryDraw(job.Model, typefaceRegular, brushBody);
+
+            if (!string.IsNullOrWhiteSpace(job.DeviceType))
+                TryDraw(job.DeviceType, typefaceRegular, brushBody);
+
+            // ── رسم كود التحقّق أسفل الملصق (بعد أن حُجز له مكانه) ──
+            if (verifyText != null)
+            {
+                dc.DrawText(verifyText, new Point(cursorX, yPx + heightPx - padPx - verifyText.Height));
             }
         }
 

@@ -584,52 +584,56 @@ namespace CAL_QR.Services.Documents
 
             bool hasRemarks = checks.Any(c => !string.IsNullOrWhiteSpace(c.Remarks));
 
-            SectionTitle(column, "FUNCTIONAL CHECKS");
-
-            column.Item().Table(table =>
+            column.Item().ShowEntire().Column(section =>
             {
-                table.ColumnsDefinition(columns =>
+                section.Item().PaddingTop(4).Text("FUNCTIONAL CHECKS")
+                    .Bold().FontSize(11).FontColor(NavyColor);
+
+                section.Item().Table(table =>
                 {
-                    columns.ConstantColumn(25);
-                    columns.RelativeColumn(2f);
-                    columns.RelativeColumn(2f);
-                    columns.RelativeColumn(1f);
-                    if (hasRemarks) columns.RelativeColumn(2f);
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(25);
+                        columns.RelativeColumn(2f);
+                        columns.RelativeColumn(2f);
+                        columns.RelativeColumn(1f);
+                        if (hasRemarks) columns.RelativeColumn(2f);
+                    });
+
+                    table.Header(header =>
+                    {
+                        void AddHeaderCell(string text) =>
+                            header.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(8).FontColor(Colors.White);
+
+                        AddHeaderCell("#");
+                        AddHeaderCell("Check Name");
+                        AddHeaderCell("Requirement");
+                        AddHeaderCell("Result");
+                        if (hasRemarks) AddHeaderCell("Remarks");
+                    });
+
+                    int idx = 1;
+                    foreach (var check in checks)
+                    {
+                        void AddCell(string text) =>
+                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter().Text(text).FontSize(8);
+
+                        AddCell(idx.ToString(CultureInfo.InvariantCulture));
+                        AddCell(check.CheckName);
+                        AddCell(check.Requirement ?? string.Empty);
+
+                        // خليّة النتيجة — حمراء غامقة للفاشل/غير المنفَّذ
+                        var resultText = check.Result ?? string.Empty;
+                        if (IsFailedResult(resultText))
+                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter()
+                                .Text(resultText).Bold().FontSize(8).FontColor("#C62828");
+                        else
+                            AddCell(resultText);
+
+                        if (hasRemarks) AddCell(check.Remarks ?? string.Empty);
+                        idx++;
+                    }
                 });
-
-                table.Header(header =>
-                {
-                    void AddHeaderCell(string text) =>
-                        header.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(8).FontColor(Colors.White);
-
-                    AddHeaderCell("#");
-                    AddHeaderCell("Check Name");
-                    AddHeaderCell("Requirement");
-                    AddHeaderCell("Result");
-                    if (hasRemarks) AddHeaderCell("Remarks");
-                });
-
-                int idx = 1;
-                foreach (var check in checks)
-                {
-                    void AddCell(string text) =>
-                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter().Text(text).FontSize(8);
-
-                    AddCell(idx.ToString(CultureInfo.InvariantCulture));
-                    AddCell(check.CheckName);
-                    AddCell(check.Requirement ?? string.Empty);
-
-                    // خليّة النتيجة — حمراء غامقة للفاشل/غير المنفَّذ
-                    var resultText = check.Result ?? string.Empty;
-                    if (IsFailedResult(resultText))
-                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Padding(3).AlignCenter()
-                            .Text(resultText).Bold().FontSize(8).FontColor("#C62828");
-                    else
-                        AddCell(resultText);
-
-                    if (hasRemarks) AddCell(check.Remarks ?? string.Empty);
-                    idx++;
-                }
             });
         }
 

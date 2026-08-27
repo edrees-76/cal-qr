@@ -1052,7 +1052,14 @@ namespace CAL_QR.ViewModels
                     attachmentsRoot = setting.Value;
                 }
             }
-            string baseFolder = Path.Combine(attachmentsRoot, CertificateNumber.Trim());
+            // اسم المجلّد = معرّف سجلّ المعايرة، لا رقم الشهادة. رقم الشهادة يبقى
+            // فارغًا على CalibrationRecord في المسار الجديد (الشهادة صاحبة الرقم
+            // وحدها)، فكان Path.Combine ينتج جذر المرفقات نفسه لكلّ السجلّات،
+            // ومع File.Copy(overwrite: true) كان ملفّ متطابق الاسم من سجلّ آخر
+            // يطمس سابقه بصمت بينما تبقى صفوف Attachments تشير إلى المسار ذاته.
+            // _calibrationRecordId مضمون > 0 هنا: SaveAttachmentsAsync تُستدعى
+            // في طور ما بعد الـCommit وحده.
+            string baseFolder = Path.Combine(attachmentsRoot, _calibrationRecordId.ToString());
             FileHelper.EnsureDirectoryExists(baseFolder);
 
             foreach (var att in Attachments)

@@ -113,7 +113,7 @@ namespace CAL_QR.ViewModels
             AddDeviceCommand = new RelayCommand(OpenAddDeviceDialog, () => CanEdit);
             ViewDetailsCommand = new RelayCommand(OpenDetailsDialog);
             EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
-            EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog);
+            EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog, (p) => CanEdit);
             ManageSignedCopyCommand = new RelayCommand(
                 async (p) => await OpenSignedCopyDialogAsync(p),
                 (p) => CanEdit);
@@ -660,6 +660,13 @@ namespace CAL_QR.ViewModels
             dialog.ShowDialog();
         }
 
+        /// <summary>
+        /// مقيَّدة بـCanEdit بقرار رضا: تعديل شهادة صادرة يدوّر رمز التحقّق،
+        /// ويؤرشف الرمز القديم، ويضع وسم «عُدّلت هذه الشهادة» على الـPDF —
+        /// فهو أثقل من تعديل بيانات جهاز، وذاك مقيَّد أصلًا.
+        /// CertificateFormViewModel لا يفحص الصلاحيّة بنفسه، فهذا الحارس
+        /// الوحيد على المسار.
+        /// </summary>
         private void OpenEditCertificateDialog(object? parameter)
         {
             if (parameter is not DeviceDisplayItem item) return;

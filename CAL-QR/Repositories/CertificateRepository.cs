@@ -172,6 +172,12 @@ namespace CAL_QR.Repositories
             certificate.IssuedAt = stored.IssuedAt;
             certificate.FirstPrintedAt = stored.FirstPrintedAt;
             certificate.AmendedAt = stored.AmendedAt;
+            // حالة النسخة الموقّعة مشتقّة من صفوف Attachments، ولا يعرفها نموذج
+            // الشهادة. بلا إنقاذها هنا يكتب SetValues القيمة الافتراضيّة (false/null)
+            // فوق المخزَّن، فتعود شهادة نسختها الموقّعة على القرص إلى حالة
+            // «بانتظار النسخة الموقّعة» عند كلّ تعديل.
+            certificate.IsSignedCopyAttached = stored.IsSignedCopyAttached;
+            certificate.SignedCopyConfirmedAt = stored.SignedCopyConfirmedAt;
             certificate.DueDate = CertificateDateRules.ComputeDueDate(certificate.CalibrationDate);
             certificate.UpdatedAt = DateTime.UtcNow;
             NormalizeDerivedValues(certificate);
@@ -203,8 +209,18 @@ namespace CAL_QR.Repositories
                 stored.VerifyCode = newCode;
                 stored.QrPayload = _signatureService.BuildQrPayload(stored);
 
-                // تاريخ **أول** تعديل بعد الطباعة، لا آخره
-                if (stored.FirstPrintedAt.HasValue && !stored.AmendedAt.HasValue)
+                // تاريخ **أوّل** تعديل بعد الإصدار، لا آخره.
+                //
+                // المرساة هي IsSignedCopyAttached لا FirstPrintedAt، لأنّ الإصدار
+                // الفعليّ هو وصول النسخة الموقّعة والمختومة لا خروج ورقة من الطابعة
+                // (قرار رضا). التصدير للمراجعة الداخليّة كان يضبط FirstPrintedAt،
+                // فيُوسم كلّ تعديل بعده «تعديلًا على شهادة صادرة» زورًا.
+                //
+                // الثمن مقبول وواعٍ: شهادة وُقّعت وسُلّمت ولم تُمسح نسختها بعد، ثمّ
+                // عُدّلت — لا تُوسم. لكنّها تظهر «بانتظار النسخة الموقّعة» في القائمة،
+                // فالتقصير مرئيّ لا صامت. لا تُضِف FirstPrintedAt إلى الشرط لسدّ هذه
+                // الفجوة: ذلك يُعيد الوسم الزائف من الباب الخلفيّ.
+                if (stored.IsSignedCopyAttached && !stored.AmendedAt.HasValue)
                 {
                     stored.AmendedAt = DateTime.UtcNow;
                 }
@@ -222,10 +238,9 @@ namespace CAL_QR.Repositories
         /// مستدعاة من مسار التصدير الفعليّ — DeviceDetailViewModel.ExportPdfAsync
         /// بعد توليد ملفّ الـPDF مباشرةً (بوسم Phase 5-b).
         ///
-        /// FirstPrintedAt بوّابة سلسلة وسم التعديل:
-        ///     يُضبط هنا ⇐ شرط AmendedAt يتحقّق عند أوّل تعديل بعد الطباعة
-        ///                  ⇐ حالة ⚠ «عُدّلت هذه الشهادة» تظهر.
-        /// إزالة هذا الاستدعاء تُعطّل السلسلة صامتةً — فلا يُحذف من مسار التصدير.
+        /// FirstPrintedAt سجلّ تاريخيّ فقط: متى خرجت أوّل نسخة مطبوعة.
+        /// لم يعد بوّابةً لوسم التعديل — تلك المرساة صارت IsSignedCopyAttached
+        /// (انظر UpdateAsync). لا منطق يتفرّع عن هذا الحقل اليوم.
         ///
         /// تغطية: CertificateAmendmentTests.
         /// </summary>

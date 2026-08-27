@@ -132,6 +132,29 @@ namespace CAL_QR.Tests
             }
         };
 
+        /// <summary>
+        /// تُصدِر الشهادة فعليًّا كما يفعل حوار النسخة الموقّعة: صفّ Attachment
+        /// حقيقيّ ثمّ مزامنة. لا تضبط العمود مباشرةً — المسار الإنتاجيّ هو
+        /// المقصود بالاختبار.
+        /// </summary>
+        private static async Task AttachSignedCopyAsync(Harness harness, int certificateId, string fileName = "signed.pdf")
+        {
+            using (var context = new CalQrDbContext(harness.Options))
+            {
+                context.Attachments.Add(new Attachment
+                {
+                    CalibrationRecordId = harness.CalibrationRecordId,
+                    CertificateId = certificateId,
+                    FileName = fileName,
+                    FilePath = $@"X:\signed\{fileName}",
+                    FileExtension = ".pdf"
+                });
+                await context.SaveChangesAsync();
+            }
+
+            await harness.Repository.SyncSignedCopyStateAsync(certificateId);
+        }
+
         [Fact]
         public async Task Issue_AssignsNumberVerifyCodeAndVersion()
         {
@@ -195,7 +218,7 @@ namespace CAL_QR.Tests
             var issued = await harness.Repository.GetByCertificateNumberAsync(number);
             string originalCode = issued!.VerifyCode!;
 
-            await harness.Repository.MarkPrintedAsync(issued.Id);
+            await AttachSignedCopyAsync(harness, issued.Id);
 
             issued.Notes = "ملاحظة إدارية جديدة";
             issued.ReferenceNo = "OUT-2026-999";
@@ -212,7 +235,7 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public async Task EditingBeforePrinting_RotatesTheCodeButLeavesAmendedAtNull()
+        public async Task EditingBeforeTheSignedCopyArrives_RotatesTheCodeButLeavesAmendedAtNull()
         {
             using var harness = new Harness("beforeprint");
 
@@ -238,7 +261,7 @@ namespace CAL_QR.Tests
             var issued = await harness.Repository.GetByCertificateNumberAsync(number);
             string codeOnThePrintedPaper = issued!.VerifyCode!;
 
-            await harness.Repository.MarkPrintedAsync(issued.Id);
+            await AttachSignedCopyAsync(harness, issued.Id);
 
             var toEdit = await harness.Repository.GetByCertificateNumberAsync(number);
             toEdit!.CalibrationResults.Single().MeasuredReading = "5.25";
@@ -250,6 +273,12 @@ namespace CAL_QR.Tests
             Assert.NotNull(result.Certificate);
             Assert.Equal(number, result.Certificate!.CertificateNumber);
             Assert.NotNull(result.AmendedAt);
+
+            // NotNull أعلاه يرضيه البديل ?? historical.ReplacedAt في
+            // VerifyByCodeAsync. هذا التوكيد يفحص العمود ذاته، فلا يمرّ
+            // الاختبار لسبب غير الذي كُتب له.
+            var stored = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.NotNull(stored!.AmendedAt);
         }
 
         [Fact]
@@ -259,7 +288,7 @@ namespace CAL_QR.Tests
 
             string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
             var issued = await harness.Repository.GetByCertificateNumberAsync(number);
-            await harness.Repository.MarkPrintedAsync(issued!.Id);
+            await AttachSignedCopyAsync(harness, issued!.Id);
 
             issued.CalibrationResults.Single().MeasuredReading = "5.25";
             await harness.Repository.UpdateAsync(issued);
@@ -291,7 +320,7 @@ namespace CAL_QR.Tests
             string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
             var issued = await harness.Repository.GetByCertificateNumberAsync(number);
             string firstCode = issued!.VerifyCode!;
-            await harness.Repository.MarkPrintedAsync(issued.Id);
+            await AttachSignedCopyAsync(harness, issued.Id);
 
             var edit1 = await harness.Repository.GetByCertificateNumberAsync(number);
             edit1!.CalibrationResults.Single().MeasuredReading = "5.25";
@@ -360,6 +389,85 @@ namespace CAL_QR.Tests
 
             Assert.Equal("TNRC-SSDL-2026-0001", first);
             Assert.Equal("TNRC-SSDL-2026-0002", second);
+        }
+
+        [Fact]
+        public async Task EditingAnIssuedCertificate_KeepsItsSignedCopyState()
+        {
+            // UpdateAsync ينسخ الكائن الوارد فوق المخزَّن عبر SetValues، ونموذج
+            // الشهادة لا يعرف حقلَي النسخة الموقّعة. بلا إنقاذهما صراحةً كانت
+            // كلّ عمليّة تعديل تُعيد شهادةً نسختها على القرص إلى «بانتظار».
+            using var harness = new Harness("keepsigned");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            await AttachSignedCopyAsync(harness, issued!.Id);
+
+            var before = await harness.Repository.GetByCertificateNumberAsync(number);
+            DateTime confirmedAt = before!.SignedCopyConfirmedAt!.Value;
+
+            var toEdit = await harness.Repository.GetByCertificateNumberAsync(number);
+            toEdit!.CalibrationResults.Single().MeasuredReading = "5.25";
+            await harness.Repository.UpdateAsync(toEdit);
+
+            var after = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.True(after!.IsSignedCopyAttached);
+            Assert.Equal(confirmedAt, after.SignedCopyConfirmedAt);
+        }
+
+        [Fact]
+        public async Task SyncSignedCopyState_RaisesTheFlag_WhenAnAttachmentExists()
+        {
+            using var harness = new Harness("syncraise");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            await AttachSignedCopyAsync(harness, issued!.Id);
+
+            var after = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.True(after!.IsSignedCopyAttached);
+            Assert.NotNull(after.SignedCopyConfirmedAt);
+        }
+
+        [Fact]
+        public async Task SyncSignedCopyState_KeepsTheFirstDate_WhenASecondFileIsAdded()
+        {
+            using var harness = new Harness("synckeepdate");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            await AttachSignedCopyAsync(harness, issued!.Id, "signed-1.pdf");
+
+            var afterFirst = await harness.Repository.GetByCertificateNumberAsync(number);
+            DateTime firstConfirmedAt = afterFirst!.SignedCopyConfirmedAt!.Value;
+
+            await AttachSignedCopyAsync(harness, issued.Id, "signed-2.pdf");
+
+            var afterSecond = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.Equal(firstConfirmedAt, afterSecond!.SignedCopyConfirmedAt);
+        }
+
+        [Fact]
+        public async Task SyncSignedCopyState_LowersTheFlag_WhenTheLastAttachmentIsRemoved()
+        {
+            using var harness = new Harness("synclower");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            await AttachSignedCopyAsync(harness, issued!.Id);
+
+            using (var context = new CalQrDbContext(harness.Options))
+            {
+                var attachment = context.Attachments.Single(a => a.CertificateId == issued.Id);
+                context.Attachments.Remove(attachment);
+                context.SaveChanges();
+            }
+
+            await harness.Repository.SyncSignedCopyStateAsync(issued.Id);
+
+            var after = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.False(after!.IsSignedCopyAttached);
+            Assert.Null(after.SignedCopyConfirmedAt);
         }
     }
 }

@@ -22,13 +22,13 @@ namespace CAL_QR.ViewModels
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IOwnerRepository _ownerRepository;
         private readonly IDeviceTypeRepository _deviceTypeRepository;
-        private readonly IAuditLogRepository _auditLogRepository;
         private readonly IQrService _qrService;
         private readonly IPrintService _printService;
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly Func<Views.Dialogs.DeviceDetailDialog> _deviceDetailDialogFactory;
         private readonly Func<Views.Dialogs.CalibrationFormDialog> _calibrationFormDialogFactory;
         private readonly Func<Views.Dialogs.CertificateFormDialog> _certificateFormDialogFactory;
+        private readonly Func<Views.Dialogs.SignedCopyDialog> _signedCopyDialogFactory;
         private readonly ICertificateRepository _certificateRepository;
         private readonly ICurrentUserService _currentUserService;
 
@@ -75,13 +75,13 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             IOwnerRepository ownerRepository,
             IDeviceTypeRepository deviceTypeRepository,
-            IAuditLogRepository auditLogRepository,
             IQrService qrService,
             IPrintService printService,
             IPaperTemplateRepository templateRepository,
             Func<Views.Dialogs.DeviceDetailDialog> deviceDetailDialogFactory,
             Func<Views.Dialogs.CalibrationFormDialog> calibrationFormDialogFactory,
             Func<Views.Dialogs.CertificateFormDialog> certificateFormDialogFactory,
+            Func<Views.Dialogs.SignedCopyDialog> signedCopyDialogFactory,
             ICertificateRepository certificateRepository,
             ICurrentUserService currentUserService)
         {
@@ -89,13 +89,13 @@ namespace CAL_QR.ViewModels
             _contextFactory = contextFactory;
             _ownerRepository = ownerRepository;
             _deviceTypeRepository = deviceTypeRepository;
-            _auditLogRepository = auditLogRepository;
             _qrService = qrService;
             _printService = printService;
             _templateRepository = templateRepository;
             _deviceDetailDialogFactory = deviceDetailDialogFactory;
             _calibrationFormDialogFactory = calibrationFormDialogFactory;
             _certificateFormDialogFactory = certificateFormDialogFactory;
+            _signedCopyDialogFactory = signedCopyDialogFactory;
             _certificateRepository = certificateRepository;
             _currentUserService = currentUserService;
 
@@ -114,7 +114,9 @@ namespace CAL_QR.ViewModels
             ViewDetailsCommand = new RelayCommand(OpenDetailsDialog);
             EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
             EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog);
-            ToggleSignedCopyCommand = new RelayCommand(async (p) => await ToggleSignedCopy(p));
+            ManageSignedCopyCommand = new RelayCommand(
+                async (p) => await OpenSignedCopyDialogAsync(p),
+                (p) => CanEdit);
             PrintDeviceCommand = new RelayCommand(PrintSpecificCertificate);
             PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
             PrintSpecificCertificateCommand = new RelayCommand(PrintSpecificCertificate);
@@ -292,7 +294,7 @@ namespace CAL_QR.ViewModels
         public ICommand ViewDetailsCommand { get; }
         public ICommand EditDeviceCommand { get; }
         public ICommand EditCertificateCommand { get; }
-        public ICommand ToggleSignedCopyCommand { get; }
+        public ICommand ManageSignedCopyCommand { get; }
         #endregion
 
         public async Task LoadDataAsync()
@@ -680,46 +682,45 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private async Task ToggleSignedCopy(object? parameter)
+        /// <summary>
+        /// يفتح حوار النسخة الموقّعة. الحالة لم تعد تُبدَّل من هنا: الحوار
+        /// يضيف الملفّات أو يحذفها، ويستدعي SyncSignedCopyStateAsync بنفسه،
+        /// ويسجّل في AuditLog بنفسه. دور هذه الدالّة العرض ثمّ إعادة التحميل.
+        /// مقيَّدة بـCanEdit بقرار رضا: إرفاق النسخة الموقّعة أو حذفها يكتب
+        /// ملفًّا على القرص ويغيّر حالة إصدار الشهادة، فهو فعل تحرير لا اطّلاع.
+        /// </summary>
+        private async Task OpenSignedCopyDialogAsync(object? parameter)
         {
             if (parameter is not DeviceDisplayItem item) return;
             if (item.CertificateId <= 0) return;
 
-            string message = item.IsSignedCopyAttached
-                ? $"هل تريد إلغاء تأكيد إرفاق النسخة الموقّعة للشهادة {item.CertificateNumber}؟"
-                : $"هل تؤكد إرفاق النسخة الموقّعة والمختومة للشهادة {item.CertificateNumber}؟";
-
-            string title = item.IsSignedCopyAttached ? "إلغاء التأكيد" : "تأكيد الإرفاق";
-
-            var result = MessageBox.Show(message, title,
-                MessageBoxButton.YesNo, MessageBoxImage.Question,
-                MessageBoxResult.No);
-
-            if (result != MessageBoxResult.Yes) return;
-
             try
             {
-                bool newState = await _certificateRepository.ToggleSignedCopyAsync(item.CertificateId);
+                var dialog = _signedCopyDialogFactory();
 
-                try
+                if (dialog.DataContext is not SignedCopyViewModel vm)
                 {
-                    await _auditLogRepository.LogAsync(
-                        newState ? "تأكيد إرفاق نسخة موقّعة" : "إلغاء تأكيد إرفاق نسخة موقّعة",
-                        "Certificate",
-                        item.CertificateId.ToString(),
-                        $"الشهادة {item.CertificateNumber} — {(newState ? "تم التأكيد" : "تم الإلغاء")}");
+                    MessageBox.Show("تعذّر تهيئة حوار النسخة الموقّعة.", "خطأ",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Audit] {ex.Message}");
-                }
+
+                // LoadAsync قبل ShowDialog: إن أعادت false فالنافذة لا تُعرض
+                // أصلًا. عرض نافذة ثمّ إغلاقها فورًا يرمي InvalidOperationException.
+                if (!await vm.LoadAsync(item.CertificateId)) return;
+
+                dialog.Owner = Application.Current?.Windows
+                    .OfType<Window>()
+                    .FirstOrDefault(w => w.IsActive);
+
+                dialog.ShowDialog();
 
                 await LoadDataAsync();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"خطأ: {ex.Message}", "خطأ",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"خطأ في فتح حوار النسخة الموقّعة: {ex.Message}",
+                    "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

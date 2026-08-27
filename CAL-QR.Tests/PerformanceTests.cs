@@ -49,24 +49,26 @@ namespace CAL_QR.Tests
             var typeRepo = new DeviceTypeRepository(factory);
             var authService = new TestCurrentUserService();
             authService.SetCurrentUser(new User { Username = "admin", Role = UserRole.Admin });
-            var auditRepo = new AuditLogRepository(factory, authService);
             var qrService = new QrService();
             var templateRepo = new PaperTemplateRepository(factory);
 
+            // وسائط مسمّاة عمدًا: النداء بالموضع انكسر صامتًا مرّتين حين
+            // تغيّرت تبعيّات DevicesViewModel، لأنّ التعليقات الجانبيّة
+            // لا يفحصها المصرّف. الأسماء يفحصها.
             var vm = new DevicesViewModel(
-                deviceRepo,
-                factory,
-                ownerRepo,
-                typeRepo,
-                auditRepo,
-                qrService,
-                null, // printService
-                templateRepo,
-                null, // deviceDetailDialogFactory
-                null, // calibrationFormDialogFactory
-                null, // certificateFormDialogFactory
-                null, // certificateRepository
-                authService
+                deviceRepository: deviceRepo,
+                contextFactory: factory,
+                ownerRepository: ownerRepo,
+                deviceTypeRepository: typeRepo,
+                qrService: qrService,
+                printService: null,
+                templateRepository: templateRepo,
+                deviceDetailDialogFactory: null,
+                calibrationFormDialogFactory: null,
+                certificateFormDialogFactory: null,
+                signedCopyDialogFactory: null,
+                certificateRepository: null,
+                currentUserService: authService
             );
 
             // Set PageSize to 2000 to measure load time of the entire dataset at once (worst-case scenario)

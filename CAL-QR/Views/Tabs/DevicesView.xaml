@@ -339,13 +339,13 @@
                                         <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <materialDesign:PackIcon Kind="FileDocumentEdit" Style="{StaticResource UnifiedNavyDataGridIconStyle}" Width="18" Height="18" />
                                         </Button>
-                                        <Button Command="{Binding DataContext.ToggleSignedCopyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Button Command="{Binding DataContext.ManageSignedCopyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignToolIconButton}">
-                                                    <Setter Property="ToolTip" Value="تأكيد إرفاق النسخة الموقّعة" />
+                                                    <Setter Property="ToolTip" Value="إرفاق النسخة الموقّعة" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
-                                                            <Setter Property="ToolTip" Value="إلغاء تأكيد الإرفاق" />
+                                                            <Setter Property="ToolTip" Value="إدارة النسخة الموقّعة" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -530,13 +530,13 @@
                                                 <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="#1A3A6B" Width="16" Height="16" />
                                                 </Button>
-                                                <Button Command="{Binding DataContext.ToggleSignedCopyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <Button Command="{Binding DataContext.ManageSignedCopyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <Button.Style>
                                                         <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignToolIconButton}">
-                                                            <Setter Property="ToolTip" Value="تأكيد إرفاق النسخة الموقّعة" />
+                                                            <Setter Property="ToolTip" Value="إرفاق النسخة الموقّعة" />
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
-                                                                    <Setter Property="ToolTip" Value="إلغاء تأكيد الإرفاق" />
+                                                                    <Setter Property="ToolTip" Value="إدارة النسخة الموقّعة" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>

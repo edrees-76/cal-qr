@@ -50,6 +50,13 @@ namespace CAL_QR.Repositories
         /// <summary>يبدّل حالة إرفاق النسخة الموقّعة. يُرجع الحالة الجديدة.</summary>
         Task<bool> ToggleSignedCopyAsync(int certificateId);
 
+        /// <summary>
+        /// يُعيد اشتقاق حالة النسخة الموقّعة من عدد المرفقات المرتبطة فعلًا
+        /// بالشهادة. الحالة نتيجة لا إقرار: لا تصير الشهادة «مكتملة» إلّا
+        /// ووراءها ملفّ حقيقيّ. يُرجع الحالة بعد المزامنة.
+        /// </summary>
+        Task<bool> SyncSignedCopyStateAsync(int certificateId);
+
         /// <summary>بحث بالرمز في الرموز الحالية أولاً ثم التاريخية.</summary>
         Task<CertificateVerificationResult> VerifyByCodeAsync(string verifyCode);
 

@@ -269,6 +269,38 @@ namespace CAL_QR.Repositories
             return certificate.IsSignedCopyAttached;
         }
 
+        public async Task<bool> SyncSignedCopyStateAsync(int certificateId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+
+            var certificate = await context.Certificates
+                .FirstOrDefaultAsync(c => c.Id == certificateId && !c.IsDeleted);
+
+            if (certificate == null)
+                throw new InvalidOperationException($"الشهادة {certificateId} غير موجودة.");
+
+            bool attached = await context.Attachments
+                .AnyAsync(a => a.CertificateId == certificateId);
+
+            certificate.IsSignedCopyAttached = attached;
+
+            // تاريخ وصول النسخة الموقّعة، لا تاريخ آخر لمسة: يُضبط عند أوّل
+            // إرفاق ويبقى، ولا يُعاد ضبطه بإضافة ملفّ ثانٍ إلى النسخة نفسها.
+            if (attached)
+            {
+                certificate.SignedCopyConfirmedAt ??= DateTime.UtcNow;
+            }
+            else
+            {
+                certificate.SignedCopyConfirmedAt = null;
+            }
+
+            certificate.UpdatedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+
+            return attached;
+        }
+
         public async Task<CertificateVerificationResult> VerifyByCodeAsync(string verifyCode)
         {
             string code = (verifyCode ?? string.Empty).Trim().ToUpperInvariant();

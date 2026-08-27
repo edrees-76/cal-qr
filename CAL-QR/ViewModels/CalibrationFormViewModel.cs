@@ -1048,15 +1048,6 @@ namespace CAL_QR.ViewModels
 
         private async Task SaveAttachmentsAsync()
         {
-            string attachmentsRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
-            using (var context = await _contextFactory.CreateDbContextAsync())
-            {
-                var setting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "AttachmentsPath");
-                if (setting != null && !string.IsNullOrWhiteSpace(setting.Value))
-                {
-                    attachmentsRoot = setting.Value;
-                }
-            }
             // اسم المجلّد = معرّف سجلّ المعايرة، لا رقم الشهادة. رقم الشهادة يبقى
             // فارغًا على CalibrationRecord في المسار الجديد (الشهادة صاحبة الرقم
             // وحدها)، فكان Path.Combine ينتج جذر المرفقات نفسه لكلّ السجلّات،
@@ -1064,7 +1055,8 @@ namespace CAL_QR.ViewModels
             // يطمس سابقه بصمت بينما تبقى صفوف Attachments تشير إلى المسار ذاته.
             // _calibrationRecordId مضمون > 0 هنا: SaveAttachmentsAsync تُستدعى
             // في طور ما بعد الـCommit وحده.
-            string baseFolder = Path.Combine(attachmentsRoot, _calibrationRecordId.ToString());
+            string attachmentsRoot = await AttachmentPaths.ResolveRootAsync(_contextFactory);
+            string baseFolder = AttachmentPaths.RecordFolder(attachmentsRoot, _calibrationRecordId);
             FileHelper.EnsureDirectoryExists(baseFolder);
 
             foreach (var att in Attachments)

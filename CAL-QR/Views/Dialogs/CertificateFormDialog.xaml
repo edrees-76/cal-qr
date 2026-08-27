@@ -256,6 +256,10 @@
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
+                    <!-- النافذة يمين←يسار، وقيمة مثل «103.1 ± 10» فيها مقطعان لاتينيّان بينهما رمز محايد،
+                         فتُرتَّب المقاطع من اليمين وتُعرض معكوسة «10 ± 103.1» بينما المخزَّن سليم.
+                         LeftToRight يجعل ترتيب العرض يطابق ترتيب التخزين، فيرى المعايِر ما كتبه فعلًا —
+                         والمراجعة البصريّة شرط في وثيقة ISO 17025. -->
                     <Grid LostFocus="EnvironmentFields_LostFocus">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -265,15 +269,15 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="4">
                             <TextBlock Text="Temperature" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="°C مثال: 23.0 ± 2.0" />
+                            <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" FlowDirection="LeftToRight" helpers:WatermarkHelper.Watermark="°C مثال: 23.0 ± 2.0" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="4">
                             <TextBlock Text="Relative Humidity" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding RelativeHumidity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="% RH مثال: 50 ± 10" />
+                            <TextBox Text="{Binding RelativeHumidity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" FlowDirection="LeftToRight" helpers:WatermarkHelper.Watermark="% RH مثال: 50 ± 10" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="4">
                             <TextBlock Text="Atmospheric Pressure" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding AtmosphericPressure, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="kPa مثال: 101.30 ± 1.00" />
+                            <TextBox Text="{Binding AtmosphericPressure, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" FlowDirection="LeftToRight" helpers:WatermarkHelper.Watermark="kPa مثال: 101.30 ± 1.00" />
                         </StackPanel>
                     </Grid>
 

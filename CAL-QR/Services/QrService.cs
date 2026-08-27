@@ -1,12 +1,8 @@
 using System;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Windows.Media.Imaging;
-using Microsoft.EntityFrameworkCore;
 using QRCoder;
-using CAL_QR.Helpers;
-using CAL_QR.Data;
 
 namespace CAL_QR.Services
 {
@@ -20,11 +16,11 @@ namespace CAL_QR.Services
 
         public byte[] GenerateQrCodePngBytes(string content, int sizePx)
         {
+            // الشعار يُنسخ مع مخرجات البناء، فمسار BaseDirectory هو الصحيح الوحيد.
+            // كان هنا احتياطيّ بمسار جهاز المطوّر — يعني أنّ انكسار نسخ Assets كان
+            // سيمرّ سليمًا على جهاز واحد ويُنتج رموزًا بلا شعار بصمت على غيره.
+            // غياب الشعار يُحتمَل أدناه أصلًا.
             string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Logo", "nuclear-center-logo.png");
-            if (!File.Exists(logoPath))
-            {
-                logoPath = Path.Combine("d:\\cal-qr\\CAL-QR", "Assets", "Logo", "nuclear-center-logo.png");
-            }
 
             Bitmap? logoImage = null;
             if (File.Exists(logoPath))

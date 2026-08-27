@@ -232,6 +232,16 @@ namespace CAL_QR.Services
                 string attachmentsPath = GetAttachmentsPath();
                 string qrOutputPath = await GetQrOutputPathAsync();
 
+                string backupPathRaw;
+                string cloudBackupPathRaw;
+                using (var pathsContext = await _contextFactory.CreateDbContextAsync())
+                {
+                    var backupPathSetting = await pathsContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "BackupPath");
+                    var cloudBackupPathSetting = await pathsContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "CloudBackupPath");
+                    backupPathRaw = backupPathSetting?.Value ?? string.Empty;
+                    cloudBackupPathRaw = cloudBackupPathSetting?.Value ?? string.Empty;
+                }
+
                 string? stagingParent = Path.GetDirectoryName(attachmentsPath);
                 if (string.IsNullOrWhiteSpace(stagingParent))
                 {
@@ -264,9 +274,48 @@ namespace CAL_QR.Services
                             }
                         }
 
+                        // ملفّ القاعدة كُتب فوقه من تحت اتّصالات المجمّع؛ نحرّرها قبل أن
+                        // نقرأ أو نكتب عبر EF، تمامًا كما يفعل BackupNowAsync بعد النسخ.
+                        SqliteConnection.ClearAllPools();
+
+                        // المسارات تصف هذا الحاسوب لا بيانات المعايرة. النسخة الاحتياطيّة
+                        // تحمل الملفّات لا العناوين. بدون هذه الكتلة تصير القاعدة تشير إلى
+                        // مسار الجهاز القديم بينما تهبط الملفّات في مسار الجهاز الحاليّ،
+                        // فتصبح كلّ المرفقات والنسخ الموقّعة يتيمة. DatabasePath مستثنى
+                        // لأنّه ليس مصدر حقيقة — المسار الحيّ من سلسلة الاتّصال وdb_path.txt.
+                        using (var restoredPathsContext = await _contextFactory.CreateDbContextAsync())
+                        {
+                            var pathValues = new (string Key, string Value)[]
+                            {
+                                ("AttachmentsPath", attachmentsPath),
+                                ("QrOutputPath", qrOutputPath),
+                                ("BackupPath", backupPathRaw),
+                                ("CloudBackupPath", cloudBackupPathRaw),
+                            };
+
+                            foreach (var (key, value) in pathValues)
+                            {
+                                var existing = await restoredPathsContext.AppSettings.FirstOrDefaultAsync(s => s.Key == key);
+                                if (existing != null)
+                                {
+                                    existing.Value = value;
+                                }
+                                else
+                                {
+                                    restoredPathsContext.AppSettings.Add(new AppSetting { Key = key, Value = value });
+                                }
+                            }
+
+                            await restoredPathsContext.SaveChangesAsync();
+                        }
+
                         // 2. Staging extraction paths
                         string tempAttachments = Path.Combine(tempDir, "StagedAttachments");
-                        Directory.CreateDirectory(tempAttachments);
+                        bool hasAttachmentsInZip = archive.Entries.Any(e => e.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase));
+                        if (hasAttachmentsInZip)
+                        {
+                            Directory.CreateDirectory(tempAttachments);
+                        }
 
                         string tempQrOutput = Path.Combine(tempDir, "StagedQrOutput");
                         bool hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
@@ -308,11 +357,16 @@ namespace CAL_QR.Services
                         }
 
                         // 3. Swap staged directories with active directories (Atomic Swap)
-                        if (Directory.Exists(attachmentsPath))
+                        // نسخة بلا مرفقات تعني «لم تكن هناك مرفقات وقتها»، لا «امحُ ما عندك».
+                        // ملفّ زائد على القرص أهون من ملفّ ضائع، والسلوك الآن مطابق لحارس QR.
+                        if (hasAttachmentsInZip)
                         {
-                            Directory.Delete(attachmentsPath, true);
+                            if (Directory.Exists(attachmentsPath))
+                            {
+                                Directory.Delete(attachmentsPath, true);
+                            }
+                            Directory.Move(tempAttachments, attachmentsPath);
                         }
-                        Directory.Move(tempAttachments, attachmentsPath);
 
                         if (hasQrFolderInZip)
                         {

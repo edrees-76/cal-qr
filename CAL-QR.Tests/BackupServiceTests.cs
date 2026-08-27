@@ -566,6 +566,212 @@ namespace CAL_QR.Tests
 
 
 
+        [Fact]
+        public async Task RestoreAsync_KeepsThisMachinePathSettings()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RestoreKeepsPaths_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPathA = Path.Combine(testDir, "Attachments_A");
+            Directory.CreateDirectory(attachmentsPathA);
+            string qrOutputPathA = Path.Combine(testDir, "QR_Output_A");
+            Directory.CreateDirectory(qrOutputPathA);
+            string backupPathA = Path.Combine(testDir, "Backup_A");
+            string cloudBackupPathA = Path.Combine(testDir, "Cloud_A");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPathA });
+                context.AppSettings.Add(new AppSetting { Key = "QrOutputPath", Value = qrOutputPathA });
+                context.AppSettings.Add(new AppSetting { Key = "BackupPath", Value = backupPathA });
+                context.AppSettings.Add(new AppSetting { Key = "CloudBackupPath", Value = cloudBackupPathA });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            try
+            {
+                // Act 1 - Backup while settings point at the "A" machine paths
+                await backupService.BackupNowAsync(testBackupFolder);
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                string zipFilePath = zipFiles[0];
+
+                // Change the live settings to "B" machine paths before restoring
+                string attachmentsPathB = Path.Combine(testDir, "Attachments_B");
+                Directory.CreateDirectory(attachmentsPathB);
+                string qrOutputPathB = Path.Combine(testDir, "QR_Output_B");
+                Directory.CreateDirectory(qrOutputPathB);
+                string backupPathB = Path.Combine(testDir, "Backup_B");
+                string cloudBackupPathB = Path.Combine(testDir, "Cloud_B");
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    (await context.AppSettings.FirstAsync(s => s.Key == "AttachmentsPath")).Value = attachmentsPathB;
+                    (await context.AppSettings.FirstAsync(s => s.Key == "QrOutputPath")).Value = qrOutputPathB;
+                    (await context.AppSettings.FirstAsync(s => s.Key == "BackupPath")).Value = backupPathB;
+                    (await context.AppSettings.FirstAsync(s => s.Key == "CloudBackupPath")).Value = cloudBackupPathB;
+
+                    // الشاهد أُضيف بعد النسخة فليس فيها. غيابه بعد الاستعادة يثبت أنّ
+                    // القاعدة استُبدلت حقًّا، فلا يمرّ الاختبار لمجرّد أنّ الاستعادة لم تفعل شيئًا.
+                    context.AppSettings.Add(new AppSetting { Key = "MarkerAddedAfterBackup", Value = "1" });
+
+                    await context.SaveChangesAsync();
+                }
+
+                // Act 2 - Restore
+                await backupService.RestoreAsync(zipFilePath);
+
+                // Assert - the "B" machine paths survive the restore, not the backed-up "A" ones
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.Equal(attachmentsPathB, (await context.AppSettings.FirstAsync(s => s.Key == "AttachmentsPath")).Value);
+                    Assert.Equal(qrOutputPathB, (await context.AppSettings.FirstAsync(s => s.Key == "QrOutputPath")).Value);
+                    Assert.Equal(backupPathB, (await context.AppSettings.FirstAsync(s => s.Key == "BackupPath")).Value);
+                    Assert.Equal(cloudBackupPathB, (await context.AppSettings.FirstAsync(s => s.Key == "CloudBackupPath")).Value);
+                    Assert.Null(await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "MarkerAddedAfterBackup"));
+                }
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
+        [Fact]
+        public async Task RestoreAsync_WithoutAttachmentsInBackup_KeepsExistingFiles()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RestoreNoAttachmentsInZip_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPath = Path.Combine(testDir, "Attachments");
+            Directory.CreateDirectory(attachmentsPath); // empty at backup time
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPath });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            try
+            {
+                // Act 1 - Backup an empty Attachments folder, so the zip has no "Attachments/" entries
+                await backupService.BackupNowAsync(testBackupFolder);
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                string zipFilePath = zipFiles[0];
+
+                using (var archive = ZipFile.OpenRead(zipFilePath))
+                {
+                    Assert.DoesNotContain(archive.Entries, e => e.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase));
+                }
+
+                // Now a file appears in the live Attachments folder after that backup was taken
+                string existingFile = Path.Combine(attachmentsPath, "existing.txt");
+                await File.WriteAllTextAsync(existingFile, "keep me");
+
+                // Act 2 - Restore from the backup that never had any attachments
+                await backupService.RestoreAsync(zipFilePath);
+
+                // Assert - the file was not wiped out just because the backup had no attachments
+                Assert.True(File.Exists(existingFile));
+                Assert.Equal("keep me", await File.ReadAllTextAsync(existingFile));
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
+        [Fact]
+        public async Task RestoreAsync_RoundTripsNestedSignedCopyFolder()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RestoreNestedSignedCopy_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPath = Path.Combine(testDir, "Attachments");
+            string nestedSignedDir = Path.Combine(attachmentsPath, "7", "signed");
+            Directory.CreateDirectory(nestedSignedDir);
+            string nestedSignedFile = Path.Combine(nestedSignedDir, "signed_copy.pdf");
+            await File.WriteAllTextAsync(nestedSignedFile, "signed pdf bytes");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPath });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            try
+            {
+                // Act 1 - Backup the nested signed-copy file
+                await backupService.BackupNowAsync(testBackupFolder);
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                string zipFilePath = zipFiles[0];
+
+                // Wipe the whole Attachments folder, as if the machine lost it
+                Directory.Delete(attachmentsPath, true);
+
+                // Act 2 - Restore
+                await backupService.RestoreAsync(zipFilePath);
+
+                // Assert - the file comes back at the same nested relative path with the same content
+                Assert.True(File.Exists(nestedSignedFile));
+                Assert.Equal("signed pdf bytes", await File.ReadAllTextAsync(nestedSignedFile));
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

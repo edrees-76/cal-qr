@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:helpers="clr-namespace:CAL_QR.Helpers"
+        xmlns:converters="clr-namespace:CAL_QR.Converters"
         Title="إنشاء شهادة معايرة | Certificate Form" Height="760" Width="900"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
@@ -35,7 +36,32 @@
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
         </Style>
 
+        <converters:UnfilledFieldConverter x:Key="UnfilledFieldConverter" />
+
+        <!--
+            إطار تذكير ذهبيّ: يظهر على أيّ حقل غير مملوء بعد أوّل محاولة حفظ.
+            الشرطان معًا لازمان — بلا ShowMissingFieldHints كان النموذج الجديد
+            يُفتح وكلّ حقوله مُعلَّمة. اللون #C9A227 هو ذهبيّ عناوين الأقسام:
+            تذكير لا إنذار، واللوحة المجمّدة بلا لون خطأ.
+        -->
         <Style x:Key="FieldBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Style.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text, Converter={StaticResource UnfilledFieldConverter}}" Value="True" />
+                        <Condition Binding="{Binding ShowMissingFieldHints}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="BorderBrush" Value="#C9A227" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </MultiDataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- بلا مُطلِق تذكير: يُطبعان بخطّ سفليّ ليُملآ باليد بعد الطباعة. -->
+        <Style x:Key="FieldBoxNoHint" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
             <Setter Property="Height" Value="38" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
             <Setter Property="FontSize" Value="13" />
@@ -177,11 +203,11 @@
                         </StackPanel>
                         <StackPanel Margin="4">
                             <TextBlock Text="Reference No." Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
+                            <TextBox Text="{Binding ReferenceNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBoxNoHint}" helpers:WatermarkHelper.Watermark="رقم المرجع" />
                         </StackPanel>
                         <StackPanel Margin="4">
                             <TextBlock Text="Financial Receipt No" Style="{StaticResource FieldLabel}" />
-                            <TextBox Text="{Binding FinancialReceiptNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="رقم الإيصال المالي" />
+                            <TextBox Text="{Binding FinancialReceiptNo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBoxNoHint}" helpers:WatermarkHelper.Watermark="رقم الإيصال المالي" />
                         </StackPanel>
                         <StackPanel Margin="4">
                             <TextBlock Text="Client Address" Style="{StaticResource FieldLabel}" />

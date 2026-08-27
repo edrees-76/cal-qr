@@ -627,6 +627,16 @@ namespace CAL_QR.ViewModels
 
         public bool HasValidationErrors => !string.IsNullOrEmpty(ValidationErrors);
 
+        // يُرفع عند أوّل محاولة حفظ فيها حقول ناقصة، فتظهر أُطر التذكير الذهبيّة.
+        // لا يُرفع عند فتح النموذج: نموذج جديد كلّه فارغ، وإظهار كلّ الحقول
+        // مُعلَّمة عند الفتح تذكيرٌ بلا معنى.
+        private bool _showMissingFieldHints;
+        public bool ShowMissingFieldHints
+        {
+            get => _showMissingFieldHints;
+            private set => SetProperty(ref _showMissingFieldHints, value);
+        }
+
         public Action? CloseWindowAction { get; set; }
 
         #endregion
@@ -1003,24 +1013,23 @@ namespace CAL_QR.ViewModels
                     return;
                 }
 
-                // الظروف البيئيّة إلزاميّة: قياس فعليّ يدخل نصّ التوقيع (TP/RH/AP)،
-                // وحقلٌ فارغ يُسقط القسم كلّه من الـPDF (HasAnyValue في
-                // CertificateDocument) فتخرج شهادة بلا ظروف قياس صامتةً.
-                // المنع هنا لا في CanSave: الزرّ يبقى مفعّلًا والرسالة تشرح السبب،
-                // كنظيره في فحص التواريخ أعلاه. «لم يُملأ» يشمل الفارغ والهيكل
-                // المبذور معًا — انظر IsEnvironmentFieldUnfilled أدناه. وفحص
-                // الفراغ فيها هو IsNullOrWhiteSpace نفسها التي تستعملها Nullify،
-                // فلا يمرّ نصّ يعدّه الحارس مملوءًا ثم يُخزَّن null.
-                var missingEnvironment = new List<string>();
-                if (IsEnvironmentFieldUnfilled(Temperature)) missingEnvironment.Add("درجة الحرارة");
-                if (IsEnvironmentFieldUnfilled(RelativeHumidity)) missingEnvironment.Add("الرطوبة النسبية");
-                if (IsEnvironmentFieldUnfilled(AtmosphericPressure)) missingEnvironment.Add("الضغط الجوي");
-
-                if (missingEnvironment.Count > 0)
+                // قرار وحدة المعايرة: لا حقل يمنع الحفظ. الحقل الناقص يُذكَّر به
+                // بإطار ذهبيّ حول الحقل نفسه ثمّ يُترك القرار للمستخدم.
+                // مستثنيان بقرار إدريس: Reference No و Financial Receipt No —
+                // يُطبعان بخطّ سفليّ ليُملآ باليد، فأسلوبهما بلا مُطلِق تذكير.
+                if (HasUnfilledFields())
                 {
-                    ValidationErrors = "يجب إدخال الظروف البيئية: "
-                        + string.Join(" · ", missingEnvironment) + ".";
-                    return;
+                    ShowMissingFieldHints = true;
+
+                    var answer = MessageBox.Show(
+                        "هناك حقول لم تُملأ، مُعلَّمة بإطار ذهبيّ في النموذج."
+                        + "\n\nهل تريد الحفظ رغم ذلك؟",
+                        "حقول غير مكتملة",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question,
+                        MessageBoxResult.No,
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+
+                    if (answer != MessageBoxResult.Yes) return;
                 }
 
                 var certificate = BuildCertificateFromForm();
@@ -1155,9 +1164,12 @@ namespace CAL_QR.ViewModels
                 CalibrationMode = Nullify(CalibrationMode),
                 CalibrationStandard = Nullify(CalibrationStandard),
 
-                Temperature = Nullify(Temperature),
-                RelativeHumidity = Nullify(RelativeHumidity),
-                AtmosphericPressure = Nullify(AtmosphericPressure),
+                // هيكل الكتابة المبذور ("__ ± __ °C") ليس قيمة: تخزينه كان
+                // سيطبعه حرفيًّا على شهادة رسميّة موقّعة، وهو داخل نصّ التوقيع
+                // فتصحيحه لاحقًا يدوّر VerifyCode ويوسم الشهادة «معدَّلة».
+                Temperature = NullifyEnvironment(Temperature),
+                RelativeHumidity = NullifyEnvironment(RelativeHumidity),
+                AtmosphericPressure = NullifyEnvironment(AtmosphericPressure),
 
                 MethodologyEnabled = MethodologyEnabled,
                 RadiationSource = Nullify(RadiationSource),
@@ -1236,7 +1248,37 @@ namespace CAL_QR.ViewModels
             || value.Contains(CertificateDraftBuilder.EnvironmentPlaceholderMarker,
                               StringComparison.Ordinal);
 
+        /// <summary>
+        /// هل في النموذج حقل واحد على الأقلّ لم يُملأ؟ لا يمنع الحفظ — يرفع
+        /// أُطر التذكير فقط. ReferenceNo و FinancialReceiptNo مستثنيان عمدًا.
+        /// حقول وحدة القراءة تُفحص فقط حين تكون ظاهرة (ShowReadoutFields).
+        /// </summary>
+        private bool HasUnfilledFields()
+        {
+            if (IsEnvironmentFieldUnfilled(ClientName)) return true;
+            if (IsEnvironmentFieldUnfilled(ClientAddress)) return true;
+            if (IsEnvironmentFieldUnfilled(DeviceModel)) return true;
+            if (IsEnvironmentFieldUnfilled(DeviceSerialNumber)) return true;
+            if (IsEnvironmentFieldUnfilled(DeviceManufacturer)) return true;
+
+            if (ShowReadoutFields)
+            {
+                if (IsEnvironmentFieldUnfilled(SurveyMeterModel)) return true;
+                if (IsEnvironmentFieldUnfilled(SurveyMeterSerialNumber)) return true;
+            }
+
+            if (IsEnvironmentFieldUnfilled(Temperature)) return true;
+            if (IsEnvironmentFieldUnfilled(RelativeHumidity)) return true;
+            if (IsEnvironmentFieldUnfilled(AtmosphericPressure)) return true;
+
+            return false;
+        }
+
         private static string? Nullify(string? value) =>
             string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        /// <summary>حقل بيئيّ غير مملوء (فارغ أو ما زال يحمل __) يُخزَّن null.</summary>
+        private static string? NullifyEnvironment(string? value) =>
+            IsEnvironmentFieldUnfilled(value) ? null : value!.Trim();
     }
 }

@@ -17,12 +17,28 @@ namespace CAL_QR.Repositories
             _contextFactory = contextFactory;
         }
 
+        /// <summary>
+        /// مرفقات المعايرة العاديّة وحدها. النسخة الموقّعة مستثناة عمدًا: لو
+        /// ظهرت في قائمة نموذج المعايرة لأمكن حذفها من هناك بينما تبقى الشهادة
+        /// موسومة «مكتملة ✓» — حالة كاذبة.
+        /// </summary>
         public async Task<IEnumerable<Attachment>> GetByRecordIdAsync(int recordId)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
             return await context.Attachments
                 .AsNoTracking()
-                .Where(a => a.CalibrationRecordId == recordId)
+                .Where(a => a.CalibrationRecordId == recordId && a.CertificateId == null)
+                .ToListAsync();
+        }
+
+        /// <summary>النسخ الموقّعة المرفقة بشهادة بعينها.</summary>
+        public async Task<IEnumerable<Attachment>> GetByCertificateIdAsync(int certificateId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Attachments
+                .AsNoTracking()
+                .Where(a => a.CertificateId == certificateId)
+                .OrderBy(a => a.UploadedAt)
                 .ToListAsync();
         }
 

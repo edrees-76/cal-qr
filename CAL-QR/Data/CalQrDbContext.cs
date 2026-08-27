@@ -161,6 +161,7 @@ namespace CAL_QR.Data
             // Attachment constraints
             modelBuilder.Entity<Attachment>(entity =>
             {
+                entity.HasIndex(e => e.CertificateId);
                 entity.Property(e => e.FileName).IsRequired();
                 entity.Property(e => e.FilePath).IsRequired();
 

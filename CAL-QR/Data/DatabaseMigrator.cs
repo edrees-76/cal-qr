@@ -60,6 +60,11 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "Devices", "IsSeedTestData", "ALTER TABLE Devices ADD COLUMN IsSeedTestData INTEGER DEFAULT 0 NOT NULL;");
                 ExecuteSqlIfColumnMissing(context, "CalibrationRecords", "IsSeedTestData", "ALTER TABLE CalibrationRecords ADD COLUMN IsSeedTestData INTEGER DEFAULT 0 NOT NULL;");
 
+                // ربط مرفق الشهادة الموقّعة. جدول Attachments أصليّ يُنشئه
+                // EnsureCreated، فالقواعد القائمة لا تحمل العمود ⇒ ترقية دفاعيّة.
+                ExecuteSqlIfColumnMissing(context, "Attachments", "CertificateId",
+                    "ALTER TABLE Attachments ADD COLUMN CertificateId INTEGER NULL;");
+
                 // Execute defensive migrations for the Certificate tables.
                 // EnsureCreated() is a no-op on a pre-existing database, so these tables would never
                 // be created on an installed system. The statements below are copied verbatim from

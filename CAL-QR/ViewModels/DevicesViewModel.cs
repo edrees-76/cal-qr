@@ -666,6 +666,8 @@ namespace CAL_QR.ViewModels
         /// فهو أثقل من تعديل بيانات جهاز، وذاك مقيَّد أصلًا.
         /// CertificateFormViewModel لا يفحص الصلاحيّة بنفسه، فهذا الحارس
         /// الوحيد على المسار.
+        /// المسار الثاني إلى نفس الحوار (زرّ «تعديل الشهادة» داخل نافذة سجلّ
+        /// المعايرة) محروس على عتبة تلك النافذة، لا على زرّه.
         /// </summary>
         private void OpenEditCertificateDialog(object? parameter)
         {

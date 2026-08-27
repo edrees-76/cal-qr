@@ -100,6 +100,10 @@ namespace CAL_QR.ViewModels
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
             IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
             IssueStatusReportCommand = new RelayCommand(IssueStatusReport, () => CanIssueCertificate);
+            // شرط وجود لا شرط صلاحيّة — عن قصد. هذا الحوار لا يُفتح إلّا من
+            // OpenAddDeviceDialog أو OpenEditDialog في DevicesViewModel، وكلاهما
+            // يبدأ بـ if (!CanEdit) return; فالحارس على عتبة النافذة لا على الزرّ.
+            // لا تُضِف فحص CanEdit هنا ظنًّا أنّه ناقص.
             EditCertificateCommand = new RelayCommand(EditCertificate, () => HasCertificate && _existingCertificateId > 0);
             
             LoadFormSources();

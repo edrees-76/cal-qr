@@ -189,7 +189,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="المرفقات والشهادات الممسوحة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Grid.Column="0" Text="مرفقات سجلّ المعايرة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                                 <Button Grid.Column="1" Command="{Binding AddAttachmentCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Height="30" Padding="8,0" FontFamily="{StaticResource CairoFont}">
                                     <Button.ContentTemplate>
                                         <DataTemplate>
@@ -201,6 +201,10 @@
                                     </Button.ContentTemplate>
                                 </Button>
                             </Grid>
+
+                            <TextBlock Text="النسخة الموقّعة من الشهادة تُرفَق من زرّ «النسخة الموقّعة» في قائمة السجلّات."
+                                       FontSize="10" Foreground="#9E9E9E" TextWrapping="Wrap"
+                                       Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
 
                             <!-- Attachment List Box -->
                             <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Height="120" Background="#FAFAFA">

@@ -583,7 +583,12 @@ namespace CAL_QR.ViewModels
                             .ThenInclude(d => d!.Owner)
                         .Include(r => r.Device)
                             .ThenInclude(d => d!.DeviceType)
-                        .Include(r => r.Attachments)
+                        // Filtered Include: مرفقات المعايرة العاديّة وحدها.
+                        // النسخة الموقّعة تخصّ الشهادة وتُدار من حوارها؛ لو ظهرت
+                        // هنا لأمكن حذفها من نموذج المعايرة بينما تبقى الشهادة
+                        // موسومة «مكتملة ✓» — حالة كاذبة. نظير الفلترة نفسها في
+                        // AttachmentRepository.GetByRecordIdAsync.
+                        .Include(r => r.Attachments.Where(a => a.CertificateId == null))
                         .FirstOrDefault(r => r.Id == recordId);
 
                     if (record != null && record.Device != null)

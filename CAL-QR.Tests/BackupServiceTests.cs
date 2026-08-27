@@ -772,6 +772,157 @@ namespace CAL_QR.Tests
             }
         }
 
+        [Fact]
+        public async Task RestoreAsync_WhenSwapFails_RollsBackAttachmentsAndDatabase()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RestoreSwapFailsRollback_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPath = Path.Combine(testDir, "Attachments");
+            Directory.CreateDirectory(attachmentsPath);
+            string attachmentFile = Path.Combine(attachmentsPath, "att.txt");
+            await File.WriteAllTextAsync(attachmentFile, "original attachment content");
+
+            string qrOutputPath = Path.Combine(testDir, "QR_Output");
+            Directory.CreateDirectory(qrOutputPath);
+            string qrFile = Path.Combine(qrOutputPath, "qr.png");
+            await File.WriteAllTextAsync(qrFile, "original qr content");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPath });
+                context.AppSettings.Add(new AppSetting { Key = "QrOutputPath", Value = qrOutputPath });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            FileStream? lockingStream = null;
+
+            try
+            {
+                // Act 1 - Backup while both Attachments and QR_Output have content
+                await backupService.BackupNowAsync(testBackupFolder);
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                string zipFilePath = zipFiles[0];
+
+                // Changes made after the backup was taken
+                string distinctiveContent = "content written after the backup - must survive a failed restore";
+                await File.WriteAllTextAsync(attachmentFile, distinctiveContent);
+
+                using (var context = new CalQrDbContext(options))
+                {
+                    context.AppSettings.Add(new AppSetting { Key = "MarkerAddedAfterBackup", Value = "1" });
+                    await context.SaveChangesAsync();
+                }
+
+                // Lock a file inside QR_Output so Directory.Move on that folder fails
+                // after the Attachments swap has already succeeded
+                lockingStream = new FileStream(qrFile, FileMode.Open, FileAccess.Read, FileShare.None);
+
+                // Act 2 - Restore should fail while trying to swap QR_Output
+                await Assert.ThrowsAnyAsync<Exception>(async () => await backupService.RestoreAsync(zipFilePath));
+
+                lockingStream.Dispose();
+                lockingStream = null;
+
+                // Assert - the attachments swap was rolled back to the post-backup content
+                Assert.True(File.Exists(attachmentFile));
+                Assert.Equal(distinctiveContent, await File.ReadAllTextAsync(attachmentFile));
+
+                // Assert - the database was never replaced
+                using (var context = new CalQrDbContext(options))
+                {
+                    Assert.NotNull(await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "MarkerAddedAfterBackup"));
+                }
+            }
+            finally
+            {
+                lockingStream?.Dispose();
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
+        [Fact]
+        public async Task RestoreAsync_OnSuccess_LeavesNoPreRestoreArtifacts()
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RestoreSuccessNoArtifacts_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPath = Path.Combine(testDir, "Attachments");
+            Directory.CreateDirectory(attachmentsPath);
+            await File.WriteAllTextAsync(Path.Combine(attachmentsPath, "att.txt"), "attachment content");
+
+            string qrOutputPath = Path.Combine(testDir, "QR_Output");
+            Directory.CreateDirectory(qrOutputPath);
+            await File.WriteAllTextAsync(Path.Combine(qrOutputPath, "qr.png"), "qr content");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPath });
+                context.AppSettings.Add(new AppSetting { Key = "QrOutputPath", Value = qrOutputPath });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo);
+
+            try
+            {
+                // Act 1 - Backup, then Act 2 - a plain, successful restore
+                await backupService.BackupNowAsync(testBackupFolder);
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                Assert.Single(zipFiles);
+                await backupService.RestoreAsync(zipFiles[0]);
+
+                // Assert - no pre-restore folder artifacts left next to Attachments/QR_Output
+                string? attachmentsParent = Path.GetDirectoryName(attachmentsPath);
+                Assert.NotNull(attachmentsParent);
+                Assert.Empty(Directory.GetDirectories(attachmentsParent!, "*_preRestore_*"));
+
+                string? qrParent = Path.GetDirectoryName(qrOutputPath);
+                Assert.NotNull(qrParent);
+                Assert.Empty(Directory.GetDirectories(qrParent!, "*_preRestore_*"));
+
+                // Assert - no database snapshot file left next to the live db file
+                string? dbParent = Path.GetDirectoryName(testDbFilePath);
+                Assert.NotNull(dbParent);
+                Assert.Empty(Directory.GetFiles(dbParent!, "*.preRestore_*"));
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

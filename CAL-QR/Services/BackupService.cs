@@ -252,6 +252,14 @@ namespace CAL_QR.Services
 
                 try
                 {
+                    string tempDbPath = Path.Combine(tempDir, "cal-qr.db");
+                    string tempAttachments = Path.Combine(tempDir, "StagedAttachments");
+                    string tempQrOutput = Path.Combine(tempDir, "StagedQrOutput");
+                    bool hasAttachmentsInZip;
+                    bool hasQrFolderInZip;
+
+                    // المرحلة ١ — تحضير فقط: نقرأ من الأرشيف ونكتب في مجلّد المسرح
+                    // المؤقّت، بلا أيّ مساس بالقاعدة أو المجلّدات الحيّة.
                     using (var archive = ZipFile.OpenRead(zipFilePath))
                     {
                         var dbEntry = archive.GetEntry("cal-qr.db");
@@ -260,65 +268,16 @@ namespace CAL_QR.Services
                             throw new InvalidOperationException("ملف النسخة الاحتياطية غير صالح (لا يحتوي على قاعدة البيانات).");
                         }
 
-                        string tempDbPath = Path.Combine(tempDir, "cal-qr.db");
                         dbEntry.ExtractToFile(tempDbPath, true);
 
-                        // 1. Live SQLite restore via reverse SQLite Backup API
-                        using (var source = new SqliteConnection($"Data Source={tempDbPath}"))
-                        {
-                            source.Open();
-                            using (var destination = new SqliteConnection($"Data Source={dbPath}"))
-                            {
-                                destination.Open();
-                                source.BackupDatabase(destination);
-                            }
-                        }
-
-                        // ملفّ القاعدة كُتب فوقه من تحت اتّصالات المجمّع؛ نحرّرها قبل أن
-                        // نقرأ أو نكتب عبر EF، تمامًا كما يفعل BackupNowAsync بعد النسخ.
-                        SqliteConnection.ClearAllPools();
-
-                        // المسارات تصف هذا الحاسوب لا بيانات المعايرة. النسخة الاحتياطيّة
-                        // تحمل الملفّات لا العناوين. بدون هذه الكتلة تصير القاعدة تشير إلى
-                        // مسار الجهاز القديم بينما تهبط الملفّات في مسار الجهاز الحاليّ،
-                        // فتصبح كلّ المرفقات والنسخ الموقّعة يتيمة. DatabasePath مستثنى
-                        // لأنّه ليس مصدر حقيقة — المسار الحيّ من سلسلة الاتّصال وdb_path.txt.
-                        using (var restoredPathsContext = await _contextFactory.CreateDbContextAsync())
-                        {
-                            var pathValues = new (string Key, string Value)[]
-                            {
-                                ("AttachmentsPath", attachmentsPath),
-                                ("QrOutputPath", qrOutputPath),
-                                ("BackupPath", backupPathRaw),
-                                ("CloudBackupPath", cloudBackupPathRaw),
-                            };
-
-                            foreach (var (key, value) in pathValues)
-                            {
-                                var existing = await restoredPathsContext.AppSettings.FirstOrDefaultAsync(s => s.Key == key);
-                                if (existing != null)
-                                {
-                                    existing.Value = value;
-                                }
-                                else
-                                {
-                                    restoredPathsContext.AppSettings.Add(new AppSetting { Key = key, Value = value });
-                                }
-                            }
-
-                            await restoredPathsContext.SaveChangesAsync();
-                        }
-
                         // 2. Staging extraction paths
-                        string tempAttachments = Path.Combine(tempDir, "StagedAttachments");
-                        bool hasAttachmentsInZip = archive.Entries.Any(e => e.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase));
+                        hasAttachmentsInZip = archive.Entries.Any(e => e.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase));
                         if (hasAttachmentsInZip)
                         {
                             Directory.CreateDirectory(tempAttachments);
                         }
 
-                        string tempQrOutput = Path.Combine(tempDir, "StagedQrOutput");
-                        bool hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
+                        hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
                         if (hasQrFolderInZip)
                         {
                             Directory.CreateDirectory(tempQrOutput);
@@ -355,31 +314,199 @@ namespace CAL_QR.Services
                                 }
                             }
                         }
+                    }
 
-                        // 3. Swap staged directories with active directories (Atomic Swap)
+                    // المرحلة ٢ — كلّ ما قبل هذه النقطة تحضير لا يمسّ النظام؛ وهنا وحدها
+                    // تبدأ العمليّات المدمّرة، مرتّبة بحيث يكون الأثقل تراجعًا آخرها.
+                    // المجلّدات تُعاد تسميتها لا تُحذف، والقاعدة تُصوَّر قبل الكتابة فوقها،
+                    // فأيّ عطل في المنتصف يعود بالنظام إلى ما كان.
+                    string attachmentsPreRestore = attachmentsPath + "_preRestore_" + Guid.NewGuid().ToString("N");
+                    string qrPreRestore = qrOutputPath + "_preRestore_" + Guid.NewGuid().ToString("N");
+                    string dbSnapshot = dbPath + ".preRestore_" + Guid.NewGuid().ToString("N");
+                    bool attachmentsSwapped = false;
+                    bool qrSwapped = false;
+                    bool dbSnapshotTaken = false;
+                    bool dbRestoreStarted = false;
+
+                    try
+                    {
                         // نسخة بلا مرفقات تعني «لم تكن هناك مرفقات وقتها»، لا «امحُ ما عندك».
                         // ملفّ زائد على القرص أهون من ملفّ ضائع، والسلوك الآن مطابق لحارس QR.
+                        // أ) المرفقات
                         if (hasAttachmentsInZip)
                         {
                             if (Directory.Exists(attachmentsPath))
                             {
-                                Directory.Delete(attachmentsPath, true);
+                                Directory.Move(attachmentsPath, attachmentsPreRestore);
                             }
                             Directory.Move(tempAttachments, attachmentsPath);
+                            attachmentsSwapped = true;
                         }
 
+                        // ب) QR
                         if (hasQrFolderInZip)
                         {
                             if (Directory.Exists(qrOutputPath))
                             {
-                                Directory.Delete(qrOutputPath, true);
+                                Directory.Move(qrOutputPath, qrPreRestore);
                             }
                             Directory.Move(tempQrOutput, qrOutputPath);
+                            qrSwapped = true;
                         }
+
+                        // ج) لقطة القاعدة قبل الكتابة فوقها، بنفس أسلوب BackupNowAsync
+                        using (var liveConnection = new SqliteConnection($"Data Source={dbPath}"))
+                        {
+                            liveConnection.Open();
+                            using (var cmd = liveConnection.CreateCommand())
+                            {
+                                cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                                cmd.ExecuteNonQuery();
+                            }
+                            using (var snapshotConnection = new SqliteConnection($"Data Source={dbSnapshot}"))
+                            {
+                                snapshotConnection.Open();
+                                liveConnection.BackupDatabase(snapshotConnection);
+                            }
+                        }
+                        SqliteConnection.ClearAllPools();
+                        dbSnapshotTaken = true;
+
+                        // د) استعادة القاعدة عبر Backup API العكسيّ
+                        dbRestoreStarted = true;
+                        using (var source = new SqliteConnection($"Data Source={tempDbPath}"))
+                        {
+                            source.Open();
+                            using (var destination = new SqliteConnection($"Data Source={dbPath}"))
+                            {
+                                destination.Open();
+                                source.BackupDatabase(destination);
+                            }
+                        }
+
+                        // ملفّ القاعدة كُتب فوقه من تحت اتّصالات المجمّع؛ نحرّرها قبل أن
+                        // نقرأ أو نكتب عبر EF، تمامًا كما يفعل BackupNowAsync بعد النسخ.
+                        SqliteConnection.ClearAllPools();
+
+                        // هـ) المسارات تصف هذا الحاسوب لا بيانات المعايرة. النسخة الاحتياطيّة
+                        // تحمل الملفّات لا العناوين. بدون هذه الكتلة تصير القاعدة تشير إلى
+                        // مسار الجهاز القديم بينما تهبط الملفّات في مسار الجهاز الحاليّ،
+                        // فتصبح كلّ المرفقات والنسخ الموقّعة يتيمة. DatabasePath مستثنى
+                        // لأنّه ليس مصدر حقيقة — المسار الحيّ من سلسلة الاتّصال وdb_path.txt.
+                        using (var restoredPathsContext = await _contextFactory.CreateDbContextAsync())
+                        {
+                            var pathValues = new (string Key, string Value)[]
+                            {
+                                ("AttachmentsPath", attachmentsPath),
+                                ("QrOutputPath", qrOutputPath),
+                                ("BackupPath", backupPathRaw),
+                                ("CloudBackupPath", cloudBackupPathRaw),
+                            };
+
+                            foreach (var (key, value) in pathValues)
+                            {
+                                var existing = await restoredPathsContext.AppSettings.FirstOrDefaultAsync(s => s.Key == key);
+                                if (existing != null)
+                                {
+                                    existing.Value = value;
+                                }
+                                else
+                                {
+                                    restoredPathsContext.AppSettings.Add(new AppSetting { Key = key, Value = value });
+                                }
+                            }
+
+                            await restoredPathsContext.SaveChangesAsync();
+                        }
+                    }
+                    catch
+                    {
+                        // التراجع بالعكس، كلّ خطوة في try/catch خاصّ بها حتّى لا يُسقط
+                        // فشلُ خطوةٍ بقيّةَ التراجع.
+                        if (dbSnapshotTaken && dbRestoreStarted)
+                        {
+                            try
+                            {
+                                SqliteConnection.ClearAllPools();
+                                using (var snapshotConnection = new SqliteConnection($"Data Source={dbSnapshot}"))
+                                {
+                                    snapshotConnection.Open();
+                                    using (var destination = new SqliteConnection($"Data Source={dbPath}"))
+                                    {
+                                        destination.Open();
+                                        snapshotConnection.BackupDatabase(destination);
+                                    }
+                                }
+                                SqliteConnection.ClearAllPools();
+                            }
+                            catch { }
+                        }
+
+                        // غياب أثر ما قبل الاستعادة يعني أنّ المجلّد لم يكن موجودًا أصلًا،
+                        // فحذف ما نقلناه هو التراجع الصحيح ولا نقل بعده. الشرط يمنع أن
+                        // يختفي فشل تراجع حقيقيّ داخل catch صامت.
+                        if (qrSwapped && Directory.Exists(qrPreRestore))
+                        {
+                            try
+                            {
+                                if (Directory.Exists(qrOutputPath))
+                                {
+                                    Directory.Delete(qrOutputPath, true);
+                                }
+                                Directory.Move(qrPreRestore, qrOutputPath);
+                            }
+                            catch { }
+                        }
+
+                        if (attachmentsSwapped && Directory.Exists(attachmentsPreRestore))
+                        {
+                            try
+                            {
+                                if (Directory.Exists(attachmentsPath))
+                                {
+                                    Directory.Delete(attachmentsPath, true);
+                                }
+                                Directory.Move(attachmentsPreRestore, attachmentsPath);
+                            }
+                            catch { }
+                        }
+
+                        try
+                        {
+                            var survivingArtifacts = new System.Collections.Generic.List<string>();
+                            if (File.Exists(dbSnapshot))
+                            {
+                                survivingArtifacts.Add(dbSnapshot);
+                            }
+                            if (Directory.Exists(attachmentsPreRestore))
+                            {
+                                survivingArtifacts.Add(attachmentsPreRestore);
+                            }
+                            if (Directory.Exists(qrPreRestore))
+                            {
+                                survivingArtifacts.Add(qrPreRestore);
+                            }
+
+                            string artifactsMessage = survivingArtifacts.Count > 0
+                                ? string.Join(", ", survivingArtifacts)
+                                : "لا آثار محفوظة.";
+
+                            await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup",
+                                $"فشل استعادة نسخة احتياطية وتمّ التراجع عن التغييرات. آثار محفوظة: {artifactsMessage}");
+                        }
+                        catch { }
+
+                        throw;
                     }
 
                     // 3. Add Audit log entry
                     await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"استعادة قاعدة البيانات والمرفقات من: {Path.GetFileName(zipFilePath)}");
+
+                    // المرحلة ٣ — تنظيف آثار ما قبل الاستعادة عند النجاح وحده. فشل
+                    // التنظيف لا يُفشل استعادة ناجحة.
+                    try { if (Directory.Exists(attachmentsPreRestore)) Directory.Delete(attachmentsPreRestore, true); } catch { }
+                    try { if (Directory.Exists(qrPreRestore)) Directory.Delete(qrPreRestore, true); } catch { }
+                    try { if (File.Exists(dbSnapshot)) File.Delete(dbSnapshot); } catch { }
                 }
                 catch (Exception ex)
                 {

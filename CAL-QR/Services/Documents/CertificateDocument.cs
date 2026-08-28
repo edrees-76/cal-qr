@@ -225,8 +225,24 @@ namespace CAL_QR.Services.Documents
             var readoutSerialLabel = def?.ReadoutUnitSerialLabel;
             var primaryLabel       = def?.PrimaryInstrumentLabel       ?? "Device Model";
             var primarySerialLabel = def?.PrimaryInstrumentSerialLabel ?? "Device Serial Number";
-            var sectionTitle       = def?.ClientSectionTitle           ?? "CLIENT & INSTRUMENT SPECIFICATIONS";
-            var showStandardBox    = def?.ClientBoxShowsStandardTraceabilityStatus ?? false;
+            // تقرير الحالة يفرض العنوان والخانات الثلاث مهما كان نوع الجهاز.
+            // قالب م. رضا لتقرير الحالة يحمل CLIENT & INSTRUMENT INFORMATION مع
+            // CALIBRATION STANDARD و STATUS / VERDICT و Traceability Reference،
+            // وكان الاثنان يُقرآن من نوع الجهاز وحده: Pancake و Beta يعطيان
+            // الصحيح بالمصادفة، والأنواع الأربعة المبسّطة تطبع SPECIFICATIONS
+            // وتُسقط الخانات الثلاث — ومنها خانة الحكم، وهي كامل مضمون الوثيقة.
+            // ولا شيء يقصر تقارير الحالة على النوعين: DocumentType متعامد على
+            // نوع الجهاز، وLoadForStatusReport تقبل أيّ سجلّ معايرة.
+            //
+            // CALIBRATION STANDARD تبقى فارغة للأنواع المبسّطة (لا معيار لها في
+            // الكتالوج) فيتخطّاها RenderFieldTable — وهذا صحيح لا نقص: لم تقع
+            // معايرة، فطباعة معيارها ادّعاء بحدوث ما لم يحدث.
+            var sectionTitle = _isStatusReport
+                ? "CLIENT & INSTRUMENT INFORMATION"
+                : (def?.ClientSectionTitle ?? "CLIENT & INSTRUMENT SPECIFICATIONS");
+
+            var showStandardBox = _isStatusReport
+                || (def?.ClientBoxShowsStandardTraceabilityStatus ?? false);
 
             var fields = new List<Field>
             {

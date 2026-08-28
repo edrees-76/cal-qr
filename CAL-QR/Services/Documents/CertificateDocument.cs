@@ -305,8 +305,18 @@ namespace CAL_QR.Services.Documents
 
             if (!HasAnyValue(fields)) return;
 
-            SectionTitle(column, "TECHNICAL INFORMATION");
-            RenderFieldTable(column, fields);
+            // القسم صغير — ثلاث خانات وسطر تتبّعيّة — ولا يقارب صفحة، فتغليفه آمن بلا
+            // تحفّظ. وكان ينقسم فتفتح الصفحة التالية بصفّ يتيم بلا عنوان فوقه، فلا يعرف
+            // القارئ إلى أيّ قسم ينتمي. بخلاف جدول النتائج الذي ينمو بلا سقف ولهذا يبقى
+            // بلا غلاف.
+            column.Item().ShowEntire().Column(section =>
+            {
+                section.Item().PaddingTop(4)
+                    .Text("TECHNICAL INFORMATION")
+                    .Bold().FontSize(11).FontColor(NavyColor);
+
+                RenderFieldTable(section, fields);
+            });
         }
 
         // يُركّب سطر Radiation Traceability من جدول النتائج: أرقام المصادر المميَّزة،

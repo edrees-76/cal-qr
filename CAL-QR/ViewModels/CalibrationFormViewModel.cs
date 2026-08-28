@@ -99,7 +99,7 @@ namespace CAL_QR.ViewModels
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
             IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
-            IssueStatusReportCommand = new RelayCommand(IssueStatusReport, () => CanIssueCertificate);
+            IssueStatusReportCommand = new RelayCommand(IssueStatusReport, () => CanIssueStatusReport);
             // شرط وجود لا شرط صلاحيّة — عن قصد. هذا الحوار لا يُفتح إلّا من
             // OpenAddDeviceDialog أو OpenEditDialog في DevicesViewModel، وكلاهما
             // يبدأ بـ if (!CanEdit) return; فالحارس على عتبة النافذة لا على الزرّ.
@@ -246,10 +246,26 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _engineerName, value);
         }
 
+        /// <summary>
+        /// نتيجة المعايرة كما تُخزَّن: Passed · Failed · Conditional (الوسوم في
+        /// ComboBox النموذج). تقود أيّ وثيقة يجوز إصدارها، فتغيّرها يُعيد تقييم
+        /// الزرّين فورًا — بلا الإشعارات كان الشرط صحيحًا والزرّان يبقيان على
+        /// حالهما حتى إعادة فتح النافذة. نفس نمط HasCertificate أدناه.
+        /// </summary>
         public string SelectedResult
         {
             get => _result;
-            set => SetProperty(ref _result, value);
+            set
+            {
+                if (SetProperty(ref _result, value))
+                {
+                    OnPropertyChanged(nameof(CanIssueCertificate));
+                    OnPropertyChanged(nameof(CanIssueStatusReport));
+                    OnPropertyChanged(nameof(IssueHintText));
+                    OnPropertyChanged(nameof(ShowIssueHint));
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
         }
 
         public string Description
@@ -341,17 +357,44 @@ namespace CAL_QR.ViewModels
                 if (SetProperty(ref _hasCertificate, value))
                 {
                     OnPropertyChanged(nameof(CanIssueCertificate));
+                    OnPropertyChanged(nameof(CanIssueStatusReport));
+                    OnPropertyChanged(nameof(ShowIssueHint));
                     RaiseCertificateNumberStateChanged();
                     CommandManager.InvalidateRequerySuggested();
                 }
             }
         }
 
+        /// <summary>القيمة المخزَّنة لنتيجة «راسب» — وسم ComboBoxItem في النموذج.</summary>
+        private const string ResultFailed = "Failed";
+
         /// <summary>
         /// الإصدار يقتضي سجلاً محفوظاً: الشهادة تحمل CalibrationRecordId غير قابل للإلغاء،
         /// وفي وضع الإضافة لا وجود للسجل بعد.
+        ///
+        /// ونتيجة المعايرة تحدّد أيّ وثيقة: «راسب» ⇒ تقرير حالة وحده. «ناجح»
+        /// و«مشروط» ⇒ شهادة وحدها — قرار إدريس: مشروط قياس ناقص الثقة لا قياس
+        /// معدوم، وComposeResultsSection يرمي كلّ صفوف النتائج في وضع تقرير
+        /// الحالة، فاختياره لمعايرة مشروطة كان يمحو أرقامها من الورقة بصمت.
+        /// كان الشرطان متطابقين فيُعرض الزرّان معًا مهما كانت النتيجة.
         /// </summary>
-        public bool CanIssueCertificate => IsEditMode && _calibrationRecordId > 0 && !HasCertificate;
+        public bool CanIssueCertificate =>
+            IsEditMode && _calibrationRecordId > 0 && !HasCertificate && SelectedResult != ResultFailed;
+
+        /// <summary>نظير CanIssueCertificate للمسار المقابل — متنافيان بحكم الشرط.</summary>
+        public bool CanIssueStatusReport =>
+            IsEditMode && _calibrationRecordId > 0 && !HasCertificate && SelectedResult == ResultFailed;
+
+        /// <summary>
+        /// سبب ظاهر بجوار الزرّ. الإخفاء الصامت يجعل المستخدم يظنّ البرنامج معطوبًا،
+        /// وقد يغيّر النتيجة ليُظهر الزرّ الغائب — وهو أسوأ ما قد يفعله.
+        /// </summary>
+        public string IssueHintText =>
+            SelectedResult == ResultFailed
+                ? "الجهاز راسب — يُصدَر له تقرير حالة، لا شهادة معايرة."
+                : "الجهاز اجتاز المعايرة — تُصدَر له شهادة معايرة.";
+
+        public bool ShowIssueHint => CanIssueCertificate || CanIssueStatusReport;
 
         /// <summary>
         /// ثلاث حالات لحقل رقم الشهادة، لا حالة واحدة:
@@ -426,7 +469,7 @@ namespace CAL_QR.ViewModels
 
         private void IssueStatusReport()
         {
-            if (!CanIssueCertificate) return;
+            if (!CanIssueStatusReport) return;
 
             try
             {
@@ -967,6 +1010,9 @@ namespace CAL_QR.ViewModels
             IsEditMode = true;
             HasCertificate = false;
             OnPropertyChanged(nameof(CanIssueCertificate));
+            OnPropertyChanged(nameof(CanIssueStatusReport));
+            OnPropertyChanged(nameof(ShowIssueHint));
+            OnPropertyChanged(nameof(IssueHintText));
             CommandManager.InvalidateRequerySuggested();
 
             Saved?.Invoke(this, EventArgs.Empty);

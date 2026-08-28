@@ -246,7 +246,13 @@
                 </Grid.ColumnDefinitions>
                 
                 <!-- Errors message -->
-                <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                    <TextBlock Text="{Binding IssueHintText}" Foreground="#707070" FontSize="11"
+                               VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,10,0"
+                               FontFamily="{StaticResource CairoFont}"
+                               Visibility="{Binding ShowIssueHint, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <!-- متاح في وضع التعديل فقط: الشهادة تحتاج سجلاً محفوظاً تُنسب إليه -->
@@ -265,7 +271,7 @@
                             Height="40" Margin="0,0,10,0" Foreground="#B71C1C" BorderBrush="#B71C1C"
                             FontFamily="{StaticResource CairoFont}"
                             ToolTip="إصدار تقرير حالة لسجل تعذّرت معايرته (بدل شهادة معايرة)"
-                            Visibility="{Binding CanIssueCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            Visibility="{Binding CanIssueStatusReport, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="FileAlert" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="إصدار تقرير حالة" VerticalAlignment="Center" />

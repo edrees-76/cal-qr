@@ -174,7 +174,7 @@ namespace CAL_QR.ViewModels
             foreach (var record in CalibrationRecords)
             {
                 // ── بيانات الملصق من المصدر الواحد (الشهادة المجمّدة) — تخطّي ما لا يُطبع ──
-                var job = await BuildJobDataAsync(record);
+                var (job, _) = await BuildJobDataAsync(record);
                 if (job == null)
                     continue;
 
@@ -227,16 +227,22 @@ namespace CAL_QR.ViewModels
 
         // ── المصدر الواحد لبناء بيانات المهمّة من الشهادة المجمّدة (طباعة ومعاينة) ──
         // ── يملأ حقول البيانات فقط؛ Template/PrinterName/StartColumn/StartRow يضبطها المستدعي ──
-        private async Task<QrPrintJob?> BuildJobDataAsync(CalibrationRecord record)
+        private async Task<(QrPrintJob? Job, string? BlockReason)> BuildJobDataAsync(CalibrationRecord record)
         {
             if (string.IsNullOrWhiteSpace(record.CertificateNumber))
-                return null;
+                return (null, CalibrationLabelPolicy.NoCertificateReason);
 
             var certificate = await _certificateRepository
                 .GetByCertificateNumberAsync(record.CertificateNumber);
 
+            // بلا هذا الحارس كانت certificate! تتّكئ على سلوك دالّة في ملفّ آخر
+            // لا يراه المترجم، فلا يستطيع التحقّق من عدم الفراغ بنفسه.
             if (certificate == null)
-                return null;
+                return (null, CalibrationLabelPolicy.NoCertificateReason);
+
+            var blockReason = CalibrationLabelPolicy.GetBlockReason(certificate);
+            if (blockReason != null)
+                return (null, blockReason);
 
             var nuclideLines = (certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
                 .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
@@ -244,7 +250,7 @@ namespace CAL_QR.ViewModels
                 .Select(s => $"{s.Radionuclide} = {s.AverageCorrectionFactor}")
                 .ToList();
 
-            return new QrPrintJob
+            return (new QrPrintJob
             {
                 CertificateNumber = certificate.CertificateNumber,
                 ClientName = certificate.ClientName,
@@ -255,7 +261,7 @@ namespace CAL_QR.ViewModels
                 ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
                 VerifyCode = certificate.VerifyCode ?? "",
                 NuclideLines = nuclideLines
-            };
+            }, null);
         }
 
         // ── تصيير صور المعاينة (الفردي + الدفعيّ) بالملصق النصّيّ نفسه عبر PrintService — WYSIWYG ──
@@ -289,12 +295,17 @@ namespace CAL_QR.ViewModels
                 int currentRow = StartRow;
 
                 var jobs = new List<QrPrintJob>();
+                var blockReasons = new List<string>();
                 foreach (var record in CalibrationRecords)
                 {
                     // ── بيانات المهمّة من المصدر الواحد (الشهادة المجمّدة) ──
-                    var job = await BuildJobDataAsync(record);
+                    var (job, blockReason) = await BuildJobDataAsync(record);
                     if (job == null)
+                    {
+                        if (blockReason != null && !blockReasons.Contains(blockReason))
+                            blockReasons.Add(blockReason);
                         continue;
+                    }
 
                     job.Template = SelectedTemplate;
                     job.PrinterName = SelectedPrinter;
@@ -317,7 +328,10 @@ namespace CAL_QR.ViewModels
                 // فارغة ثمّ يسجّل في سجلّ التدقيق حدث طباعة لم يقع.
                 if (jobs.Count == 0)
                 {
-                    MessageBox.Show("السجلّات المحدّدة لا ملصق لها.", "لا يوجد ما يُطبع", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string message = blockReasons.Count > 0
+                        ? string.Join("\n", blockReasons)
+                        : "السجلّات المحدّدة لا ملصق لها.";
+                    MessageBox.Show(message, "لا يوجد ما يُطبع", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 

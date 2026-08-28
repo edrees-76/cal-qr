@@ -712,12 +712,15 @@
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
+                    <!-- حقول التاريخ أُخفيت من النموذج — الموقّع يكتب تاريخه بخطّه على الورقة
+                         المطبوعة. خصائص التواريخ باقية في الـViewModel وأعمدتها في القاعدة:
+                         شهادات مُصدَرة تحمل قيمًا محفوظة، والتجميد التاريخيّ يمنع حذف عمود
+                         بأثر رجعيّ. -->
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -729,27 +732,22 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="Name" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="Title" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
-                        <TextBlock Grid.Row="0" Grid.Column="3" Text="Date" Style="{StaticResource FieldLabel}" Margin="4,0,4,4" />
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Calibrated By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
                         <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CalibratedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="اسم المهندس المعاير" />
                         <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding CalibratedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="المسمّى الوظيفي" />
-                        <DatePicker Grid.Row="1" Grid.Column="3" SelectedDate="{Binding CalibratedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="Reviewed By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
                         <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ReviewedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="اسم المراجع" />
                         <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding ReviewedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="المسمّى الوظيفي" />
-                        <DatePicker Grid.Row="2" Grid.Column="3" SelectedDate="{Binding ReviewedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
                         <TextBlock Grid.Row="3" Grid.Column="0" Text="Approved By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
                         <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ApprovedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="اسم المعتمد" />
                         <TextBox Grid.Row="3" Grid.Column="2" Text="{Binding ApprovedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="المسمّى الوظيفي" />
-                        <DatePicker Grid.Row="3" Grid.Column="3" SelectedDate="{Binding ApprovedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
 
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="Authorized By" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="4,0,10,0" />
                         <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding AuthorizedByName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="اسم المجيز" />
                         <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding AuthorizedByTitle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" Margin="4" helpers:WatermarkHelper.Watermark="المسمّى الوظيفي" />
-                        <DatePicker Grid.Row="4" Grid.Column="3" SelectedDate="{Binding AuthorizedByDate}" Style="{StaticResource FieldDate}" Width="140" Margin="4" />
                     </Grid>
 
                 </StackPanel>

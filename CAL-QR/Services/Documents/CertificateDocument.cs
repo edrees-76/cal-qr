@@ -733,7 +733,14 @@ namespace CAL_QR.Services.Documents
                     {
                         col.Item().Text(title).Bold().FontSize(8).FontColor(NavyColor);
                         if (!string.IsNullOrWhiteSpace(name)) col.Item().Text(name!).FontSize(8);
-                        if (!string.IsNullOrWhiteSpace(position)) col.Item().Text(position!).FontSize(7).FontColor(Colors.Grey.Darken1);
+                        // مسافتان فأكثر في المنصب تعنيان «اكسر السطر هنا». الكسر في الطباعة لا
+                        // في القيمة المخزَّنة: نفس النصّ يظهر في حقل النموذج، وهو TextBox سطر
+                        // واحد بارتفاع ثابت يقصّ أيّ \n بصريًّا. فتبقى القيمة سطرًا واحدًا للشاشة
+                        // وتُرسم سطرين على الورقة.
+                        if (!string.IsNullOrWhiteSpace(position))
+                            col.Item().Text(System.Text.RegularExpressions.Regex
+                                .Replace(position!.Trim(), @"[ \t]{2,}", "\n"))
+                                .FontSize(7).FontColor(Colors.Grey.Darken1);
                         if (date.HasValue) col.Item().Text($"Date: {date.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}").FontSize(7);
                         col.Item().PaddingTop(15).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
                     });

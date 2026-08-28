@@ -768,7 +768,12 @@ namespace CAL_QR.Services.Documents
                                 .Replace(position!.Trim(), @"[ \t]{2,}", "\n"))
                                 .FontSize(7).FontColor(Colors.Grey.Darken1);
                         if (date.HasValue) col.Item().Text($"Date: {date.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}").FontSize(7);
-                        col.Item().PaddingTop(15).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
+                        // الفراغ فوق الخطّ مساحة التوقيع اليدويّ لا هامشًا — أربعون نقطة نحو
+                        // أربعة عشر ملّيمترًا تكفي قلمًا، بينما خمس عشرة كانت خمسة ملّيمترات لا
+                        // تكفي. قيمة ثابتة لا محسوبة على المساحة المتبقّية: الوثيقة نفسها يجب
+                        // أن تُطبع بنفس الشكل في كلّ مرّة، ولا يعرف QuestPDF ما تبقّى في الصفحة
+                        // وهو يرسم من أعلى إلى أسفل بلا تمرير ثانٍ.
+                        col.Item().PaddingTop(40).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2);
                     });
                 }
 

@@ -313,6 +313,14 @@ namespace CAL_QR.ViewModels
                     }
                 }
 
+                // بلا هذا الحارس كان فرع else يستدعي PrintMultipleQrLabels بقائمة
+                // فارغة ثمّ يسجّل في سجلّ التدقيق حدث طباعة لم يقع.
+                if (jobs.Count == 0)
+                {
+                    MessageBox.Show("السجلّات المحدّدة لا ملصق لها.", "لا يوجد ما يُطبع", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 if (jobs.Count == 1)
                 {
                     _printService.PrintQrLabel(jobs[0]);

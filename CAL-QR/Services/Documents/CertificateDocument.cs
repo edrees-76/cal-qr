@@ -254,9 +254,13 @@ namespace CAL_QR.Services.Documents
 
             if (showStandardBox)
             {
+                // الحقل العريض يملأ صفّه كاملًا، وأيّ حقل عاديّ يليه يبدأ صفًّا جديدًا فيترك
+                // خانات فارغة مؤطَّرة. بوضع Traceability آخرًا يقع Standard وStatus في صفّ
+                // واحد وينتهي الجدول بصفّ ممتلئ — فتذوب فجوتان كانتا تكلّفان صفًّا كاملًا.
+                // الترتيب المنطقيّ للقراءة محفوظ: المعيار ثمّ الحكم ثمّ سند التتبّعيّة.
                 fields.Add(new Field("CALIBRATION STANDARD", _certificate.CalibrationStandard));
-                fields.Add(new Field("Traceability Reference", _certificate.TraceabilityReference, FullWidth: true));
                 fields.Add(new Field("STATUS / VERDICT", _certificate.ComplianceVerdict));
+                fields.Add(new Field("Traceability Reference", _certificate.TraceabilityReference, FullWidth: true));
             }
 
             if (!HasAnyValue(fields)) return;

@@ -1,5 +1,6 @@
 using Xunit;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
@@ -78,30 +79,28 @@ namespace CAL_QR.Tests
             return (factory, record.Id);
         }
 
+        private static CertificateFormViewModel BuildViewModel(TestDbContextFactory factory)
+        {
+            var hmacService = new HmacService(factory);
+            hmacService.Initialize();
+
+            return new CertificateFormViewModel(
+                new DeviceTypeRepository(factory),
+                new CertificateDraftBuilder(),
+                new CertificateRepository(
+                    factory,
+                    new CertificateNumberService(factory),
+                    new CertificateSignatureService(hmacService)),
+                new AuditLogRepository(factory, new TestCurrentUserService()),
+                factory);
+        }
+
         [Fact]
         public async Task LoadForStatusReport_SeedsNotPerformedVerdict_NotTemplateApproval()
         {
             // Arrange
             var (factory, recordId) = await SeedRecordAsync("Failed");
-
-            var typeRepo = new DeviceTypeRepository(factory);
-            var draftBuilder = new CertificateDraftBuilder();
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-            var signatureService = new CertificateSignatureService(hmacService);
-            var certificateRepo = new CertificateRepository(
-                factory,
-                new CertificateNumberService(factory),
-                signatureService);
-            var authService = new TestCurrentUserService();
-            var auditRepo = new AuditLogRepository(factory, authService);
-
-            var vm = new CertificateFormViewModel(
-                typeRepo,
-                draftBuilder,
-                certificateRepo,
-                auditRepo,
-                factory);
+            var vm = BuildViewModel(factory);
 
             // Act
             vm.LoadForStatusReport(recordId);
@@ -121,25 +120,7 @@ namespace CAL_QR.Tests
         {
             // Arrange
             var (factory, recordId) = await SeedRecordAsync("Passed");
-
-            var typeRepo = new DeviceTypeRepository(factory);
-            var draftBuilder = new CertificateDraftBuilder();
-            var hmacService = new HmacService(factory);
-            hmacService.Initialize();
-            var signatureService = new CertificateSignatureService(hmacService);
-            var certificateRepo = new CertificateRepository(
-                factory,
-                new CertificateNumberService(factory),
-                signatureService);
-            var authService = new TestCurrentUserService();
-            var auditRepo = new AuditLogRepository(factory, authService);
-
-            var vm = new CertificateFormViewModel(
-                typeRepo,
-                draftBuilder,
-                certificateRepo,
-                auditRepo,
-                factory);
+            var vm = BuildViewModel(factory);
 
             // Act
             vm.LoadForRecord(recordId);
@@ -148,6 +129,52 @@ namespace CAL_QR.Tests
             Assert.False(string.IsNullOrWhiteSpace(vm.CertificateTemplateType));
             Assert.False(vm.IsStatusReport);
             Assert.Equal("APPROVED FOR OPERATIONAL USE", vm.ComplianceVerdict);
+        }
+
+        // العنوان ونصّ الزرّ هما أوّل ما يقرؤه المعايِر، وكانا يقولان "شهادة" على
+        // تقرير حالة. الحالة الرابعة (تعديل تقرير حالة) تُغطّى بضبط DocumentType
+        // مباشرةً مع _isEditMode عبر LoadForEdit في اختبار مستقلّ مستقبلاً — هنا
+        // نحرس الحالات الثلاث التي يبلغها المستخدم من شاشة سجلّ المعايرة.
+        [Fact]
+        public async Task FormTitleAndSaveButtonText_FollowDocumentType()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Failed");
+
+            var certificateVm = BuildViewModel(factory);
+            certificateVm.LoadForRecord(recordId);
+
+            Assert.False(certificateVm.IsStatusReport);
+            Assert.Equal("إصدار شهادة جديدة", certificateVm.FormTitle);
+            Assert.Equal("حفظ وإصدار الشهادة", certificateVm.SaveButtonText);
+
+            var reportVm = BuildViewModel(factory);
+            reportVm.LoadForStatusReport(recordId);
+
+            Assert.True(reportVm.IsStatusReport);
+            Assert.Equal("إصدار تقرير حالة جديد", reportVm.FormTitle);
+            Assert.Equal("حفظ وإصدار تقرير الحالة", reportVm.SaveButtonText);
+        }
+
+        // بلا هذا الحارس، نقل الإشعارين خارج setter الـDocumentType كان سيُبقي
+        // العنوان والزرّ على قيمتهما القديمة في الواجهة رغم صحّة الخاصيّتين.
+        [Fact]
+        public async Task DocumentTypeChange_RaisesFormTitleAndSaveButtonTextNotifications()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Failed");
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            var raised = new List<string>();
+            vm.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName != null) raised.Add(e.PropertyName);
+            };
+
+            vm.DocumentType = CAL_QR.Enums.CertificateDocumentType.CalibrationStatusReport;
+
+            Assert.Contains(nameof(CertificateFormViewModel.FormTitle), raised);
+            Assert.Contains(nameof(CertificateFormViewModel.SaveButtonText), raised);
+            Assert.Contains(nameof(CertificateFormViewModel.IsStatusReport), raised);
         }
     }
 }

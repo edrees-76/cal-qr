@@ -290,6 +290,13 @@
                         <Separator Margin="0,4,0,8" />
 
                         <StackPanel Margin="4">
+                            <TextBlock Text="Status / Verdict" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource FieldBox}"
+                                     helpers:WatermarkHelper.Watermark="حكم الحالة (مثال: NOT PERFORMED)" />
+                        </StackPanel>
+
+                        <StackPanel Margin="4">
                             <TextBlock Text="Status / Reason (سبب تعذّر المعايرة)" Style="{StaticResource FieldLabel}" />
                             <TextBox Text="{Binding StatusReason, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FieldBox}"

@@ -20,6 +20,14 @@ namespace CAL_QR.Services
         public const string RelativeHumidityTemplate = "__ ± __ % RH";
         public const string AtmosphericPressureTemplate = "__ ± __ kPa";
 
+        /// <summary>
+        /// الحكم المبذور لتقرير الحالة، منقول حرفيًّا من خانة STATUS / VERDICT
+        /// في قالب م. رضا. يُخزَّن على الشهادة ويدخل SIG1 — فهو قيمة صفّ لا نصّ
+        /// ثابت مطبوع، ولذلك هنا مع قوالب الظروف البيئيّة لا في CertificateTexts
+        /// (ذاك موثَّق صراحةً بأنّه خارج SIG1 وليس حقلاً على Certificate).
+        /// </summary>
+        public const string StatusReportDefaultVerdict = "NOT PERFORMED";
+
         public CertificateDraftResult Build(
             DeviceType deviceType,
             CalibrationRecord record,

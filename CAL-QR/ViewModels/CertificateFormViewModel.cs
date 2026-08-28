@@ -789,6 +789,18 @@ namespace CAL_QR.ViewModels
         {
             LoadForRecord(calibrationRecordId);
             DocumentType = CertificateDocumentType.CalibrationStatusReport;
+
+            // ApplyDraft بذر ComplianceVerdict من قالب النوع، وقيمته هناك
+            // "APPROVED FOR OPERATIONAL USE" لكلّ الأنواع الستّة — نقيض ما تقوله
+            // هذه الوثيقة حرفيًّا. الباني لا يستقبل DocumentType فلا يمكنه التمييز،
+            // والتصحيح هنا حيث يُثبَّت الوضع. LoadForEdit لا تُصحَّح: هناك القيمة
+            // من الشهادة المخزَّنة، والتجميد التاريخيّ يمنع دهسها.
+            ComplianceVerdict = CertificateDraftBuilder.StatusReportDefaultVerdict;
+
+            // تُعاد بعد تثبيت الوضع: نُفِّذت داخل ApplyDraft والوثيقة ما زالت
+            // "شهادة معايرة"، فأنتجت تحذيرات تطابق نويدات لا معنى لها في تقرير
+            // بلا جدول نتائج أصلاً.
+            RunTemplateConsistencyChecks();
         }
 
         /// <summary>

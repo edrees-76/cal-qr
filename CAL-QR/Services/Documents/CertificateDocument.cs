@@ -61,7 +61,10 @@ namespace CAL_QR.Services.Documents
             container.Page(page =>
             {
                 page.Size(PageSizes.A4);
-                page.Margin(1.2f, Unit.Centimetre);
+                // الهامش الرأسيّ سنتيمتر واحد — فوق حدّ الطابعات المكتبيّة الآمن (٦–١٠ مم)
+                // ودونه يُخاطَر بقصّ سطر التذييل. الأفقيّ يبقى ١٫٢ سم.
+                page.MarginVertical(1.0f, Unit.Centimetre);
+                page.MarginHorizontal(1.2f, Unit.Centimetre);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontFamily(LatinFont).FontSize(9));
 
@@ -124,7 +127,7 @@ namespace CAL_QR.Services.Documents
         {
             container.PaddingVertical(10).Column(column =>
             {
-                column.Spacing(8);
+                column.Spacing(6);
 
                 ComposeTitleBlock(column);
 
@@ -744,7 +747,7 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeApprovalBlock(ColumnDescriptor column)
         {
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(6).Row(row =>
             {
                 void AddBox(string title, string? name, string? position, DateTime? date)
                 {
@@ -771,17 +774,18 @@ namespace CAL_QR.Services.Documents
                 AddBox("Authorized By", _certificate.AuthorizedByName, _certificate.AuthorizedByTitle, _certificate.AuthorizedByDate);
 
                 // خانة ختم رسمي فارغة إلى اليسار
-                row.RelativeItem(1.5f).Padding(4).Column(stamp =>
+                // الختم الرسميّ دائريّ فالخانة مربّعة لا مستطيلة.
+                row.RelativeItem(1.0f).Padding(4).Column(stamp =>
                 {
                     stamp.Item().Text("Official Stamp").Bold().FontSize(8).FontColor(NavyColor);
-                    stamp.Item().PaddingTop(2).Border(0.5f).BorderColor(Colors.Grey.Lighten2).Height(60);
+                    stamp.Item().PaddingTop(2).Border(0.5f).BorderColor(Colors.Grey.Lighten2).Height(80);
                 });
             });
         }
 
         private void ComposeFinalBlock(ColumnDescriptor column)
         {
-            column.Item().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(6).Row(row =>
             {
                 row.ConstantItem(60).Column(qr =>
                 {

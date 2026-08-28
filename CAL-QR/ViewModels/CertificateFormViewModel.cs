@@ -562,7 +562,17 @@ namespace CAL_QR.ViewModels
 
         #region حالة الواجهة
 
-        public string FormTitle => _isEditMode ? "تعديل الشهادة" : "إصدار شهادة جديدة";
+        // العنوان ونصّ الزرّ يعلنان نوع الوثيقة، لا وضع الفتح وحده. النافذة كانت
+        // تقول "إصدار شهادة جديدة" فوق قسم أحمر مكتوب عليه Calibration Status
+        // Report، فتناقض نفسها في الشاشة الواحدة. المعايِر يقرأ العنوان والزرّ قبل
+        // أن يمرّر إلى منتصف النموذج.
+        public string FormTitle => IsStatusReport
+            ? (_isEditMode ? "تعديل تقرير الحالة" : "إصدار تقرير حالة جديد")
+            : (_isEditMode ? "تعديل الشهادة" : "إصدار شهادة جديدة");
+
+        public string SaveButtonText => IsStatusReport
+            ? "حفظ وإصدار تقرير الحالة"
+            : "حفظ وإصدار الشهادة";
 
         public CertificateDocumentType DocumentType
         {
@@ -573,6 +583,11 @@ namespace CAL_QR.ViewModels
                 {
                     OnPropertyChanged(nameof(IsStatusReport));
                     OnPropertyChanged(nameof(IsCalibrationCertificate));
+                    // الإشعار هنا لا في LoadForStatusReport: LoadForEdit تضبط
+                    // DocumentType أيضًا من الشهادة المخزَّنة، فالموضع الواحد
+                    // يغطّي مسارَي الفتح ولا يترك سطرًا منسيًّا لاحقًا.
+                    OnPropertyChanged(nameof(FormTitle));
+                    OnPropertyChanged(nameof(SaveButtonText));
                 }
             }
         }
@@ -1091,15 +1106,20 @@ namespace CAL_QR.ViewModels
                     // ١. الإصدار: الرقم والتوقيع والحمولة و DueDate كلها من AddAsync.
                     string number = await _certificateRepository.AddAsync(certificate);
 
+                    string docLabel = IsStatusReport ? "تقرير الحالة" : "الشهادة";
+
                     // ٢. طور ما بعد الـCommit — خارج أي معاملة، وفشله لا يُبطل الإصدار.
                     string postCommitError = string.Empty;
                     try
                     {
+                        // سجلّ التدقيق يجب أن يقول ما صدر فعلاً. "إصدار شهادة" على
+                        // تقرير حالة تناقض دائم يقرؤه مدقّق ISO 17025 بعد سنة، بخلاف
+                        // رسالة الواجهة التي تزول بضغطة.
                         await _auditLogRepository.LogAsync(
-                            "إصدار شهادة",
+                            IsStatusReport ? "إصدار تقرير حالة" : "إصدار شهادة",
                             "Certificate",
                             certificate.Id.ToString(),
-                            $"إصدار شهادة رقم {number} لسجل المعايرة {_calibrationRecordId}");
+                            $"إصدار {docLabel} رقم {number} لسجل المعايرة {_calibrationRecordId}");
                     }
                     catch (Exception ex)
                     {
@@ -1113,13 +1133,13 @@ namespace CAL_QR.ViewModels
                     if (postCommitError.Length > 0)
                     {
                         MessageBox.Show(
-                            $"تم إصدار الشهادة بنجاح برقم {number}، ولكن حدث خطأ بعد الحفظ:{postCommitError}"
-                            + "\n\n(لا تحتاج لإعادة الإصدار — الشهادة مسجلة بنجاح).",
+                            $"تم إصدار {docLabel} بنجاح برقم {number}، ولكن حدث خطأ بعد الحفظ:{postCommitError}"
+                            + $"\n\n(لا تحتاج لإعادة الإصدار — {docLabel} مسجّلة بنجاح).",
                             "تحذير - فشل جزئي بعد الحفظ", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                     else
                     {
-                        MessageBox.Show($"تم إصدار الشهادة بنجاح برقم {number}.", "تم الإصدار",
+                        MessageBox.Show($"تم إصدار {docLabel} بنجاح برقم {number}.", "تم الإصدار",
                             MessageBoxButton.OK, MessageBoxImage.Information);
                     }
 
@@ -1133,7 +1153,7 @@ namespace CAL_QR.ViewModels
                 {
                     message += $"\nتفاصيل إضافية: {ex.InnerException.Message}";
                 }
-                MessageBox.Show($"خطأ أثناء إصدار الشهادة: {message}", "خطأ",
+                MessageBox.Show($"خطأ أثناء إصدار {(IsStatusReport ? "تقرير الحالة" : "الشهادة")}: {message}", "خطأ",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally

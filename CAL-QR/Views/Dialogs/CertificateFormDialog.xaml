@@ -822,9 +822,23 @@
                                Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Command="{Binding SaveCommand}" Content="حفظ وإصدار الشهادة"
-                                Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B"
-                                Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                        <!-- النصّ واللون يتبعان نوع الوثيقة. #B71C1C هو نفسه لون
+                             عنوان قسم تقرير الحالة أعلى النموذج — اللون يُقرأ قبل النصّ. -->
+                        <Button Command="{Binding SaveCommand}" Content="{Binding SaveButtonText}"
+                                Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+                                    <Setter Property="Background" Value="#1A3A6B" />
+                                    <Setter Property="BorderBrush" Value="#1A3A6B" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsStatusReport}" Value="True">
+                                            <Setter Property="Background" Value="#B71C1C" />
+                                            <Setter Property="BorderBrush" Value="#B71C1C" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
                                 BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click"
                                 FontFamily="{StaticResource CairoFont}" />

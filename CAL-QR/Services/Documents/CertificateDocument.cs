@@ -139,8 +139,19 @@ namespace CAL_QR.Services.Documents
                     ComposeDetailedBody(column);
 
                 ComposeComplianceBox(column);
-                ComposeApprovalBlock(column);
-                ComposeFinalBlock(column);
+                ComposeDocumentTail(column);
+            });
+        }
+
+        // التواقيع ورمز التحقّق ذيل واحد للوثيقة، فيبقيان معًا أو ينزلان معًا ولا
+        // يفترقان. كانا غلافين متجاورين فكان قياسهما منفصلًا يدفع الثاني وحده إلى
+        // صفحة كاملة.
+        private void ComposeDocumentTail(ColumnDescriptor column)
+        {
+            column.Item().ShowEntire().Column(tail =>
+            {
+                ComposeApprovalBlock(tail);
+                ComposeFinalBlock(tail);
             });
         }
 
@@ -508,7 +519,15 @@ namespace CAL_QR.Services.Documents
             bool hasSummary = !string.IsNullOrWhiteSpace(_certificate.CombinedUncertainty)
                 || !string.IsNullOrWhiteSpace(_certificate.ExpandedUncertainty);
 
-            if (components.Count == 0 && !hasSummary) return;
+            // وجود صفوف لا يعني وجود قياس. جدول ميزانية بستّة أعمدة فارغة وصفّ «100 (%)»
+            // معلّق بلا ما يجمعه يبدو على وثيقة ISO 17025 كبيانات مفقودة لا كقالب للملء
+            // اليدويّ — بخلاف Ref وFinancial Receipt No اللذين يحملان خطًّا سفليًّا صريحًا.
+            // رقم واحد في أيّ مكوّن يكفي لطباعة القسم كاملًا.
+            bool anyComponentHasValue = components.Any(c =>
+                !string.IsNullOrWhiteSpace(c.StandardUncertainty)
+                || !string.IsNullOrWhiteSpace(c.ContributionPercent));
+
+            if (!anyComponentHasValue && !hasSummary) return;
 
             // الجدول كان ينقسم بعد صفّه الأوّل حين لا يتبقّى في الصفحة إلّا سطر، فتبدو
             // الصفحة الأولى كأنّها تُبلغ عن مكوّن واحد لعدم اليقين. ShowEntire ينقل القسم
@@ -725,7 +744,7 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeApprovalBlock(ColumnDescriptor column)
         {
-            column.Item().ShowEntire().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).Row(row =>
             {
                 void AddBox(string title, string? name, string? position, DateTime? date)
                 {
@@ -762,7 +781,7 @@ namespace CAL_QR.Services.Documents
 
         private void ComposeFinalBlock(ColumnDescriptor column)
         {
-            column.Item().ShowEntire().PaddingTop(10).Row(row =>
+            column.Item().PaddingTop(10).Row(row =>
             {
                 row.ConstantItem(60).Column(qr =>
                 {

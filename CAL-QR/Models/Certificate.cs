@@ -62,7 +62,9 @@ namespace CAL_QR.Models
         // نمط المعايرة، يظهر في كتلة TECHNICAL INFORMATION في العائلة الكاملة.
         // مثال: "Direct Contact Geometry". منسوخ نصاً من قالب DeviceType وقت
         // الإصدار، كنظيريه CountingTime و CountingUnit.
-        // ملاحظة: خارج SIG1 في هذه المرحلة — لا يُضاف إلى SignaturePayloadBuilderV1.
+        // يدخل SIG1 بالمفتاح CM بعد CU مباشرة، كنظيريه CountingTime و CountingUnit.
+        // حقل مطبوع وقابل للتحرير في النموذج، فتركه خارج التوقيع كان يترك سطر
+        // CALIBRATION MODE المطبوع بلا حماية.
         public string? CalibrationMode { get; set; }
 
         // الظروف البيئية

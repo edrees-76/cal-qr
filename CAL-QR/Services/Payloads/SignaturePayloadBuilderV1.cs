@@ -23,6 +23,7 @@ namespace CAL_QR.Services.Payloads
     ///   • المرحلة ١: إضافة TT و RE و Remarks في ذيل R و F قبل أول التزام.
     ///   • المرحلة ٢: حذف AF، وإضافة PN و LO و IN و DT، وإضافة كتلة النويدات NC/N.
     ///   • المرحلة ٣: إضافة DK وRM وSR قبل كتلة النويدات — قبل أول إصدار.
+    ///   • المرحلة ٤: إضافة CM (CalibrationMode) بعد CU — قبل أول إصدار.
     /// يُسجَّل هذا صراحةً لأن تعليقاً يقول «مجمَّد إلى الأبد» ثم يُعدَّل مرتين
     /// يفقد قيمته كتحذير: القارئ التالي يتعلم أن التحذير لا يُؤخذ حرفياً.
     /// التحذير الدقيق يُطاع؛ التحذير المبالَغ يُتجاوز.
@@ -54,7 +55,12 @@ namespace CAL_QR.Services.Payloads
     /// ─── الخارج عن التوقيع عمداً ───
     /// ReferenceNo · Notes · AdditionalInformation · السطر التحذيري !: في الـQR ·
     /// QrPayload · VerifyCode · SignaturePayloadVersion · Id · CalibrationRecordId ·
-    /// IsDeleted · IssuedAt · CreatedAt · UpdatedAt · AmendedAt · FirstPrintedAt
+    /// IsDeleted · IssuedAt · CreatedAt · UpdatedAt · AmendedAt · FirstPrintedAt ·
+    /// FinancialReceiptNo · IsSignedCopyAttached · SignedCopyConfirmedAt
+    ///
+    /// FinancialReceiptNo خارجه لأنّه بيان إداريّ يُملأ يدويًّا بعد الطباعة الأولى —
+    /// توقيعه يُفشل التحقّق على شهادة سليمة مُلئت خانتها بقلم.
+    /// والعَلَمان الأخيران حالة تتغيّر بعد الإصدار، كـ AmendedAt.
     ///
     /// AmendedAt خارجه بالضرورة: لو دخله لَغيَّر تسجيلُ التعديل نصَّ التوقيع بذاته،
     /// فتلزم دورة إعادة حساب لا تنتهي.
@@ -90,6 +96,7 @@ namespace CAL_QR.Services.Payloads
             Add("DI", PayloadNormalizer.Text(c.Distance));
             Add("CT", PayloadNormalizer.Text(c.CountingTime));
             Add("CU", PayloadNormalizer.Text(c.CountingUnit));
+            Add("CM", PayloadNormalizer.Text(c.CalibrationMode));
             Add("TP", PayloadNormalizer.Text(c.Temperature));
             Add("RH", PayloadNormalizer.Text(c.RelativeHumidity));
             Add("AP", PayloadNormalizer.Text(c.AtmosphericPressure));

@@ -19,6 +19,7 @@ namespace CAL_QR.Tests
     ///   • المرحلة ١ — الصيغة الأولى.
     ///   • المرحلة ٢ — حذف AF، وإضافة PN و LO و IN و DT، وكتلة النويدات NC/N.
     ///   • المرحلة ٣ — إضافة DK وRM وSR قبل كتلة النويدات.
+    ///   • المرحلة ٤ — إضافة CM (CalibrationMode) بعد CU.
     /// وهذا آخر تحديث مصرّح به.
     ///
     /// السلسلة تُبنى بـ string.Join("\n", ...) عمداً: لو كُتبت كنص حرفي
@@ -57,6 +58,7 @@ namespace CAL_QR.Tests
                 Distance = null,
                 CountingTime = "60 Sec",
                 CountingUnit = "kCPM",
+                CalibrationMode = "Direct Contact Geometry",
 
                 Temperature = "22.5",
                 RelativeHumidity = "45",
@@ -186,6 +188,7 @@ namespace CAL_QR.Tests
             "DI:~",
             "CT:60 Sec",
             "CU:kCPM",
+            "CM:Direct Contact Geometry",
             "TP:22.5",
             "RH:45",
             "AP:1013",
@@ -317,6 +320,7 @@ namespace CAL_QR.Tests
         [InlineData("CalibrationLocation")]
         [InlineData("Instrumentation")]
         [InlineData("DetectorType")]
+        [InlineData("CalibrationMode")]
         [InlineData("NuclideName")]
         [InlineData("NuclideCfAvg")]
         public void SignaturePayloadV1_CoversFieldsAddedBeforeFreeze(string field)
@@ -358,6 +362,9 @@ namespace CAL_QR.Tests
                     break;
                 case "DetectorType":
                     mutated.DetectorType = "Electronic Personal Dosimeter";
+                    break;
+                case "CalibrationMode":
+                    mutated.CalibrationMode = "Free Air Geometry";
                     break;
                 case "NuclideName":
                     mutated.NuclideSummaries.First().Radionuclide = "Am-241";

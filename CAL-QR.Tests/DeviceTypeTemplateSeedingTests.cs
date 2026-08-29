@@ -495,7 +495,22 @@ namespace CAL_QR.Tests
 
             Assert.Equal(5, beta.FunctionalChecks.Length);
             Assert.Equal(5, beta.UncertaintyComponents.Length);
-            Assert.All(beta.FunctionalChecks, c => Assert.Equal("Yes", c.DefaultResult));
+            Assert.All(beta.FunctionalChecks, c => Assert.Equal("Acceptable", c.DefaultResult));
+        }
+
+        [Fact]
+        public void Catalog_UsesTheApprovedResultWordForEveryFunctionalCheck()
+        {
+            // قوالب م. رضا الستّة كلّها تكتب "Acceptable" في عمود Result، بما فيها
+            // B401 (قالب Pancake) و G501 (قالب Gamma). كلمة "Yes" لا ترد في أيّ
+            // قالب منها، وكانت مزروعة على Pancake و Beta.
+            //
+            // الحارس القديم كان على Beta وحدها، فبقيت Pancake بلا توكيد واحد على
+            // DefaultResult وعاشت القيمة الخاطئة حتّى كُشفت بمقارنة الورق لا بالكود.
+            // هذا التوكيد يغطّي الكتالوج كلّه، فيشمل أيّ نوع يُضاف لاحقًا.
+            Assert.All(DeviceTypeCatalog.All, d =>
+                Assert.All(d.FunctionalChecks, c =>
+                    Assert.Equal("Acceptable", c.DefaultResult)));
         }
 
         [Fact]

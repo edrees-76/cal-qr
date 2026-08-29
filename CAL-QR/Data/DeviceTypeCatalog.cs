@@ -152,11 +152,11 @@ namespace CAL_QR.Data
                     "The calibration results relate strictly and exclusively to the specific physical instrument identified by the serial number above.",
                 FunctionalChecks = new[]
                 {
-                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Audio/Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to instrument and probe", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Detector Window Inspection", Requirement = "Window clean and free from damage", DefaultResult = "Yes" }
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Audio/Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to instrument and probe", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Detector Window Inspection", Requirement = "Window clean and free from damage", DefaultResult = "Acceptable" }
                 },
                 // StandardUncertainty و ContributionPercent متروكان فارغين عمداً:
                 // المكوّن ثابت والقيمة تتغير بكل معايرة. أما Distribution فخاصّية
@@ -203,11 +203,11 @@ namespace CAL_QR.Data
                     "The calibration results relate strictly and exclusively to the specific physical instrument identified by the serial number above.",
                 FunctionalChecks = new[]
                 {
-                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Audio/Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to instrument and probe", DefaultResult = "Yes" },
-                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Probe Window Inspection", Requirement = "Window clean and free from damage", DefaultResult = "Yes" }
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Audio/Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to instrument and probe", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Probe Window Inspection", Requirement = "Window clean and free from damage", DefaultResult = "Acceptable" }
                 },
                 UncertaintyComponents = new[]
                 {

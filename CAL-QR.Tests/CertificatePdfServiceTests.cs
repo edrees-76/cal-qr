@@ -651,5 +651,40 @@ namespace CAL_QR.Tests
             Assert.Contains("Dose Rate Meter Serial Number (S/N)", text);
             Assert.DoesNotContain("Readout Unit", text);
         }
+
+        // ===== حارس بادئة Reason على تقرير الحالة =====
+        // العيب ظهر على وثيقة مطبوعة: «Reason: Reason: Failure of functional
+        // checks…». الكود يضيف البادئة والقيمة المنسوخة من القالب تحملها.
+        // النظيران معًا: بادئة محمولة تُبتلع، وقيمة نظيفة تُسبَق — بلا الثاني
+        // قد يحذف حارسٌ زائد الحماسة البادئة من كلّ الوثائق.
+
+        private static Certificate BuildStatusReasonCertificate(string reason)
+        {
+            var c = BuildBaseCertificate();
+            c.CertificateTemplateType = "Beta Scintillation Probe";   // اسم محلول لا "Beta Probe"
+            c.DocumentType = CertificateDocumentType.CalibrationStatusReport;
+            c.ComplianceVerdict = "NOT PERFORMED";
+            c.StatusReason = reason;
+            return c;
+        }
+
+        [Fact]
+        public void StatusReport_ReasonPrefixCarriedByValue_IsNotPrintedTwice()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildStatusReasonCertificate("Reason: Failure of functional checks.")));
+
+            Assert.Contains("Reason: Failure of functional checks.", text);
+            Assert.DoesNotContain("Reason: Reason:", text);
+        }
+
+        [Fact]
+        public void StatusReport_CleanReason_StillGetsThePrefix()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildStatusReasonCertificate("Failure of functional checks.")));
+
+            Assert.Contains("Reason: Failure of functional checks.", text);
+        }
     }
 }

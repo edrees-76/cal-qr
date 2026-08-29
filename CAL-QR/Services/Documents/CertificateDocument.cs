@@ -718,7 +718,19 @@ namespace CAL_QR.Services.Documents
             if (hasVerdict)
                 column.Item().Text(_certificate.ComplianceVerdict!).Bold().FontSize(9).FontColor(NavyColor);
             if (hasReason)
-                column.Item().Text($"Reason: {_certificate.StatusReason}").FontSize(8);
+            {
+                // القيمة تُنسخ غالبًا من قالب م. رضا وهو يعرض «Reason: ...»، فتحمل
+                // البادئة معها ويكتبها الكود ثانيةً: «Reason: Reason: ...» على وثيقة
+                // رسميّة. ووسم الحقل في النموذج «Status / Reason» يزيد الدعوة إلى ذلك.
+                // الحارس في الطباعة لا عند الحفظ: StatusReason داخل SIG1 بالمفتاح SR،
+                // فتعديل القيمة المخزَّنة يغيّر نصًّا موقَّعًا.
+                const string prefix = "Reason:";
+                var reason = _certificate.StatusReason!.TrimStart();
+                if (reason.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    reason = reason.Substring(prefix.Length).TrimStart();
+
+                column.Item().Text($"{prefix} {reason}").FontSize(8);
+            }
         }
 
         // منفصلان بقرار رضا (ب١١): «IMPORTANT NOTES & CONDITIONS» (الملاحظات) ثمّ

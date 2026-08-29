@@ -301,7 +301,7 @@
                             <TextBox Text="{Binding StatusReason, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource FieldBox}"
                                      TextWrapping="Wrap" AcceptsReturn="True" MinHeight="60"
-                                     helpers:WatermarkHelper.Watermark="سبب عدم إجراء المعايرة (مثال: الجهاز فشل الفحص الوظيفيّ)" />
+                                     helpers:WatermarkHelper.Watermark="سبب عدم إجراء المعايرة (مثال: الجهاز فشل الفحص الوظيفيّ) — بلا كلمة Reason، النظام يضيفها" />
                         </StackPanel>
 
                         <StackPanel Margin="4">

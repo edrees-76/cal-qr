@@ -108,6 +108,10 @@ namespace CAL_QR.ViewModels
             });
 
             CalibrationResults.CollectionChanged += (_, _) => RunTemplateConsistencyChecks();
+
+            // الجدولان يتغذّيان الحارس نفسه. FunctionalChecks كانت غير موصولة،
+            // فحذف الصفّ الراسب الوحيد يترك التحذير معروضًا على وثيقة سليمة.
+            FunctionalChecks.CollectionChanged += (_, _) => RunTemplateConsistencyChecks();
         }
 
         #region ١. بيانات الجهة والجهاز
@@ -455,6 +459,27 @@ namespace CAL_QR.ViewModels
 
         public ObservableCollection<CertificateFunctionalCheck> FunctionalChecks { get; }
             = new ObservableCollection<CertificateFunctionalCheck>();
+
+        /// <summary>
+        /// خيارات عمود Result. تبدأ من AllowedResults، وتُضاف إليها أيّ قيمة
+        /// موجودة في الصفوف المحمَّلة وليست فيها.
+        ///
+        /// ⚠ الإضافة ليست تساهلًا: ComboBox مغلق قيمته الحاليّة خارج قائمته
+        /// يعرض فراغًا ويكتب null عند الحفظ — محو صامت. وشهادات صادرة تحمل
+        /// "Yes" مجمَّدة موجودة فعلًا، والتجميد التاريخيّ يمنع تصحيحها.
+        /// فالقائمة تحرس الإدخال الجديد ولا تعدم القديم.
+        /// </summary>
+        public ObservableCollection<string?> ResultOptions { get; }
+            = new ObservableCollection<string?>(FunctionalCheckResultRules.AllowedResults);
+
+        private void RefreshResultOptions()
+        {
+            foreach (var row in FunctionalChecks)
+            {
+                if (row.Result != null && !ResultOptions.Contains(row.Result))
+                    ResultOptions.Add(row.Result);
+            }
+        }
 
         private string _additionalInformation = string.Empty;
         public string AdditionalInformation
@@ -977,6 +1002,8 @@ namespace CAL_QR.ViewModels
 
             FunctionalChecks.Clear();
             foreach (var row in c.FunctionalChecks) FunctionalChecks.Add(row);
+
+            RefreshResultOptions();
 
             HasNoTemplateWarning = !draft.HasTemplate;
             NoTemplateWarningText = draft.HasTemplate

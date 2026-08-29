@@ -91,6 +91,34 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <!-- نظير CenteredCellElement لأعمدة ComboBox: النمط هناك يستهدف
+             TextBlock، وتمريره إلى عمود ComboBox يرمي استثناءً وقت التشغيل. -->
+        <Style x:Key="CenteredComboCell" TargetType="ComboBox">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <!-- الخيار الأوّل null = «امسح الاختيار». بلا ارتفاع أدنى يُرسم
+                 بلا محتوى فينهار إلى بضعة بكسلات، فلا يراه المستخدم ولا
+                 يصيبه بالفأرة، ويفقد التراجع عن اختيار خاطئ. -->
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="MinHeight" Value="24" />
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+                        <Setter Property="FontSize" Value="12" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsSource"
+                    Value="{Binding DataContext.ResultOptions,
+                            RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+        </Style>
+
         <Style x:Key="GridStyle" TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
             <Setter Property="AutoGenerateColumns" Value="False" />
             <Setter Property="CanUserAddRows" Value="False" />
@@ -673,7 +701,11 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Test / Check" Binding="{Binding CheckName}" Width="2*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTextColumn Header="Requirement" Binding="{Binding Requirement}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
-                            <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
+                            <DataGridComboBoxColumn Header="Result"
+                                    SelectedItemBinding="{Binding Result}"
+                                    Width="1*"
+                                    ElementStyle="{StaticResource CenteredComboCell}"
+                                    EditingElementStyle="{StaticResource CenteredComboCell}" />
                             <DataGridTextColumn Header="Remarks" Binding="{Binding Remarks}" Width="1.2*" ElementStyle="{StaticResource CenteredCellElement}" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>

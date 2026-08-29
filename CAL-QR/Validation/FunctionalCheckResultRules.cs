@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace CAL_QR.Validation
 {
     /// <summary>
@@ -8,6 +10,15 @@ namespace CAL_QR.Validation
     /// </summary>
     public static class FunctionalCheckResultRules
     {
+        /// <summary>
+        /// المفردات المسموحة في عمود Result، منقولة من قوالب م. رضا الستّة.
+        /// null أوّلًا = «لم يُملأ بعد» وهي حالة مشروعة: صفّ جديد يولد فارغًا،
+        /// وتقرير الحالة يُفرّغ النتائج عمدًا لأنّ القياس لم يقع.
+        /// مصدر واحد يقرأ منه النموذج وIsNonPassing، فلا يتباعد النصّان.
+        /// </summary>
+        public static readonly IReadOnlyList<string?> AllowedResults =
+            new string?[] { null, "Acceptable", "Failed", "Not Performed" };
+
         public static bool IsNonPassing(string? result)
         {
             if (string.IsNullOrWhiteSpace(result)) return false;

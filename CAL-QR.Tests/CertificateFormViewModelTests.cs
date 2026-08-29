@@ -25,7 +25,8 @@ namespace CAL_QR.Tests
             public CalQrDbContext CreateDbContext() => new CalQrDbContext(_options);
         }
 
-        private async Task<(TestDbContextFactory factory, int recordId)> SeedRecordAsync(string result)
+        private async Task<(TestDbContextFactory factory, int recordId)> SeedRecordAsync(
+            string result, string defaultCheckResult = "Acceptable")
         {
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
                 .UseInMemoryDatabase(databaseName: "CalQrTestDb_CertFormVM_" + Guid.NewGuid().ToString())
@@ -50,8 +51,8 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
 
                 context.DeviceTypeFunctionalCheckTemplates.AddRange(
-                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 1, CheckName = "Background Check", Requirement = "within limits", DefaultResult = "Acceptable" },
-                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 2, CheckName = "Visual Inspection", Requirement = "no damage", DefaultResult = "Acceptable" });
+                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 1, CheckName = "Background Check", Requirement = "within limits", DefaultResult = defaultCheckResult },
+                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 2, CheckName = "Visual Inspection", Requirement = "no damage", DefaultResult = defaultCheckResult });
                 await context.SaveChangesAsync();
 
                 var device = new Device
@@ -235,6 +236,43 @@ namespace CAL_QR.Tests
             Assert.Contains(nameof(CertificateFormViewModel.FormTitle), raised);
             Assert.Contains(nameof(CertificateFormViewModel.SaveButtonText), raised);
             Assert.Contains(nameof(CertificateFormViewModel.IsStatusReport), raised);
+        }
+
+        // ملاحظة على النطاق: هذان يحرسان منطق ResultOptions في الـViewModel.
+        // ربطُ العمود نفسه في XAML خارج ما يبلغه xUnit ولا اختبار آليّ يحرسه.
+        [Fact]
+        public async Task ResultOptions_KeepAValueThatIsNotInTheApprovedList()
+        {
+            // "Yes" كانت مزروعة في قوالب Pancake و Beta وصدرت بها شهادات
+            // حقيقيّة، والتجميد التاريخيّ يمنع تصحيحها. وComboBox مغلق قيمته
+            // خارج قائمته يعرض فراغًا ويكتب null عند الحفظ — فتُمحى نتائج
+            // وثيقة صادرة بمجرّد فتحها. القائمة تحرس الجديد ولا تعدم القديم.
+            var (factory, recordId) = await SeedRecordAsync("Passed", "Yes");
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForRecord(recordId);
+
+            Assert.All(vm.FunctionalChecks, c => Assert.Equal("Yes", c.Result));
+            Assert.Contains("Yes", vm.ResultOptions);
+            Assert.All(vm.FunctionalChecks, c => Assert.Contains(c.Result, vm.ResultOptions));
+        }
+
+        [Fact]
+        public async Task ResultOptions_HoldOnlyTheApprovedWordsWhenNothingIsOutOfList()
+        {
+            // النظير العكسيّ: بلا هذا، حارسٌ يضيف كلّ قيمة بلا شرط كان يمرّ
+            // ويُنتج قائمة تكبر بالتكرار عند كلّ فتح.
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForRecord(recordId);
+
+            Assert.Equal(4, vm.ResultOptions.Count);
+            Assert.Null(vm.ResultOptions[0]);
+            Assert.Contains("Acceptable", vm.ResultOptions);
+            Assert.Contains("Failed", vm.ResultOptions);
+            Assert.Contains("Not Performed", vm.ResultOptions);
+            Assert.DoesNotContain("Yes", vm.ResultOptions);
         }
     }
 }

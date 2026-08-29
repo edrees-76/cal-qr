@@ -325,7 +325,7 @@
                             <Button Command="{Binding AddCalibrationResultCommand}" Content="إضافة صفّ نتيجة" Style="{StaticResource RowActionButton}" />
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="CalibrationResults_CellEditEnding">
+                        <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="ConsistencyGrid_CellEditEnding">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Template">
@@ -640,7 +640,7 @@
                         <Button Command="{Binding AddFunctionalCheckCommand}" Content="إضافة فحص" Style="{StaticResource RowActionButton}" />
                     </StackPanel>
 
-                    <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                    <DataGrid ItemsSource="{Binding FunctionalChecks}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="ConsistencyGrid_CellEditEnding">
                         <DataGrid.Resources>
                             <Style TargetType="DataGridColumnHeader">
                                 <Setter Property="Template">

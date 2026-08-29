@@ -49,6 +49,11 @@ namespace CAL_QR.Tests
                 context.DeviceTypes.Add(deviceType);
                 await context.SaveChangesAsync();
 
+                context.DeviceTypeFunctionalCheckTemplates.AddRange(
+                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 1, CheckName = "Background Check", Requirement = "within limits", DefaultResult = "Acceptable" },
+                    new DeviceTypeFunctionalCheckTemplate { DeviceTypeId = deviceType.Id, SortOrder = 2, CheckName = "Visual Inspection", Requirement = "no damage", DefaultResult = "Acceptable" });
+                await context.SaveChangesAsync();
+
                 var device = new Device
                 {
                     OwnerId = owner.Id,
@@ -112,6 +117,40 @@ namespace CAL_QR.Tests
             Assert.DoesNotContain("APPROVED", vm.ComplianceVerdict, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Fact]
+        public async Task LoadForStatusReport_DoesNotInheritTemplateCheckResults()
+        {
+            // Arrange
+            var (factory, recordId) = await SeedRecordAsync("Failed");
+            var vm = BuildViewModel(factory);
+
+            // Act
+            vm.LoadForStatusReport(recordId);
+
+            // Assert
+            Assert.Equal(2, vm.FunctionalChecks.Count);
+            Assert.Contains(vm.FunctionalChecks, c => c.CheckName == "Background Check");
+            Assert.Contains(vm.FunctionalChecks, c => c.CheckName == "Visual Inspection");
+            Assert.All(vm.FunctionalChecks, c => Assert.True(string.IsNullOrWhiteSpace(c.Result)));
+        }
+
+        // النظير العكسيّ لاختبار الفحوص أعلاه. بدونه، أيّ إصلاح يُنقل إلى
+        // CertificateDraftBuilder يُفرغ فحوص كلّ شهادة والاختبارات خضراء.
+        [Fact]
+        public async Task LoadForRecord_KeepsTemplateCheckResults_ForNormalCertificate()
+        {
+            // Arrange
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+
+            // Act
+            vm.LoadForRecord(recordId);
+
+            // Assert
+            Assert.Equal(2, vm.FunctionalChecks.Count);
+            Assert.All(vm.FunctionalChecks, c => Assert.Equal("Acceptable", c.Result));
+        }
+
         // النظير العكسيّ للاختبار أعلاه. بدونه، أيّ "إصلاح" يُنقل إلى
         // CertificateDraftBuilder بدل الـViewModel كان سيُفرغ حكم كلّ شهادة
         // معايرة عاديّة وتبقى الاختبارات خضراء.
@@ -129,6 +168,27 @@ namespace CAL_QR.Tests
             Assert.False(string.IsNullOrWhiteSpace(vm.CertificateTemplateType));
             Assert.False(vm.IsStatusReport);
             Assert.Equal("APPROVED FOR OPERATIONAL USE", vm.ComplianceVerdict);
+        }
+
+        [Fact]
+        public async Task StatusReport_WarnsWhenNoCheckFailed()
+        {
+            // Arrange
+            var (factory, recordId) = await SeedRecordAsync("Failed");
+            var vm = BuildViewModel(factory);
+            vm.LoadForStatusReport(recordId);
+
+            foreach (var check in vm.FunctionalChecks)
+                check.Result = "Acceptable";
+
+            // Act
+            vm.RunTemplateConsistencyChecks();
+
+            // Assert
+            // التحذير المقصود هو تحذير «لا رسوب»، لا تحذير «بلا نتيجة»: الثاني
+            // يُطلقه أيضًا فشلٌ في ضبط النتائج داخل الاختبار نفسه، فيمرّ الاختبار
+            // لسبب غير الذي كُتب له.
+            Assert.Contains(vm.TemplateWarnings, w => w.Message.Contains("لا يُظهر أيّ Failed"));
         }
 
         // العنوان ونصّ الزرّ هما أوّل ما يقرؤه المعايِر، وكانا يقولان "شهادة" على

@@ -80,7 +80,14 @@ namespace CAL_QR.Views.Dialogs
             e.Row.Header = (e.Row.GetIndex() + 1).ToString();
         }
 
-        private void CalibrationResults_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        /// <summary>
+        /// تحرير خليّة في أيّ جدول تعتمد عليه فحوص التطابق يعيد حسابها.
+        /// BeginInvoke ضروريّ: القيمة لا تصل إلى الكائن قبل انتهاء التحرير،
+        /// فالاستدعاء المباشر يقرأ القيمة السابقة.
+        /// يخدم جدولَي النتائج والفحوص الوظيفيّة — جدول الفحوص كان بلا ربط،
+        /// فبقي شريط التحذير على قيمته لحظة الفتح مهما كتب المستخدم.
+        /// </summary>
+        private void ConsistencyGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
             Dispatcher.BeginInvoke(new Action(() =>
             {

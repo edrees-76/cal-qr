@@ -679,8 +679,31 @@ namespace CAL_QR.ViewModels
         {
             TemplateWarnings.Clear();
 
-            // تقرير الحالة بلا نتائج عمداً — تحذيرات النويدات/النتائج لا معنى لها فيه.
-            if (IsStatusReport) return;
+            // تحذيرات النويدات والمسافة لا معنى لها في تقرير بلا جدول نتائج، لكنّ
+            // للتقرير تناقضه الخاصّ: وثيقة تعلن تعذّر المعايرة لرسوب الفحوص وجدولُ
+            // فحوصها لا يُظهر رسوبًا. بلا CanAutoFix: البرنامج لا يعرف أيّ فحص رسب،
+            // واختياره عنه أسوأ من بذره.
+            if (IsStatusReport)
+            {
+                if (FunctionalChecks.Count > 0)
+                {
+                    if (FunctionalChecks.Any(c => string.IsNullOrWhiteSpace(c.Result)))
+                    {
+                        TemplateWarnings.Add(new TemplateWarning
+                        {
+                            Message = "فحص واحد أو أكثر بلا نتيجة — تقرير الحالة يوثّق الفحص المبدئيّ، فكلّ فحص يحتاج نتيجة صريحة."
+                        });
+                    }
+                    else if (!FunctionalChecks.Any(c => FunctionalCheckResultRules.IsNonPassing(c.Result)))
+                    {
+                        TemplateWarnings.Add(new TemplateWarning
+                        {
+                            Message = "الوثيقة تعلن تعذّر المعايرة لرسوب الفحوص، وجدول الفحوص لا يُظهر أيّ Failed أو Not Performed."
+                        });
+                    }
+                }
+                return;
+            }
 
             // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──
             if (MethodologyEnabled && !string.IsNullOrWhiteSpace(MethodologyText))
@@ -811,6 +834,14 @@ namespace CAL_QR.ViewModels
             // والتصحيح هنا حيث يُثبَّت الوضع. LoadForEdit لا تُصحَّح: هناك القيمة
             // من الشهادة المخزَّنة، والتجميد التاريخيّ يمنع دهسها.
             ComplianceVerdict = CertificateDraftBuilder.StatusReportDefaultVerdict;
+
+            // نفس حجّة الحكم أعلاه، مطبَّقة على الفحوص. الباني ينسخ DefaultResult من
+            // القالب ("Acceptable" في خمسة أنواع و"Yes" في Pancake)، وهو اقتراح
+            // لمعايرة ستقع. هنا لم تقع: الوثيقة تقول في ثلاثة مواضع إنّ الجهاز رسب
+            // في الفحوص، فجدولٌ كلّه مقبول يناقض الوثيقة التي هو فيها. الاسم
+            // والمتطلَّب يبقيان — هما هيكل الجدول؛ النتيجة وحدها قياس لم يقع.
+            foreach (var check in FunctionalChecks)
+                check.Result = null;
 
             // تُعاد بعد تثبيت الوضع: نُفِّذت داخل ApplyDraft والوثيقة ما زالت
             // "شهادة معايرة"، فأنتجت تحذيرات تطابق نويدات لا معنى لها في تقرير

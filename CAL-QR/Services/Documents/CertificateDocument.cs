@@ -880,13 +880,8 @@ namespace CAL_QR.Services.Documents
         private static bool HasAnyValue(IEnumerable<Field> fields) =>
             fields.Any(f => !string.IsNullOrWhiteSpace(f.Value));
 
-        private static bool IsFailedResult(string? result)
-        {
-            if (string.IsNullOrWhiteSpace(result)) return false;
-            var normalized = System.Text.RegularExpressions.Regex.Replace(result.Trim(), @"\s+", " ");
-            return normalized.Equals("Failed", StringComparison.OrdinalIgnoreCase)
-                || normalized.Equals("Not Performed", StringComparison.OrdinalIgnoreCase);
-        }
+        private static bool IsFailedResult(string? result) =>
+            CAL_QR.Validation.FunctionalCheckResultRules.IsNonPassing(result);
 
         private static void RenderFieldTable(ColumnDescriptor column, IEnumerable<Field> fields)
         {

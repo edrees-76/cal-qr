@@ -85,6 +85,11 @@ namespace CAL_QR.Repositories
             }
 
             certificate.DueDate = CertificateDateRules.ComputeDueDate(certificate.CalibrationDate);
+            // الترتيب إلزاميّ: SanitizeUserText قبل NormalizeDerivedValues.
+            // NormalizeDerivedValues تشتقّ AE من RE عبر MeasurementValueRules.AbsoluteOf،
+            // وتلك تُسقط علامات الاتّجاه حين تجد إشارة سالب وتُبقيها حين لا تجدها.
+            // تنظيفٌ بعدها يترك RE وAE بنظافتين مختلفتين.
+            SanitizeUserText(certificate);
             NormalizeDerivedValues(certificate);
 
             string number = await _numberService.AllocateAsync(context, certificate.IssueDate);
@@ -180,6 +185,15 @@ namespace CAL_QR.Repositories
             certificate.SignedCopyConfirmedAt = stored.SignedCopyConfirmedAt;
             certificate.DueDate = CertificateDateRules.ComputeDueDate(certificate.CalibrationDate);
             certificate.UpdatedAt = DateTime.UtcNow;
+            // الترتيب إلزاميّ: SanitizeUserText قبل NormalizeDerivedValues.
+            // NormalizeDerivedValues تشتقّ AE من RE عبر MeasurementValueRules.AbsoluteOf،
+            // وتلك تُسقط علامات الاتّجاه حين تجد إشارة سالب وتُبقيها حين لا تجدها.
+            // تنظيفٌ بعدها يترك RE وAE بنظافتين مختلفتين.
+            //
+            // الموضع هنا على الكائن الوارد (certificate) قبل SetValues وSyncChildren
+            // عمداً — لا يُنقل: فينتشر الأثر إلى المخزَّن (عبر SetValues) وإلى
+            // الصفوف الجديدة (عبر SyncChildren) معاً.
+            SanitizeUserText(certificate);
             NormalizeDerivedValues(certificate);
 
             context.Entry(stored).CurrentValues.SetValues(certificate);
@@ -357,6 +371,104 @@ namespace CAL_QR.Repositories
             {
                 Status = CertificateVerificationStatus.NotFound
             };
+        }
+
+        /// <summary>
+        /// تنظيف محارف الاتّجاه الخفيّة (تأتي مع اللصق من Word) من كل نصوص
+        /// المستخدم قبل أي اشتقاق أو حفظ.
+        ///
+        /// يُستثنى ما يولّده النظام لا ما يكتبه المستخدم — خمسة حقول:
+        /// CertificateNumber · QrPayload · QrPayloadVersion · VerifyCode ·
+        /// SignaturePayloadVersion. المستخدم لا يلصق في هذه الخمسة من Word
+        /// أصلاً، وتنظيفها يوهم القارئ أنّها مُدخَلات. من يضيف عموداً مولَّداً
+        /// سادساً يعرف من هذا التعليق أين يضعه.
+        /// </summary>
+        private static void SanitizeUserText(Certificate certificate)
+        {
+            certificate.ReferenceNo = TextInputRules.Clean(certificate.ReferenceNo);
+            certificate.FinancialReceiptNo = TextInputRules.Clean(certificate.FinancialReceiptNo);
+            certificate.CertificateTemplateType = TextInputRules.Clean(certificate.CertificateTemplateType);
+            certificate.ProcedureNo = TextInputRules.Clean(certificate.ProcedureNo);
+            certificate.CalibrationLocation = TextInputRules.Clean(certificate.CalibrationLocation);
+            certificate.Instrumentation = TextInputRules.Clean(certificate.Instrumentation);
+            certificate.DetectorType = TextInputRules.Clean(certificate.DetectorType);
+            certificate.ClientName = TextInputRules.Clean(certificate.ClientName) ?? string.Empty;
+            certificate.ClientAddress = TextInputRules.Clean(certificate.ClientAddress);
+            certificate.DeviceModel = TextInputRules.Clean(certificate.DeviceModel) ?? string.Empty;
+            certificate.DeviceSerialNumber = TextInputRules.Clean(certificate.DeviceSerialNumber) ?? string.Empty;
+            certificate.DeviceManufacturer = TextInputRules.Clean(certificate.DeviceManufacturer);
+            certificate.SurveyMeterModel = TextInputRules.Clean(certificate.SurveyMeterModel);
+            certificate.SurveyMeterSerialNumber = TextInputRules.Clean(certificate.SurveyMeterSerialNumber);
+            certificate.MeasurementType = TextInputRules.Clean(certificate.MeasurementType);
+            certificate.Distance = TextInputRules.Clean(certificate.Distance);
+            certificate.CountingTime = TextInputRules.Clean(certificate.CountingTime);
+            certificate.CountingUnit = TextInputRules.Clean(certificate.CountingUnit);
+            certificate.CalibrationMode = TextInputRules.Clean(certificate.CalibrationMode);
+            certificate.Temperature = TextInputRules.Clean(certificate.Temperature);
+            certificate.RelativeHumidity = TextInputRules.Clean(certificate.RelativeHumidity);
+            certificate.AtmosphericPressure = TextInputRules.Clean(certificate.AtmosphericPressure);
+            certificate.CorrectedReadingFormula = TextInputRules.Clean(certificate.CorrectedReadingFormula);
+            certificate.ComplianceVerdict = TextInputRules.Clean(certificate.ComplianceVerdict);
+            certificate.CalibrationStandard = TextInputRules.Clean(certificate.CalibrationStandard);
+            certificate.RadiationSource = TextInputRules.Clean(certificate.RadiationSource);
+            certificate.ReferenceGeometry = TextInputRules.Clean(certificate.ReferenceGeometry);
+            certificate.MethodologyText = TextInputRules.Clean(certificate.MethodologyText);
+            certificate.TraceabilityReference = TextInputRules.Clean(certificate.TraceabilityReference);
+            certificate.CombinedUncertainty = TextInputRules.Clean(certificate.CombinedUncertainty);
+            certificate.ExpandedUncertainty = TextInputRules.Clean(certificate.ExpandedUncertainty);
+            certificate.CoverageFactor = TextInputRules.Clean(certificate.CoverageFactor);
+            certificate.AdditionalInformation = TextInputRules.Clean(certificate.AdditionalInformation);
+            certificate.Notes = TextInputRules.Clean(certificate.Notes);
+            certificate.Remarks = TextInputRules.Clean(certificate.Remarks);
+            certificate.StatusReason = TextInputRules.Clean(certificate.StatusReason);
+            certificate.CalibratedByName = TextInputRules.Clean(certificate.CalibratedByName);
+            certificate.CalibratedByTitle = TextInputRules.Clean(certificate.CalibratedByTitle);
+            certificate.ReviewedByName = TextInputRules.Clean(certificate.ReviewedByName);
+            certificate.ReviewedByTitle = TextInputRules.Clean(certificate.ReviewedByTitle);
+            certificate.ApprovedByName = TextInputRules.Clean(certificate.ApprovedByName);
+            certificate.ApprovedByTitle = TextInputRules.Clean(certificate.ApprovedByTitle);
+            certificate.AuthorizedByName = TextInputRules.Clean(certificate.AuthorizedByName);
+            certificate.AuthorizedByTitle = TextInputRules.Clean(certificate.AuthorizedByTitle);
+
+            foreach (var nuclide in certificate.NuclideSummaries)
+            {
+                nuclide.Radionuclide = TextInputRules.Clean(nuclide.Radionuclide) ?? string.Empty;
+                nuclide.AverageCorrectionFactor = TextInputRules.Clean(nuclide.AverageCorrectionFactor);
+            }
+
+            foreach (var result in certificate.CalibrationResults)
+            {
+                result.SourceId = TextInputRules.Clean(result.SourceId);
+                result.Radionuclide = TextInputRules.Clean(result.Radionuclide);
+                result.Scale = TextInputRules.Clean(result.Scale);
+                result.ReferenceDoseLevel = TextInputRules.Clean(result.ReferenceDoseLevel);
+                result.ReferenceValue = TextInputRules.Clean(result.ReferenceValue);
+                result.MeasuredReading = TextInputRules.Clean(result.MeasuredReading);
+                result.CorrectionFactor = TextInputRules.Clean(result.CorrectionFactor);
+                result.RelativeError = TextInputRules.Clean(result.RelativeError);
+                result.AbsoluteRelativeError = TextInputRules.Clean(result.AbsoluteRelativeError);
+                result.Unit = TextInputRules.Clean(result.Unit);
+                result.Remarks = TextInputRules.Clean(result.Remarks);
+            }
+
+            foreach (var component in certificate.UncertaintyComponents)
+            {
+                component.ComponentName = TextInputRules.Clean(component.ComponentName) ?? string.Empty;
+                component.EvaluationType = TextInputRules.Clean(component.EvaluationType);
+                component.StandardUncertainty = TextInputRules.Clean(component.StandardUncertainty);
+                component.ContributionPercent = TextInputRules.Clean(component.ContributionPercent);
+                component.Distribution = TextInputRules.Clean(component.Distribution);
+            }
+
+            foreach (var check in certificate.FunctionalChecks)
+            {
+                check.CheckName = TextInputRules.Clean(check.CheckName) ?? string.Empty;
+                check.Requirement = TextInputRules.Clean(check.Requirement);
+                // Result: null مقصود («امسح الاختيار» في القائمة المنسدلة، وتقرير
+                // الحالة يضبطه null عمداً). عودة Clean بـnull تحفظ ذلك.
+                check.Result = TextInputRules.Clean(check.Result);
+                check.Remarks = TextInputRules.Clean(check.Remarks);
+            }
         }
 
         /// <summary>AE = |RE| نصياً على كل صف نتائج، قبل أي بناء لنص التوقيع.</summary>

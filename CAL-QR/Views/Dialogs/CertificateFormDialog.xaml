@@ -20,6 +20,10 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
+        <!-- وسيط ربط لعمود رأس CF/CFavg في جدول ملخّص النويدة: DataGridColumn خارج
+             الشجرة المرئيّة، فلا يصله ElementName ولا DataContext الموروث مباشرة. -->
+        <helpers:BindingProxy x:Key="DialogDataContextProxy" Data="{Binding}" />
+
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
@@ -445,7 +449,7 @@
                             </DataGrid.Resources>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Radionuclide" Binding="{Binding Radionuclide}" Width="1*" ElementStyle="{StaticResource CenteredCellElement}" />
-                                <DataGridTextColumn Header="Average Correction Factor (CFavg)" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
+                                <DataGridTextColumn Header="{Binding Source={StaticResource DialogDataContextProxy}, Path=Data.CorrectionFactorColumnHeader}" Binding="{Binding AverageCorrectionFactor}" Width="1.5*" ElementStyle="{StaticResource CenteredCellElement}" />
                                 <DataGridTemplateColumn Width="Auto">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>

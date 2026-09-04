@@ -112,6 +112,12 @@ namespace CAL_QR.ViewModels
             // الجدولان يتغذّيان الحارس نفسه. FunctionalChecks كانت غير موصولة،
             // فحذف الصفّ الراسب الوحيد يترك التحذير معروضًا على وثيقة سليمة.
             FunctionalChecks.CollectionChanged += (_, _) => RunTemplateConsistencyChecks();
+
+            // رأس عمود الملخّص (CF/CFavg) يتبع محتوى الجدولين معاً — إضافة/حذف صفّ
+            // نتيجة يغيّر عدد قراءات نظير فيؤثّر في تصنيفه، وإضافة/حذف صفّ ملخّص
+            // يغيّر مجموعة النظائر المعروضة نفسها.
+            CalibrationResults.CollectionChanged += (_, _) => RefreshCorrectionFactorColumnHeader();
+            NuclideSummaries.CollectionChanged += (_, _) => RefreshCorrectionFactorColumnHeader();
         }
 
         #region ١. بيانات الجهة والجهاز
@@ -289,6 +295,22 @@ namespace CAL_QR.ViewModels
 
         public ObservableCollection<CertificateNuclideSummary> NuclideSummaries { get; }
             = new ObservableCollection<CertificateNuclideSummary>();
+
+        // رأس عمود الملخّص على الشاشة: لا نصّ ثابت، بل مشتقّ من CorrectionFactorLabelRules —
+        // نفس القاعدة المستخدمة لرأس شريط الملخّص في CertificateDocument.cs (مصدر واحد).
+        private string _correctionFactorColumnHeader = CorrectionFactorLabelRules.HeaderFor(Array.Empty<bool>());
+        public string CorrectionFactorColumnHeader
+        {
+            get => _correctionFactorColumnHeader;
+            private set => SetProperty(ref _correctionFactorColumnHeader, value);
+        }
+
+        private void RefreshCorrectionFactorColumnHeader()
+        {
+            var isAveragedFlags = NuclideSummaries
+                .Select(s => CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, CalibrationResults));
+            CorrectionFactorColumnHeader = CorrectionFactorLabelRules.HeaderFor(isAveragedFlags);
+        }
 
         private string _correctedReadingFormula = string.Empty;
         public string CorrectedReadingFormula

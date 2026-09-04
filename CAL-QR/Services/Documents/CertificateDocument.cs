@@ -8,6 +8,7 @@ using QuestPDF.Infrastructure;
 using CAL_QR.Data;
 using CAL_QR.Enums;
 using CAL_QR.Models;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Services.Documents
 {
@@ -450,23 +451,56 @@ namespace CAL_QR.Services.Documents
         }
 
         // شريط ملخّص بعد جدول النتائج (العائلة الكاملة) مطابق لقالب رضا: ثلاثة أعمدة
-        // رأس + قيمة — CFavg (من ملخّصات النويدات) · uc · U. القيم uc/U مكرّرة عمداً
+        // رأس + قيمة — CF/CFavg (من ملخّصات النويدات) · uc · U. القيم uc/U مكرّرة عمداً
         // هنا وفي جدول الميزانية، كما في B401. يعيد بلا رسم إن لا بيانات.
+        //
+        // رأس العمود الأوّل وصيغة CFavg = ΣCF / n يتبعان محتوى النويدات لا نصًّا ثابتًا
+        // (CorrectionFactorLabelRules.HeaderFor) — نفس القاعدة المستخدمة لرأس عمود
+        // ملخّص النويدة في الشاشة، مصدر واحد كي لا يتباعد منطقان متوازيان.
         private void ComposeResultsSummaryStrip(ColumnDescriptor column)
         {
-            var cfavg = string.Join(", ",
-                (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
-                    .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-                    .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
-                    .Select(s => s.AverageCorrectionFactor!.Trim()));
+            var summaries = (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
+                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+                .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
+                .ToList();
+
+            var calibrationResults = _certificate.CalibrationResults ?? new List<CertificateCalibrationResult>();
+
+            var isAveragedFlags = summaries
+                .Select(s => CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, calibrationResults))
+                .ToList();
+
+            string? cfValue;
+            if (summaries.Count == 0)
+            {
+                // لا بيانات — القالب لا يعرض شيئاً هنا أصلاً، فتُترك القيمة فارغة كما كانت.
+                cfValue = null;
+            }
+            else if (summaries.Count == 1)
+            {
+                // نظير واحد: القيمة وحدها بلا اسم ولا تسمية، مطابقة لقالب B401 حرفياً.
+                cfValue = summaries[0].AverageCorrectionFactor!.Trim();
+            }
+            else
+            {
+                // أكثر من نظير: سطر لكلّ نظير، بنفس صيغة سطر الملصق (التسمية + النظير + القيمة).
+                cfValue = string.Join("\n", summaries.Select(s =>
+                {
+                    bool averaged = CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, calibrationResults);
+                    string label = CorrectionFactorLabelRules.LabelFor(averaged);
+                    return $"{label} {s.Radionuclide} = {s.AverageCorrectionFactor!.Trim()}";
+                }));
+            }
 
             var uc = _certificate.CombinedUncertainty;
             var u = _certificate.ExpandedUncertainty;
 
-            if (string.IsNullOrWhiteSpace(cfavg) && string.IsNullOrWhiteSpace(uc) && string.IsNullOrWhiteSpace(u))
+            if (string.IsNullOrWhiteSpace(cfValue) && string.IsNullOrWhiteSpace(uc) && string.IsNullOrWhiteSpace(u))
                 return;
 
             string coverageFactor = string.IsNullOrWhiteSpace(_certificate.CoverageFactor) ? "2" : _certificate.CoverageFactor!;
+            string cfHeader = CorrectionFactorLabelRules.HeaderFor(isAveragedFlags);
+            bool showAverageFormula = isAveragedFlags.Any(f => f);
 
             column.Item().PaddingTop(2).Table(table =>
             {
@@ -477,23 +511,32 @@ namespace CAL_QR.Services.Documents
                     columns.RelativeColumn();
                 });
 
-                void HeaderCell(string text) =>
-                    table.Cell().Background(NavyColor).Padding(4).AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(Colors.White);
+                // subText اختياري: صيغة CFavg = ΣCF / n، ملحقة بنصّ الرأس نفسه داخل
+                // الخليّة كما في قالب B401 — لا سطرًا مستقلّاً تحت الجدول.
+                void HeaderCell(string text, string? subText = null) =>
+                    table.Cell().Background(NavyColor).Padding(4).Column(col =>
+                    {
+                        col.Item().AlignCenter().Text(text).Bold().FontSize(7.5f).FontColor(Colors.White);
+                        if (!string.IsNullOrWhiteSpace(subText))
+                            col.Item().AlignCenter().Text(subText).FontSize(6.5f).FontColor(Colors.White);
+                    });
                 void ValueCell(string? text) =>
                     table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4).AlignCenter().Text(text ?? string.Empty).Bold().FontSize(8);
 
-                HeaderCell("Average Correction Factor (CFavg)");
+                // التعريف يُلحَق مع CFavg وحدها — نظير بقراءة واحدة اسمه CF، وإلحاق
+                // التعريف يشرح متوسّطاً لا وجود له.
+                HeaderCell(cfHeader, showAverageFormula ? "CFavg = ΣCF / n" : null);
                 HeaderCell("Combined Standard Uncertainty (uc)");
                 HeaderCell($"Expanded Uncertainty (U) (k = {coverageFactor}) (95% confidence level)");
 
                 // uc and U are shown with a "%" suffix in this strip to match Reda's
-                // template (the budget table below keeps them bare). CFavg is a
+                // template (the budget table below keeps them bare). CF/CFavg is a
                 // dimensionless factor and stays unchanged.
                 static string Pct(string? v) =>
                     string.IsNullOrWhiteSpace(v) ? string.Empty
                     : (v!.TrimEnd().EndsWith("%") ? v.Trim() : v.Trim() + " %");
 
-                ValueCell(cfavg);
+                ValueCell(cfValue);
                 ValueCell(Pct(uc));
                 ValueCell(Pct(u));
             });

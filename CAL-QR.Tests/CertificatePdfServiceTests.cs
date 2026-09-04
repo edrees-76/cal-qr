@@ -686,5 +686,55 @@ namespace CAL_QR.Tests
 
             Assert.Contains("Reason: Failure of functional checks.", text);
         }
+
+        // ===== حرّاس شريط ملخّص CF/CFavg (CorrectionFactorLabelRules) =====
+
+        private static Certificate BuildSummaryStripCertificate(int rowCountForNuclide, string averageCorrectionFactor)
+        {
+            var c = BuildBaseCertificate();
+            c.CertificateTemplateType = "Pancake Probe";
+
+            for (int i = 1; i <= rowCountForNuclide; i++)
+            {
+                c.CalibrationResults.Add(new CertificateCalibrationResult
+                {
+                    SortOrder = i,
+                    SourceId = $"SRC-{i:00}",
+                    Radionuclide = "Cs-137",
+                    MeasuredReading = "10.1",
+                    CorrectionFactor = "1.02",
+                    Unit = "µSv/h"
+                });
+            }
+
+            c.NuclideSummaries.Add(new CertificateNuclideSummary
+            {
+                SortOrder = 1,
+                Radionuclide = "Cs-137",
+                AverageCorrectionFactor = averageCorrectionFactor,
+            });
+
+            return c;
+        }
+
+        [Fact]
+        public void SummaryStrip_NuclideWithTwoRows_ShowsCFavgAndFormula()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildSummaryStripCertificate(rowCountForNuclide: 2, averageCorrectionFactor: "1.05")));
+
+            Assert.Contains("Average Correction Factor (CFavg)", text);
+            Assert.Contains("CFavg = ΣCF / n", text);
+        }
+
+        [Fact]
+        public void SummaryStrip_NuclideWithOneRow_ShowsCFWithoutFormula()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(
+                BuildSummaryStripCertificate(rowCountForNuclide: 1, averageCorrectionFactor: "1.02")));
+
+            Assert.Contains("Correction Factor (CF)", text);
+            Assert.DoesNotContain("ΣCF / n", text);
+        }
     }
 }

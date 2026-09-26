@@ -1,0 +1,39 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore CAL-QR.sln
+
+      - name: Build Solution
+        run: dotnet build CAL-QR.sln --configuration Release --no-restore
+
+      - name: Run Unit Tests
+        timeout-minutes: 10
+        run: dotnet test CAL-QR.Tests/CAL-QR.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal" --blame-hang --blame-hang-timeout 5m

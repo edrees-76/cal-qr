@@ -357,7 +357,7 @@
                             <Button Command="{Binding AddCalibrationResultCommand}" Content="إضافة صفّ نتيجة" Style="{StaticResource RowActionButton}" />
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="ConsistencyGrid_CellEditEnding">
+                        <DataGrid ItemsSource="{Binding CalibrationResults}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="ResultsGrid_CellEditEnding">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Template">
@@ -417,7 +417,7 @@
                             <Button Command="{Binding AddNuclideSummaryCommand}" Content="إضافة صفّ نويدة" Style="{StaticResource RowActionButton}" />
                         </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                        <DataGrid ItemsSource="{Binding NuclideSummaries}" Style="{StaticResource GridStyle}" MinHeight="70" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="NuclideSummaryGrid_CellEditEnding">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Template">

@@ -84,8 +84,9 @@ namespace CAL_QR.Views.Dialogs
         /// تحرير خليّة في أيّ جدول تعتمد عليه فحوص التطابق يعيد حسابها.
         /// BeginInvoke ضروريّ: القيمة لا تصل إلى الكائن قبل انتهاء التحرير،
         /// فالاستدعاء المباشر يقرأ القيمة السابقة.
-        /// يخدم جدولَي النتائج والفحوص الوظيفيّة — جدول الفحوص كان بلا ربط،
-        /// فبقي شريط التحذير على قيمته لحظة الفتح مهما كتب المستخدم.
+        /// يخدم جدول الفحوص الوظيفيّة — كان بلا ربط، فبقي شريط التحذير على قيمته
+        /// لحظة الفتح مهما كتب المستخدم. جدول النتائج له ResultsGrid_CellEditEnding
+        /// أدناه، ويستدعي الفحوص نفسها.
         /// </summary>
         private void ConsistencyGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
         {
@@ -93,6 +94,35 @@ namespace CAL_QR.Views.Dialogs
             {
                 if (DataContext is CertificateFormViewModel vm)
                     vm.RunTemplateConsistencyChecks();
+            }), DispatcherPriority.Background);
+        }
+
+        /// <summary>
+        /// جدول النتائج يغذّي أمرين: فحوص التطابق، وتسمية CF/CFavg (رأس عمود الملخّص
+        /// ومعادلة القراءة المصحّحة) التي تتبع عدد صفوف كلّ نظير. BeginInvoke للسبب نفسه
+        /// المذكور أعلاه.
+        /// </summary>
+        private void ResultsGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (DataContext is CertificateFormViewModel vm)
+                {
+                    vm.RunTemplateConsistencyChecks();
+                    vm.RefreshCorrectionFactorLabels();
+                }
+            }), DispatcherPriority.Background);
+        }
+
+        /// <summary>
+        /// جدول ملخّص النويدات: اسم النظير وقيمته يحدّدان أيّ النظائر تُطبع وتسميتها.
+        /// </summary>
+        private void NuclideSummaryGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (DataContext is CertificateFormViewModel vm)
+                    vm.RefreshCorrectionFactorLabels();
             }), DispatcherPriority.Background);
         }
 

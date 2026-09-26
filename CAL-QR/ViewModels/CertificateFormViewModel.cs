@@ -309,6 +309,18 @@ namespace CAL_QR.ViewModels
             private set => SetProperty(ref _correctionFactorColumnHeader, value);
         }
 
+        /// <summary>
+        /// يعيد اشتقاق رأس عمود CF/CFavg ومعادلة القراءة المصحّحة بعد تحرير خليّة.
+        /// الصفوف POCO بلا INotifyPropertyChanged، فتعديل اسم نظير أو قيمة CF داخل
+        /// صفّ لا يطلق CollectionChanged؛ الواجهة تستدعي هذه بعد انتهاء التحرير
+        /// (CertificateFormDialog: CellEditEnding) كما تفعل مع فحوص التطابق.
+        /// </summary>
+        public void RefreshCorrectionFactorLabels()
+        {
+            RefreshCorrectionFactorColumnHeader();
+            ApplyCorrectedReadingFormulaRule();
+        }
+
         private void RefreshCorrectionFactorColumnHeader()
         {
             var isAveragedFlags = NuclideSummaries

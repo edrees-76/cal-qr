@@ -1,6 +1,7 @@
 using Xunit;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
@@ -358,6 +359,74 @@ namespace CAL_QR.Tests
             vm.CalibrationResults.Add(Row("Co-60"));
 
             Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
+        }
+        // تعديل خليّة داخل صفّ لا يطلق CollectionChanged (الصفوف POCO)؛ الواجهة تستدعي
+        // RefreshCorrectionFactorLabels بعد انتهاء التحرير. بلا هذا الحارس، تحويل صفّين
+        // من نظيرين مختلفين إلى نظير واحد كان يترك الرأس والمعادلة على CF.
+        [Fact]
+        public async Task InRowEdit_RefreshCorrectionFactorLabels_UpdatesHeaderAndFormula()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            vm.CalibrationResults.Clear();
+            vm.NuclideSummaries.Clear();
+            vm.CalibrationResults.Add(Row("Cs-137"));
+            var second = Row("Co-60");
+            vm.CalibrationResults.Add(second);
+            vm.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+
+            Assert.Equal("Correction Factor (CF)", vm.CorrectionFactorColumnHeader);
+            Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
+
+            // تعديل داخل الصفّ: لا حدث مجموعة، فلا يتغيّر شيء قبل الاستدعاء.
+            second.Radionuclide = "Cs-137";
+            Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
+
+            vm.RefreshCorrectionFactorLabels();
+
+            Assert.Equal("Average Correction Factor (CFavg)", vm.CorrectionFactorColumnHeader);
+            Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
+        }
+
+        [Fact]
+        public async Task EditMode_RefreshCorrectionFactorLabels_UpdatesHeaderButNotFormula()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+
+            int certificateId;
+            using (var context = factory.CreateDbContext())
+            {
+                var certificate = new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = "TNRC-SSDL-2026-0002",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Model A",
+                    DeviceSerialNumber = "SN123",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today,
+                    CorrectedReadingFormula = CorrectionFactorLabelRules.CfFormula,
+                };
+                certificate.CalibrationResults.Add(Row("Cs-137"));
+                certificate.CalibrationResults.Add(Row("Co-60"));
+                certificate.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+                context.Certificates.Add(certificate);
+                await context.SaveChangesAsync();
+                certificateId = certificate.Id;
+            }
+
+            var vm = BuildViewModel(factory);
+            vm.LoadForEdit(certificateId);
+
+            vm.CalibrationResults.First(r => r.Radionuclide == "Co-60").Radionuclide = "Cs-137";
+            vm.RefreshCorrectionFactorLabels();
+
+            // الرأس عرض على الشاشة فيتبع البيانات؛ المعادلة داخل حمولة التوقيع فلا تُلمس.
+            Assert.Equal("Average Correction Factor (CFavg)", vm.CorrectionFactorColumnHeader);
+            Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
         }
     }
 }

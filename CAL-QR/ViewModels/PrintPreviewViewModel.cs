@@ -12,6 +12,7 @@ using CAL_QR.Data;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -244,11 +245,12 @@ namespace CAL_QR.ViewModels
             if (blockReason != null)
                 return (null, blockReason);
 
-            var nuclideLines = (certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
-                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-                .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
-                .Select(s => $"{s.Radionuclide} = {s.AverageCorrectionFactor}")
-                .ToList();
+            // التسمية (CF/CFavg) مشتقّة من عدد صفوف كلّ نظير — نفس قاعدة شريط ملخّص الشهادة.
+            // اشتقاق وقت الطباعة من بيانات مجمّدة: لا يمسّ الشهادة ولا حمولة توقيعها.
+            var nuclideLines = CorrectionFactorLabelRules.NuclideLines(
+                certificate.NuclideSummaries, certificate.CalibrationResults);
+            string correctionFactorLabel = CorrectionFactorLabelRules.ShortLabelFor(
+                CorrectionFactorLabelRules.PrintedFlags(certificate.NuclideSummaries, certificate.CalibrationResults));
 
             return (new QrPrintJob
             {
@@ -260,7 +262,8 @@ namespace CAL_QR.ViewModels
                 CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd"),
                 ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
                 VerifyCode = certificate.VerifyCode ?? "",
-                NuclideLines = nuclideLines
+                NuclideLines = nuclideLines,
+                CorrectionFactorLabel = correctionFactorLabel
             }, null);
         }
 

@@ -118,6 +118,10 @@ namespace CAL_QR.ViewModels
             // يغيّر مجموعة النظائر المعروضة نفسها.
             CalibrationResults.CollectionChanged += (_, _) => RefreshCorrectionFactorColumnHeader();
             NuclideSummaries.CollectionChanged += (_, _) => RefreshCorrectionFactorColumnHeader();
+
+            // معادلة القراءة المصحّحة تتبع التسمية نفسها (CF/CFavg) — للسبب ذاته.
+            CalibrationResults.CollectionChanged += (_, _) => ApplyCorrectedReadingFormulaRule();
+            NuclideSummaries.CollectionChanged += (_, _) => ApplyCorrectedReadingFormulaRule();
         }
 
         #region ١. بيانات الجهة والجهاز
@@ -310,6 +314,18 @@ namespace CAL_QR.ViewModels
             var isAveragedFlags = NuclideSummaries
                 .Select(s => CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, CalibrationResults));
             CorrectionFactorColumnHeader = CorrectionFactorLabelRules.HeaderFor(isAveragedFlags);
+        }
+
+        // نصّ المعادلة داخل حمولة التوقيع (RF)، فلا يُشتقّ وقت الطباعة بل يُضبط هنا قبل
+        // الحفظ، فيطابق المطبوعُ الموقَّع. في التعديل لا يُلمس: الشهادة الصادرة مجمّدة،
+        // وتبديل RF فيها يدوّر VerifyCode ويوسمها «معدَّلة» بلا طلب من المستخدم.
+        // (LoadForEdit يضبط _isEditMode قبل ApplyDraft، فالتحميل نفسه لا يمرّ هنا.)
+        private void ApplyCorrectedReadingFormulaRule()
+        {
+            if (_isEditMode) return;
+
+            var isAveragedFlags = CorrectionFactorLabelRules.PrintedFlags(NuclideSummaries, CalibrationResults);
+            CorrectedReadingFormula = CorrectionFactorLabelRules.FormulaFor(CorrectedReadingFormula, isAveragedFlags) ?? string.Empty;
         }
 
         private string _correctedReadingFormula = string.Empty;
@@ -1138,6 +1154,10 @@ namespace CAL_QR.ViewModels
 
                     if (answer != MessageBoxResult.Yes) return;
                 }
+
+                // تعديل خليّة داخل صفّ (اسم النظير، قيمة CF) لا يطلق CollectionChanged،
+                // فتُعاد القاعدة هنا كي لا يُحفظ نصّ يخالف الشريط المطبوع.
+                ApplyCorrectedReadingFormulaRule();
 
                 var certificate = BuildCertificateFromForm();
 

@@ -45,6 +45,19 @@ namespace CAL_QR.Validation
         /// </summary>
         public static string HeaderFor(IEnumerable<bool> isAveragedFlags)
         {
+            string shortLabel = ShortLabelFor(isAveragedFlags);
+
+            return shortLabel == "CFavg"
+                ? $"Average Correction Factor ({shortLabel})"
+                : $"Correction Factor ({shortLabel})";
+        }
+
+        /// <summary>
+        /// التسمية المختصرة لمجموعة نظائر: "CFavg" (كلّها متوسّطة) · "CF" (كلّها مفردة
+        /// أو لا نظائر) · "CF / CFavg" (مختلطة). مصدر HeaderFor ونصّ احتياط الملصق.
+        /// </summary>
+        public static string ShortLabelFor(IEnumerable<bool> isAveragedFlags)
+        {
             var flags = isAveragedFlags as IReadOnlyCollection<bool> ?? isAveragedFlags.ToList();
 
             bool anyAveraged = flags.Any(f => f);
@@ -52,10 +65,91 @@ namespace CAL_QR.Validation
 
             if (anyAveraged && anySingle)
             {
-                return "Correction Factor (CF / CFavg)";
+                return "CF / CFavg";
             }
 
-            return anyAveraged ? "Average Correction Factor (CFavg)" : "Correction Factor (CF)";
+            return anyAveraged ? "CFavg" : "CF";
+        }
+
+        /// <summary>
+        /// النظائر التي تُطبع قيمتها: ملخّصات بقيمة CF غير فارغة، بترتيبها المعروض.
+        /// نفس المجموعة في شريط ملخّص PDF وسطور الملصق ومعادلة القراءة المصحّحة.
+        /// </summary>
+        public static List<CertificateNuclideSummary> PrintedSummaries(IEnumerable<CertificateNuclideSummary>? summaries) =>
+            (summaries ?? Enumerable.Empty<CertificateNuclideSummary>())
+                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
+                .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
+                .ToList();
+
+        /// <summary>
+        /// أعلام التوسيط للنظائر المطبوعة (PrintedSummaries) بالترتيب نفسه.
+        /// </summary>
+        public static List<bool> PrintedFlags(
+            IEnumerable<CertificateNuclideSummary>? summaries,
+            IEnumerable<CertificateCalibrationResult>? rows)
+        {
+            var results = rows?.ToList() ?? new List<CertificateCalibrationResult>();
+            return PrintedSummaries(summaries).Select(s => IsAveraged(s.Radionuclide, results)).ToList();
+        }
+
+        /// <summary>
+        /// سطر لكلّ نظير مطبوع: "التسمية النظير = القيمة" (مثل "CFavg Sr-90/Y-90 = 1.02").
+        /// مصدر واحد لشريط ملخّص PDF (أكثر من نظير) وسطور الملصق.
+        /// </summary>
+        public static List<string> NuclideLines(
+            IEnumerable<CertificateNuclideSummary>? summaries,
+            IEnumerable<CertificateCalibrationResult>? rows)
+        {
+            var results = rows?.ToList() ?? new List<CertificateCalibrationResult>();
+            return PrintedSummaries(summaries)
+                .Select(s => $"{LabelFor(IsAveraged(s.Radionuclide, results))} {s.Radionuclide} = {s.AverageCorrectionFactor!.Trim()}")
+                .ToList();
+        }
+
+        // نصّا المعادلة كما في قوالب رضا (DeviceTypeCatalog) حرفيًّا.
+        public const string CfFormula = "Corrected Reading = Measured Reading × CF";
+        public const string CfAvgFormula = "Corrected Reading = Measured Reading × CFavg";
+
+        /// <summary>
+        /// معادلة القراءة المصحّحة تتبع تسمية النظائر المطبوعة. تُستبدل فقط إن كان النصّ
+        /// الحاليّ أحد نصّي القالب (مقارنة بلا مسافات ولا حالة أحرف)؛ النصّ الذي كتبه
+        /// المشغّل بنفسه يُعاد كما هو.
+        ///
+        ///   كلّها متوسّطة ⇒ CfAvgFormula
+        ///   كلّها مفردة   ⇒ CfFormula
+        ///   مختلطة أو بلا نظائر ⇒ بلا تغيير — القالب لا يحوي معادلة مختلطة، والعائلة
+        ///   المبسّطة وتقرير الحالة لا نظائر لهما فتبقى معادلتهما كما هي.
+        /// </summary>
+        public static string? FormulaFor(string? currentFormula, IEnumerable<bool> isAveragedFlags)
+        {
+            string normalized = Normalize(currentFormula);
+            bool isTemplateText =
+                string.Equals(normalized, Normalize(CfFormula), StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalized, Normalize(CfAvgFormula), StringComparison.OrdinalIgnoreCase);
+            if (!isTemplateText)
+            {
+                return currentFormula;
+            }
+
+            var flags = isAveragedFlags as IReadOnlyCollection<bool> ?? isAveragedFlags.ToList();
+            if (flags.Count == 0)
+            {
+                return currentFormula;
+            }
+
+            bool anyAveraged = flags.Any(f => f);
+            bool anySingle = flags.Any(f => !f);
+            if (anyAveraged && anySingle)
+            {
+                return currentFormula;
+            }
+
+            string target = anyAveraged ? CfAvgFormula : CfFormula;
+
+            // النصّ صحيح أصلاً (ولو بمسافات مختلفة): لا تغيير، كي لا يتبدّل نصّ مخزَّن بلا داعٍ.
+            return string.Equals(normalized, Normalize(target), StringComparison.OrdinalIgnoreCase)
+                ? currentFormula
+                : target;
         }
 
         private static string Normalize(string? value) =>

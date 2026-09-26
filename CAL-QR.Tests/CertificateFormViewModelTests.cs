@@ -7,6 +7,7 @@ using CAL_QR.Data;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 using CAL_QR.ViewModels;
 
 #pragma warning disable CS1998
@@ -26,7 +27,7 @@ namespace CAL_QR.Tests
         }
 
         private async Task<(TestDbContextFactory factory, int recordId)> SeedRecordAsync(
-            string result, string defaultCheckResult = "Acceptable")
+            string result, string defaultCheckResult = "Acceptable", string? correctedReadingFormula = null)
         {
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
                 .UseInMemoryDatabase(databaseName: "CalQrTestDb_CertFormVM_" + Guid.NewGuid().ToString())
@@ -45,6 +46,7 @@ namespace CAL_QR.Tests
                 {
                     Name = "Pancake Probe",
                     ComplianceVerdict = "APPROVED FOR OPERATIONAL USE",
+                    CorrectedReadingFormula = correctedReadingFormula,
                     CreatedAt = DateTime.UtcNow
                 };
                 context.DeviceTypes.Add(deviceType);
@@ -273,6 +275,89 @@ namespace CAL_QR.Tests
             Assert.Contains("Failed", vm.ResultOptions);
             Assert.Contains("Not Performed", vm.ResultOptions);
             Assert.DoesNotContain("Yes", vm.ResultOptions);
+        }
+        // ===== معادلة القراءة المصحّحة تتبع تسمية CF/CFavg (CorrectionFactorLabelRules.FormulaFor) =====
+
+        private static CertificateNuclideSummary Summary(string nuclide, string value) =>
+            new CertificateNuclideSummary { SortOrder = 1, Radionuclide = nuclide, AverageCorrectionFactor = value };
+
+        private static CertificateCalibrationResult Row(string nuclide) =>
+            new CertificateCalibrationResult { Radionuclide = nuclide, CorrectionFactor = "1.02" };
+
+        [Fact]
+        public async Task NewCertificate_FormulaFollowsRowCount_WhenTemplateText()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+            Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
+
+            vm.CalibrationResults.Clear();
+            vm.NuclideSummaries.Clear();
+            vm.CalibrationResults.Add(Row("Cs-137"));
+            vm.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+
+            // نظير بقراءة واحدة: CF لا CFavg — مطابقة لشريط الملخّص المطبوع.
+            Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
+
+            vm.CalibrationResults.Add(Row("Cs-137"));
+
+            Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
+        }
+
+        [Fact]
+        public async Task NewCertificate_CustomFormulaIsNeverOverwritten()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            vm.CorrectedReadingFormula = "Corrected Reading = Measured Reading × CFavg × k";
+            vm.CalibrationResults.Clear();
+            vm.NuclideSummaries.Clear();
+            vm.CalibrationResults.Add(Row("Cs-137"));
+            vm.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+
+            Assert.Equal("Corrected Reading = Measured Reading × CFavg × k", vm.CorrectedReadingFormula);
+        }
+
+        // الشهادة الصادرة مجمّدة: RF داخل حمولة التوقيع، وتبديله عند فتحها للتعديل
+        // كان سيدوّر VerifyCode ويوسمها «معدَّلة» بلا طلب من المستخدم.
+        [Fact]
+        public async Task EditMode_FormulaIsNotRewritten_EvenIfItContradictsRowCount()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+
+            int certificateId;
+            using (var context = factory.CreateDbContext())
+            {
+                var certificate = new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = "TNRC-SSDL-2026-0001",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Model A",
+                    DeviceSerialNumber = "SN123",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today,
+                    CorrectedReadingFormula = CorrectionFactorLabelRules.CfAvgFormula,
+                };
+                certificate.CalibrationResults.Add(Row("Cs-137"));
+                certificate.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+                context.Certificates.Add(certificate);
+                await context.SaveChangesAsync();
+                certificateId = certificate.Id;
+            }
+
+            var vm = BuildViewModel(factory);
+            vm.LoadForEdit(certificateId);
+
+            Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
+
+            vm.CalibrationResults.Add(Row("Co-60"));
+
+            Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
         }
     }
 }

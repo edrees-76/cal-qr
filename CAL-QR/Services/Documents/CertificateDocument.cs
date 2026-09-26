@@ -459,16 +459,8 @@ namespace CAL_QR.Services.Documents
         // ملخّص النويدة في الشاشة، مصدر واحد كي لا يتباعد منطقان متوازيان.
         private void ComposeResultsSummaryStrip(ColumnDescriptor column)
         {
-            var summaries = (_certificate.NuclideSummaries ?? new List<CertificateNuclideSummary>())
-                .OrderBy(s => s.SortOrder).ThenBy(s => s.Id)
-                .Where(s => !string.IsNullOrWhiteSpace(s.AverageCorrectionFactor))
-                .ToList();
-
-            var calibrationResults = _certificate.CalibrationResults ?? new List<CertificateCalibrationResult>();
-
-            var isAveragedFlags = summaries
-                .Select(s => CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, calibrationResults))
-                .ToList();
+            var summaries = CorrectionFactorLabelRules.PrintedSummaries(_certificate.NuclideSummaries);
+            var isAveragedFlags = CorrectionFactorLabelRules.PrintedFlags(_certificate.NuclideSummaries, _certificate.CalibrationResults);
 
             string? cfValue;
             if (summaries.Count == 0)
@@ -483,13 +475,9 @@ namespace CAL_QR.Services.Documents
             }
             else
             {
-                // أكثر من نظير: سطر لكلّ نظير، بنفس صيغة سطر الملصق (التسمية + النظير + القيمة).
-                cfValue = string.Join("\n", summaries.Select(s =>
-                {
-                    bool averaged = CorrectionFactorLabelRules.IsAveraged(s.Radionuclide, calibrationResults);
-                    string label = CorrectionFactorLabelRules.LabelFor(averaged);
-                    return $"{label} {s.Radionuclide} = {s.AverageCorrectionFactor!.Trim()}";
-                }));
+                // أكثر من نظير: سطر لكلّ نظير، بنفس صيغة سطر الملصق (التسمية + النظير + القيمة)
+                // ومن نفس الدالّة.
+                cfValue = string.Join("\n", CorrectionFactorLabelRules.NuclideLines(_certificate.NuclideSummaries, _certificate.CalibrationResults));
             }
 
             var uc = _certificate.CombinedUncertainty;

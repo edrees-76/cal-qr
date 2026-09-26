@@ -23,7 +23,11 @@ namespace CAL_QR.Services
         // ── كود التحقّق: من Certificates.VerifyCode لا HmacSignature (يُملأ في الالتزام ٢) ──
         public string VerifyCode { get; set; } = string.Empty;
 
-        // ── سطور CFavg لكلّ نويدة، جاهزة للطباعة (مثل "Co-60 = 1.02"). قد تكون فارغة للمبسّطة. ──
+        // ── سطر لكلّ نويدة بتسميته، جاهز للطباعة (مثل "CFavg Co-60 = 1.02"). قد تكون فارغة للمبسّطة. ──
+        // ── التسمية من CorrectionFactorLabelRules.NuclideLines — نفس سطور شريط ملخّص الشهادة. ──
         public List<string> NuclideLines { get; set; } = new List<string>();
+
+        // ── تسمية مختصرة لنصّ الاحتياط حين لا تتّسع السطور: "CF" أو "CFavg" أو "CF / CFavg". ──
+        public string CorrectionFactorLabel { get; set; } = "CF";
     }
 }

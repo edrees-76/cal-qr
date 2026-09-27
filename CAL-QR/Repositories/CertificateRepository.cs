@@ -472,6 +472,8 @@ namespace CAL_QR.Repositories
             certificate.ApprovedByTitle = TextInputRules.Clean(certificate.ApprovedByTitle);
             certificate.AuthorizedByName = TextInputRules.Clean(certificate.AuthorizedByName);
             certificate.AuthorizedByTitle = TextInputRules.Clean(certificate.AuthorizedByTitle);
+            certificate.RevokedByName = TextInputRules.Clean(certificate.RevokedByName);
+            certificate.RevocationReason = TextInputRules.Clean(certificate.RevocationReason);
 
             foreach (var nuclide in certificate.NuclideSummaries)
             {

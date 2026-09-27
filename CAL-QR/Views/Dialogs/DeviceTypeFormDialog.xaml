@@ -2,56 +2,379 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="نموذج نوع جهاز | Device Type Form" Height="300" Width="500"
+        Title="تحرير قالب نوع الجهاز" Height="720" Width="820"
+        MinHeight="500" MinWidth="650"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         Background="Transparent"
         FlowDirection="RightToLeft"
         WindowStyle="None"
         AllowsTransparency="True">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#1A3A6B" />
+            <Setter Property="Margin" Value="0,4,0,4" />
+            <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
+        </Style>
+    </Window.Resources>
+
     <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Top Header Bar -->
-            <Grid Grid.Row="0" Margin="0,0,0,15">
+            <!-- ─── رأس النافذة ─── -->
+            <Grid Grid.Row="0" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="إدارة أنواع الأجهزة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="إضافة نوع جهاز جديد أو تعديل بياناته" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="تحرير قالب نوع الجهاز" FontSize="18" FontWeight="Bold"
+                               Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="تعديل الحقول النصية والعلمين وقوالب الفحوصات ومكوّنات عدم اليقين"
+                               FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
+                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}"
+                        Width="30" Height="30" Padding="0" Click="CloseButton_Click">
                     <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
                 </Button>
             </Grid>
 
-            <!-- Form Content -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="5">
-                    <!-- Name -->
-                    <TextBlock Text="نوع الجهاز *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
-                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
-                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             materialDesign:HintAssist.Hint="مثال: كاشف Geiger" 
-                             Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+            <!-- ─── تنبيه نوع الكتالوج ─── -->
+            <Border Grid.Row="1"
+                    Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                    CornerRadius="6" Padding="10,6" Margin="0,0,0,8"
+                    Visibility="{Binding IsCatalogType, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="InformationOutline" Foreground="#F57F17"
+                                            Width="18" Height="18" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <TextBlock FontFamily="{StaticResource CairoFont}" FontSize="12" Foreground="#795548"
+                               VerticalAlignment="Center" TextWrapping="Wrap">
+                        <Run Text="هذا نوع كتالوجيّ:" FontWeight="Bold"/>
+                        <Run Text="علَما إظهار القسمين (عدم اليقين / المنهجية) يُعاد ضبطهما تلقائياً عند الإقلاع التالي. الحقول النصية تدوم."/>
+                    </TextBlock>
                 </StackPanel>
-            </ScrollViewer>
+            </Border>
 
-            <!-- Footer Actions -->
-            <Grid Grid.Row="2" Margin="0,15,0,0">
+            <!-- ─── علامات التبويب ─── -->
+            <TabControl Grid.Row="2"
+                        Style="{StaticResource MaterialDesignTabControl}"
+                        Margin="0,0,0,10">
+
+                <!-- ─── تبويب ١: البيانات الأساسية ─── -->
+                <TabItem Header="البيانات الأساسية" FontFamily="{StaticResource CairoFont}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
+                        <StackPanel Margin="4">
+
+                            <!-- الاسم -->
+                            <TextBlock Text="اسم النوع *" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="مثال: Pancake Probe"
+                                     Margin="0,0,0,12" FontFamily="{StaticResource CairoFont}" />
+
+                            <!-- العلمان -->
+                            <Border Background="#F5F5F5" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
+                                <StackPanel>
+                                    <TextBlock Text="إظهار الأقسام الاختيارية"
+                                               FontWeight="Bold" Foreground="#1A3A6B"
+                                               FontFamily="{StaticResource CairoFont}" Margin="0,0,0,8"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <ToggleButton IsChecked="{Binding UncertaintyEnabled}"
+                                                      Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                                      Margin="0,0,10,0" />
+                                        <TextBlock Text="قسم عدم اليقين (Uncertainty)"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ToggleButton IsChecked="{Binding MethodologyEnabled}"
+                                                      Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                                      Margin="0,0,10,0" />
+                                        <TextBlock Text="قسم المنهجية (Methodology)"
+                                                   VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource CairoFont}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- الحقول النصية — مجموعتان -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="12" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="رقم الإجراء (Procedure No)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding ProcedureNo, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="موقع المعايرة (Calibration Location)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CalibrationLocation, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="الهندسة المرجعية (Reference Geometry)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding ReferenceGeometry, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="وقت العدّ (Counting Time)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CountingTime, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="مثال: 60 Sec"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="وحدة العدّ (Counting Unit)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CountingUnit, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="مثال: kCPM"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="نمط المعايرة (Calibration Mode)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CalibrationMode, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="نوع القياس (Measurement Type)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding MeasurementType, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="المسافة (Distance)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding Distance, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="معيار المعايرة (Calibration Standard)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CalibrationStandard, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="حكم المطابقة (Compliance Verdict)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding ComplianceVerdict, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="معادلة القراءة المصحّحة" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding CorrectedReadingFormula, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="نوع الكاشف (Detector Type)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding DetectorType, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="الأجهزة المستخدمة (Instrumentation)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding Instrumentation, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                                    <TextBlock Text="مرجع التتبّعية (Traceability Reference)" Style="{StaticResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding TraceabilityReference, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                             materialDesign:HintAssist.Hint="اختياري"
+                                             AcceptsReturn="True" TextWrapping="Wrap"
+                                             Height="72" VerticalScrollBarVisibility="Auto"
+                                             Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- حقول متعددة الأسطر -->
+                            <TextBlock Text="نص المنهجية (Methodology Text)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding MethodologyText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="اختياري"
+                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                     Height="72" VerticalScrollBarVisibility="Auto"
+                                     Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                            <TextBlock Text="ملاحظات (Notes)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="اختياري"
+                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                     Height="72" VerticalScrollBarVisibility="Auto"
+                                     Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                            <TextBlock Text="معلومات إضافية (Additional Information)" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding AdditionalInformation, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="اختياري"
+                                     AcceptsReturn="True" TextWrapping="Wrap"
+                                     Height="72" VerticalScrollBarVisibility="Auto"
+                                     Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <!-- ─── تبويب ٢: الفحوصات الوظيفية ─── -->
+                <TabItem Header="الفحوصات الوظيفية" FontFamily="{StaticResource CairoFont}">
+                    <Grid Margin="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Margin="0,4,0,8" FontFamily="{StaticResource CairoFont}"
+                                   FontSize="12" Foreground="#555">
+                            قائمة الفحوصات الوظيفية المقترحة عند إنشاء شهادة جديدة من هذا النوع.
+                        </TextBlock>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding FunctionalChecks}"
+                                  SelectedItem="{Binding SelectedFunctionalCheck, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserReorderColumns="False"
+                                  CanUserSortColumns="True"
+                                  SelectionMode="Single"
+                                  FontFamily="{StaticResource CairoFont}"
+                                  materialDesign:DataGridAssist.CellPadding="8 4 8 4"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8 6 8 6">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding SortOrder}" Width="45" />
+                                <DataGridTextColumn Header="اسم الفحص" Binding="{Binding CheckName}" Width="*" />
+                                <DataGridTextColumn Header="المتطلّب" Binding="{Binding Requirement}" Width="*" />
+                                <DataGridTextColumn Header="النتيجة الافتراضية" Binding="{Binding DefaultResult}" Width="130" />
+                                <DataGridTemplateColumn Header="حذف" Width="60">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Command="{Binding DataContext.RemoveFunctionalCheckCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="0" Width="28" Height="28"
+                                                    ToolTip="حذف هذا الصف">
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="16" Height="16" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Grid.Row="2" Margin="0,8,0,0"
+                                Command="{Binding AddFunctionalCheckCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                HorizontalAlignment="Right"
+                                FontFamily="{StaticResource CairoFont}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="إضافة فحص" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </TabItem>
+
+                <!-- ─── تبويب ٣: مكوّنات عدم اليقين ─── -->
+                <TabItem Header="مكوّنات عدم اليقين" FontFamily="{StaticResource CairoFont}">
+                    <Grid Margin="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Margin="0,4,0,8" FontFamily="{StaticResource CairoFont}"
+                                   FontSize="12" Foreground="#555">
+                            قائمة مكوّنات ميزانية عدم اليقين المقترحة. قيم القياس تُملأ على الشهادة نفسها.
+                        </TextBlock>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding UncertaintyComponents}"
+                                  SelectedItem="{Binding SelectedUncertaintyComponent, Mode=TwoWay}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  CanUserReorderColumns="False"
+                                  CanUserSortColumns="True"
+                                  SelectionMode="Single"
+                                  FontFamily="{StaticResource CairoFont}"
+                                  materialDesign:DataGridAssist.CellPadding="8 4 8 4"
+                                  materialDesign:DataGridAssist.ColumnHeaderPadding="8 6 8 6">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding SortOrder}" Width="45" />
+                                <DataGridTextColumn Header="اسم المكوّن" Binding="{Binding ComponentName}" Width="*" />
+                                <DataGridTextColumn Header="نوع التقييم" Binding="{Binding EvaluationType}" Width="110" />
+                                <DataGridTextColumn Header="التوزيع" Binding="{Binding Distribution}" Width="110" />
+                                <DataGridTemplateColumn Header="حذف" Width="60">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                                    Command="{Binding DataContext.RemoveUncertaintyComponentCommand,
+                                                              RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    Padding="0" Width="28" Height="28"
+                                                    ToolTip="حذف هذا الصف">
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="16" Height="16" />
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Grid.Row="2" Margin="0,8,0,0"
+                                Command="{Binding AddUncertaintyComponentCommand}"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                HorizontalAlignment="Right"
+                                FontFamily="{StaticResource CairoFont}">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="إضافة مكوّن" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </TabItem>
+
+            </TabControl>
+
+            <!-- ─── شريط الأزرار ─── -->
+            <Grid Grid.Row="3">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="100" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding SaveCommand}" Content="حفظ"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            Background="#1A3A6B" BorderBrush="#1A3A6B"
+                            Height="40" Width="100" Margin="0,0,10,0"
+                            FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding CancelCommand}" Content="إلغاء"
+                            Style="{StaticResource MaterialDesignOutlinedButton}"
+                            Foreground="#707070" BorderBrush="#E0E0E0"
+                            Height="40" Width="80"
+                            FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
+
         </Grid>
     </Border>
 </Window>

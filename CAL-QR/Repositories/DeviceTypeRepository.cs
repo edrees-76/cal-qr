@@ -76,6 +76,55 @@ namespace CAL_QR.Repositories
             }
         }
 
+        public async Task UpdateTemplateAsync(DeviceType updated)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var existing = await context.DeviceTypes
+                .Include(t => t.FunctionalCheckTemplates)
+                .Include(t => t.UncertaintyComponentTemplates)
+                .FirstOrDefaultAsync(t => t.Id == updated.Id);
+            if (existing == null) return;
+
+            existing.Name                    = updated.Name;
+            existing.ProcedureNo             = updated.ProcedureNo;
+            existing.CalibrationLocation     = updated.CalibrationLocation;
+            existing.ReferenceGeometry       = updated.ReferenceGeometry;
+            existing.CountingTime            = updated.CountingTime;
+            existing.CountingUnit            = updated.CountingUnit;
+            existing.CalibrationMode         = updated.CalibrationMode;
+            existing.MethodologyText         = updated.MethodologyText;
+            existing.TraceabilityReference   = updated.TraceabilityReference;
+            existing.ComplianceVerdict       = updated.ComplianceVerdict;
+            existing.CalibrationStandard     = updated.CalibrationStandard;
+            existing.Notes                   = updated.Notes;
+            existing.AdditionalInformation   = updated.AdditionalInformation;
+            existing.MeasurementType         = updated.MeasurementType;
+            existing.Distance                = updated.Distance;
+            existing.CorrectedReadingFormula = updated.CorrectedReadingFormula;
+            existing.DetectorType            = updated.DetectorType;
+            existing.Instrumentation         = updated.Instrumentation;
+            existing.UncertaintyEnabled      = updated.UncertaintyEnabled;
+            existing.MethodologyEnabled      = updated.MethodologyEnabled;
+
+            context.DeviceTypeFunctionalCheckTemplates.RemoveRange(existing.FunctionalCheckTemplates);
+            context.DeviceTypeUncertaintyComponentTemplates.RemoveRange(existing.UncertaintyComponentTemplates);
+
+            foreach (var fc in updated.FunctionalCheckTemplates)
+            {
+                fc.Id = 0;
+                fc.DeviceTypeId = existing.Id;
+                context.DeviceTypeFunctionalCheckTemplates.Add(fc);
+            }
+            foreach (var uc in updated.UncertaintyComponentTemplates)
+            {
+                uc.Id = 0;
+                uc.DeviceTypeId = existing.Id;
+                context.DeviceTypeUncertaintyComponentTemplates.Add(uc);
+            }
+
+            await context.SaveChangesAsync();
+        }
+
         public async Task SoftDeleteAsync(int id)
         {
             using var context = await _contextFactory.CreateDbContextAsync();

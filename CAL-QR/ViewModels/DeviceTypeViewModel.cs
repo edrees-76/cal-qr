@@ -150,7 +150,7 @@ namespace CAL_QR.ViewModels
             var dialog = _deviceTypeFormDialogFactory();
             if (dialog.DataContext is DeviceTypeFormViewModel vm)
             {
-                vm.LoadForEdit(item);
+                await vm.LoadForEditAsync(item.Id);
             }
 
             if (dialog.ShowDialog() == true)

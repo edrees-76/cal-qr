@@ -318,7 +318,7 @@ namespace CAL_QR.Repositories
 
             using var context = await _contextFactory.CreateDbContextAsync();
 
-            // ١. الرموز الحالية
+            // ١. الرموز الحالية (شهادة حيّة غير ملغاة)
             var current = await context.Certificates
                 .AsNoTracking()
                 .Include(c => c.NuclideSummaries)
@@ -339,7 +339,25 @@ namespace CAL_QR.Repositories
                 };
             }
 
-            // ٢. الرموز التاريخية — المسار الذي يمنع ظهور وثيقة أصلية كأنها مزوّرة
+            // ٢. الشهادات الملغاة — الرمز أصلي لكن الشهادة سُحبت رسمياً.
+            // يجب أن يسبق التاريخية: ملغاة ≠ مزوّرة، والمستخدم يستحق الحقيقة.
+            var revoked = await context.Certificates
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.VerifyCode == code && c.IsRevoked);
+
+            if (revoked != null)
+            {
+                return new CertificateVerificationResult
+                {
+                    Status = CertificateVerificationStatus.Revoked,
+                    Certificate = revoked,
+                    RevokedAt = revoked.RevokedAt,
+                    RevokedByName = revoked.RevokedByName,
+                    RevocationReason = revoked.RevocationReason
+                };
+            }
+
+            // ٣. الرموز التاريخية — المسار الذي يمنع ظهور وثيقة أصلية كأنها مزوّرة
             var historical = await context.CertificateVerifyCodeHistory
                 .AsNoTracking()
                 .Where(h => h.VerifyCode == code)
@@ -371,6 +389,31 @@ namespace CAL_QR.Repositories
             {
                 Status = CertificateVerificationStatus.NotFound
             };
+        }
+
+        public async Task RevokeAsync(int certificateId, string revokedByName, string reason)
+        {
+            if (string.IsNullOrWhiteSpace(revokedByName))
+                throw new ArgumentException("اسم المُلغي مطلوب.", nameof(revokedByName));
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new ArgumentException("سبب الإلغاء مطلوب.", nameof(reason));
+
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var cert = await context.Certificates.FirstOrDefaultAsync(c => c.Id == certificateId);
+
+            if (cert == null)
+                throw new InvalidOperationException($"الشهادة {certificateId} غير موجودة.");
+            if (cert.IsRevoked)
+                throw new InvalidOperationException("الشهادة ملغاة مسبقاً.");
+
+            cert.IsRevoked = true;
+            cert.IsDeleted = true;
+            cert.RevokedAt = DateTime.UtcNow;
+            cert.RevokedByName = revokedByName.Trim();
+            cert.RevocationReason = reason.Trim();
+            cert.UpdatedAt = DateTime.UtcNow;
+
+            await context.SaveChangesAsync();
         }
 
         /// <summary>

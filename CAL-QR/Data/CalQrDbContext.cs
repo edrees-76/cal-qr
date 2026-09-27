@@ -262,6 +262,11 @@ namespace CAL_QR.Data
 
                 entity.Property(e => e.IsSignedCopyAttached).HasDefaultValue(false);
 
+                entity.Property(e => e.IsRevoked).HasDefaultValue(false);
+                entity.Property(e => e.RevokedByName).HasMaxLength(200);
+                entity.Property(e => e.RevocationReason).HasMaxLength(500);
+                entity.HasIndex(e => e.IsRevoked);
+
                 // فهرس البحث بالرمز — مسار «الكود السريع» يبحث به وحده.
                 // غير فريد عمداً: تصادم رمز ١٦ خانة ممكن نظرياً، وفهرس فريد
                 // كان سيُسقِط عملية إصدار مشروعة.

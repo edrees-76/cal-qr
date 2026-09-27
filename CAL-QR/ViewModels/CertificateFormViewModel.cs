@@ -13,6 +13,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Services;
 using CAL_QR.Validation;
 using CAL_QR.ViewModels.Base;
+using CAL_QR.Views.Dialogs;
 
 namespace CAL_QR.ViewModels
 {
@@ -55,6 +56,7 @@ namespace CAL_QR.ViewModels
         private bool _isLoaded;
         private bool _isEditMode;
         private int _certificateId;
+        private string _loadedCertificateNumber = string.Empty;
         private CertificateDocumentType _documentType = CertificateDocumentType.CalibrationCertificate;
 
         public event EventHandler<CertificateIssuedEventArgs>? CertificateIssued;
@@ -73,6 +75,7 @@ namespace CAL_QR.ViewModels
             _contextFactory = contextFactory;
 
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
+            RevokeCommand = new RelayCommand(async () => await RevokeAsync(), () => _isEditMode && _certificateId > 0);
 
             AddNuclideSummaryCommand = new RelayCommand(() =>
                 NuclideSummaries.Add(new CertificateNuclideSummary()));
@@ -673,6 +676,8 @@ namespace CAL_QR.ViewModels
         /// <summary>معكوس IsStatusReport — يقود إظهار الأقسام الخاصّة بالمعايرة (النتائج، عدم اليقين).</summary>
         public bool IsCalibrationCertificate => !IsStatusReport;
 
+        public bool IsEditMode => _isEditMode;
+
         private string _remarks = string.Empty;
         public string Remarks
         {
@@ -734,6 +739,7 @@ namespace CAL_QR.ViewModels
         #region الأوامر
 
         public ICommand SaveCommand { get; }
+        public ICommand RevokeCommand { get; }
         public ICommand AddNuclideSummaryCommand { get; }
         public ICommand RemoveNuclideSummaryCommand { get; }
         public ICommand AddCalibrationResultCommand { get; }
@@ -955,6 +961,7 @@ namespace CAL_QR.ViewModels
                 }
 
                 _calibrationRecordId = certificate.CalibrationRecordId;
+                _loadedCertificateNumber = certificate.CertificateNumber;
 
                 var draft = new CertificateDraftResult
                 {
@@ -1272,6 +1279,51 @@ namespace CAL_QR.ViewModels
             {
                 _isSaving = false;
                 CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        private async Task RevokeAsync()
+        {
+            if (!_isEditMode || _certificateId <= 0) return;
+
+            string certNumber = string.IsNullOrWhiteSpace(_loadedCertificateNumber)
+                ? _certificateId.ToString()
+                : _loadedCertificateNumber;
+
+            var dialog = new RevokeCertificateDialog(certNumber)
+            {
+                Owner = Application.Current.MainWindow
+            };
+
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                await _certificateRepository.RevokeAsync(_certificateId, dialog.RevokedByName, dialog.RevocationReason);
+
+                try
+                {
+                    await _auditLogRepository.LogAsync(
+                        "إلغاء شهادة",
+                        "Certificate",
+                        _certificateId.ToString(),
+                        $"إلغاء الشهادة رقم {certNumber} — السبب: {dialog.RevocationReason} — المُلغي: {dialog.RevokedByName}");
+                }
+                catch { /* فشل سجل العمليات لا يُبطل الإلغاء المكتمل */ }
+
+                MessageBox.Show(
+                    $"تم إلغاء الشهادة رقم {certNumber} بنجاح.\n" +
+                    "عند مسح رمز QR الخاص بها ستظهر حالة «ملغاة».\n" +
+                    "يمكنك الآن إصدار شهادة بديلة لنفس سجل المعايرة.",
+                    "تم الإلغاء",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
+                CloseWindowAction?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"خطأ أثناء إلغاء الشهادة: {ex.Message}", "خطأ",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

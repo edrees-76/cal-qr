@@ -126,6 +126,20 @@
     (كانت 383؛ +6 جديدة). دُمج في PR 10.
   - **التحقّق البصريّ (إدريس، 27 سبتمبر 2026، بعد الدمج):** نجح.
 
+- **جولة نظام الثيم وإعادة تصميم الإعدادات** — فرع `claude/quirky-lamport-df0g4s` (من `main` بعد دمج PR 10):
+  - السبب: طلب إدريس تحسين المظهر وإضافة الوضع الداكن وإعادة تصميم قسم الإعدادات الذي كان مزدحماً.
+  - **القرارات:** (أ) 4 لوحات ألوان قابلة للتبديل وقت التشغيل (Steel/Gold/Cobalt/Olive)؛ (ب) 3 أوضاع إضاءة (فاتح/داكن/النظام)؛ (ج) تصميم «بطاقات تشعّبيّة» (Hub Cards) للإعدادات.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/Services/ThemeService.cs` — **جديد**: `Palettes` (4 ألوان) + `Apply(name, mode)` يُحدّث MaterialDesign PaletteHelper والفراشي المخصّصة في `App.Resources` دفعةً واحدة.
+    - `CAL-QR/App.xaml.cs` — تحميل الثيم المحفوظ قبل أيّ نافذة (بعد الترحيلات، قبل HMAC).
+    - `CAL-QR/MainWindow.xaml` — الخلفية وأيقونتا المستخدم/قاعدة البيانات والتبويب المحدَّد ← `DynamicResource` بدل ألوان ثابتة.
+    - `CAL-QR/ViewModels/SettingsViewModel.cs` — `SelectedThemeName`، `AppearanceMode`، `ApplyThemeCommand`، `ApplyThemeAsync` (يطبّق ويحفظ في AppSettings).
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — إعادة كتابة كاملة: 6 بطاقات تشعّبيّة RadioButton، 6 لوحات مخفيّة/مرئيّة بـDataTrigger، منطقة الخطر Expander في الأسفل.
+    - `CAL-QR/Helpers/StringEqualityConverter.cs` — **جديد**: `IValueConverter` يربط `RadioButton.IsChecked` بخاصية `string` في الـViewModel.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - PR مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
+
 ## ملاحظات مفتوحة
 
 - ملفّات `.zip` القديمة غير المقفلة على جهاز المختبر وأيّ قرص خارجيّ/مجلّد سحابيّ تبقى كاشفة لمفتاح

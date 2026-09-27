@@ -31,6 +31,16 @@ namespace CAL_QR.Repositories
         /// تحديثاً كاملاً فيفقد القالب من حيث لا يدري.
         /// </summary>
         Task RenameAsync(int id, string name);
+
+        /// <summary>
+        /// تحديث قالب نوع جهاز كاملاً: الاسم والحقول النصية السبعة عشر والعَلَمان
+        /// وقوائم الفحوصات الوظيفية ومكوّنات عدم اليقين.
+        ///
+        /// تحمّل الصفّ والأبناء من السياق (Tracked) وتكتب الفروق فقط.
+        /// أبناء الجدولين: delete+insert بالكامل — أبسط من حساب الفرق ومضمون الصحّة.
+        /// </summary>
+        Task UpdateTemplateAsync(DeviceType updated);
+
         Task SoftDeleteAsync(int id);
     }
 }

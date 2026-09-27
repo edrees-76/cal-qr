@@ -307,13 +307,13 @@ namespace CAL_QR.Tests
 
             var authService = new TestCurrentUserService();
             var auditRepo = new AuditLogRepository(factory, authService);
-            var backupService = new BackupService(factory, auditRepo);
+            var backupService = new BackupService(factory, auditRepo, new TestBackupPasswordStore());
 
             // Act - Perform Backup
             await backupService.BackupNowAsync(backupFolder);
 
             // Assert backup file created
-            var zipFiles = Directory.GetFiles(backupFolder, "CalQR_Backup_*.zip");
+            var zipFiles = Directory.GetFiles(backupFolder, "CalQR_Backup_*.cqbak");
             Assert.Single(zipFiles);
             string zipFilePath = zipFiles[0];
 

@@ -59,7 +59,7 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
@@ -67,14 +67,14 @@ namespace CAL_QR.Tests
                 await backupService.BackupNowAsync(testBackupFolder);
 
                 // 3. Assert Backup created
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
 
                 string zipFilePath = zipFiles[0];
                 Assert.True(File.Exists(zipFilePath));
 
                 // Verify ZIP contents
-                using (var archive = ZipFile.OpenRead(zipFilePath))
+                using (var archive = TestBackupPasswordStore.OpenArchive(zipFilePath))
                 {
                     Assert.NotNull(archive.GetEntry("cal-qr.db"));
                     Assert.NotNull(archive.GetEntry("Attachments/test_file.txt"));
@@ -172,14 +172,14 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // 2. Act 1 - Run Backup
                 await backupService.BackupNowAsync(testBackupFolder);
 
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
                 Assert.True(File.Exists(zipFilePath));
@@ -284,19 +284,19 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // Create backup zip using BackupNowAsync (since QR Output folder doesn't exist, it won't be packed)
                 await backupService.BackupNowAsync(testBackupFolder);
 
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
 
                 // Verify ZIP contents (should not contain QR_Output folder)
-                using (var archive = ZipFile.OpenRead(zipFilePath))
+                using (var archive = TestBackupPasswordStore.OpenArchive(zipFilePath))
                 {
                     Assert.NotNull(archive.GetEntry("cal-qr.db"));
                     Assert.NotNull(archive.GetEntry("Attachments/test_file.txt"));
@@ -358,7 +358,7 @@ namespace CAL_QR.Tests
                 context.Database.EnsureCreated();
             }
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(async () => 
@@ -395,7 +395,7 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             // Create a completely empty zip file (no db entry)
             string corruptZipPath = Path.Combine(testBackupFolder, "corrupt.zip");
@@ -440,12 +440,12 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             bool result = await backupService.BackupNowAsync(testBackupFolder);
 
             Assert.True(result);
-            var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+            var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
             Assert.Single(zipFiles);
 
             SqliteConnection.ClearAllPools();
@@ -474,13 +474,13 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             bool result = await backupService.BackupNowAsync(testBackupFolder);
 
             Assert.True(result);
-            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
-            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.zip");
+            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
+            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.cqbak");
             Assert.Single(localZipFiles);
             Assert.Single(cloudZipFiles);
             Assert.Equal(Path.GetFileName(localZipFiles[0]), Path.GetFileName(cloudZipFiles[0]));
@@ -509,12 +509,12 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             bool result = await backupService.BackupNowAsync(testBackupFolder);
 
             Assert.False(result); // Cloud copy failed, but local backup succeeded
-            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+            var localZipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
             Assert.Single(localZipFiles);
 
             SqliteConnection.ClearAllPools();
@@ -536,7 +536,7 @@ namespace CAL_QR.Tests
             DateTime baseTime = DateTime.Now.AddDays(-20);
             for (int i = 0; i < 12; i++)
             {
-                string oldFile = Path.Combine(testCloudFolder, $"CalQR_Backup_2026-01-01_10-{i:D2}.zip");
+                string oldFile = Path.Combine(testCloudFolder, $"CalQR_Backup_2026-01-01_10-{i:D2}.cqbak");
                 await File.WriteAllTextAsync(oldFile, "mock backup");
                 File.SetCreationTime(oldFile, baseTime.AddMinutes(i));
             }
@@ -552,12 +552,12 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             bool result = await backupService.BackupNowAsync(testBackupFolder);
 
             Assert.True(result);
-            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.zip");
+            var cloudZipFiles = Directory.GetFiles(testCloudFolder, "CalQR_Backup_*.cqbak");
             Assert.Equal(10, cloudZipFiles.Length);
 
             SqliteConnection.ClearAllPools();
@@ -601,13 +601,13 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // Act 1 - Backup while settings point at the "A" machine paths
                 await backupService.BackupNowAsync(testBackupFolder);
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
 
@@ -681,17 +681,17 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // Act 1 - Backup an empty Attachments folder, so the zip has no "Attachments/" entries
                 await backupService.BackupNowAsync(testBackupFolder);
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
 
-                using (var archive = ZipFile.OpenRead(zipFilePath))
+                using (var archive = TestBackupPasswordStore.OpenArchive(zipFilePath))
                 {
                     Assert.DoesNotContain(archive.Entries, e => e.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase));
                 }
@@ -745,13 +745,13 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // Act 1 - Backup the nested signed-copy file
                 await backupService.BackupNowAsync(testBackupFolder);
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
 
@@ -808,7 +808,7 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             FileStream? lockingStream = null;
 
@@ -816,7 +816,7 @@ namespace CAL_QR.Tests
             {
                 // Act 1 - Backup while both Attachments and QR_Output have content
                 await backupService.BackupNowAsync(testBackupFolder);
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 string zipFilePath = zipFiles[0];
 
@@ -892,13 +892,13 @@ namespace CAL_QR.Tests
             }
 
             var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
-            var backupService = new BackupService(factory, auditLogRepo);
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
 
             try
             {
                 // Act 1 - Backup, then Act 2 - a plain, successful restore
                 await backupService.BackupNowAsync(testBackupFolder);
-                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.zip");
+                var zipFiles = Directory.GetFiles(testBackupFolder, "CalQR_Backup_*.cqbak");
                 Assert.Single(zipFiles);
                 await backupService.RestoreAsync(zipFiles[0]);
 

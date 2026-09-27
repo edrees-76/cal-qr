@@ -16,12 +16,23 @@ namespace CAL_QR.Services
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IAuditLogRepository _auditLogRepository;
+        private readonly IBackupPasswordStore _passwordStore;
         private Timer? _backupTimer;
 
-        public BackupService(IDbContextFactory<CalQrDbContext> contextFactory, IAuditLogRepository auditLogRepository)
+        public const string NoPasswordMessage =
+            "لم تُضبط كلمة سرّ النسخ الاحتياطيّ بعد، فلم تُنشأ أيّ نسخة. اضبطها من «الإعدادات» ← «النسخ الاحتياطي والاستعادة». " +
+            "النسخة غير المقفلة تكشف مفتاح توقيع الشهادات لمن يحصل عليها.";
+
+        private const string BackupFilePattern = "CalQR_Backup_*" + BackupEncryption.FileExtension;
+
+        public BackupService(
+            IDbContextFactory<CalQrDbContext> contextFactory,
+            IAuditLogRepository auditLogRepository,
+            IBackupPasswordStore passwordStore)
         {
             _contextFactory = contextFactory;
             _auditLogRepository = auditLogRepository;
+            _passwordStore = passwordStore;
         }
 
         private string GetDatabaseFilePath()
@@ -70,6 +81,14 @@ namespace CAL_QR.Services
                     throw new ArgumentException("لم يتم تحديد مسار مطلق صالح لحفظ النسخة الاحتياطية.");
                 }
 
+                // قبل أيّ كتابة: لا نسخة مكشوفة أبداً. قاعدة البيانات تحمل مفتاح HMAC،
+                // فنسخة بلا تشفير تُمكّن من يحصل عليها من توقيع شهادات مزوَّرة.
+                string? password = await _passwordStore.GetPasswordAsync();
+                if (string.IsNullOrEmpty(password))
+                {
+                    throw new InvalidOperationException(NoPasswordMessage);
+                }
+
                 string dbPath = GetDatabaseFilePath();
                 string attachmentsPath = GetAttachmentsPath();
                 string qrOutputPath = await GetQrOutputPathAsync();
@@ -82,8 +101,11 @@ namespace CAL_QR.Services
                 string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
 
-                string zipFileName = $"CalQR_Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.zip";
-                string zipFilePath = Path.Combine(destinationFolder, zipFileName);
+                string backupFileName = $"CalQR_Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}{BackupEncryption.FileExtension}";
+                string backupFilePath = Path.Combine(destinationFolder, backupFileName);
+                // الأرشيف المكشوف يُبنى في المجلّد المؤقّت وحده ويُحذف معه في finally؛
+                // ما يصل إلى مجلّد النسخ هو الملفّ المشفَّر فقط.
+                string plainZipPath = Path.Combine(tempDir, "backup.zip");
                 bool cloudCopySuccess = true;
 
                 try
@@ -113,7 +135,7 @@ namespace CAL_QR.Services
                     SqliteConnection.ClearAllPools();
 
                     // 2. Compress into ZIP
-                    using (var zipStream = new FileStream(zipFilePath, FileMode.Create))
+                    using (var zipStream = new FileStream(plainZipPath, FileMode.Create))
                     using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
                     {
                         archive.CreateEntryFromFile(tempDbPath, "cal-qr.db");
@@ -139,8 +161,11 @@ namespace CAL_QR.Services
                         }
                     }
 
+                    // 2.ب التشفير بكلمة سرّ النسخ الاحتياطيّ
+                    BackupEncryption.EncryptFile(plainZipPath, backupFilePath, password);
+
                     // 3. Keep last 10 backups
-                    var oldBackups = Directory.GetFiles(destinationFolder, "CalQR_Backup_*.zip")
+                    var oldBackups = Directory.GetFiles(destinationFolder, BackupFilePattern)
                         .Select(f => new FileInfo(f))
                         .OrderByDescending(f => f.CreationTime)
                         .Skip(10)
@@ -152,7 +177,7 @@ namespace CAL_QR.Services
                     }
 
                     // 4. Add Audit log entry
-                    await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"إنشاء نسخة احتياطية بنجاح: {zipFileName}");
+                    await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"إنشاء نسخة احتياطية بنجاح: {backupFileName}");
 
                     // 5. Cloud Backup Copy
                     string cloudBackupPath = await GetCloudBackupPathAsync();
@@ -172,11 +197,11 @@ namespace CAL_QR.Services
                                     Directory.CreateDirectory(cloudBackupPath);
                                 }
 
-                                string cloudZipPath = Path.Combine(cloudBackupPath, zipFileName);
-                                File.Copy(zipFilePath, cloudZipPath, true);
+                                string cloudBackupFilePath = Path.Combine(cloudBackupPath, backupFileName);
+                                File.Copy(backupFilePath, cloudBackupFilePath, true);
 
                                 // Keep last 10 backups in cloud backup path independently
-                                var oldCloudBackups = Directory.GetFiles(cloudBackupPath, "CalQR_Backup_*.zip")
+                                var oldCloudBackups = Directory.GetFiles(cloudBackupPath, BackupFilePattern)
                                     .Select(f => new FileInfo(f))
                                     .OrderByDescending(f => f.CreationTime)
                                     .Skip(10)
@@ -219,11 +244,11 @@ namespace CAL_QR.Services
             });
         }
 
-        public async Task RestoreAsync(string zipFilePath)
+        public async Task RestoreAsync(string backupFilePath, string? password = null)
         {
             await Task.Run(async () =>
             {
-                if (string.IsNullOrWhiteSpace(zipFilePath) || !File.Exists(zipFilePath))
+                if (string.IsNullOrWhiteSpace(backupFilePath) || !File.Exists(backupFilePath))
                 {
                     throw new FileNotFoundException("ملف النسخة الاحتياطية المحدد غير موجود أو غير صالح.");
                 }
@@ -234,12 +259,31 @@ namespace CAL_QR.Services
 
                 string backupPathRaw;
                 string cloudBackupPathRaw;
+                string? backupPasswordRaw;
                 using (var pathsContext = await _contextFactory.CreateDbContextAsync())
                 {
                     var backupPathSetting = await pathsContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "BackupPath");
                     var cloudBackupPathSetting = await pathsContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "CloudBackupPath");
+                    var backupPasswordSetting = await pathsContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == DpapiBackupPasswordStore.SettingKey);
                     backupPathRaw = backupPathSetting?.Value ?? string.Empty;
                     cloudBackupPathRaw = cloudBackupPathSetting?.Value ?? string.Empty;
+                    backupPasswordRaw = backupPasswordSetting?.Value;
+                }
+
+                bool isEncrypted = BackupEncryption.IsEncryptedBackup(backupFilePath);
+                string? effectivePassword = null;
+                if (isEncrypted)
+                {
+                    // كلمة مكتوبة عند الاستعادة تُقدَّم: نسخة من جهاز آخر أو بكلمة سابقة.
+                    effectivePassword = string.IsNullOrEmpty(password)
+                        ? await _passwordStore.GetPasswordAsync()
+                        : password;
+
+                    if (string.IsNullOrEmpty(effectivePassword))
+                    {
+                        throw new BackupPasswordException(
+                            "هذه النسخة مقفلة بكلمة سرّ ولا كلمة مضبوطة على هذا الجهاز. اكتب كلمة سرّ النسخة ثمّ أعد المحاولة.");
+                    }
                 }
 
                 string? stagingParent = Path.GetDirectoryName(attachmentsPath);
@@ -257,6 +301,15 @@ namespace CAL_QR.Services
                     string tempQrOutput = Path.Combine(tempDir, "StagedQrOutput");
                     bool hasAttachmentsInZip;
                     bool hasQrFolderInZip;
+
+                    // المرحلة ٠ — فكّ التشفير إلى مجلّد المسرح. كلمة سرّ خاطئة أو ملفّ
+                    // معدَّل يتوقّفان هنا قبل أيّ مساس بالنظام.
+                    string zipFilePath = backupFilePath;
+                    if (isEncrypted)
+                    {
+                        zipFilePath = Path.Combine(tempDir, "restore.zip");
+                        BackupEncryption.DecryptFile(backupFilePath, zipFilePath, effectivePassword!);
+                    }
 
                     // المرحلة ١ — تحضير فقط: نقرأ من الأرشيف ونكتب في مجلّد المسرح
                     // المؤقّت، بلا أيّ مساس بالقاعدة أو المجلّدات الحيّة.
@@ -416,6 +469,31 @@ namespace CAL_QR.Services
                                 }
                             }
 
+                            // كلمة سرّ النسخ الاحتياطيّ مقفلة بـDPAPI على الجهاز الذي ضبطها:
+                            // القيمة الآتية من نسخة جهاز آخر لا تُفكّ هنا. تبقى قيمة هذا
+                            // الجهاز، أو لا شيء إن لم تُضبط بعد، فيُطلب ضبطها.
+                            var restoredPassword = await restoredPathsContext.AppSettings
+                                .FirstOrDefaultAsync(s => s.Key == DpapiBackupPasswordStore.SettingKey);
+                            if (backupPasswordRaw == null)
+                            {
+                                if (restoredPassword != null)
+                                {
+                                    restoredPathsContext.AppSettings.Remove(restoredPassword);
+                                }
+                            }
+                            else if (restoredPassword != null)
+                            {
+                                restoredPassword.Value = backupPasswordRaw;
+                            }
+                            else
+                            {
+                                restoredPathsContext.AppSettings.Add(new AppSetting
+                                {
+                                    Key = DpapiBackupPasswordStore.SettingKey,
+                                    Value = backupPasswordRaw
+                                });
+                            }
+
                             await restoredPathsContext.SaveChangesAsync();
                         }
                     }
@@ -500,7 +578,7 @@ namespace CAL_QR.Services
                     }
 
                     // 3. Add Audit log entry
-                    await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"استعادة قاعدة البيانات والمرفقات من: {Path.GetFileName(zipFilePath)}");
+                    await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"استعادة قاعدة البيانات والمرفقات من: {Path.GetFileName(backupFilePath)}");
 
                     // المرحلة ٣ — تنظيف آثار ما قبل الاستعادة عند النجاح وحده. فشل
                     // التنظيف لا يُفشل استعادة ناجحة.
@@ -592,9 +670,20 @@ namespace CAL_QR.Services
                     await updateContext.SaveChangesAsync();
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Background thread - swallow exceptions to prevent process crash
+                // خيط خلفيّ: الاستثناء لا يُرمى (يُسقط البرنامج) لكنّه لا يُبتلع أيضاً.
+                // كان هنا catch صامت، فلو فشل النسخ المجدول — ومنه غياب كلمة السرّ —
+                // لم يعلم أحد. يُسجَّل في سجلّ العمليات، ولا تُحدَّث LastBackupDateTime
+                // فيُعاد المحاولة في الفحص التالي.
+                try
+                {
+                    await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"فشل النسخ الاحتياطي المجدول: {ex.Message}");
+                }
+                catch (Exception logEx)
+                {
+                    System.Diagnostics.Trace.TraceError($"فشل النسخ الاحتياطي المجدول ({ex.Message}) وتعذّر تسجيله: {logEx.Message}");
+                }
             }
         }
     }

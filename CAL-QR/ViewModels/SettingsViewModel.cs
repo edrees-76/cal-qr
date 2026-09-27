@@ -13,6 +13,7 @@ using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
 using CAL_QR.Helpers;
+using CAL_QR.Validation;
 
 using Microsoft.Data.Sqlite;
 
@@ -23,6 +24,7 @@ namespace CAL_QR.ViewModels
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IPaperTemplateRepository _templateRepository;
         private readonly IBackupService _backupService;
+        private readonly IBackupPasswordStore _backupPasswordStore;
         private readonly IAuditLogRepository _auditLogRepository;
         private readonly IUserRepository _userRepository;
 
@@ -56,6 +58,13 @@ namespace CAL_QR.ViewModels
         private string _selectedBackupSchedule = "None";
         private ObservableCollection<string> _backupSchedules = new() { "None", "Daily", "Weekly", "Monthly" };
 
+        // كلمة سرّ النسخ الاحتياطيّ
+        private string _backupPassword = string.Empty;
+        private string _backupPasswordConfirm = string.Empty;
+        private string _restorePassword = string.Empty;
+        private bool _backupPasswordIsSet;
+        private string _backupPasswordStatusText = "الحالة: جارٍ الفحص…";
+
         // Printing Fields
         private PaperTemplate? _selectedDefaultTemplate;
         private ObservableCollection<PaperTemplate> _templates = new();
@@ -68,6 +77,7 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             IPaperTemplateRepository templateRepository,
             IBackupService backupService,
+            IBackupPasswordStore backupPasswordStore,
             IAuditLogRepository auditLogRepository,
             ICurrentUserService currentUserService,
             IUserRepository userRepository,
@@ -77,6 +87,7 @@ namespace CAL_QR.ViewModels
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
             _backupService = backupService;
+            _backupPasswordStore = backupPasswordStore;
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
             _userRepository = userRepository;
@@ -103,8 +114,12 @@ namespace CAL_QR.ViewModels
             ClearHelpSectionPasswordCommand = new RelayCommand(
                 async () => await ClearHelpSectionPasswordAsync(), () => IsHelpSectionPasswordVisible && HelpSectionPasswordIsSet);
 
+            SaveBackupPasswordCommand = new RelayCommand(
+                async () => await SaveBackupPasswordAsync(), () => CanSaveBackupPassword());
+
             _ = LoadSettingsAsync();
             _ = LoadHelpSectionPasswordStateAsync();
+            _ = LoadBackupPasswordStateAsync();
         }
 
         public bool IsBackupRestoreVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Settings) ?? false;
@@ -224,6 +239,7 @@ namespace CAL_QR.ViewModels
         public ICommand BrowseQrOutputPathCommand { get; }
         public ICommand BackupNowCommand { get; }
         public ICommand RestoreBackupCommand { get; }
+        public ICommand SaveBackupPasswordCommand { get; }
         public ICommand OpenTemplatesDialogCommand { get; }
         public ICommand EditTemplateCommand { get; }
         public ICommand NewTemplateCommand { get; }
@@ -799,17 +815,29 @@ namespace CAL_QR.ViewModels
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "Backup ZIP Files (*.zip)|*.zip"
+                // .zip للنسخ القديمة غير المشفَّرة التي سبقت قفل النسخ — تبقى قابلة للاستعادة.
+                Filter = "نسخ CAL-QR الاحتياطية (*.cqbak;*.zip)|*.cqbak;*.zip"
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                var confirm = MessageBox.Show("تحذير هام: سيتم استبدال قاعدة البيانات الحالية وكافة المرفقات بمحتويات النسخة الاحتياطية. هذا الإجراء غير قابل للتراجع وسيتم تطبيق الاسترداد فوراً.\n\nهل تود الاستمرار بالاستعادة؟", "تأكيد الاسترداد الحاسم", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                string confirmText = "تحذير هام: سيتم استبدال قاعدة البيانات الحالية وكافة المرفقات بمحتويات النسخة الاحتياطية. هذا الإجراء غير قابل للتراجع وسيتم تطبيق الاسترداد فوراً.\n\nهل تود الاستمرار بالاستعادة؟";
+                if (!BackupEncryption.IsEncryptedBackup(openFileDialog.FileName))
+                {
+                    confirmText = "⚠ هذه نسخة قديمة غير مقفلة بكلمة سرّ (من قبل تفعيل قفل النسخ). بعد استعادتها خذ نسخة جديدة مقفلة، واحذف الملفّات القديمة غير المقفلة.\n\n" + confirmText;
+                }
+
+                var confirm = MessageBox.Show(confirmText, "تأكيد الاسترداد الحاسم", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (confirm == MessageBoxResult.Yes)
                 {
                     try
                     {
-                        await _backupService.RestoreAsync(openFileDialog.FileName);
+                        await _backupService.RestoreAsync(
+                            openFileDialog.FileName,
+                            string.IsNullOrEmpty(RestorePassword) ? null : RestorePassword);
+
+                        // على جهاز جديد لا تبقى كلمة سرّ نسخ بعد الاستعادة، فتُحدَّث الحالة المعروضة.
+                        await LoadBackupPasswordStateAsync();
                         
                         // Force update
                         CalibrationEvents.RaiseCalibrationChanged();
@@ -1008,6 +1036,96 @@ namespace CAL_QR.ViewModels
                 MessageBox.Show($"تعذّر الإزالة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #region كلمة سرّ النسخ الاحتياطيّ
+
+        public string BackupPassword { get => _backupPassword; set { if (SetProperty(ref _backupPassword, value)) (SaveBackupPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string BackupPasswordConfirm { get => _backupPasswordConfirm; set { if (SetProperty(ref _backupPasswordConfirm, value)) (SaveBackupPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+
+        /// <summary>تُستعمل فقط لنسخة مقفلة بكلمة غير المضبوطة على هذا الجهاز (جهاز آخر، أو كلمة سابقة).</summary>
+        public string RestorePassword { get => _restorePassword; set => SetProperty(ref _restorePassword, value); }
+
+        public bool BackupPasswordIsSet
+        {
+            get => _backupPasswordIsSet;
+            private set => SetProperty(ref _backupPasswordIsSet, value);
+        }
+
+        public string BackupPasswordStatusText
+        {
+            get => _backupPasswordStatusText;
+            private set => SetProperty(ref _backupPasswordStatusText, value);
+        }
+
+        private bool CanSaveBackupPassword() =>
+            IsBackupRestoreVisible &&
+            !string.IsNullOrEmpty(BackupPassword) &&
+            !string.IsNullOrEmpty(BackupPasswordConfirm);
+
+        private async Task LoadBackupPasswordStateAsync()
+        {
+            try
+            {
+                BackupPasswordIsSet = await _backupPasswordStore.IsSetAsync();
+                BackupPasswordStatusText = BackupPasswordIsSet
+                    ? "الحالة: مضبوطة ✔ — كلّ نسخة تُقفل بها."
+                    : "الحالة: لم تُضبط بعد ✖ — لن تُنشأ أيّ نسخة احتياطيّة حتى تُضبط.";
+            }
+            catch (Exception ex)
+            {
+                BackupPasswordIsSet = false;
+                BackupPasswordStatusText = $"الحالة: تعذّرت قراءتها ({ex.Message})";
+            }
+        }
+
+        /// <summary>
+        /// تُحفظ مقفلة بقفل ويندوز الخاصّ بهذا الجهاز (DPAPI)، لا نصّاً صريحاً ولا تجزئة:
+        /// النسخ المجدول يحتاج الكلمة نفسها ليشفّر بها.
+        /// </summary>
+        private async Task SaveBackupPasswordAsync()
+        {
+            if (!IsBackupRestoreVisible)
+            {
+                return;
+            }
+
+            string? error = BackupPasswordRules.Validate(BackupPassword, BackupPasswordConfirm);
+            if (error != null)
+            {
+                MessageBox.Show(error, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            bool wasSet = BackupPasswordIsSet;
+
+            try
+            {
+                await _backupPasswordStore.SetPasswordAsync(BackupPassword);
+                await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup",
+                    wasSet ? "تغيير كلمة سرّ النسخ الاحتياطيّ." : "ضبط كلمة سرّ النسخ الاحتياطيّ.");
+
+                // لا تبقى الكلمة في الذاكرة بعد الحفظ
+                BackupPassword = string.Empty;
+                BackupPasswordConfirm = string.Empty;
+                await LoadBackupPasswordStateAsync();
+
+                string message =
+                    "حُفظت كلمة سرّ النسخ الاحتياطيّ.\n\n" +
+                    "اكتبها على ورقة واحفظها في الظرف المختوم مع نسخة مفتاح التوقيع: بدونها لا تُفتح أيّ نسخة احتياطيّة على جهاز آخر.";
+                if (wasSet)
+                {
+                    message += "\n\nالنسخ التي أُخذت قبل هذا التغيير تبقى مقفلة بالكلمة السابقة.";
+                }
+
+                MessageBox.Show(message, "تم", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"تعذّر حفظ كلمة سرّ النسخ الاحتياطيّ: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
 
         private static async Task UpsertAppSettingAsync(CalQrDbContext context, string key, string value)
         {

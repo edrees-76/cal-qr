@@ -112,6 +112,20 @@
     (كانت 374؛ +9 جديدة لاختبارات الإلغاء). دُمج في PR 8 (`32035cc`).
   - **التحقّق البصريّ (إدريس، 27 سبتمبر 2026، بعد الدمج):** نجح.
 
+- **جولة واجهة تحرير قوالب أنواع الأجهزة** — فرع `claude/quirky-lamport-df0g4s` (من `main` عند `32035cc`):
+  - السبب: أيّ تعديل في القالب (الـ17 حقلاً + العلمان + الجدولين) كان يتطلّب تعديل كود مباشرة.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/Repositories/IDeviceTypeRepository.cs` — إضافة `UpdateTemplateAsync(DeviceType)`.
+    - `CAL-QR/Repositories/DeviceTypeRepository.cs` — تنفيذ `UpdateTemplateAsync`: يحمّل الصفّ متتبَّعاً، يحدّث الـ20 حقلاً، يحذف الأبناء القديمة ويُضيف الجديدة.
+    - `CAL-QR/ViewModels/DeviceTypeFormViewModel.cs` — إعادة كتابة كاملة: `FunctionalCheckRow`، `UncertaintyComponentRow`، 17 حقلاً نصّياً + علمان + `IsCatalogType`، `LoadForEditAsync`، `BuildDeviceType`، أوامر الجداول.
+    - `CAL-QR/ViewModels/DeviceTypeViewModel.cs` — `OpenEditTypeAsync` يستدعي `LoadForEditAsync(id)` بدلاً من `LoadForEdit(item)`.
+    - `CAL-QR/Views/Dialogs/DeviceTypeFormDialog.xaml` — إعادة كتابة كاملة: نافذة 820×720، شريط تحذير للأنواع الكتالوجيّة، TabControl بثلاثة تبويبات.
+    - `CAL-QR.Tests/DeviceTypeTemplateUpdateTests.cs` — 6 اختبارات جديدة (SQLite حقيقي).
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع.
+  - CI على `41b96bf` (PR 10): البناء 0 تحذيرات، 0 أخطاء؛ الاختبارات **389 نجح، 0 فشل، 0 تخطّى**
+    (كانت 383؛ +6 جديدة). دُمج في PR 10.
+  - **التحقّق البصريّ (إدريس، 27 سبتمبر 2026، بعد الدمج):** نجح.
+
 ## ملاحظات مفتوحة
 
 - ملفّات `.zip` القديمة غير المقفلة على جهاز المختبر وأيّ قرص خارجيّ/مجلّد سحابيّ تبقى كاشفة لمفتاح

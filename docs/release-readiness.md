@@ -88,6 +88,29 @@
   تطوير المنظومة.** لا تشفير لحقل المفتاح في القاعدة الحيّة، ولا DPAPI له، ولا يُقترح البند ثانيةً.
   الحماية المعتمدة: قفل النسخ الاحتياطيّة (PR 6) + نسخة المفتاح الورقيّة في الظرف المختوم.
 
+- **جولة إلغاء الشهادة الصادرة** — فرع `claude/inspiring-edison-u44rbt` (من `main` عند `8d234f8`):
+  - السبب: قرب أوّل إصدار شهادة حقيقيّة. الإلغاء ضروريّ لمواجهة الأخطاء وإصدار بديل.
+  - **القرار المعماريّ:** `IsRevoked = true` + `IsDeleted = true` معاً ⇒ الفهرس الفريد المشروط
+    (`IsDeleted=0`) على `CalibrationRecordId` يتيح شهادة بديلة فوراً؛ رمز التحقّق يعود `Revoked`
+    لا `NotFound` فيعلم المتلقّي أنّ الشهادة أُلغيت لا مزوَّرة.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/Models/Certificate.cs` — 4 حقول: `IsRevoked`, `RevokedAt`, `RevokedByName`, `RevocationReason`.
+    - `CAL-QR/Data/DatabaseMigrator.cs` — 4 استدعاءات `ExecuteSqlIfColumnMissing` + فهرس `IX_Certificates_IsRevoked`.
+    - `CAL-QR/Data/CalQrDbContext.cs` — إعدادات الخاصيّة والفهرس في `OnModelCreating`.
+    - `CAL-QR/Repositories/ICertificateRepository.cs` — `Revoked` في `CertificateVerificationStatus`،
+      3 حقول في `CertificateVerificationResult`، `RevokeAsync` في الواجهة.
+    - `CAL-QR/Repositories/CertificateRepository.cs` — خطوة ٢ في `VerifyByCodeAsync` (الشهادة الملغاة)،
+      تنفيذ `RevokeAsync`.
+    - `CAL-QR/ViewModels/QrVerifyViewModel.cs` — `Revoked` في `VerificationDisplayState`، 3 خصائص، حالة العرض.
+    - `CAL-QR/Views/Dialogs/RevokeCertificateDialog.xaml` + `.cs` — حوار جديد يجمع اسم المُلغي والسبب.
+    - `CAL-QR/ViewModels/CertificateFormViewModel.cs` — `RevokeCommand`, `RevokeAsync`, `_loadedCertificateNumber`, `IsEditMode`.
+    - `CAL-QR/Views/Dialogs/CertificateFormDialog.xaml` — زرّ «🚫 إلغاء الشهادة» في وضع التعديل.
+    - `CAL-QR/Views/Tabs/QrVerifyView.xaml` — حالة `IsRevoked` مع لون وأيقونة وتفاصيل الإلغاء.
+    - `CAL-QR.Tests/CertificateRevocationTests.cs` — 9 اختبارات جديدة (SQLite حقيقي).
+  - لا تغيير في حمولة التوقيع ولا HMAC. الشهادات الصادرة السابقة لا تتأثّر.
+  - CI: انتظار النتيجة.
+  - التحقّق البصريّ: يجريه إدريس بعد الدمج.
+
 ## ملاحظات مفتوحة
 
 - ملفّات `.zip` القديمة غير المقفلة على جهاز المختبر وأيّ قرص خارجيّ/مجلّد سحابيّ تبقى كاشفة لمفتاح

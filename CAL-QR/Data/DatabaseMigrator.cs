@@ -307,6 +307,18 @@ namespace CAL_QR.Data
                 ExecuteSqlIfColumnMissing(context, "Certificates", "FinancialReceiptNo",
                     "ALTER TABLE Certificates ADD COLUMN FinancialReceiptNo TEXT NULL;");
 
+                // حقول إلغاء الشهادة الصادرة.
+                // IsRevoked يُضبط مع IsDeleted = 1 معاً عند الإلغاء؛ بذلك يُطلق
+                // الفهرس الفريد المشروط (IsDeleted = 0) ويتيح شهادة بديلة لنفس السجل.
+                ExecuteSqlIfColumnMissing(context, "Certificates", "IsRevoked",
+                    "ALTER TABLE Certificates ADD COLUMN IsRevoked INTEGER NOT NULL DEFAULT 0;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "RevokedAt",
+                    "ALTER TABLE Certificates ADD COLUMN RevokedAt TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "RevokedByName",
+                    "ALTER TABLE Certificates ADD COLUMN RevokedByName TEXT NULL;");
+                ExecuteSqlIfColumnMissing(context, "Certificates", "RevocationReason",
+                    "ALTER TABLE Certificates ADD COLUMN RevocationReason TEXT NULL;");
+
                 // ملخّص النويدات — الطبقة الوسطى بين قراءات المصادر والملصق
                 context.Database.ExecuteSqlRaw(@"
                     CREATE TABLE IF NOT EXISTS CertificateNuclideSummaries (
@@ -371,6 +383,7 @@ namespace CAL_QR.Data
                 context.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Certificates_CertificateNumber"" ON ""Certificates"" (""CertificateNumber"");");
                 context.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Certificates_CalibrationRecordId"" ON ""Certificates"" (""CalibrationRecordId"") WHERE ""IsDeleted"" = 0;");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Certificates_IsDeleted"" ON ""Certificates"" (""IsDeleted"");");
+                context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Certificates_IsRevoked"" ON ""Certificates"" (""IsRevoked"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Certificates_IssuedAt"" ON ""Certificates"" (""IssuedAt"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateCalibrationResults_CertificateId"" ON ""CertificateCalibrationResults"" (""CertificateId"");");
                 context.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_CertificateUncertaintyComponents_CertificateId"" ON ""CertificateUncertaintyComponents"" (""CertificateId"");");

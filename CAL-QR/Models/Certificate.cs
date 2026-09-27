@@ -157,6 +157,16 @@ namespace CAL_QR.Models
         public DateTime? SignedCopyConfirmedAt { get; set; }
 
         public bool IsDeleted { get; set; } = false;
+
+        // ─── إلغاء الشهادة الصادرة ───
+        // شهادة ملغاة = IsRevoked true + IsDeleted true. الجمع بينهما يُفعّل
+        // الفهرس الفريد المشروط (IsDeleted = 0) فيُتيح إصدار شهادة بديلة لنفس
+        // سجل المعايرة. التحقّق عبر QR يُعيد «ملغاة» لا «غير موجودة».
+        public bool IsRevoked { get; set; } = false;
+        public DateTime? RevokedAt { get; set; }
+        public string? RevokedByName { get; set; }
+        public string? RevocationReason { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

@@ -860,6 +860,18 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <!-- النصّ واللون يتبعان نوع الوثيقة. #B71C1C هو نفسه لون
                              عنوان قسم تقرير الحالة أعلى النموذج — اللون يُقرأ قبل النصّ. -->
+                        <!-- زرّ الإلغاء النهائيّ — يظهر في وضع التعديل فقط -->
+                        <Button Command="{Binding RevokeCommand}"
+                                Content="🚫 إلغاء الشهادة"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#DC3545" BorderBrush="#DC3545"
+                                Height="40" Margin="0,0,10,0"
+                                FontFamily="{StaticResource CairoFont}"
+                                ToolTip="إلغاء الشهادة الصادرة نهائياً وتمييزها كملغاة عند التحقق">
+                            <Button.Visibility>
+                                <Binding Path="IsEditMode" Converter="{StaticResource BooleanToVisibilityConverter}"/>
+                            </Button.Visibility>
+                        </Button>
                         <Button Command="{Binding SaveCommand}" Content="{Binding SaveButtonText}"
                                 Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                             <Button.Style>

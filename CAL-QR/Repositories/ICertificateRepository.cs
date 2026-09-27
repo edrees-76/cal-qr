@@ -17,7 +17,10 @@ namespace CAL_QR.Repositories
         NotFound,
 
         /// <summary>الشهادة موجودة لكن إصدار توقيعها غير مدعوم — تعذّر لا فشل.</summary>
-        UnsupportedVersion
+        UnsupportedVersion,
+
+        /// <summary>الشهادة أصلية لكنها ألغيت رسمياً. صادرة ثم سُحبت — التوقيع سليم والمحتوى غير معدَّل.</summary>
+        Revoked
     }
 
     public class CertificateVerificationResult
@@ -25,6 +28,11 @@ namespace CAL_QR.Repositories
         public CertificateVerificationStatus Status { get; set; }
         public Certificate? Certificate { get; set; }
         public DateTime? AmendedAt { get; set; }
+
+        // مجموعتان من حقول الإلغاء — تُملأ فقط عند Status == Revoked
+        public DateTime? RevokedAt { get; set; }
+        public string? RevokedByName { get; set; }
+        public string? RevocationReason { get; set; }
     }
 
     public interface ICertificateRepository
@@ -54,12 +62,15 @@ namespace CAL_QR.Repositories
         /// </summary>
         Task<bool> SyncSignedCopyStateAsync(int certificateId);
 
-        /// <summary>بحث بالرمز في الرموز الحالية أولاً ثم التاريخية.</summary>
+        /// <summary>بحث بالرمز في الرموز الحالية أولاً ثم الملغاة ثم التاريخية.</summary>
         Task<CertificateVerificationResult> VerifyByCodeAsync(string verifyCode);
 
-        // ملاحظة: لا توجد دالّة إبطال شهادة في هذه المرحلة عمداً — انظر البند 5
-        // في جدول التبعيات الحاجزة بملف القرارات. المخطط يدعمها فعلاً (الفهرس
-        // الفريد المشروط على CalibrationRecordId يسمح بشهادة بديلة بعد الإبطال)،
-        // لكن فحص التصريح شأن طبقة التطبيق لا المستودع.
+        /// <summary>
+        /// إلغاء شهادة صادرة. يضبط IsRevoked = true و IsDeleted = true معاً؛
+        /// الجمع بينهما يُطلق الفهرس الفريد المشروط (IsDeleted = 0) ويُتيح إصدار
+        /// شهادة بديلة لنفس سجل المعايرة. لا تغيير في التوقيع ولا في حمولة QR
+        /// ولا في أي بيانات قياسيّة — الشهادة تُقرأ كاملةً عبر التحقّق لكنّها تُعيد Revoked.
+        /// </summary>
+        Task RevokeAsync(int certificateId, string revokedByName, string reason);
     }
 }

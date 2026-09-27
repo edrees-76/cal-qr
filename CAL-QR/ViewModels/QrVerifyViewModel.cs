@@ -11,6 +11,7 @@ namespace CAL_QR.ViewModels
         None,
         Authentic,
         Amended,
+        Revoked,
         NotFound,
         Unverifiable
     }
@@ -30,6 +31,9 @@ namespace CAL_QR.ViewModels
         private string _expDate = string.Empty;
         private string _result = string.Empty;
         private string _amendedAt = string.Empty;
+        private string _revokedAt = string.Empty;
+        private string _revokedBy = string.Empty;
+        private string _revocationReason = string.Empty;
 
         private bool _isValidated;
         private VerificationDisplayState _displayState = VerificationDisplayState.None;
@@ -66,6 +70,9 @@ namespace CAL_QR.ViewModels
         public string ExpDate { get => _expDate; set => SetProperty(ref _expDate, value); }
         public string Result { get => _result; set => SetProperty(ref _result, value); }
         public string AmendedAt { get => _amendedAt; set => SetProperty(ref _amendedAt, value); }
+        public string RevokedAt { get => _revokedAt; set => SetProperty(ref _revokedAt, value); }
+        public string RevokedBy { get => _revokedBy; set => SetProperty(ref _revokedBy, value); }
+        public string RevocationReason { get => _revocationReason; set => SetProperty(ref _revocationReason, value); }
 
         public string VerificationSource
         {
@@ -84,6 +91,7 @@ namespace CAL_QR.ViewModels
                 {
                     OnPropertyChanged(nameof(IsAuthentic));
                     OnPropertyChanged(nameof(IsAmended));
+                    OnPropertyChanged(nameof(IsRevoked));
                     OnPropertyChanged(nameof(IsNotFound));
                     OnPropertyChanged(nameof(IsUnverifiable));
                     OnPropertyChanged(nameof(IsSuccess));
@@ -93,6 +101,7 @@ namespace CAL_QR.ViewModels
 
         public bool IsAuthentic => DisplayState == VerificationDisplayState.Authentic;
         public bool IsAmended => DisplayState == VerificationDisplayState.Amended;
+        public bool IsRevoked => DisplayState == VerificationDisplayState.Revoked;
         public bool IsNotFound => DisplayState == VerificationDisplayState.NotFound;
         public bool IsUnverifiable => DisplayState == VerificationDisplayState.Unverifiable;
         public bool IsSuccess => IsAuthentic || IsAmended;
@@ -168,6 +177,15 @@ namespace CAL_QR.ViewModels
                     Message = $"⚠️ شهادة أصلية، لكنها عُدِّلت بعد إصدارها بتاريخ {AmendedAt}.";
                     break;
 
+                case CertificateVerificationStatus.Revoked:
+                    FillCertificateDisplay(result.Certificate);
+                    RevokedAt = result.RevokedAt?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    RevokedBy = result.RevokedByName ?? string.Empty;
+                    RevocationReason = result.RevocationReason ?? string.Empty;
+                    DisplayState = VerificationDisplayState.Revoked;
+                    Message = $"🚫 شهادة ملغاة رسمياً — لا يُعتدّ بها. أُلغيت بتاريخ {RevokedAt}.";
+                    break;
+
                 case CertificateVerificationStatus.NotFound:
                     ClearCertificateDisplay();
                     DisplayState = VerificationDisplayState.NotFound;
@@ -219,6 +237,9 @@ namespace CAL_QR.ViewModels
             ExpDate = string.Empty;
             Result = string.Empty;
             AmendedAt = string.Empty;
+            RevokedAt = string.Empty;
+            RevokedBy = string.Empty;
+            RevocationReason = string.Empty;
         }
 
         private void Clear()

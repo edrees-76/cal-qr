@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="نظام معايرة أجهزة المسح الإشعاعي (CAL-QR)" Height="720" Width="1080"
         WindowStartupLocation="CenterScreen"
-        Background="#F5F5F5"
+        Background="{DynamicResource MaterialDesignPaper}"
         FlowDirection="RightToLeft">
 
     <Window.InputBindings>
@@ -138,7 +138,7 @@
         </Border>
 
         <!-- Tabs Menu -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Visibility="{Binding IsTabHeaderVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="1" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="0,0,0,1" Visibility="{Binding IsTabHeaderVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -168,10 +168,10 @@
                                                 <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="False">
-                                                <Setter Property="Foreground" Value="#606060" />
+                                                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
                                             </Trigger>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Border" Property="Background" Value="#F5F5F5" />
+                                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource MaterialDesignBackground}" />
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>

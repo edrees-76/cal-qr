@@ -138,6 +138,23 @@
     - `CAL-QR/Helpers/StringEqualityConverter.cs` — **جديد**: `IValueConverter` يربط `RadioButton.IsChecked` بخاصية `string` في الـViewModel.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - **CI (PR 12):** اجتاز ← 389 نجح / 0 فشل. **التحقّق البصريّ (إدريس):** ظهرت 3 ملاحظات مرئيّة (يُعالجها الجولة التالية).
+  - دُمج في PR 12 (`a4519ae`).
+
+- **جولة إصلاح مشاكل الثيم الثلاث** — فرع `claude/quirky-lamport-df0g4s` (من `main` عند `a4519ae`):
+  - **السبب (3 ملاحظات مرئيّة أبلغ عنها إدريس بعد اختبار PR 12):**
+    1. «لا تتغير المنظومة بالكامل فقط لون العنوان الرئيسى» — شريط التبويبات وخلفية النافذة وألواح الإعدادات بقيت مُشفَّرة على White/#F5F5F5.
+    2. «عند الوضع الداكن اسماء التبويبات لا تظهر» — `Foreground="#606060"` في حالة IsSelected=False أصبح غير مرئيّ على خلفية داكنة.
+    3. «ايقونات الاعدات غير مناسبة» — `Kind="{TemplateBinding Tag}"` مع `Tag` نصّيّ (string) لا يُحوَّل تلقائيّاً إلى `PackIconKind` enum.
+  - **الإصلاحات المعماريّة:**
+    - **السبب الجذريّ لإصلاح 1+2:** `StaticResource` لا يُحدَّث عند تغيير مورد وقت التشغيل؛ الحلّ: `DynamicResource`.
+    - **السبب الجذريّ لإصلاح 3:** WPF لا يُحوّل string إلى PackIconKind في TemplateBinding؛ الحلّ: `{x:Static materialDesign:PackIconKind.XYZ}` مباشرةً في `Tag`.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/App.xaml` — تغيير 22 مرجع `StaticResource PrimaryInputForeground` إلى `DynamicResource` في أنماط TextBox/PasswordBox/ComboBox/DatePicker حتّى يتحدّث لون النصّ عند تبديل الثيم.
+    - `CAL-QR/MainWindow.xaml` — (أ) خلفية النافذة `#F5F5F5` → `MaterialDesignPaper`؛ (ب) خلفية شريط التبويبات `White` → `MaterialDesignPaper`؛ (ج) `#606060` في IsSelected=False → `MaterialDesignBody`؛ (د) hover `#F5F5F5` → `MaterialDesignBackground`.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — (أ) `Tag="XYZ"` → `{x:Static materialDesign:PackIconKind.XYZ}` لـ 9 أيقونات؛ (ب) `Background="White"` → `MaterialDesignPaper` على 7 Borders؛ (ج) `#374151/#6B7280` → `MaterialDesignBody` على النصوص.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: يُشغَّلان على جهاز إدريس (لا .NET/Windows في بيئة الجلسة).
   - PR مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
 
 ## ملاحظات مفتوحة

@@ -27,7 +27,7 @@ namespace CAL_QR.Tests
                 .UseSqlite($"Data Source={_dbPath}")
                 .Options;
             using var ctx = new CalQrDbContext(_opts);
-            DatabaseMigrator.Migrate(ctx);
+            DatabaseMigrator.RunMigrations(ctx);
         }
 
         public void Dispose()

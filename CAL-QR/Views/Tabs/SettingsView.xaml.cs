@@ -56,6 +56,30 @@ namespace CAL_QR.Views.Tabs
             }
         }
 
+        private void TxtBackupPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.BackupPassword = ((PasswordBox)sender).Password;
+            }
+        }
+
+        private void TxtBackupPasswordConfirm_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.BackupPasswordConfirm = ((PasswordBox)sender).Password;
+            }
+        }
+
+        private void TxtRestorePassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.RestorePassword = ((PasswordBox)sender).Password;
+            }
+        }
+
         private void TxtFactoryResetPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
             if (DataContext is SettingsViewModel vm)

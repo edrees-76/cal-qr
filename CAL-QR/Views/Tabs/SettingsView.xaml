@@ -274,6 +274,27 @@
                             <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ إعدادات الجدولة والنسخ" Margin="0,0,0,15"
                                     Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
 
+                            <!--
+                                كلمة سرّ النسخ الاحتياطيّ: كلّ نسخة (يدويّة أو مجدولة) تُقفل بها.
+                                بلا كلمة مضبوطة لا تُنشأ أيّ نسخة — قاعدة البيانات تحمل مفتاح التوقيع.
+                            -->
+                            <TextBlock Text="🔒 كلمة سرّ النسخ الاحتياطي" Style="{StaticResource SettingsLabelStyle}" />
+                            <TextBlock Text="{Binding BackupPasswordStatusText}" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,8" TextWrapping="Wrap" />
+                            <TextBlock Text="تُقفل بها كلّ نسخة احتياطيّة، ويطلبها البرنامج عند الاستعادة على جهاز آخر. اكتبها على ورقة واحفظها في الظرف المختوم مع نسخة مفتاح التوقيع."
+                                       FontSize="12" Foreground="#4A5568" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                            <TextBlock Text="كلمة السرّ (10 محارف على الأقلّ)" Style="{StaticResource SettingsLabelStyle}" />
+                            <PasswordBox x:Name="TxtBackupPassword" Height="40" PasswordChanged="TxtBackupPassword_PasswordChanged" Margin="0,0,0,12" />
+
+                            <TextBlock Text="تأكيد كلمة السرّ" Style="{StaticResource SettingsLabelStyle}" />
+                            <PasswordBox x:Name="TxtBackupPasswordConfirm" Height="40" PasswordChanged="TxtBackupPasswordConfirm_PasswordChanged" Margin="0,0,0,12" />
+
+                            <Button Command="{Binding SaveBackupPasswordCommand}" Content="حفظ كلمة سرّ النسخ الاحتياطي" Margin="0,0,0,15"
+                                    Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
+
+                            <TextBlock Text="كلمة سرّ النسخة المراد استعادتها (اتركها فارغة لاستخدام كلمة هذا الجهاز)" Style="{StaticResource SettingsLabelStyle}" TextWrapping="Wrap" />
+                            <PasswordBox x:Name="TxtRestorePassword" Height="40" PasswordChanged="TxtRestorePassword_PasswordChanged" Margin="0,0,0,15" />
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

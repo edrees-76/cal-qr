@@ -248,12 +248,6 @@
                                                     <DataTrigger Binding="{Binding CertificateId}" Value="0">
                                                         <Setter Property="Foreground" Value="Transparent" />
                                                     </DataTrigger>
-                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                        <Setter Property="Foreground" Value="White" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                        <Setter Property="Foreground" Value="White" />
-                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
@@ -324,14 +318,6 @@
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
                                                         <Setter Property="Foreground" Value="{DynamicResource GoldAccent}" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
                                                     </Style>
                                                 </materialDesign:PackIcon.Style>
                                             </materialDesign:PackIcon>
@@ -360,12 +346,6 @@
                                                                 <Setter Property="Kind" Value="ClipboardCheckMultiple" />
                                                                 <Setter Property="Foreground" Value="#2E7D32" />
                                                             </DataTrigger>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
                                                 </materialDesign:PackIcon.Style>
@@ -376,14 +356,6 @@
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
                                                         <Setter Property="Foreground" Value="#2E7D32" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                                <Setter Property="Foreground" Value="White" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
                                                     </Style>
                                                 </materialDesign:PackIcon.Style>
                                             </materialDesign:PackIcon>

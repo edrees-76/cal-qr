@@ -21,10 +21,13 @@
             <SolidColorBrush x:Key="ErrorRed" Color="#C62828" />
 
             <!-- Palette-tinted surface brushes (updated by ThemeService.Apply) -->
-            <SolidColorBrush x:Key="AppBackground"  Color="#F2F4F8" />
-            <SolidColorBrush x:Key="AppSurface"     Color="#FFFFFF" />
-            <SolidColorBrush x:Key="AppSurfaceAlt"  Color="#F7F8FA" />
-            <SolidColorBrush x:Key="AppBorder"      Color="#E0E4EC" />
+            <SolidColorBrush x:Key="AppBackground"        Color="#F2F4F8" />
+            <SolidColorBrush x:Key="AppSurface"          Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AppSurfaceAlt"       Color="#F7F8FA" />
+            <SolidColorBrush x:Key="AppBorder"           Color="#E0E4EC" />
+            <!-- DataGrid hover/selection tokens — Enjaz-style subtle approach -->
+            <SolidColorBrush x:Key="DataGridHoverBrush"     Color="#EEF2FB" /><!-- كحليّ فاتح جداً عند التمرير -->
+            <SolidColorBrush x:Key="DataGridSelectionBrush" Color="#D4E3F7" /><!-- أزرق ناعم عند التحديد -->
 
             <!-- Material Design overrides using our colors -->
             <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#2E5088" />
@@ -123,14 +126,15 @@
                 <Setter Property="CaretBrush" Value="{DynamicResource PrimaryInputForeground}" />
             </Style>
 
-            <!-- 6. Global DataGrid style (dark-mode + unified hover) -->
+            <!-- 6. Global DataGrid style — Enjaz-style subtle hover/selection -->
             <Style TargetType="{x:Type DataGrid}" BasedOn="{StaticResource MaterialDesignDataGrid}">
-                <Setter Property="RowBackground"           Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="RowBackground"            Value="{DynamicResource MaterialDesignPaper}" />
                 <Setter Property="AlternatingRowBackground" Value="{DynamicResource MaterialDesignBackground}" />
-                <Setter Property="Background"              Value="{DynamicResource MaterialDesignPaper}" />
-                <Setter Property="BorderBrush"             Value="{DynamicResource AppBorder}" />
-                <Setter Property="Foreground"              Value="{DynamicResource MaterialDesignBody}" />
-                <Setter Property="RowStyle"                Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
+                <Setter Property="Background"               Value="{DynamicResource MaterialDesignPaper}" />
+                <Setter Property="BorderBrush"              Value="{DynamicResource AppBorder}" />
+                <Setter Property="Foreground"               Value="{DynamicResource MaterialDesignBody}" />
+                <Setter Property="SelectionUnit"            Value="FullRow" />
+                <Setter Property="RowStyle"                 Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
             </Style>
 
             <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
@@ -142,66 +146,43 @@
             <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
-                <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
-            </Style>
-
-            <!-- 7. Unified DataGrid Row Hover Style -->
-            <Style x:Key="UnifiedDataGridRowHoverStyle" TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                <Setter Property="Foreground"  Value="{DynamicResource MaterialDesignBody}" />
                 <Style.Triggers>
-                    <!-- Hover Trigger when NOT Selected -->
-                    <MultiTrigger>
-                        <MultiTrigger.Conditions>
-                            <Condition Property="IsMouseOver" Value="True" />
-                            <Condition Property="IsSelected" Value="False" />
-                        </MultiTrigger.Conditions>
-                        <Setter Property="Background" Value="{DynamicResource PrimaryNavy}" />
-                        <Setter Property="Foreground" Value="White" />
-                    </MultiTrigger>
-                    <!-- الصفّ المُحدَّد يطابق مظهر الصفّ الممرور عليه: كحليّ + كتابة بيضاء -->
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="{DynamicResource PrimaryNavy}" />
-                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="Background" Value="{DynamicResource DataGridSelectionBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
-            <!-- 8. Unified Navy DataGrid Icon Style -->
+            <!-- 7. Unified DataGrid Row Hover Style — Enjaz approach: خلفية فاتحة + نصّ داكن -->
+            <Style x:Key="UnifiedDataGridRowHoverStyle" TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                <Style.Triggers>
+                    <!-- تمرير: كحليّ فاتح جداً — النصّ يبقى داكناً -->
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource DataGridHoverBrush}" />
+                    </Trigger>
+                    <!-- تحديد: أزرق ناعم — النصّ كحليّ داكن -->
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource DataGridSelectionBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- 8. Unified Navy DataGrid Icon Style — الأيقونة دائماً كحليّ (الخلفية فاتحة دائماً) -->
             <Style x:Key="UnifiedNavyDataGridIconStyle" TargetType="materialDesign:PackIcon">
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                        <Setter Property="Foreground" Value="White" />
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                        <Setter Property="Foreground" Value="White" />
-                    </DataTrigger>
-                </Style.Triggers>
             </Style>
 
-            <!-- 9. Unified Navy DataGrid TextBlock Style -->
+            <!-- 9. Unified Navy DataGrid TextBlock Style — الكحليّ دائماً (الخلفية فاتحة) -->
             <Style x:Key="UnifiedNavyDataGridTextBlockStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                        <Setter Property="Foreground" Value="White" />
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                        <Setter Property="Foreground" Value="White" />
-                    </DataTrigger>
-                </Style.Triggers>
             </Style>
 
-            <!-- 10. Unified Subtle DataGrid TextBlock Style -->
+            <!-- 10. Unified Subtle DataGrid TextBlock Style — رمادي فاتح دائماً -->
             <Style x:Key="UnifiedSubtleDataGridTextBlockStyle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBodyLight}" />
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                        <Setter Property="Foreground" Value="#F0F0F0" />
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                        <Setter Property="Foreground" Value="#F0F0F0" />
-                    </DataTrigger>
-                </Style.Triggers>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

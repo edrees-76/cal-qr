@@ -123,13 +123,14 @@
                 <Setter Property="CaretBrush" Value="{DynamicResource PrimaryInputForeground}" />
             </Style>
 
-            <!-- 6. Global DataGrid dark-mode support -->
+            <!-- 6. Global DataGrid style (dark-mode + unified hover) -->
             <Style TargetType="{x:Type DataGrid}" BasedOn="{StaticResource MaterialDesignDataGrid}">
                 <Setter Property="RowBackground"           Value="{DynamicResource MaterialDesignPaper}" />
                 <Setter Property="AlternatingRowBackground" Value="{DynamicResource MaterialDesignBackground}" />
                 <Setter Property="Background"              Value="{DynamicResource MaterialDesignPaper}" />
                 <Setter Property="BorderBrush"             Value="{DynamicResource AppBorder}" />
                 <Setter Property="Foreground"              Value="{DynamicResource MaterialDesignBody}" />
+                <Setter Property="RowStyle"                Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
             </Style>
 
             <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">

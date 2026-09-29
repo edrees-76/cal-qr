@@ -162,13 +162,27 @@
   - **القرار المعماريّ:** إضافة 4 موارد ديناميكيّة (`AppBackground`, `AppSurface`, `AppSurfaceAlt`, `AppBorder`) تُحسب في ThemeService من اللوحة الحاليّة — نبرة شاحبة جداً في الوضع الفاتح (5-12% خلط) وداكنة جداً في الوضع الداكن. ألوان الحالة (أحمر/أخضر/برتقالي) وأيقونات العمليّة تبقى ثابتة لأنّها دلاليّة.
   - **الملفّات المعدَّلة:**
     - `CAL-QR/Services/ThemeService.cs` — `TintLight`/`TintDark` + `IsSystemDark` + حساب الـ 4 موارد في `Apply()`.
-    - `CAL-QR/App.xaml` — إضافة الـ 4 موارد الافتراضيّة.
+    - `CAL-QR/App.xaml` — إضافة الـ 4 موارد الافتراضيّة + أنماط DataGrid/DataGridColumnHeader/DataGridCell لدعم الوضع الداكن + إصلاح `UnifiedDataGridRowHoverStyle` من StaticResource إلى DynamicResource.
     - `CAL-QR/MainWindow.xaml` — خلفية النافذة ← `AppBackground`.
     - 8 تبويبات (Dashboard, Devices, DeviceTypes, Owners, QrVerify, Reports, Users, Help) — `Background="White"` و`#F5F5F5/#FAFAFA/#F8FAFC` → `AppSurface`/`AppSurfaceAlt`؛ `BorderBrush="#E0E0E0/#E2E8F0"` → `AppBorder`.
     - `AboutView.xaml` + `HelpView.xaml` — `#1A3A6B` في Background/Foreground → `DynamicResource PrimaryNavy`.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build/test: يُشغَّلان على جهاز إدريس.
-  - PR — في انتظار CI وتحقّق إدريس البصريّ.
+  - PR 14 — في انتظار CI وتحقّق إدريس البصريّ.
+
+- **جولة مراجعة الثيم الشاملة (Color Audit)** — فرع `claude/quirky-lamport-df0g4s` (commit `b129a30`):
+  - **السبب:** إدريس أبلغ عن DataGrid صفوف بيضاء غير مقروءة في الوضع الداكن في جميع الأقسام، وطلب مراجعة شاملة لكلّ الثيمات.
+  - **تشخيص السبب الجذريّ:** (أ) `UnifiedDataGridRowHoverStyle` كان يستخدم `StaticResource PrimaryNavy` الذي لا يُحدَّث وقت التشغيل. (ب) الألوان المشفَّرة مباشرة `#1A3A6B/#C9A227/#707070/#E0E0E0` في 27 ملفّ XAML لا تستجيب للثيم.
+  - **الإصلاحات:**
+    - `App.xaml` — أنماط DataGrid/DataGridColumnHeader/DataGridCell بـ`MaterialDesignPaper`/`MaterialDesignBackground`/`MaterialDesignBody` (تتكيّف مع الوضع الداكن تلقائيّاً)؛ إصلاح 4 أنماط في `UnifiedDataGrid*Style` إلى DynamicResource.
+    - **14 نافذة حوار** (كلّها): `Background="White"` → `{DynamicResource AppSurface}`، `#1A3A6B` → `{DynamicResource PrimaryNavy}`، `#C9A227` → `{DynamicResource GoldAccent}`. استثناء: `PaperCanvas` أُبقي `White` (محاكاة ورقة طباعة حقيقيّة).
+    - **10 تبويبات** + **LoginWindow** + **FirstRunWizard** + **ScreensaverWindow** + **SplashWindow**: نفس التحويلات؛ `BorderBrush="#E0E0E0"` → `{DynamicResource AppBorder}`.
+    - `DashboardView.xaml` — إعادة `GradientStop Color="{DynamicResource PrimaryNavy}"` إلى `Color="#1A3A6B"` (WPF لا يدعم DynamicResource على GradientStop.Color لأنّه Color وليس Brush).
+    - `#801A3A6B` (تراكب شفّاف زخرفيّ في LoginWindow) + ألوان الحالة الدلاليّة (`#C62828`, `#2E7D32`, `#F9A825`) — أُبقيت ثابتة.
+  - **النتيجة:** 0 مراجع ألوان مشفَّرة قابلة للتبديل متبقّية؛ مرجعان وحيدان في GradientStop لا يدعمان DynamicResource (قيد WPF)، وهما ثابتان من هويّة التطبيق.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: يُشغَّلان على جهاز إدريس.
+  - PR 14 — يحتاج تحقّق إدريس البصريّ (الوضع الداكن والفاتح على كلّ الأقسام).
 
 ## ملاحظات مفتوحة
 

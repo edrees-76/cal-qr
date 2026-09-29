@@ -25,7 +25,7 @@
         </Grid.RowDefinitions>
 
         <!-- Main Toolbar -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+        <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -46,7 +46,7 @@
                         </Button.ContentTemplate>
                     </Button>
 
-                    <Button Command="{Binding ToggleViewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding ToggleViewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -57,7 +57,7 @@
                         </Button.ContentTemplate>
                     </Button>
 
-                    <Button Command="{Binding PrintBatchCommand}" Content="طباعة المحدد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding PrintBatchCommand}" Content="طباعة المحدد" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -80,17 +80,17 @@
                         </TextBox.InputBindings>
                     </TextBox>
 
-                    <Button Command="{Binding SearchCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="40" Padding="0" Margin="0,0,10,0" ToolTip="بحث">
+                    <Button Command="{Binding SearchCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="40" Padding="0" Margin="0,0,10,0" ToolTip="بحث">
                         <materialDesign:PackIcon Kind="Magnify" Width="20" Height="20" />
                     </Button>
 
-                    <Button Command="{Binding ToggleAdvancedSearchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Content="بحث متقدم" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ToggleAdvancedSearchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Content="بحث متقدم" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Advanced Search Panel -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10" Visibility="{Binding IsAdvancedSearchVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+        <Border Grid.Row="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10" Visibility="{Binding IsAdvancedSearchVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -106,38 +106,38 @@
 
                     <!-- Row 1 -->
                     <StackPanel Grid.Row="0" Grid.Column="0" Margin="5">
-                        <TextBlock Text="الجهة المالكة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الجهة المالكة" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <ComboBox ItemsSource="{Binding OwnersFilter}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedOwnerFilter}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="0" Grid.Column="1" Margin="5">
-                        <TextBlock Text="نوع الجهاز" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="نوع الجهاز" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <ComboBox ItemsSource="{Binding DeviceTypesFilter}" DisplayMemberPath="Name" SelectedItem="{Binding SelectedDeviceTypeFilter}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="0" Grid.Column="2" Margin="5">
-                        <TextBlock Text="الموديل" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الموديل" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <TextBox Text="{Binding FilterModel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="0" Grid.Column="3" Margin="5">
-                        <TextBlock Text="الرقم التسلسلي" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الرقم التسلسلي" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <TextBox Text="{Binding FilterSerialNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <!-- Row 2 -->
                     <StackPanel Grid.Row="1" Grid.Column="0" Margin="5">
-                        <TextBlock Text="تاريخ المعايرة من" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تاريخ المعايرة من" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <DatePicker SelectedDate="{Binding FilterStartDate}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="1" Margin="5">
-                        <TextBlock Text="تاريخ المعايرة إلى" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تاريخ المعايرة إلى" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <DatePicker SelectedDate="{Binding FilterEndDate}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="2" Margin="5">
-                        <TextBlock Text="النتيجة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="النتيجة" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <ComboBox SelectedValue="{Binding FilterResult}" SelectedValuePath="Content" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}">
                             <ComboBoxItem Content="الكل" />
                             <ComboBoxItem Content="ناجح" />
@@ -148,7 +148,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.Column="3" Margin="5">
-                        <TextBlock Text="الحالة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="الحالة" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <ComboBox SelectedValue="{Binding FilterStatus}" SelectedValuePath="Content" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}">
                             <ComboBoxItem Content="الكل" />
                             <ComboBoxItem Content="سارية" />
@@ -159,14 +159,14 @@
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,15,5,5">
-                    <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="36" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </StackPanel>
         </Border>
 
         <!-- Year Scope Bar (always visible, independent of the advanced search panel) -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15,10" Margin="0,0,0,10">
+        <Border Grid.Row="2" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15,10" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -174,7 +174,7 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="سنة المعايرة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" VerticalAlignment="Center" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Grid.Column="0" Text="سنة المعايرة" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" VerticalAlignment="Center" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
 
                 <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableYears}" SelectedItem="{Binding SelectedYearText}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
             </Grid>
@@ -183,7 +183,7 @@
         <!-- Content Area -->
         <Grid Grid.Row="3">
             <!-- 1. Table View -->
-            <Border Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="10" Visibility="{Binding IsTableView, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="10" Visibility="{Binding IsTableView, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DataGrid ItemsSource="{Binding Devices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <DataGrid.Resources>
                         <Style x:Key="DynamicTextColumnStyle" TargetType="TextBlock" BasedOn="{StaticResource MaterialDesignDataGridTextColumnStyle}">
@@ -323,7 +323,7 @@
                                             <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18">
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
-                                                        <Setter Property="Foreground" Value="#C9A227" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource GoldAccent}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
                                                                 <Setter Property="Foreground" Value="White" />
@@ -447,7 +447,7 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="{Binding CertificateNumber}" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="0" Text="{Binding CertificateNumber}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" />
                                             <CheckBox Grid.Column="1" IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="تحديد للطباعة الدفيعة" VerticalAlignment="Center" Margin="5,0,0,0" />
                                         </Grid>
 
@@ -469,7 +469,7 @@
                                         </TextBlock>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                            <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="#C9A227" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                            <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="{DynamicResource GoldAccent}" Margin="0,0,5,0" VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding OwnerName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
@@ -479,13 +479,13 @@
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                            <materialDesign:PackIcon Kind="Laptop" Foreground="#1A3A6B" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                            <materialDesign:PackIcon Kind="Laptop" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,5,0" VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding Model}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
                                             <TextBlock Text=" - " Foreground="#757575" />
                                             <TextBlock Text="{Binding SerialNumber}" FontSize="12" Foreground="#757575" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
-                                        <Separator Background="#EEEEEE" Margin="0,0,0,10" />
+                                        <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
 
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -506,14 +506,14 @@
                                             <Border Background="{Binding StatusColor}" CornerRadius="4" Padding="8,3" Margin="0,0,10,0">
                                                 <TextBlock Text="{Binding Status}" Foreground="White" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                                             </Border>
-                                            <Border Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Padding="8,3">
+                                            <Border Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="4" Padding="8,3">
                                                 <TextBlock Text="{Binding ResultAr}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                                             </Border>
                                         </StackPanel>
                                     </StackPanel>
 
                                     <!-- Footer -->
-                                    <Border Grid.Row="2" Background="#FAFAFA" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0" Padding="10,5">
+                                    <Border Grid.Row="2" Background="{DynamicResource AppSurfaceAlt}" BorderBrush="#EEEEEE" BorderThickness="0,1,0,0" Padding="10,5">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
@@ -521,14 +521,14 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                                 <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تفاصيل">
-                                                    <materialDesign:PackIcon Kind="Eye" Foreground="#1A3A6B" Width="16" Height="16" />
+                                                    <materialDesign:PackIcon Kind="Eye" Foreground="{DynamicResource PrimaryNavy}" Width="16" Height="16" />
                                                 </Button>
 
                                                 <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <materialDesign:PackIcon Kind="Pencil" Foreground="#C9A227" Width="16" Height="16" />
+                                                    <materialDesign:PackIcon Kind="Pencil" Foreground="{DynamicResource GoldAccent}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="#1A3A6B" Width="16" Height="16" />
+                                                    <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="{DynamicResource PrimaryNavy}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Command="{Binding DataContext.ManageSignedCopyCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Width="30" Height="30" Padding="0" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <Button.Style>
@@ -571,7 +571,7 @@
         </Grid>
 
         <!-- Pagination Bar -->
-        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="10" Margin="0,10,0,0">
+        <Border Grid.Row="4" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="10" Margin="0,10,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

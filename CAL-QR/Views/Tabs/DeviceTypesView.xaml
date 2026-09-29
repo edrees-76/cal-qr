@@ -19,7 +19,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Data Table Border (DeviceTypes List) -->
-        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+        <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -35,7 +35,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Add Button -->
-                    <Button Grid.Column="0" Command="{Binding AddTypeCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}"
+                    <Button Grid.Column="0" Command="{Binding AddTypeCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" FontFamily="{StaticResource CairoFont}"
                             Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.ContentTemplate>
                             <DataTemplate>
@@ -113,7 +113,7 @@
                                         <Button Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="مشاهدة التفاصيل">
-                                            <materialDesign:PackIcon Kind="Eye" Foreground="#C9A227" Width="18" Height="18" />
+                                            <materialDesign:PackIcon Kind="Eye" Foreground="{DynamicResource GoldAccent}" Width="18" Height="18" />
                                         </Button>
 
                                         <!-- 3. حذف -->

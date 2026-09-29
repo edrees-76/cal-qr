@@ -11,7 +11,7 @@
         WindowStyle="None"
         AllowsTransparency="True">
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="{DynamicResource AppSurface}" CornerRadius="12" BorderBrush="{DynamicResource PrimaryNavy}" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -26,7 +26,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="تفاصيل الجهة المالكة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="تفاصيل الجهة المالكة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="استعراض بيانات الجهة وقائمة كافة الأجهزة المرتبطة بها" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
@@ -42,7 +42,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Top Panel (Owner Info Card) -->
-                <Border Grid.Row="0" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+                <Border Grid.Row="0" Background="{DynamicResource AppSurfaceAlt}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -53,7 +53,7 @@
                         
                         <StackPanel Grid.Column="0" Margin="5">
                             <TextBlock Text="اسم الجهة" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="{Binding Owner.Name}" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="{Binding Owner.Name}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                         
                         <StackPanel Grid.Column="1" Margin="5">
@@ -74,14 +74,14 @@
                 </Border>
 
                 <!-- Bottom Panel (DataGrid) -->
-                <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
+                <Border Grid.Row="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="10">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Text="الأجهزة التابعة للجهة" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Grid.Row="0" Text="الأجهزة التابعة للجهة" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="5,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
                         <DataGrid Grid.Row="1" ItemsSource="{Binding AssociatedDevices}"
                                   AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
@@ -179,7 +179,7 @@
 
             <!-- Footer Actions -->
             <Grid Grid.Row="2" Margin="0,15,0,0">
-                <Button Content="إغلاق" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="100" HorizontalAlignment="Right" Click="CloseButton_Click" FontFamily="{StaticResource CairoFont}" />
+                <Button Content="إغلاق" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="100" HorizontalAlignment="Right" Click="CloseButton_Click" FontFamily="{StaticResource CairoFont}" />
             </Grid>
         </Grid>
     </Border>

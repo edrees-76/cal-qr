@@ -12,7 +12,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         FlowDirection="RightToLeft"
-        Background="#F5F5F5">
+        Background="{DynamicResource AppBackground}">
 
     <Window.Resources>
         <!-- Style for Field Labels -->
@@ -32,7 +32,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="إعدادات قالب الورق والملصقات" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+        <TextBlock Grid.Row="0" Text="إعدادات قالب الورق والملصقات" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <Grid>
@@ -173,8 +173,8 @@
         </ScrollViewer>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
-            <Button Command="{Binding SaveCommand}" Content="حفظ القالب" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Width="120" Height="38" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-            <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Width="100" Height="38" FontFamily="{StaticResource CairoFont}" />
+            <Button Command="{Binding SaveCommand}" Content="حفظ القالب" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Width="120" Height="38" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+            <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Width="100" Height="38" FontFamily="{StaticResource CairoFont}" />
         </StackPanel>
     </Grid>
 </Window>

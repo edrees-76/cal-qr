@@ -27,7 +27,7 @@
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#C9A227" />
+            <Setter Property="Foreground" Value="{DynamicResource GoldAccent}" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
             <Setter Property="Margin" Value="0,10,0,0" />
         </Style>
@@ -35,7 +35,7 @@
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#1A3A6B" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
             <Setter Property="Margin" Value="0,0,0,4" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
         </Style>
@@ -58,7 +58,7 @@
                         <Condition Binding="{Binding RelativeSource={RelativeSource Self}, Path=Text, Converter={StaticResource UnfilledFieldConverter}}" Value="True" />
                         <Condition Binding="{Binding ShowMissingFieldHints}" Value="True" />
                     </MultiDataTrigger.Conditions>
-                    <Setter Property="BorderBrush" Value="#C9A227" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource GoldAccent}" />
                     <Setter Property="BorderThickness" Value="2" />
                 </MultiDataTrigger>
             </Style.Triggers>
@@ -154,7 +154,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="White" BorderBrush="#1A3A6B">
+    <Border Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource PrimaryNavy}">
         <Border.Style>
             <Style TargetType="Border">
                 <Setter Property="CornerRadius" Value="12" />
@@ -182,12 +182,12 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
-                        <materialDesign:PackIcon x:Name="IconMaximize" Foreground="#1A3A6B" Width="20" Height="20">
+                        <materialDesign:PackIcon x:Name="IconMaximize" Foreground="{DynamicResource PrimaryNavy}" Width="20" Height="20">
                             <materialDesign:PackIcon.Style>
                                 <Style TargetType="materialDesign:PackIcon">
                                     <Setter Property="Kind" Value="WindowMaximize" />
@@ -223,7 +223,7 @@
 
                     <!-- ═══ ١. بيانات الجهة والجهاز ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="1. Client &amp; Instrument Identification" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="1. Client &amp; Instrument Identification" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="بيانات الجهة والجهاز" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -283,7 +283,7 @@
 
                     <!-- ═══ ٢. الظروف البيئية ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="2. Environmental Conditions" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="2. Environmental Conditions" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="الظروف البيئية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -348,7 +348,7 @@
                     <!-- ═══ ٣. نتائج المعايرة ═══ -->
                     <StackPanel Visibility="{Binding IsCalibrationCertificate, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Visible}">
                         <StackPanel Margin="0,10,0,0">
-                            <TextBlock Text="3. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="3. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="نتائج المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
@@ -364,14 +364,14 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="DataGridColumnHeader">
                                                 <Border x:Name="HeaderBorder"
-                                                        Background="White"
-                                                        BorderBrush="#1A3A6B"
+                                                        Background="{DynamicResource AppSurface}"
+                                                        BorderBrush="{DynamicResource PrimaryNavy}"
                                                         BorderThickness="0,1,1,1"
                                                         Padding="8,6">
                                                     <ContentPresenter
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"
-                                                        TextElement.Foreground="#1A3A6B" />
+                                                        TextElement.Foreground="{DynamicResource PrimaryNavy}" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="Content" Value="{x:Null}">
@@ -424,14 +424,14 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="DataGridColumnHeader">
                                                 <Border x:Name="HeaderBorder"
-                                                        Background="White"
-                                                        BorderBrush="#1A3A6B"
+                                                        Background="{DynamicResource AppSurface}"
+                                                        BorderBrush="{DynamicResource PrimaryNavy}"
                                                         BorderThickness="0,1,1,1"
                                                         Padding="8,6">
                                                     <ContentPresenter
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Center"
-                                                        TextElement.Foreground="#1A3A6B" />
+                                                        TextElement.Foreground="{DynamicResource PrimaryNavy}" />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="Content" Value="{x:Null}">
@@ -483,7 +483,7 @@
                     <!-- ═══ ٤. المنهجية والمعلومات التقنية ═══ -->
                     <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
                         <StackPanel Orientation="Vertical">
-                            <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <CheckBox IsChecked="{Binding MethodologyEnabled}"
@@ -574,7 +574,7 @@
                     <StackPanel Visibility="{Binding IsCalibrationCertificate, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Visible}">
                         <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
                             <StackPanel Orientation="Vertical">
-                                <TextBlock Text="5. Uncertainty Budget" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="5. Uncertainty Budget" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                                 <TextBlock Text="ميزانية عدم اليقين" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                             </StackPanel>
                             <CheckBox IsChecked="{Binding UncertaintyEnabled}"
@@ -601,14 +601,14 @@
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="DataGridColumnHeader">
                                                     <Border x:Name="HeaderBorder"
-                                                            Background="White"
-                                                            BorderBrush="#1A3A6B"
+                                                            Background="{DynamicResource AppSurface}"
+                                                            BorderBrush="{DynamicResource PrimaryNavy}"
                                                             BorderThickness="0,1,1,1"
                                                             Padding="8,6">
                                                         <ContentPresenter
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
-                                                            TextElement.Foreground="#1A3A6B" />
+                                                            TextElement.Foreground="{DynamicResource PrimaryNavy}" />
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="Content" Value="{x:Null}">
@@ -663,7 +663,7 @@
 
                     <!-- ═══ ٦. الفحوص الوظيفية ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="6. Functional Checks &amp; Notes" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="6. Functional Checks &amp; Notes" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="الفحوص الوظيفية والملاحظات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -679,14 +679,14 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="DataGridColumnHeader">
                                             <Border x:Name="HeaderBorder"
-                                                    Background="White"
-                                                    BorderBrush="#1A3A6B"
+                                                    Background="{DynamicResource AppSurface}"
+                                                    BorderBrush="{DynamicResource PrimaryNavy}"
                                                     BorderThickness="0,1,1,1"
                                                     Padding="8,6">
                                                 <ContentPresenter
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                    TextElement.Foreground="#1A3A6B" />
+                                                    TextElement.Foreground="{DynamicResource PrimaryNavy}" />
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="Content" Value="{x:Null}">
@@ -750,7 +750,7 @@
 
                     <!-- ═══ ٧. الاعتماد ═══ -->
                     <StackPanel Margin="0,10,0,0">
-                        <TextBlock Text="7. Authorization &amp; Signatures" FontSize="13" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="7. Authorization &amp; Signatures" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="الاعتماد والتوقيعات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -876,8 +876,8 @@
                                 Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
-                                    <Setter Property="Background" Value="#1A3A6B" />
-                                    <Setter Property="BorderBrush" Value="#1A3A6B" />
+                                    <Setter Property="Background" Value="{DynamicResource PrimaryNavy}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsStatusReport}" Value="True">
                                             <Setter Property="Background" Value="#B71C1C" />
@@ -888,7 +888,7 @@
                             </Button.Style>
                         </Button>
                         <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
-                                BorderBrush="#E0E0E0" Height="40" Width="80" Click="CancelButton_Click"
+                                BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click"
                                 FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Grid>

@@ -20,18 +20,18 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+        <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="إدارة حسابات المستخدمين والصلاحيات" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إدارة حسابات المستخدمين والصلاحيات" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="التحكم في مستخدمي النظام وتوزيع الصلاحيات ومراقبة سجل نشاطاتهم" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 
-                <materialDesign:PackIcon Grid.Column="1" Kind="ShieldAccount" Width="36" Height="36" Foreground="#1A3A6B" VerticalAlignment="Center" />
+                <materialDesign:PackIcon Grid.Column="1" Kind="ShieldAccount" Width="36" Height="36" Foreground="{DynamicResource PrimaryNavy}" VerticalAlignment="Center" />
             </Grid>
         </Border>
 
@@ -46,7 +46,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Control Panel (Search and Add) -->
-                    <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12" Margin="0,0,0,15">
+                    <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="12" Margin="0,0,0,15">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -77,7 +77,7 @@
 
                             <!-- Add User Button -->
                             <Button Grid.Column="1" Command="{Binding AddUserCommand}" Style="{StaticResource MaterialDesignRaisedButton}" 
-                                    Background="#1A3A6B" BorderBrush="#1A3A6B" Height="38" Padding="15,0" FontFamily="{StaticResource CairoFont}">
+                                    Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="38" Padding="15,0" FontFamily="{StaticResource CairoFont}">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="AccountPlus" Width="18" Height="18" Margin="0,0,5,0" VerticalAlignment="Center" />
                                     <TextBlock Text="إضافة مستخدم جديد" VerticalAlignment="Center" />
@@ -87,14 +87,14 @@
                     </Border>
 
                     <!-- Accounts Grid -->
-                    <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
+                    <Border Grid.Row="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="10">
                         <DataGrid ItemsSource="{Binding Users}" AutoGenerateColumns="False" IsReadOnly="True"
                                   Background="Transparent" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
                                   BorderThickness="0" RowHeight="42" FontFamily="{StaticResource CairoFont}">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#F8FAFC"/>
-                                    <Setter Property="Foreground" Value="#1A3A6B"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}"/>
                                     <Setter Property="FontWeight" Value="Bold"/>
                                     <Setter Property="Padding" Value="10,5"/>
                                     <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -224,7 +224,7 @@
                     </Grid.RowDefinitions>
 
                     <!-- Filters Panel -->
-                    <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+                    <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1.5*" />
@@ -264,14 +264,14 @@
                     </Border>
 
                     <!-- Logs Table -->
-                    <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="10">
+                    <Border Grid.Row="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="10">
                         <DataGrid ItemsSource="{Binding Logs}" AutoGenerateColumns="False" IsReadOnly="True"
                                   Background="Transparent" GridLinesVisibility="Horizontal" HeadersVisibility="Column"
                                   BorderThickness="0" RowHeight="38" FontFamily="{StaticResource CairoFont}">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="#F8FAFC"/>
-                                    <Setter Property="Foreground" Value="#1A3A6B"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}"/>
                                     <Setter Property="FontWeight" Value="Bold"/>
                                     <Setter Property="Padding" Value="10,5"/>
                                     <Setter Property="BorderThickness" Value="0,0,0,1"/>

@@ -40,7 +40,7 @@
             <!-- Circular Card wrapper for Logo -->
             <Grid Width="220" Height="220" HorizontalAlignment="Center" Margin="0,0,0,30">
                 <!-- Outer Blue Glow -->
-                <Ellipse Fill="#1A3A6B" Margin="-25" Opacity="0.25">
+                <Ellipse Fill="{DynamicResource PrimaryNavy}" Margin="-25" Opacity="0.25">
                     <Ellipse.Effect>
                         <BlurEffect Radius="50" />
                     </Ellipse.Effect>
@@ -97,7 +97,7 @@
                        FontFamily="{StaticResource CairoFont}"
                        FontSize="13"
                        FontWeight="Medium"
-                       Foreground="#C9A227"
+                       Foreground="{DynamicResource GoldAccent}"
                        HorizontalAlignment="Center"
                        TextAlignment="Center"
                        Margin="0,0,0,5" />
@@ -106,7 +106,7 @@
                        FontFamily="{StaticResource CairoFont}"
                        FontSize="12"
                        FontWeight="Normal"
-                       Foreground="#C9A227"
+                       Foreground="{DynamicResource GoldAccent}"
                        HorizontalAlignment="Center"
                        TextAlignment="Center" />
         </StackPanel>

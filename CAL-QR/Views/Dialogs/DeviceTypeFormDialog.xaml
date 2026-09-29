@@ -16,13 +16,13 @@
         <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#1A3A6B" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
             <Setter Property="Margin" Value="0,4,0,4" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
         </Style>
     </Window.Resources>
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="{DynamicResource AppSurface}" CornerRadius="12" BorderBrush="{DynamicResource PrimaryNavy}" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -39,7 +39,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="تحرير قالب نوع الجهاز" FontSize="18" FontWeight="Bold"
-                               Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                               Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="تعديل الحقول النصية والعلمين وقوالب الفحوصات ومكوّنات عدم اليقين"
                                FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
@@ -83,10 +83,10 @@
                                      Margin="0,0,0,12" FontFamily="{StaticResource CairoFont}" />
 
                             <!-- العلمان -->
-                            <Border Background="#F5F5F5" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
+                            <Border Background="{DynamicResource AppBackground}" CornerRadius="6" Padding="12,8" Margin="0,0,0,12">
                                 <StackPanel>
                                     <TextBlock Text="إظهار الأقسام الاختيارية"
-                                               FontWeight="Bold" Foreground="#1A3A6B"
+                                               FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}"
                                                FontFamily="{StaticResource CairoFont}" Margin="0,0,0,8"/>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                         <ToggleButton IsChecked="{Binding UncertaintyEnabled}"
@@ -364,12 +364,12 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Command="{Binding SaveCommand}" Content="حفظ"
                             Style="{StaticResource MaterialDesignRaisedButton}"
-                            Background="#1A3A6B" BorderBrush="#1A3A6B"
+                            Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}"
                             Height="40" Width="100" Margin="0,0,10,0"
                             FontFamily="{StaticResource CairoFont}" />
                     <Button Command="{Binding CancelCommand}" Content="إلغاء"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Foreground="#707070" BorderBrush="#E0E0E0"
+                            Foreground="#707070" BorderBrush="{DynamicResource AppBorder}"
                             Height="40" Width="80"
                             FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>

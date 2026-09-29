@@ -10,7 +10,7 @@
         WindowStyle="None"
         AllowsTransparency="True">
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="{DynamicResource AppSurface}" CornerRadius="12" BorderBrush="{DynamicResource PrimaryNavy}" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -25,7 +25,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="إدارة الجهات المالكة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إدارة الجهات المالكة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="إضافة جهة مالكة جديدة أو تعديل بياناتها" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
@@ -37,28 +37,28 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="5">
                     <!-- Name -->
-                    <TextBlock Text="اسم الجهة *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="اسم الجهة *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: مركز البحوث النووية" 
                              Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- Address -->
-                    <TextBlock Text="العنوان" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="العنوان" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: بنغازي، ليبيا" 
                              Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- Phone -->
-                    <TextBlock Text="رقم الاتصال" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="رقم الاتصال" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding ContactPhone, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: 091XXXXXXX" 
                              Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- Contact Person -->
-                    <TextBlock Text="اسم المسؤول / المندوب" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="اسم المسؤول / المندوب" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding ContactPerson, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: أ. محمد علي" 
@@ -69,8 +69,8 @@
             <!-- Footer Actions -->
             <Grid Grid.Row="2" Margin="0,15,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="100" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="100" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

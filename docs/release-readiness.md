@@ -220,7 +220,20 @@
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build: 0 أخطاء، 0 تحذيرات (على جهاز إدريس).
   - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
-  - PR #23 مفتوح — في انتظار CI وحكم الدمج.
+  - CI (PR #23، commit `8ac4868`): 389 نجح / 0 فشل / 0 تخطّى. دُمج في `main` (29 سبتمبر 2026).
+
+- **جولة اختصارات لوحة المفاتيح + اختبارات DevicesViewModel** — فرع `feat/keyboard-shortcuts-and-tests` (من `main`):
+  - السبب: (١) اختصارات Ctrl+N/P/B/E موثَّقة في `CAL-QR_Full_Description.md` لم تكن مربوطة بأوامر؛ (٢) ملفّ `DevicesViewModelTests` كان مفقوداً.
+  - **القرار المعماريّ للاختصارات:** أوامر تنقّل مخصَّصة (`NavigateToDevicesCommand`، `NavigateToSettingsCommand`، `NavigateToReportsCommand`) تستدعي `NavigateToTabIfAllowed` التي تتحقّق من صلاحية المستخدم قبل تغيير التبويب؛ هذا يمنع التنقّل إلى تبويبات لا يملك المستخدم صلاحيتها عبر الاختصار.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/MainWindow.xaml` — إضافة 4 `KeyBinding` في `Window.InputBindings`:
+      Ctrl+N/P → تبويب الأجهزة، Ctrl+B → تبويب الإعدادات، Ctrl+E → تبويب التقارير.
+    - `CAL-QR/ViewModels/MainViewModel.cs` — 3 أوامر جديدة + دالّة `NavigateToTabIfAllowed(int)`.
+    - `CAL-QR.Tests/DevicesViewModelTests.cs` — **جديد**: 6 اختبارات (Stubs لـ `IQrService`، `IPrintService`، `IPaperTemplateRepository`، `ICertificateRepository` + `TestCurrentUserService` القائمة).
+  - الاختبارات الجديدة: `CanEdit_AdminUser`، `CanEdit_NullUser`، `CanEdit_EditorUser`، `ToggleAdvancedSearch`، `LoadDataAsync_NonDeletedOnly`، `ClearFiltersAsync_Resets`.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC ولا أنماط الواجهة.
+  - CI (PR #24، commit `e34ff91`): في انتظار النتيجة. لم يُشغَّل `dotnet build/test` محلّيّاً (لا .NET/Windows في بيئة الجلسة).
+  - **التحقّق البصريّ:** مطلوب من إدريس — التحقّق من أنّ Ctrl+N ينتقل إلى تبويب الأجهزة، Ctrl+B إلى الإعدادات، Ctrl+E إلى التقارير.
 
 ## ملاحظات مفتوحة
 

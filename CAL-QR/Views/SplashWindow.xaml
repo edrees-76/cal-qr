@@ -6,7 +6,7 @@
         AllowsTransparency="True"
         Background="Transparent"
         Title="CAL-QR" Height="460" Width="600">
-    <Border Background="#1A3A6B" CornerRadius="15" BorderBrush="#C9A227" BorderThickness="2">
+    <Border Background="{DynamicResource PrimaryNavy}" CornerRadius="15" BorderBrush="{DynamicResource GoldAccent}" BorderThickness="2">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -23,12 +23,12 @@
 
             <!-- App Title -->
             <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="10">
-                <TextBlock Text="CAL-QR" FontSize="26" FontWeight="Bold" Foreground="#C9A227" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="CAL-QR" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="18" Foreground="White" HorizontalAlignment="Center" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
 
             <!-- Loading Progress -->
-            <ProgressBar Grid.Row="2" x:Name="ProgressBar" Height="6" Background="#0D2040" Foreground="#C9A227" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Margin="40,20,40,10" BorderThickness="0" />
+            <ProgressBar Grid.Row="2" x:Name="ProgressBar" Height="6" Background="#0D2040" Foreground="{DynamicResource GoldAccent}" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Margin="40,20,40,10" BorderThickness="0" />
 
             <!-- Status Text -->
             <TextBlock Grid.Row="3" x:Name="TxtStatus" Text="جاري تشغيل النظام..." Foreground="#A0B0D0" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />

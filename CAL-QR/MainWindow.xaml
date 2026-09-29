@@ -14,6 +14,10 @@
 
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Control" Command="{Binding FocusSearchCommand}" />
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NavigateToDevicesCommand}" />
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding NavigateToDevicesCommand}" />
+        <KeyBinding Key="B" Modifiers="Control" Command="{Binding NavigateToSettingsCommand}" />
+        <KeyBinding Key="E" Modifiers="Control" Command="{Binding NavigateToReportsCommand}" />
     </Window.InputBindings>
     
     <Grid>

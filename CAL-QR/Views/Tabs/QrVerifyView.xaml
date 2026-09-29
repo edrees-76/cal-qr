@@ -23,15 +23,15 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+        <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <StackPanel>
-                <TextBlock Text="التحقق الرقمي من صحة شهادة المعايرة" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="التحقق الرقمي من صحة شهادة المعايرة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="تحليل محتويات كود QR ومطابقة التوقيع الإلكتروني المشفر لمنع التزوير" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
         </Border>
 
         <!-- Quick Verify Section -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+        <Border Grid.Row="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" /> <!-- TextBox (Right) -->
@@ -43,11 +43,11 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="تحقق سريع بالكود" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="تحقق سريع بالكود" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
                 <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding QuickVerifyCode, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="أدخل كود التحقق المكتوب على الملصق" Style="{StaticResource MaterialDesignOutlinedTextBox}" Width="350" Height="40" VerticalContentAlignment="Center" FontFamily="{StaticResource CairoFont}" Margin="10,0,0,0" />
 
-                <Button Grid.Row="1" Grid.Column="1" Command="{Binding QuickVerifyCommand}" Content="تحقق سريع" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" FontFamily="{StaticResource CairoFont}" />
+                <Button Grid.Row="1" Grid.Column="1" Command="{Binding QuickVerifyCommand}" Content="تحقق سريع" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" FontFamily="{StaticResource CairoFont}" />
             </Grid>
         </Border>
 
@@ -57,12 +57,12 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="تحقق عبر لصق نص QR" FontSize="15" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" Margin="15,0,0,0" />
-            <Border Grid.Column="1" Height="1" Background="#E0E0E0" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="0" Text="تحقق عبر لصق نص QR" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" Margin="15,0,0,0" />
+            <Border Grid.Column="1" Height="1" Background="{DynamicResource AppBorder}" VerticalAlignment="Center" />
         </Grid>
 
         <!-- Paste Section -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+        <Border Grid.Row="3" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -70,12 +70,12 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="قم بلصق النص المقروء من كاميرا QR هنا:" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Grid.Row="0" Text="قم بلصق النص المقروء من كاميرا QR هنا:" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                 <TextBox Grid.Row="1" Text="{Binding ConcatenatedText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="NaN" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" FontFamily="{StaticResource CairoFont}" />
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
-                    <Button Command="{Binding VerifyPastedTextCommand}" Content="تحليل وتحقق" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding ClearCommand}" Content="مسح" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="36" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding VerifyPastedTextCommand}" Content="تحليل وتحقق" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ClearCommand}" Content="مسح" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -94,7 +94,7 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsAmended}" Value="True">
                             <Setter Property="Background" Value="#FFF8E1" />
-                            <Setter Property="BorderBrush" Value="#C9A227" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource GoldAccent}" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsRevoked}" Value="True">
                             <Setter Property="Background" Value="#FBE9E7" />
@@ -122,7 +122,7 @@
 
                     <Grid Grid.Column="0" Margin="0,0,15,0" VerticalAlignment="Center">
                         <materialDesign:PackIcon Kind="CheckCircle" Foreground="#2E7D32" Width="30" Height="30" Visibility="{Binding IsAuthentic, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <materialDesign:PackIcon Kind="AlertCircle" Foreground="#C9A227" Width="30" Height="30" Visibility="{Binding IsAmended, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <materialDesign:PackIcon Kind="AlertCircle" Foreground="{DynamicResource GoldAccent}" Width="30" Height="30" Visibility="{Binding IsAmended, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <materialDesign:PackIcon Kind="Cancel" Foreground="#E64A19" Width="30" Height="30" Visibility="{Binding IsRevoked, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <materialDesign:PackIcon Kind="AlertDecagram" Foreground="#C62828" Width="30" Height="30" Visibility="{Binding IsNotFound, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <materialDesign:PackIcon Kind="InformationOutline" Foreground="#707070" Width="30" Height="30" Visibility="{Binding IsUnverifiable, Converter={StaticResource BooleanToVisibilityConverter}}" />
@@ -138,7 +138,7 @@
                                             <Setter Property="Foreground" Value="#2E7D32" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsAmended}" Value="True">
-                                            <Setter Property="Foreground" Value="#C9A227" />
+                                            <Setter Property="Foreground" Value="{DynamicResource GoldAccent}" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsNotFound}" Value="True">
                                             <Setter Property="Foreground" Value="#C62828" />
@@ -190,7 +190,7 @@
 
                     <StackPanel Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,4" Visibility="{Binding IsAmended, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="تاريخ التعديل: " FontWeight="SemiBold" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="{Binding AmendedAt}" FontWeight="Bold" Foreground="#C9A227" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="{Binding AmendedAt}" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Grid>
 

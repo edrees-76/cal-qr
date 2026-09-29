@@ -117,10 +117,9 @@
                 <Setter Property="CaretBrush" Value="{DynamicResource PrimaryInputForeground}" />
             </Style>
 
-            <!-- 6. Global DataGrid style — RowStyle + SelectionUnit applied to ALL DataGrids -->
+            <!-- 6. Global DataGrid style - apply hover style to ALL DataGrids -->
             <Style TargetType="{x:Type DataGrid}" BasedOn="{StaticResource MaterialDesignDataGrid}">
-                <Setter Property="RowStyle"      Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
-                <Setter Property="SelectionUnit" Value="FullRow" />
+                <Setter Property="RowStyle" Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
             </Style>
 
             <!-- 7. Unified DataGrid Row Hover Style -->

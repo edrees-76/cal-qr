@@ -179,8 +179,8 @@ namespace CAL_QR.Tests
             await vm.LoadDataAsync();
 
             // يجب أن تظهر السجلات غير المحذوفة فقط
-            Assert.Equal(1, vm.Devices.Count);
-            Assert.Equal("A100", vm.Devices[0].Model);
+            var single = Assert.Single(vm.Devices);
+            Assert.Equal("A100", single.Model);
         }
 
         [Fact]

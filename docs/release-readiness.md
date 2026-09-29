@@ -157,7 +157,19 @@
     - `CAL-QR/Views/Tabs/SettingsView.xaml` — تحويل Expander منطقة الخطر (Grid.Row="3") إلى بطاقة سادسة `CardReset` («إعادة الضبط»)، وإضافة `PanelReset` داخل الـScrollViewer بديلاً؛ مرئيّ للمسؤول فقط (`IsFactoryResetVisible`).
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
-  - فرع: `claude/revert-theme` (commit `7ea8309`) — PR #15 مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح — الشعار في واجهة الدخول وعن البرنامج ✔، بطاقة «إعادة الضبط» ✔.
+
+- **جولة بوّابة كلمة المرور لبطاقة «إعادة الضبط»** — فرع `claude/revert-theme` (commit `b472e15`):
+  - السبب: الضغط على بطاقة «إعادة الضبط» كان يعرض لوح التصفير مباشرةً دون أيّ حماية.
+  - **القرار:** لوح بوّابة وسيط `PanelResetGate` يظهر أوّلاً (MultiDataTrigger: `CardReset.IsChecked=True AND IsResetUnlocked=False`)، يطلب كلمة مرور المستخدم الحالي؛ بعد التحقّق بـ`BCrypt.Verify` تُفتح `PanelReset`. مغادرة البطاقة تُعيّن `IsResetUnlocked=false` تلقائياً.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/ViewModels/SettingsViewModel.cs` — `IsResetUnlocked`, `ResetGatePassword`, `UnlockResetCommand`, `UnlockResetAsync()`, `ResetUnlockState()`.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — `PanelResetGate` (MultiDataTrigger)، trigger الـ`PanelReset` ← `IsResetUnlocked`، `CardReset.Unchecked` event.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml.cs` — `TxtResetGatePassword_PasswordChanged`, `CardReset_Unchecked`, `BtnCancelResetGate_Click`.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
+  - فرع: `claude/revert-theme` (commit `b472e15`) — PR #15 مفتوح — في انتظار CI وموافقة الدمج.
 
 ## ملاحظات مفتوحة
 

@@ -43,7 +43,7 @@
         <!-- Left Column: Organization Hierarchy & Developers -->
         <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="20,0,10,0">
             <!-- Organization Section -->
-            <TextBlock Text="الجهة" FontSize="12" Foreground="#C9A227" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="الجهة" FontSize="12" Foreground="{DynamicResource GoldAccent}" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
             
             <TextBlock Text="مركز البحوث النووية - تاجوراء" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
             <!-- English Center Name -->
@@ -67,7 +67,7 @@
             <Border Height="2" Background="{DynamicResource GoldAccent}" Margin="0,15,0,10" CornerRadius="1" />
 
             <!-- Developer Section -->
-            <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="12" Foreground="#C9A227" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="12" Foreground="{DynamicResource GoldAccent}" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}" />
             
             <StackPanel HorizontalAlignment="Center" Margin="0,3,0,0">
                 <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="14.5" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />

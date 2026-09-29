@@ -27,7 +27,7 @@
         <!-- Backdrop Tint Overlay -->
         <Border Background="#801A3A6B" />
 
-        <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5"
+        <Border Background="{DynamicResource AppSurface}" CornerRadius="12" BorderBrush="{DynamicResource PrimaryNavy}" BorderThickness="1.5"
                 Width="480" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid Margin="28">
                 <!-- Main Login Content -->
@@ -59,7 +59,7 @@
                             <TextBlock Text="SECONDARY STANDARD DOSIMETRY LABORATORY" 
                                        FontSize="13" 
                                        FontWeight="SemiBold" 
-                                       Foreground="#1A3A6B" 
+                                       Foreground="{DynamicResource PrimaryNavy}" 
                                        HorizontalAlignment="Center" 
                                        TextAlignment="Center"
                                        TextWrapping="NoWrap"
@@ -67,7 +67,7 @@
                             <TextBlock Text="(SSDL)" 
                                        FontSize="12" 
                                        FontWeight="SemiBold" 
-                                       Foreground="#1A3A6B" 
+                                       Foreground="{DynamicResource PrimaryNavy}" 
                                        HorizontalAlignment="Center" 
                                        TextAlignment="Center"
                                        TextWrapping="NoWrap"
@@ -76,13 +76,13 @@
                         </StackPanel>
 
                         <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Height="75" Width="75" Margin="5" RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock Text="CAL-QR" FontSize="24" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="CAL-QR" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="14" Foreground="#707070" HorizontalAlignment="Center" Margin="0,4,0,0" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
  
                     <!-- Fields -->
                     <StackPanel Grid.Row="2" Margin="10,0,10,12">
-                        <TextBlock Text="اسم المستخدم" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="اسم المستخدم" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
                         <TextBox x:Name="TxtUsername" 
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  materialDesign:HintAssist.Hint="أدخل اسم المستخدم" 
@@ -95,7 +95,7 @@
                                  KeyDown="TxtUsername_KeyDown"
                                  VerticalContentAlignment="Center" />
 
-                        <TextBlock Text="كلمة المرور" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="كلمة المرور" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
                         <Grid Margin="0,0,0,12">
                             <PasswordBox x:Name="TxtPassword" 
                                          Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
@@ -122,7 +122,7 @@
                                     Style="{StaticResource MaterialDesignToolButton}"
                                     HorizontalAlignment="Right" VerticalAlignment="Center"
                                     Margin="0,0,10,0" Width="30" Height="30" Padding="0">
-                                <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                                <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="{DynamicResource PrimaryNavy}" />
                             </Button>
                         </Grid>
                         
@@ -131,21 +131,21 @@
                         <Button x:Name="BtnLogin" 
                                 Content="دخول" 
                                 Style="{StaticResource MaterialDesignRaisedButton}" 
-                                Background="#1A3A6B" 
-                                BorderBrush="#1A3A6B"
+                                Background="{DynamicResource PrimaryNavy}" 
+                                BorderBrush="{DynamicResource PrimaryNavy}"
                                 Height="45" 
                                 Margin="0,4,0,12" 
                                 Click="BtnLogin_Click"
                                 FontFamily="{StaticResource CairoFont}"/>
                         
                         <TextBlock HorizontalAlignment="Center" FontSize="14" Padding="0,4" FontFamily="{StaticResource CairoFont}">
-                            <Hyperlink Click="ForgotPassword_Click" Foreground="#C9A227">نسيت كلمة المرور؟</Hyperlink>
+                            <Hyperlink Click="ForgotPassword_Click" Foreground="{DynamicResource GoldAccent}">نسيت كلمة المرور؟</Hyperlink>
                         </TextBlock>
                     </StackPanel>
  
                     <!-- Credits -->
                     <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                        <Separator Background="#E0E0E0" Margin="0,0,0,10" />
+                        <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
                         <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,10" FontFamily="{StaticResource CairoFont}" />
@@ -170,26 +170,26 @@
 
                     <!-- Back Button -->
                     <Button Grid.Row="0" HorizontalAlignment="Right" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="BtnBackToLogin_Click">
-                        <materialDesign:PackIcon Kind="ArrowRight" Foreground="#1A3A6B" Width="20" Height="20" />
+                        <materialDesign:PackIcon Kind="ArrowRight" Foreground="{DynamicResource PrimaryNavy}" Width="20" Height="20" />
                     </Button>
 
                     <!-- Header Icon & Title -->
                     <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,5,0,20">
-                        <materialDesign:PackIcon Kind="LockReset" Foreground="#1A3A6B" Width="60" Height="60" HorizontalAlignment="Center" />
-                        <TextBlock Text="استرداد كلمة المرور" FontSize="20" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}" />
+                        <materialDesign:PackIcon Kind="LockReset" Foreground="{DynamicResource PrimaryNavy}" Width="60" Height="60" HorizontalAlignment="Center" />
+                        <TextBlock Text="استرداد كلمة المرور" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" Margin="0,5,0,0" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <!-- Recovery Form Content -->
                     <Grid Grid.Row="2" Margin="10,0,10,20">
                         <!-- Step 1: Security Question Verification -->
                         <StackPanel x:Name="PanelVerifyQuestion" Visibility="Visible">
-                            <TextBlock Text="السؤال السري للاسترداد:" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,8" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
+                            <TextBlock Text="السؤال السري للاسترداد:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,8" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
                             
-                            <Border Background="#F7FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12,10" Margin="0,0,0,15">
+                            <Border Background="{DynamicResource AppSurfaceAlt}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="12,10" Margin="0,0,0,15">
                                 <TextBlock x:Name="TxtSecurityQuestion" Text="سؤال الأمان الخاص بك؟" TextWrapping="Wrap" FontSize="14" Foreground="#2D3748" FontFamily="{StaticResource CairoFont}" FontWeight="Medium"/>
                             </Border>
 
-                            <TextBlock Text="الإجابة:" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
+                            <TextBlock Text="الإجابة:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
                             <TextBox x:Name="TxtSecurityAnswerInput" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="أدخل إجابة السؤال السري"
@@ -204,8 +204,8 @@
                             <Button x:Name="BtnVerifyAnswer" 
                                     Content="تحقق من الإجابة" 
                                     Style="{StaticResource MaterialDesignRaisedButton}" 
-                                    Background="#1A3A6B" 
-                                    BorderBrush="#1A3A6B"
+                                    Background="{DynamicResource PrimaryNavy}" 
+                                    BorderBrush="{DynamicResource PrimaryNavy}"
                                     Height="45" 
                                     Margin="0,20,0,0" 
                                     Click="BtnVerifyAnswer_Click"
@@ -214,7 +214,7 @@
 
                         <!-- Step 2: Reset Password (Initially Collapsed) -->
                         <StackPanel x:Name="PanelResetPassword" Visibility="Collapsed">
-                            <TextBlock Text="كلمة المرور الجديدة" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
+                            <TextBlock Text="كلمة المرور الجديدة" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
                             <Grid>
                                 <PasswordBox x:Name="TxtNewPassword" 
                                              Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
@@ -239,11 +239,11 @@
                                         Style="{StaticResource MaterialDesignToolButton}"
                                         HorizontalAlignment="Right" VerticalAlignment="Center"
                                         Margin="0,0,10,0" Width="30" Height="30" Padding="0">
-                                    <materialDesign:PackIcon x:Name="IconRevealNewPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                                    <materialDesign:PackIcon x:Name="IconRevealNewPassword" Kind="Eye" Width="20" Height="20" Foreground="{DynamicResource PrimaryNavy}" />
                                 </Button>
                             </Grid>
 
-                            <TextBlock Text="تأكيد كلمة المرور الجديدة" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,10,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
+                            <TextBlock Text="تأكيد كلمة المرور الجديدة" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,10,0,5" Padding="0,2" FontFamily="{StaticResource CairoFont}"/>
                             <Grid>
                                 <PasswordBox x:Name="TxtConfirmNewPassword" 
                                              Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
@@ -268,7 +268,7 @@
                                         Style="{StaticResource MaterialDesignToolButton}"
                                         HorizontalAlignment="Right" VerticalAlignment="Center"
                                         Margin="0,0,10,0" Width="30" Height="30" Padding="0">
-                                    <materialDesign:PackIcon x:Name="IconRevealConfirmNewPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                                    <materialDesign:PackIcon x:Name="IconRevealConfirmNewPassword" Kind="Eye" Width="20" Height="20" Foreground="{DynamicResource PrimaryNavy}" />
                                 </Button>
                             </Grid>
 
@@ -286,7 +286,7 @@
 
                     <!-- Credits -->
                     <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                        <Separator Background="#E0E0E0" Margin="0,0,0,10" />
+                        <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
                         <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,10" FontFamily="{StaticResource CairoFont}" />

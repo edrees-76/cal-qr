@@ -33,12 +33,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#F0F4F8" />
-                                <Setter Property="Foreground" Value="#1A3A6B" />
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource AppSurfaceAlt}" />
+                                <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#1A3A6B" />
-                                <Setter Property="BorderBrush" Value="#C9A227" />
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource PrimaryNavy}" />
+                                <Setter Property="BorderBrush" Value="{DynamicResource GoldAccent}" />
                                 <Setter Property="Foreground" Value="White" />
                             </Trigger>
                         </ControlTemplate.Triggers>

@@ -21,7 +21,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </Window.Resources>
 
-    <Border Background="White" CornerRadius="12" BorderBrush="#1A3A6B" BorderThickness="1.5">
+    <Border Background="{DynamicResource AppSurface}" CornerRadius="12" BorderBrush="{DynamicResource PrimaryNavy}" BorderThickness="1.5">
         <Grid Margin="20">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -36,7 +36,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="إدارة حسابات المستخدمين" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إدارة حسابات المستخدمين" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="إنشاء حساب مستخدم جديد وتخصيص صلاحيات العمل الخاصة به" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
@@ -48,21 +48,21 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="5">
                     <!-- Full Name -->
-                    <TextBlock Text="الاسم الكامل للمستخدم *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="الاسم الكامل للمستخدم *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: م. إدريس فتح الله" 
                              Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- Username -->
-                    <TextBlock Text="اسم الدخول للنظام (Username) *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="اسم الدخول للنظام (Username) *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              materialDesign:HintAssist.Hint="مثال: idrees_f" 
                              Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- Password -->
-                    <TextBlock Text="كلمة المرور *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="كلمة المرور *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <PasswordBox x:Name="TxtPassword"
                                  Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
                                  materialDesign:HintAssist.Hint="أدخل كلمة مرور قوية..." 
@@ -70,7 +70,7 @@
                     <TextBlock Text="* اترك حقل كلمة المرور فارغاً عند التعديل إذا كنت لا ترغب في تغييرها" FontSize="10" Foreground="#E65100" Margin="0,-12,0,15" Visibility="{Binding IsEditMode, Converter={StaticResource BoolToVis}}" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- User Role -->
-                    <TextBlock Text="دور الحساب / الصلاحية الرئيسية *" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="دور الحساب / الصلاحية الرئيسية *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
                     <ComboBox ItemsSource="{Binding Source={StaticResource UserRolesEnum}}"
                               SelectedItem="{Binding Role}"
                               Style="{StaticResource MaterialDesignFilledComboBox}" 
@@ -101,14 +101,14 @@
                     <!-- Settings and Editor Flags -->
                     <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
                         <CheckBox IsChecked="{Binding IsEditor}" Content="صلاحية التعديل والكتابة (IsEditor)" 
-                                  FontFamily="{StaticResource CairoFont}" FontWeight="Bold" Foreground="#1A3A6B" />
+                                  FontFamily="{StaticResource CairoFont}" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" />
                     </StackPanel>
 
                     <!-- Permissions Flags Group (Collapsed if Admin) -->
                     <StackPanel x:Name="PnlPermissions" Visibility="{Binding IsNotAdminRole, Converter={StaticResource BoolToVis}}">
-                        <Border BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="15" Background="#F8FAFC">
+                        <Border BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="8" Padding="15" Background="{DynamicResource AppSurfaceAlt}">
                             <StackPanel>
-                                <TextBlock Text="تخصيص الصلاحيات الفرعية:" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="تخصيص الصلاحيات الفرعية:" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                                 
                                 <WrapPanel Margin="-8" Orientation="Horizontal">
                                     <!-- Records -->
@@ -162,8 +162,8 @@
             <!-- Footer -->
             <Grid Grid.Row="2" Margin="0,15,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Click="SaveButton_Click" Content="حفظ الحساب" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="120" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
+                    <Button Click="SaveButton_Click" Content="حفظ الحساب" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="120" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

@@ -9,7 +9,7 @@
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         FlowDirection="RightToLeft"
-        Background="#F5F5F5">
+        Background="{DynamicResource AppBackground}">
 
     <Grid Margin="15">
         <Grid.ColumnDefinitions>
@@ -18,7 +18,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Column 0: Print Settings and Batch Records Preview -->
-        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,10,0">
+        <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,10,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -27,34 +27,34 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0">
-                    <TextBlock Text="إعدادات الطباعة الدفيعة" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="{Binding BatchStatusText}" FontSize="12" Foreground="#C9A227" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إعدادات الطباعة الدفيعة" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding BatchStatusText}" FontSize="12" Foreground="{DynamicResource GoldAccent}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                     <Separator Margin="0,0,0,15" />
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <!-- Basic Print settings -->
-                        <TextBlock Text="اختر الطابعة" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="اختر الطابعة" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <ComboBox ItemsSource="{Binding Printers}" SelectedItem="{Binding SelectedPrinter}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
-                        <TextBlock Text="قالب الملصقات" FontSize="11" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="قالب الملصقات" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                         <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <ComboBox Grid.Column="0" ItemsSource="{Binding Templates}" DisplayMemberPath="TemplateName" SelectedItem="{Binding SelectedTemplate}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
-                            <Button Grid.Column="1" Click="NewTemplate_Click" Content="قالب جديد" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1A3A6B" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
+                            <Button Grid.Column="1" Click="NewTemplate_Click" Content="قالب جديد" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{DynamicResource PrimaryNavy}" Margin="5,0,0,0" FontFamily="{StaticResource CairoFont}" />
                         </Grid>
 
                         <!-- Batch Preview List -->
-                        <TextBlock Text="قائمة الملصقات المحددة للطباعة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,5,0,10" FontFamily="{StaticResource CairoFont}" />
-                        <Border Background="#F9F9F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="8">
+                        <TextBlock Text="قائمة الملصقات المحددة للطباعة" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,10" FontFamily="{StaticResource CairoFont}" />
+                        <Border Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="8" Padding="8">
                             <ItemsControl ItemsSource="{Binding BatchItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" CornerRadius="6" BorderBrush="#E2E8F0" BorderThickness="1" Padding="8" Margin="0,3">
+                                        <Border Background="{DynamicResource AppSurface}" CornerRadius="6" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="8" Margin="0,3">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
@@ -63,14 +63,14 @@
                                                 </Grid.ColumnDefinitions>
 
                                                 <!-- Index Number -->
-                                                <TextBlock Grid.Column="0" Text="{Binding Index, StringFormat='{}{0}.'}" VerticalAlignment="Center" FontWeight="Bold" FontSize="12" Foreground="#1A3A6B" Margin="0,0,8,0" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Grid.Column="0" Text="{Binding Index, StringFormat='{}{0}.'}" VerticalAlignment="Center" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,8,0" FontFamily="{StaticResource CairoFont}" />
                                                 
                                                 <!-- Mini label preview (WYSIWYG) -->
                                                 <Image Grid.Column="1" Source="{Binding QrImage}" MaxWidth="85" MaxHeight="62" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,8,0" />
                                                 
                                                 <!-- Certificate details -->
                                                 <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding CertificateNumber}" FontWeight="Bold" FontSize="12" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                                                    <TextBlock Text="{Binding CertificateNumber}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                                                     <TextBlock Text="{Binding DeviceInfo}" FontSize="9.5" Foreground="#64748B" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                                                 </StackPanel>
                                             </Grid>
@@ -83,20 +83,20 @@
                 </ScrollViewer>
 
                 <StackPanel Grid.Row="2" Margin="0,15,0,0">
-                    <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding PrintCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,0,8" FontFamily="{StaticResource CairoFont}">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Printer" Margin="0,0,8,0" VerticalAlignment="Center" />
                             <TextBlock Text="🖨️ طباعة الدفعة" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
 
-                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="#E0E0E0" Height="40" FontFamily="{StaticResource CairoFont}" />
+                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Column 1: Starting cell visual preview sheet -->
-        <Border Grid.Column="1" Background="#E0E0E0" CornerRadius="8" Padding="15">
+        <Border Grid.Column="1" Background="{DynamicResource AppBorder}" CornerRadius="8" Padding="15">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -105,7 +105,7 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,5">
-                    <TextBlock Text="معاينة موضع الملصق على الورقة" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="معاينة موضع الملصق على الورقة" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
 
@@ -118,8 +118,8 @@
                 </Border>
 
                 <Viewbox Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Border Background="White" CornerRadius="2" BorderBrush="#B0B0B0" BorderThickness="1" Padding="5">
-                        <Canvas x:Name="PaperCanvas" Width="350" Height="495" Background="White" />
+                    <Border Background="{DynamicResource AppSurface}" CornerRadius="2" BorderBrush="#B0B0B0" BorderThickness="1" Padding="5">
+                        <Canvas x:Name="PaperCanvas" Width="350" Height="495" Background="{DynamicResource AppSurface}" />
                     </Border>
                 </Viewbox>
             </Grid>

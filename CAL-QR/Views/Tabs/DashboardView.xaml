@@ -52,7 +52,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Card 1: Total Devices (Navy) -->
-            <Border Grid.Column="0" Margin="0,0,5,0" Background="#1A3A6B" CornerRadius="8" Padding="12" Height="85">
+            <Border Grid.Column="0" Margin="0,0,5,0" Background="{DynamicResource PrimaryNavy}" CornerRadius="8" Padding="12" Height="85">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />

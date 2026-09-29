@@ -133,7 +133,7 @@
                                         <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
                                         <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                                     </StackPanel>
-                                    <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="#C9A227" Width="26" Height="26" VerticalAlignment="Center" />
+                                    <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="{DynamicResource GoldAccent}" Width="26" Height="26" VerticalAlignment="Center" />
                                 </Grid>
                             </Border>
                         </Grid>

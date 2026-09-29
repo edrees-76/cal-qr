@@ -18,7 +18,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#1A3A6B" Padding="20,15">
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryNavy}" Padding="20,15">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <Border Width="36" Height="36" CornerRadius="18" Background="White" Padding="4" Margin="0,0,10,0" VerticalAlignment="Center">
                     <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" RenderOptions.BitmapScalingMode="HighQuality" />
@@ -33,14 +33,14 @@
             <!-- Step 1: Welcome -->
             <StackPanel x:Name="Step1Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Width="140" Height="140" Margin="0,0,0,20" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-                <TextBlock Text="مرحباً بك في CAL-QR" FontSize="22" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" />
+                <TextBlock Text="مرحباً بك في CAL-QR" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" />
                 <TextBlock Text="نظام معايرة وفقا لمتطلبات  المواصفة الدولية ISO/IEC 17025:2017" FontSize="13" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,8,0,25" TextAlignment="Center" />
                 <TextBlock Text="سنقوم بإعداد النظام في بضع خطوات بسيطة." FontSize="12" Foreground="#718096" HorizontalAlignment="Center" TextAlignment="Center" />
             </StackPanel>
 
             <!-- Step 2: Database Path -->
             <StackPanel x:Name="Step2Panel" Visibility="Collapsed" VerticalAlignment="Center">
-                <TextBlock Text="📂 مسار حفظ قاعدة البيانات" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                <TextBlock Text="📂 مسار حفظ قاعدة البيانات" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
                 <TextBlock Text="اختر المجلد الذي سيتم حفظ قاعدة بيانات النظام فيه. المسار الافتراضي هو مجلد التطبيق الحالي." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
                 
                 <TextBlock Text="مسار قاعدة البيانات" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
@@ -51,15 +51,15 @@
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="TxtDatabasePath" Grid.Column="0" IsReadOnly="True"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Foreground="#1A3A6B"
-                             materialDesign:HintAssist.Foreground="#1A3A6B"
-                             CaretBrush="#1A3A6B"
+                             Foreground="{DynamicResource PrimaryNavy}"
+                             materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                             CaretBrush="{DynamicResource PrimaryNavy}"
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
                              VerticalContentAlignment="Center" />
                     <Button Grid.Column="1" Content="تصفح..." Click="BrowsePath_Click" Margin="10,0,0,0" Height="50"
-                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" />
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" />
                 </Grid>
 
                 <Border Background="#FFFDE7" CornerRadius="6" Padding="12,8" Margin="0,5,0,0">
@@ -70,15 +70,15 @@
             <!-- Step 3: Password & Security -->
             <ScrollViewer x:Name="Step3Panel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
                 <StackPanel Margin="0,0,0,10">
-                    <TextBlock Text="🔐 إنشاء كلمة المرور والأمان" FontSize="16" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" />
+                    <TextBlock Text="🔐 إنشاء كلمة المرور والأمان" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
                     <TextBlock Text="أنشئ حساب المسؤول وكلمة مرور النظام وسؤالاً سرياً للاسترداد." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
 
                     <TextBlock Text="الاسم الكامل للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtAdminFullName" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Foreground="#1A3A6B"
-                             materialDesign:HintAssist.Foreground="#1A3A6B"
-                             CaretBrush="#1A3A6B"
+                             Foreground="{DynamicResource PrimaryNavy}"
+                             materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                             CaretBrush="{DynamicResource PrimaryNavy}"
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
@@ -88,9 +88,9 @@
                     <TextBlock Text="اسم المستخدم للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtAdminUsername" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Foreground="#1A3A6B"
-                             materialDesign:HintAssist.Foreground="#1A3A6B"
-                             CaretBrush="#1A3A6B"
+                             Foreground="{DynamicResource PrimaryNavy}"
+                             materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                             CaretBrush="{DynamicResource PrimaryNavy}"
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
@@ -101,9 +101,9 @@
                     <Grid Margin="0,0,0,10">
                         <PasswordBox x:Name="TxtWizardPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                     Foreground="#1A3A6B"
-                                     materialDesign:HintAssist.Foreground="#1A3A6B"
-                                     CaretBrush="#1A3A6B"
+                                     Foreground="{DynamicResource PrimaryNavy}"
+                                     materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                                     CaretBrush="{DynamicResource PrimaryNavy}"
                                      Height="50"
                                      Padding="10,8,45,8"
                                      FontSize="15"
@@ -111,9 +111,9 @@
                                      VerticalContentAlignment="Center" />
                         <TextBox x:Name="TxtWizardPasswordReveal"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Foreground="#1A3A6B"
-                                 materialDesign:HintAssist.Foreground="#1A3A6B"
-                                 CaretBrush="#1A3A6B"
+                                 Foreground="{DynamicResource PrimaryNavy}"
+                                 materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                                 CaretBrush="{DynamicResource PrimaryNavy}"
                                  Height="50"
                                  Padding="10,8,45,8"
                                  FontSize="15"
@@ -123,7 +123,7 @@
                                 Style="{StaticResource MaterialDesignToolButton}"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 Margin="0,0,10,0" Width="30" Height="30" Padding="0">
-                            <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                            <materialDesign:PackIcon x:Name="IconRevealPassword" Kind="Eye" Width="20" Height="20" Foreground="{DynamicResource PrimaryNavy}" />
                         </Button>
                     </Grid>
 
@@ -131,9 +131,9 @@
                     <Grid Margin="0,0,0,15">
                         <PasswordBox x:Name="TxtWizardConfirmPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                     Foreground="#1A3A6B"
-                                     materialDesign:HintAssist.Foreground="#1A3A6B"
-                                     CaretBrush="#1A3A6B"
+                                     Foreground="{DynamicResource PrimaryNavy}"
+                                     materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                                     CaretBrush="{DynamicResource PrimaryNavy}"
                                      Height="50"
                                      Padding="10,8,45,8"
                                      FontSize="15"
@@ -141,9 +141,9 @@
                                      VerticalContentAlignment="Center" />
                         <TextBox x:Name="TxtWizardConfirmPasswordReveal"
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Foreground="#1A3A6B"
-                                 materialDesign:HintAssist.Foreground="#1A3A6B"
-                                 CaretBrush="#1A3A6B"
+                                 Foreground="{DynamicResource PrimaryNavy}"
+                                 materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                                 CaretBrush="{DynamicResource PrimaryNavy}"
                                  Height="50"
                                  Padding="10,8,45,8"
                                  FontSize="15"
@@ -153,16 +153,16 @@
                                 Style="{StaticResource MaterialDesignToolButton}"
                                 HorizontalAlignment="Right" VerticalAlignment="Center"
                                 Margin="0,0,10,0" Width="30" Height="30" Padding="0">
-                            <materialDesign:PackIcon x:Name="IconRevealConfirmPassword" Kind="Eye" Width="20" Height="20" Foreground="#1A3A6B" />
+                            <materialDesign:PackIcon x:Name="IconRevealConfirmPassword" Kind="Eye" Width="20" Height="20" Foreground="{DynamicResource PrimaryNavy}" />
                         </Button>
                     </Grid>
 
                     <TextBlock Text="السؤال السري لاسترداد كلمة المرور" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtSecurityQuestion" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Foreground="#1A3A6B"
-                             materialDesign:HintAssist.Foreground="#1A3A6B"
-                             CaretBrush="#1A3A6B"
+                             Foreground="{DynamicResource PrimaryNavy}"
+                             materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                             CaretBrush="{DynamicResource PrimaryNavy}"
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
@@ -173,9 +173,9 @@
                     <TextBlock Text="إجابة السؤال السري" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtSecurityAnswer"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                             Foreground="#1A3A6B"
-                             materialDesign:HintAssist.Foreground="#1A3A6B"
-                             CaretBrush="#1A3A6B"
+                             Foreground="{DynamicResource PrimaryNavy}"
+                             materialDesign:HintAssist.Foreground="{DynamicResource PrimaryNavy}"
+                             CaretBrush="{DynamicResource PrimaryNavy}"
                              Height="50"
                              Padding="10,8,10,8"
                              FontSize="15"
@@ -212,7 +212,7 @@
                     <Button x:Name="BtnPrevious" Content="→ السابق" Click="BtnPrevious_Click" Height="38" Margin="0,0,10,0"
                             Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#718096" Foreground="#718096" Visibility="Collapsed" />
                     <Button x:Name="BtnNext" Content="التالي ←" Click="BtnNext_Click" Height="38"
-                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" />
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" />
                     <Button x:Name="BtnFinish" Content="🚀 بدء الاستخدام" Click="BtnFinish_Click" Height="38"
                             Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Visibility="Collapsed" />
                 </StackPanel>

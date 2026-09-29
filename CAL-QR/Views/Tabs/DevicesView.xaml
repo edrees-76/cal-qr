@@ -46,7 +46,7 @@
                         </Button.ContentTemplate>
                     </Button>
 
-                    <Button Command="{Binding ToggleViewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding ToggleViewCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -57,7 +57,7 @@
                         </Button.ContentTemplate>
                     </Button>
 
-                    <Button Command="{Binding PrintBatchCommand}" Content="طباعة المحدد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
+                    <Button Command="{Binding PrintBatchCommand}" Content="طباعة المحدد" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}">
                         <Button.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -80,11 +80,11 @@
                         </TextBox.InputBindings>
                     </TextBox>
 
-                    <Button Command="{Binding SearchCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="40" Width="40" Padding="0" Margin="0,0,10,0" ToolTip="بحث">
+                    <Button Command="{Binding SearchCommand}" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="40" Padding="0" Margin="0,0,10,0" ToolTip="بحث">
                         <materialDesign:PackIcon Kind="Magnify" Width="20" Height="20" />
                     </Button>
 
-                    <Button Command="{Binding ToggleAdvancedSearchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="#1A3A6B" Height="40" Content="بحث متقدم" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ToggleAdvancedSearchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Content="بحث متقدم" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -159,7 +159,7 @@
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,15,5,5">
-                    <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="#1A3A6B" BorderBrush="#1A3A6B" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
                     <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </StackPanel>
@@ -323,7 +323,7 @@
                                             <materialDesign:PackIcon Kind="Pencil" Width="18" Height="18">
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
-                                                        <Setter Property="Foreground" Value="#C9A227" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource GoldAccent}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
                                                                 <Setter Property="Foreground" Value="White" />
@@ -469,7 +469,7 @@
                                         </TextBlock>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                            <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="#C9A227" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                            <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="{DynamicResource GoldAccent}" Margin="0,0,5,0" VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding OwnerName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
@@ -525,7 +525,7 @@
                                                 </Button>
 
                                                 <Button Command="{Binding DataContext.EditDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل" Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <materialDesign:PackIcon Kind="Pencil" Foreground="#C9A227" Width="16" Height="16" />
+                                                    <materialDesign:PackIcon Kind="Pencil" Foreground="{DynamicResource GoldAccent}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Command="{Binding DataContext.EditCertificateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="تعديل الشهادة" Visibility="{Binding HasIssuedCertificate, Converter={StaticResource BooleanToVisibilityConverter}}">
                                                     <materialDesign:PackIcon Kind="FileDocumentEdit" Foreground="{DynamicResource PrimaryNavy}" Width="16" Height="16" />

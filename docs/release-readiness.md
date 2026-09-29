@@ -140,6 +140,25 @@
   - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
   - PR مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
 
+- **جولة التراجع عن نظام الثيمات + تحسينات الواجهة** — فرع `claude/revert-theme` (من `origin/main` عند `a4519ae`):
+  - السبب: قرار إدريس بإزالة نظام الثيمات والوضع الداكن كليّاً والعودة إلى الألوان الثابتة.
+  - **الملفّات المحذوفة:**
+    - `CAL-QR/Services/ThemeService.cs` — حُذف كليّاً.
+    - `CAL-QR/Helpers/StringEqualityConverter.cs` — حُذف كليّاً (لم يعد مستخدماً).
+  - **الملفّات المعدَّلة (التراجع):**
+    - `CAL-QR/App.xaml.cs` — حذف كتلة تحميل الثيم.
+    - `CAL-QR/MainWindow.xaml` — إعادة الألوان الثابتة `#1A3A6B` و`#C9A227`.
+    - `CAL-QR/ViewModels/SettingsViewModel.cs` — حذف `SelectedThemeName`، `AppearanceMode`، `ApplyThemeCommand`.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — حذف بطاقة المظهر السادسة وبانيلها والـConverters المرتبطة، وإبقاء 5 بطاقات Hub-Cards.
+  - **الملفّات المعدَّلة (تحسينات الجولة الحاليّة):**
+    - `CAL-QR/Assets/Logo/efh-logo.jpg` — **جديد**: شعار EFH المُرفق من إدريس.
+    - `CAL-QR/Views/LoginWindow.xaml` — استبدال `logo_original_4k.png` بـ`efh-logo.jpg` في موضعين (تسجيل الدخول + نسيت المرور)، تقليص MinHeight من 600 إلى 480، تقليص هوامش الهيدر وأحجام الأيقونة.
+    - `CAL-QR/Views/Tabs/AboutView.xaml` — استبدال الشعار بـ`efh-logo.jpg` في قسم «عن البرنامج».
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — تحويل Expander منطقة الخطر (Grid.Row="3") إلى بطاقة سادسة `CardReset` («إعادة الضبط»)، وإضافة `PanelReset` داخل الـScrollViewer بديلاً؛ مرئيّ للمسؤول فقط (`IsFactoryResetVisible`).
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - فرع: `claude/revert-theme` (commit `7ea8309`) — PR #15 مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
+
 ## ملاحظات مفتوحة
 
 - ملفّات `.zip` القديمة غير المقفلة على جهاز المختبر وأيّ قرص خارجيّ/مجلّد سحابيّ تبقى كاشفة لمفتاح

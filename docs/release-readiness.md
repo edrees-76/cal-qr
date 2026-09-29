@@ -155,34 +155,47 @@
     - `CAL-QR/Views/Tabs/SettingsView.xaml` — (أ) `Tag="XYZ"` → `{x:Static materialDesign:PackIconKind.XYZ}` لـ 9 أيقونات؛ (ب) `Background="White"` → `MaterialDesignPaper` على 7 Borders؛ (ج) `#374151/#6B7280` → `MaterialDesignBody` على النصوص.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build/test: يُشغَّلان على جهاز إدريس (لا .NET/Windows في بيئة الجلسة).
-  - PR 13 — في انتظار CI وتحقّق إدريس البصريّ.
+  - PR مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
 
-- **جولة الثيم الشامل (Tinted Surfaces)** — فرع `claude/quirky-lamport-df0g4s` (من `main` عند `a4519ae` + الجولة السابقة):
-  - **السبب:** إدريس أراد أن يتغيّر لون الخلفيّة الرئيسيّة والألواح عند تبديل لوحة الألوان مثل Antigravity IDE.
-  - **القرار المعماريّ:** إضافة 4 موارد ديناميكيّة (`AppBackground`, `AppSurface`, `AppSurfaceAlt`, `AppBorder`) تُحسب في ThemeService من اللوحة الحاليّة — نبرة شاحبة جداً في الوضع الفاتح (5-12% خلط) وداكنة جداً في الوضع الداكن. ألوان الحالة (أحمر/أخضر/برتقالي) وأيقونات العمليّة تبقى ثابتة لأنّها دلاليّة.
+- **جولة التراجع عن نظام الثيمات + تحسينات الواجهة** — فرع `claude/revert-theme` (من `origin/main` عند `a4519ae`):
+  - السبب: قرار إدريس بإزالة نظام الثيمات والوضع الداكن كليّاً والعودة إلى الألوان الثابتة.
+  - **الملفّات المحذوفة:**
+    - `CAL-QR/Services/ThemeService.cs` — حُذف كليّاً.
+    - `CAL-QR/Helpers/StringEqualityConverter.cs` — حُذف كليّاً (لم يعد مستخدماً).
+  - **الملفّات المعدَّلة (التراجع):**
+    - `CAL-QR/App.xaml.cs` — حذف كتلة تحميل الثيم.
+    - `CAL-QR/MainWindow.xaml` — إعادة الألوان الثابتة `#1A3A6B` و`#C9A227`.
+    - `CAL-QR/ViewModels/SettingsViewModel.cs` — حذف `SelectedThemeName`، `AppearanceMode`، `ApplyThemeCommand`.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — حذف بطاقة المظهر السادسة وبانيلها والـConverters المرتبطة، وإبقاء 5 بطاقات Hub-Cards.
+  - **الملفّات المعدَّلة (تحسينات الجولة الحاليّة):**
+    - `CAL-QR/Assets/Logo/efh-logo.jpg` — **جديد**: شعار EFH المُرفق من إدريس.
+    - `CAL-QR/Views/LoginWindow.xaml` — استبدال `logo_original_4k.png` بـ`efh-logo.jpg` في موضعين (تسجيل الدخول + نسيت المرور)، تقليص MinHeight من 600 إلى 480، تقليص هوامش الهيدر وأحجام الأيقونة.
+    - `CAL-QR/Views/Tabs/AboutView.xaml` — استبدال الشعار بـ`efh-logo.jpg` في قسم «عن البرنامج».
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — تحويل Expander منطقة الخطر (Grid.Row="3") إلى بطاقة سادسة `CardReset` («إعادة الضبط»)، وإضافة `PanelReset` داخل الـScrollViewer بديلاً؛ مرئيّ للمسؤول فقط (`IsFactoryResetVisible`).
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح — الشعار في واجهة الدخول وعن البرنامج ✔، بطاقة «إعادة الضبط» ✔.
+
+- **جولة بوّابة كلمة المرور لبطاقة «إعادة الضبط»** — فرع `claude/revert-theme` (commit `b472e15`):
+  - السبب: الضغط على بطاقة «إعادة الضبط» كان يعرض لوح التصفير مباشرةً دون أيّ حماية.
+  - **القرار:** لوح بوّابة وسيط `PanelResetGate` يظهر أوّلاً (MultiDataTrigger: `CardReset.IsChecked=True AND IsResetUnlocked=False`)، يطلب كلمة مرور المستخدم الحالي؛ بعد التحقّق بـ`BCrypt.Verify` تُفتح `PanelReset`. مغادرة البطاقة تُعيّن `IsResetUnlocked=false` تلقائياً.
   - **الملفّات المعدَّلة:**
-    - `CAL-QR/Services/ThemeService.cs` — `TintLight`/`TintDark` + `IsSystemDark` + حساب الـ 4 موارد في `Apply()`.
-    - `CAL-QR/App.xaml` — إضافة الـ 4 موارد الافتراضيّة + أنماط DataGrid/DataGridColumnHeader/DataGridCell لدعم الوضع الداكن + إصلاح `UnifiedDataGridRowHoverStyle` من StaticResource إلى DynamicResource.
-    - `CAL-QR/MainWindow.xaml` — خلفية النافذة ← `AppBackground`.
-    - 8 تبويبات (Dashboard, Devices, DeviceTypes, Owners, QrVerify, Reports, Users, Help) — `Background="White"` و`#F5F5F5/#FAFAFA/#F8FAFC` → `AppSurface`/`AppSurfaceAlt`؛ `BorderBrush="#E0E0E0/#E2E8F0"` → `AppBorder`.
-    - `AboutView.xaml` + `HelpView.xaml` — `#1A3A6B` في Background/Foreground → `DynamicResource PrimaryNavy`.
+    - `CAL-QR/ViewModels/SettingsViewModel.cs` — `IsResetUnlocked`, `ResetGatePassword`, `UnlockResetCommand`, `UnlockResetAsync()`, `ResetUnlockState()`.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml` — `PanelResetGate` (MultiDataTrigger)، trigger الـ`PanelReset` ← `IsResetUnlocked`، `CardReset.Unchecked` event.
+    - `CAL-QR/Views/Tabs/SettingsView.xaml.cs` — `TxtResetGatePassword_PasswordChanged`, `CardReset_Unchecked`, `BtnCancelResetGate_Click`.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
-  - dotnet build/test: يُشغَّلان على جهاز إدريس.
-  - PR 14 — في انتظار CI وتحقّق إدريس البصريّ.
+  - dotnet build/test: لم يُشغّلا في بيئة الجلسة السحابيّة (لا .NET/Windows)؛ يُشغَّلان على جهاز إدريس.
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
+  - CI (PR #15، commit `7a966d9`): 389 نجح / 0 فشل / 0 تخطّى. تعارض مع `main` في `SettingsView.xaml` (بقايا نظام الثيم) حُلَّ باستبقاء نسخة الفرع (بلا لوح Appearance). دُمج في PR #15 على `main` (29 سبتمبر 2026). كما حُدِّث الـworkflow لتشغيل CI على `push` إلى أيّ فرع `claude/**` لضمان انطلاق CI في الجولات المستقبليّة.
 
-- **جولة مراجعة الثيم الشاملة (Color Audit)** — فرع `claude/quirky-lamport-df0g4s` (commit `b129a30`):
-  - **السبب:** إدريس أبلغ عن DataGrid صفوف بيضاء غير مقروءة في الوضع الداكن في جميع الأقسام، وطلب مراجعة شاملة لكلّ الثيمات.
-  - **تشخيص السبب الجذريّ:** (أ) `UnifiedDataGridRowHoverStyle` كان يستخدم `StaticResource PrimaryNavy` الذي لا يُحدَّث وقت التشغيل. (ب) الألوان المشفَّرة مباشرة `#1A3A6B/#C9A227/#707070/#E0E0E0` في 27 ملفّ XAML لا تستجيب للثيم.
-  - **الإصلاحات:**
-    - `App.xaml` — أنماط DataGrid/DataGridColumnHeader/DataGridCell بـ`MaterialDesignPaper`/`MaterialDesignBackground`/`MaterialDesignBody` (تتكيّف مع الوضع الداكن تلقائيّاً)؛ إصلاح 4 أنماط في `UnifiedDataGrid*Style` إلى DynamicResource.
-    - **14 نافذة حوار** (كلّها): `Background="White"` → `{DynamicResource AppSurface}`، `#1A3A6B` → `{DynamicResource PrimaryNavy}`، `#C9A227` → `{DynamicResource GoldAccent}`. استثناء: `PaperCanvas` أُبقي `White` (محاكاة ورقة طباعة حقيقيّة).
-    - **10 تبويبات** + **LoginWindow** + **FirstRunWizard** + **ScreensaverWindow** + **SplashWindow**: نفس التحويلات؛ `BorderBrush="#E0E0E0"` → `{DynamicResource AppBorder}`.
-    - `DashboardView.xaml` — إعادة `GradientStop Color="{DynamicResource PrimaryNavy}"` إلى `Color="#1A3A6B"` (WPF لا يدعم DynamicResource على GradientStop.Color لأنّه Color وليس Brush).
-    - `#801A3A6B` (تراكب شفّاف زخرفيّ في LoginWindow) + ألوان الحالة الدلاليّة (`#C62828`, `#2E7D32`, `#F9A825`) — أُبقيت ثابتة.
-  - **النتيجة:** 0 مراجع ألوان مشفَّرة قابلة للتبديل متبقّية؛ مرجعان وحيدان في GradientStop لا يدعمان DynamicResource (قيد WPF)، وهما ثابتان من هويّة التطبيق.
+- **جولة القائمة المنسدلة لأسماء المستخدمين في نافذة الدخول** — فرع `feat/login-username-dropdown` (من `main` عند `80e47e8`):
+  - السبب: طلب إدريس — بدلاً من كتابة اسم المستخدم يدويّاً في كلّ مرّة، تظهر قائمة منسدلة بأسماء المستخدمين النشطين.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/Views/LoginWindow.xaml` — تحويل `TextBox` إلى `ComboBox` من نمط `MaterialDesignOutlinedComboBox` مع `IsEditable="True"`.
+    - `CAL-QR/Views/LoginWindow.xaml.cs` — إضافة حدث `Loaded` يستدعي `_userRepository.GetAllAsync()`، يصفّي المستخدمين النشطين (`IsActive=true`)، ويربط أسمائهم بـ`ItemsSource`. خطأ التحميل يُسجَّل في Debug ولا يمنع فتح النافذة.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
-  - dotnet build/test: يُشغَّلان على جهاز إدريس.
-  - PR 14 — يحتاج تحقّق إدريس البصريّ (الوضع الداكن والفاتح على كلّ الأقسام).
+  - CI (PR #18): 2 فحوصات ناجحة، لا تعارضات. دُمج في `main` (29 سبتمبر 2026).
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح — القائمة تعرض المستخدمين الثلاثة النشطين (admin new، admin، mohamed).
 
 - **جولة تصحيح تخطيط الإعدادات وإعادة تسمية مجلد الملصق** — فرع `fix/settings-panels-layout` (3 commits → squashed to `3c16dcc`):
   - السبب: (1) حقلا "المسارات" و"الطباعة" و"عام" كانت ممتدّةً بعرض ناقص بسبب `MaxWidth=600` وَ`HorizontalAlignment="Right"` المُطبَّقَين على الحاويات؛ (2) تسمية "مجلد مخرجات QR" لم تعكس أنّ الملصق نصيّ فقط وليس مصدر رموز QR؛ (3) المجلد الافتراضيّ `QR_Output` يجب أن يُصبح `poster` ليتّسق مع الوظيفة.
@@ -195,6 +208,19 @@
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - CI (PR #20، commit `3c16dcc`): 389 نجح / 0 فشل / 0 تخطّى. دُمج في `main` (29 سبتمبر 2026).
   - **التحقّق البصريّ:** مطلوب من إدريس — التحقّق من أنّ الحقول الثلاثة في لوحة "المسارات" تمتدّ بعرض كامل، وأنّ الحقل المعيد تسميته يظهر "مجلد مخرجات الملصق" بالعنوان الصحيح.
+
+- **جولة توحيد تأثير التمرير في جميع DataGrid** — فرع `feat/datagrid-unified-selection` (من `main` عند `5bd9f8e`):
+  - السبب: تأثير التمرير (لون `#1A3A6B` عند وجود المؤشر على الصف) كان يعمل في تبويب المستخدمين فقط لأنّه الوحيد الذي يضبط `RowStyle` صراحةً. باقي التبويبات (السجلات، الأجهزة، الأنواع، الجهات...) تعرض اللون الافتراضيّ لويندوز.
+  - **القرار:** نمط DataGrid ضمنيّ عامّ (بلا `x:Key`) في `App.xaml` يضبط `RowStyle` على `UnifiedDataGridRowHoverStyle` تلقائيّاً على **جميع** الجداول دون لمس أيّ ملفّ تبويب.
+  - **السلوك المطلوب:**
+    - التمرير (بدون نقر): `#1A3A6B` كحليّ داكن ← من `UnifiedDataGridRowHoverStyle`
+    - النقر (تحديد خليّة): `#0078D7` أزرق ويندوز ← يبقى كما هو (لا `SelectionUnit=FullRow`)
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/App.xaml` — إضافة نمط ضمنيّ عامّ لـDataGrid (7 أسطر).
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build: 0 أخطاء، 0 تحذيرات (على جهاز إدريس).
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
+  - CI (PR #23، commit `8ac4868`): 389 نجح / 0 فشل / 0 تخطّى. دُمج في `main` (29 سبتمبر 2026).
 
 ## ملاحظات مفتوحة
 

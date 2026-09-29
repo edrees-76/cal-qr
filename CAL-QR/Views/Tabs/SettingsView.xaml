@@ -100,7 +100,6 @@
             <RowDefinition Height="Auto" />  <!-- Page header -->
             <RowDefinition Height="Auto" />  <!-- Hub cards -->
             <RowDefinition Height="*" />     <!-- Section panel -->
-            <RowDefinition Height="Auto" />  <!-- Danger zone -->
         </Grid.RowDefinitions>
 
         <!-- ══════════ Page Header ══════════ -->
@@ -114,7 +113,7 @@
         </Border>
 
         <!-- ══════════ Hub Cards ══════════ -->
-        <UniformGrid Grid.Row="1" Rows="1" Columns="5" Margin="14,12,14,0">
+        <UniformGrid Grid.Row="1" Rows="1" Columns="6" Margin="14,12,14,0">
 
             <RadioButton Style="{StaticResource HubCardStyle}"
                          Tag="Lock" Content="الأمان"
@@ -139,6 +138,11 @@
                          Tag="CogOutline" Content="عام"
                          x:Name="CardGeneral"
                          IsEnabled="{Binding CanEdit}" />
+
+            <RadioButton Style="{StaticResource HubCardStyle}"
+                         Tag="AlertCircle" Content="إعادة الضبط"
+                         x:Name="CardReset"
+                         Visibility="{Binding IsFactoryResetVisible, Converter={StaticResource BoolToVis}}" />
 
         </UniformGrid>
 
@@ -474,60 +478,70 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ── Reset Panel ── -->
+                <Border x:Name="PanelReset" Background="#FFF5F5" CornerRadius="10"
+                        BorderBrush="#FEB2B2" BorderThickness="1" Padding="24">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChecked, ElementName=CardReset}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel MaxWidth="540" HorizontalAlignment="Center">
+
+                        <TextBlock Text="⚠️ إعادة ضبط البرنامج"
+                                   FontSize="18" FontWeight="Bold" Foreground="#C62828"
+                                   FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
+                                   Margin="0,0,0,12" />
+
+                        <TextBlock Text="مسح كليّ شامل لكافة بيانات المعايرة والملفات وسجلات التدقيق وإعادة النظام لحالة التثبيت النظيفة. لا يمكن التراجع."
+                                   FontSize="13" Foreground="#9B2C2C" TextWrapping="Wrap"
+                                   FontFamily="{StaticResource CairoFont}" TextAlignment="Center"
+                                   Margin="0,0,0,12" />
+
+                        <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1"
+                                CornerRadius="6" Padding="12,10" Margin="0,0,0,20">
+                            <TextBlock Text="🛡️ تُؤخذ نسخة احتياطية إجبارية قبل الحذف. يُشترط ضبط «مجلد النسخ الاحتياطيّة» أوّلاً."
+                                       FontSize="12" Foreground="#92400E" TextWrapping="Wrap"
+                                       FontFamily="{StaticResource CairoFont}" />
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="1) اكتب: RESET-ALL-DATA" FontSize="12" FontWeight="Bold"
+                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                <TextBox Text="{Binding FactoryResetConfirmationText, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="40" HorizontalContentAlignment="Center"
+                                         FontFamily="Consolas, Courier New, monospace"
+                                         FontWeight="Bold" Foreground="#C62828" VerticalContentAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="2) أدخل كلمة المرور الحالية" FontSize="12" FontWeight="Bold"
+                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                <PasswordBox x:Name="TxtFactoryResetPassword" Height="40"
+                                             PasswordChanged="TxtFactoryResetPassword_PasswordChanged" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Command="{Binding FactoryResetCommand}" Content="💥 تصفير كامل النظام"
+                                HorizontalAlignment="Stretch" Margin="0,16,0,0"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Background="#C62828" BorderBrush="#C62828"
+                                Height="44" FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
+                </Border>
+
             </Grid>
         </ScrollViewer>
-
-        <!-- ══════════ Danger Zone (Admin only) ══════════ -->
-        <Border Grid.Row="3" Margin="14,0,14,12"
-                Background="#FFF5F5" CornerRadius="10"
-                BorderBrush="#FEB2B2" BorderThickness="1" Padding="20"
-                Visibility="{Binding IsFactoryResetVisible, Converter={StaticResource BoolToVis}}">
-            <Expander Header="⚠️ منطقة الخطر: التصفير الكامل للنظام"
-                      Foreground="#C62828"
-                      FontFamily="{StaticResource CairoFont}"
-                      FontSize="13" FontWeight="Bold">
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock Text="مسح كليّ شامل لكافة بيانات المعايرة والملفات وسجلات التدقيق وإعادة النظام لحالة التثبيت النظيفة. لا يمكن التراجع."
-                               FontSize="12" Foreground="#9B2C2C" TextWrapping="Wrap"
-                               FontFamily="{StaticResource CairoFont}" Margin="0,0,0,10" />
-
-                    <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1"
-                            CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
-                        <TextBlock Text="🛡️ تُؤخذ نسخة احتياطية إجبارية قبل الحذف. يُشترط ضبط «مجلد النسخ الاحتياطيّة» أوّلاً."
-                                   FontSize="11" Foreground="#92400E" TextWrapping="Wrap"
-                                   FontFamily="{StaticResource CairoFont}" />
-                    </Border>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="20" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="1) اكتب: RESET-ALL-DATA" FontSize="11" FontWeight="Bold"
-                                       Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
-                            <TextBox Text="{Binding FactoryResetConfirmationText, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="40" HorizontalContentAlignment="Center"
-                                     FontFamily="Consolas, Courier New, monospace"
-                                     FontWeight="Bold" Foreground="#C62828" VerticalContentAlignment="Center" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="2) أدخل كلمة سرّك الشخصية" FontSize="11" FontWeight="Bold"
-                                       Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
-                            <PasswordBox x:Name="TxtFactoryResetPassword" Height="40"
-                                         PasswordChanged="TxtFactoryResetPassword_PasswordChanged" />
-                        </StackPanel>
-                    </Grid>
-
-                    <Button Command="{Binding FactoryResetCommand}" Content="💥 تصفير كامل النظام"
-                            HorizontalAlignment="Stretch" Margin="0,12,0,0"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            Background="#C62828" BorderBrush="#C62828"
-                            Height="44" FontFamily="{StaticResource CairoFont}" />
-                </StackPanel>
-            </Expander>
-        </Border>
 
     </Grid>
 </UserControl>

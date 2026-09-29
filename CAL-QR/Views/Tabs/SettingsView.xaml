@@ -142,6 +142,7 @@
             <RadioButton Style="{StaticResource HubCardStyle}"
                          Tag="AlertCircle" Content="إعادة الضبط"
                          x:Name="CardReset"
+                         Unchecked="CardReset_Unchecked"
                          Visibility="{Binding IsFactoryResetVisible, Converter={StaticResource BoolToVis}}" />
 
         </UniformGrid>
@@ -478,6 +479,64 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ── Reset Gate Panel (password verification before reset panel) ── -->
+                <Border x:Name="PanelResetGate" Background="White" CornerRadius="10"
+                        BorderBrush="#FEB2B2" BorderThickness="1" Padding="40,50">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsChecked, ElementName=CardReset}" Value="True" />
+                                        <Condition Binding="{Binding IsResetUnlocked}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel MaxWidth="380" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                        <materialDesign:PackIcon Kind="ShieldLockOutline" Width="52" Height="52"
+                                                 HorizontalAlignment="Center" Foreground="#C62828"
+                                                 Margin="0,0,0,14" />
+
+                        <TextBlock Text="تأكيد الهوية"
+                                   FontSize="20" FontWeight="Bold" Foreground="#C62828"
+                                   FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
+                                   Margin="0,0,0,8" />
+
+                        <TextBlock Text="أدخل كلمة مرور حسابك للوصول إلى بطاقة إعادة الضبط"
+                                   FontSize="13" Foreground="#6B7280" TextWrapping="Wrap"
+                                   FontFamily="{StaticResource CairoFont}" TextAlignment="Center"
+                                   Margin="0,0,0,24" />
+
+                        <TextBlock Text="كلمة المرور" Style="{StaticResource FieldLabel}" />
+                        <PasswordBox x:Name="TxtResetGatePassword" Height="40"
+                                     PasswordChanged="TxtResetGatePassword_PasswordChanged"
+                                     Margin="0,0,0,20" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Command="{Binding UnlockResetCommand}" Content="دخول"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#C62828" BorderBrush="#C62828"
+                                    Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <Button Grid.Column="2" x:Name="BtnCancelResetGate" Content="إلغاء"
+                                    Click="BtnCancelResetGate_Click"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    BorderBrush="#9CA3AF" Foreground="#6B7280"
+                                    Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </Grid>
+
+                    </StackPanel>
+                </Border>
+
                 <!-- ── Reset Panel ── -->
                 <Border x:Name="PanelReset" Background="#FFF5F5" CornerRadius="10"
                         BorderBrush="#FEB2B2" BorderThickness="1" Padding="24">
@@ -485,7 +544,7 @@
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsChecked, ElementName=CardReset}" Value="True">
+                                <DataTrigger Binding="{Binding IsResetUnlocked}" Value="True">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>

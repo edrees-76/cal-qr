@@ -109,6 +109,7 @@ namespace CAL_QR.ViewModels
             EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
             FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
+            UnlockResetCommand = new RelayCommand(async () => await UnlockResetAsync(), () => !string.IsNullOrEmpty(ResetGatePassword));
             SaveHelpSectionPasswordCommand = new RelayCommand(
                 async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword());
             ClearHelpSectionPasswordCommand = new RelayCommand(
@@ -905,6 +906,71 @@ namespace CAL_QR.ViewModels
                     _factoryResetPassword = value;
                     OnPropertyChanged(nameof(FactoryResetPassword));
                 }
+            }
+        }
+
+        // ── بوّابة الدخول لبطاقة إعادة الضبط ──
+        private bool _isResetUnlocked;
+        public bool IsResetUnlocked
+        {
+            get => _isResetUnlocked;
+            set => SetProperty(ref _isResetUnlocked, value);
+        }
+
+        private string _resetGatePassword = string.Empty;
+        public string ResetGatePassword
+        {
+            get => _resetGatePassword;
+            set
+            {
+                if (SetProperty(ref _resetGatePassword, value))
+                    (UnlockResetCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public ICommand UnlockResetCommand { get; }
+
+        /// <summary>يُعيّن الحالة إلى مقفلة — يُستدعى من code-behind عند مغادرة البطاقة.</summary>
+        public void ResetUnlockState()
+        {
+            IsResetUnlocked = false;
+            ResetGatePassword = string.Empty;
+        }
+
+        private async Task UnlockResetAsync()
+        {
+            var currentUserId = _currentUserService.CurrentUser?.Id;
+            if (currentUserId == null)
+            {
+                MessageBox.Show("تعذّر تحديد المستخدم الحالي.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(currentUserId.Value);
+                bool valid = false;
+                if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
+                {
+                    try { valid = BCrypt.Net.BCrypt.Verify(ResetGatePassword, user.PasswordHash); }
+                    catch { valid = false; }
+                }
+
+                ResetGatePassword = string.Empty;
+
+                if (valid)
+                {
+                    IsResetUnlocked = true;
+                }
+                else
+                {
+                    MessageBox.Show("كلمة المرور غير صحيحة.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ResetGatePassword = string.Empty;
+                MessageBox.Show($"خطأ أثناء التحقق من كلمة المرور: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

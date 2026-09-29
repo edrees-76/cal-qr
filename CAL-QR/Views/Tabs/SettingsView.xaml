@@ -242,7 +242,7 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel MaxWidth="600" HorizontalAlignment="Right">
+                    <StackPanel>
                         <TextBlock Text="📂 مسارات ملفات النظام" Style="{StaticResource SectionTitle}" />
 
                         <TextBlock Text="مسار قاعدة البيانات (SQLite)" Style="{StaticResource FieldLabel}" />
@@ -259,7 +259,7 @@
                         </Grid>
 
                         <TextBlock Text="مجلد المرفقات" Style="{StaticResource FieldLabel}" />
-                        <Grid Margin="0,0,0,15">
+                        <Grid Margin="0,0,0,20">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -271,23 +271,10 @@
                                     FontFamily="{StaticResource CairoFont}" />
                         </Grid>
 
-                        <TextBlock Text="مجلد مخرجات QR" Style="{StaticResource FieldLabel}" />
-                        <Grid Margin="0,0,0,20">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Text="{Binding QrOutputPath, UpdateSourceTrigger=PropertyChanged}" Height="40" />
-                            <Button Grid.Column="1" Command="{Binding BrowseQrOutputPathCommand}" Content="استعراض…" Margin="10,0,0,0" Height="40"
-                                    Style="{StaticResource MaterialDesignOutlinedButton}"
-                                    BorderBrush="{DynamicResource PrimaryNavy}" Foreground="{DynamicResource PrimaryNavy}"
-                                    FontFamily="{StaticResource CairoFont}" />
-                        </Grid>
-
                         <Button Command="{Binding SavePathsCommand}" Content="حفظ المسارات"
                                 Style="{StaticResource MaterialDesignRaisedButton}"
                                 Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}"
-                                Height="40" HorizontalAlignment="Right" Width="160" FontFamily="{StaticResource CairoFont}" />
+                                Height="40" HorizontalAlignment="Left" Width="160" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Border>
 
@@ -305,7 +292,7 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel MaxWidth="600" HorizontalAlignment="Right">
+                    <StackPanel>
                         <TextBlock Text="🖨️ إعدادات ورق الطباعة" Style="{StaticResource SectionTitle}" />
 
                         <TextBlock Text="قالب الورق والملصقات الافتراضيّ" Style="{StaticResource FieldLabel}" />
@@ -461,7 +448,7 @@
                             </Style.Triggers>
                         </Style>
                     </Border.Style>
-                    <StackPanel MaxWidth="500" HorizontalAlignment="Right">
+                    <StackPanel>
                         <TextBlock Text="⚙️ الإعدادات العامة" Style="{StaticResource SectionTitle}" />
 
                         <TextBlock Text="حد التنبيه قبل انتهاء صلاحية المعايرة (أيام)" Style="{StaticResource FieldLabel}" />

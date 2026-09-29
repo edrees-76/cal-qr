@@ -232,8 +232,10 @@
     - `CAL-QR.Tests/DevicesViewModelTests.cs` — **جديد**: 6 اختبارات (Stubs لـ `IQrService`، `IPrintService`، `IPaperTemplateRepository`، `ICertificateRepository` + `TestCurrentUserService` القائمة).
   - الاختبارات الجديدة: `CanEdit_AdminUser`، `CanEdit_NullUser`، `CanEdit_EditorUser`، `ToggleAdvancedSearch`، `LoadDataAsync_NonDeletedOnly`، `ClearFiltersAsync_Resets`.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC ولا أنماط الواجهة.
-  - CI (PR #24، commit `e34ff91`): في انتظار النتيجة. لم يُشغَّل `dotnet build/test` محلّيّاً (لا .NET/Windows في بيئة الجلسة).
-  - **التحقّق البصريّ:** مطلوب من إدريس — التحقّق من أنّ Ctrl+N ينتقل إلى تبويب الأجهزة، Ctrl+B إلى الإعدادات، Ctrl+E إلى التقارير.
+  - `dotnet build` على `D:\cal-qr`: 0 أخطاء، 1 تحذير xUnit2013 (أُصلح في commit `0af3e4a`).
+  - `dotnet test` على جهاز إدريس: **395 نجح / 0 فشل / 0 تخطّى** (29 سبتمبر 2026).
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
+  - CI (PR #24، commit `bf2ae66`): لا workflow مُفعَّل في المستودع (0 check runs). دُمج في `main` (29 سبتمبر 2026).
 
 ## ملاحظات مفتوحة
 

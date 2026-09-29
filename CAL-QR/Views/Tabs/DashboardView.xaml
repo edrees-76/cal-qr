@@ -24,14 +24,14 @@
         </Grid.RowDefinitions>
 
         <!-- Row 0: Header Info -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0,0,0,10">
+        <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="لوحة البيانات والتحليل العام" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="لوحة البيانات والتحليل العام" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="نظرة شاملة على حالة الأجهزة المعايرة وتوزيع الجهات والتنبيهات النشطة" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
@@ -115,13 +115,13 @@
         <!-- Row 2: Charts -->
         <Grid Grid.Row="2" Margin="0,0,0,10">
             <!-- Left: Owner Distribution Flat Bar Chart (Expanded to full width) -->
-            <Border Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="0" FlowDirection="RightToLeft">
+            <Border Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0" FlowDirection="RightToLeft">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="توزيع الأجهزة حسب الجهات المالكة" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Text="توزيع الأجهزة حسب الجهات المالكة" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="220">
                         <ItemsControl ItemsSource="{Binding OwnerDeviceStats}" VerticalAlignment="Top">
                             <ItemsControl.ItemTemplate>
@@ -141,7 +141,7 @@
                                             </Grid.ColumnDefinitions>
                                             
                                             <!-- Rank -->
-                                            <TextBlock Grid.Column="0" Text="{Binding Rank, StringFormat={}{0}.}" FontWeight="Bold" Foreground="#1A3A6B" FontSize="10.5" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Top" />
+                                            <TextBlock Grid.Column="0" Text="{Binding Rank, StringFormat={}{0}.}" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontSize="10.5" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Top" />
                                             
                                             <!-- Owner Name -->
                                             <TextBlock Grid.Column="2" Text="{Binding OwnerName}" FontSize="10.5" Foreground="#424242" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" HorizontalAlignment="Stretch" VerticalAlignment="Top" />
@@ -155,7 +155,7 @@
                                             </Grid.ColumnDefinitions>
                                             
                                             <!-- Gray Background Bar -->
-                                            <Border Grid.ColumnSpan="2" Background="#EEEEEE" CornerRadius="5" />
+                                            <Border Grid.ColumnSpan="2" Background="{DynamicResource AppBorder}" CornerRadius="5" />
                                             
                                             <!-- Proportional Colored Bar with Gradient -->
                                             <Border Grid.Column="0" CornerRadius="5">
@@ -169,7 +169,7 @@
                                         </Grid>
                                         
                                         <!-- Count -->
-                                        <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="10.5" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Left" VerticalAlignment="Center" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -187,13 +187,13 @@
             </Grid.ColumnDefinitions>
 
             <!-- Card 1: Expiring Soon List (Right in RTL) -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15" Margin="10,0,0,0">
+            <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="10,0,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="الأجهزة التي ستنتهي صلاحية معايرتها قريباً" FontSize="12" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Text="الأجهزة التي ستنتهي صلاحية معايرتها قريباً" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
                     <DataGrid Grid.Row="1" ItemsSource="{Binding ExpiringDevices}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Background="Transparent" BorderThickness="0" RowHeaderWidth="0" GridLinesVisibility="Horizontal">
                         <DataGrid.Resources>
@@ -269,7 +269,7 @@
             </Border>
 
             <!-- Card 2: Expired List (Left in RTL) -->
-            <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+            <Border Grid.Column="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />

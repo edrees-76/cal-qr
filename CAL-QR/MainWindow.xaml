@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="نظام معايرة أجهزة المسح الإشعاعي (CAL-QR)" Height="720" Width="1080"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource MaterialDesignPaper}"
+        Background="{DynamicResource AppBackground}"
         FlowDirection="RightToLeft">
 
     <Window.InputBindings>

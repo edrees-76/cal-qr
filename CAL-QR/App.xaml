@@ -20,6 +20,12 @@
             <SolidColorBrush x:Key="WarningYellow" Color="#F9A825" />
             <SolidColorBrush x:Key="ErrorRed" Color="#C62828" />
 
+            <!-- Palette-tinted surface brushes (updated by ThemeService.Apply) -->
+            <SolidColorBrush x:Key="AppBackground"  Color="#F2F4F8" />
+            <SolidColorBrush x:Key="AppSurface"     Color="#FFFFFF" />
+            <SolidColorBrush x:Key="AppSurfaceAlt"  Color="#F7F8FA" />
+            <SolidColorBrush x:Key="AppBorder"      Color="#E0E4EC" />
+
             <!-- Material Design overrides using our colors -->
             <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#2E5088" />
             <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#1A3A6B" />

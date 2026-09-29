@@ -155,7 +155,20 @@
     - `CAL-QR/Views/Tabs/SettingsView.xaml` — (أ) `Tag="XYZ"` → `{x:Static materialDesign:PackIconKind.XYZ}` لـ 9 أيقونات؛ (ب) `Background="White"` → `MaterialDesignPaper` على 7 Borders؛ (ج) `#374151/#6B7280` → `MaterialDesignBody` على النصوص.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
   - dotnet build/test: يُشغَّلان على جهاز إدريس (لا .NET/Windows في بيئة الجلسة).
-  - PR مفتوح — في انتظار CI وتحقّق إدريس البصريّ.
+  - PR 13 — في انتظار CI وتحقّق إدريس البصريّ.
+
+- **جولة الثيم الشامل (Tinted Surfaces)** — فرع `claude/quirky-lamport-df0g4s` (من `main` عند `a4519ae` + الجولة السابقة):
+  - **السبب:** إدريس أراد أن يتغيّر لون الخلفيّة الرئيسيّة والألواح عند تبديل لوحة الألوان مثل Antigravity IDE.
+  - **القرار المعماريّ:** إضافة 4 موارد ديناميكيّة (`AppBackground`, `AppSurface`, `AppSurfaceAlt`, `AppBorder`) تُحسب في ThemeService من اللوحة الحاليّة — نبرة شاحبة جداً في الوضع الفاتح (5-12% خلط) وداكنة جداً في الوضع الداكن. ألوان الحالة (أحمر/أخضر/برتقالي) وأيقونات العمليّة تبقى ثابتة لأنّها دلاليّة.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/Services/ThemeService.cs` — `TintLight`/`TintDark` + `IsSystemDark` + حساب الـ 4 موارد في `Apply()`.
+    - `CAL-QR/App.xaml` — إضافة الـ 4 موارد الافتراضيّة.
+    - `CAL-QR/MainWindow.xaml` — خلفية النافذة ← `AppBackground`.
+    - 8 تبويبات (Dashboard, Devices, DeviceTypes, Owners, QrVerify, Reports, Users, Help) — `Background="White"` و`#F5F5F5/#FAFAFA/#F8FAFC` → `AppSurface`/`AppSurfaceAlt`؛ `BorderBrush="#E0E0E0/#E2E8F0"` → `AppBorder`.
+    - `AboutView.xaml` + `HelpView.xaml` — `#1A3A6B` في Background/Foreground → `DynamicResource PrimaryNavy`.
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: يُشغَّلان على جهاز إدريس.
+  - PR — في انتظار CI وتحقّق إدريس البصريّ.
 
 ## ملاحظات مفتوحة
 

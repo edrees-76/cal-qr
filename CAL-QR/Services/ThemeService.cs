@@ -31,6 +31,9 @@ namespace CAL_QR.Services
             theme.SetPrimaryColor(p.Primary);
             theme.SetSecondaryColor(p.Accent);
 
+            bool isDark = mode == "Dark" ||
+                (mode == "System" && IsSystemDark());
+
             var baseTheme = mode switch
             {
                 "Dark"   => BaseTheme.Dark,
@@ -49,8 +52,26 @@ namespace CAL_QR.Services
             SetBrush("SecondaryAccentBrush",p.Accent);
 
             // Input foreground: white text in dark mode, primary colour in light
-            var inputColor = mode == "Dark" ? Colors.White : p.Primary;
+            var inputColor = isDark ? Colors.White : p.Primary;
             SetBrush("PrimaryInputForeground", inputColor);
+
+            // Tinted surface colours — derive from palette for both modes
+            if (isDark)
+            {
+                // Dark: very dark tinted surfaces
+                SetBrush("AppBackground",  TintDark(p.Primary, 0.12f, 0x12));
+                SetBrush("AppSurface",     TintDark(p.Primary, 0.10f, 0x1C));
+                SetBrush("AppSurfaceAlt",  TintDark(p.Primary, 0.08f, 0x16));
+                SetBrush("AppBorder",      TintDark(p.Primary, 0.25f, 0x30));
+            }
+            else
+            {
+                // Light: very pale tinted surfaces (5-8% primary hue)
+                SetBrush("AppBackground",  TintLight(p.Primary, 0.06f));
+                SetBrush("AppSurface",     TintLight(p.Primary, 0.02f));
+                SetBrush("AppSurfaceAlt",  TintLight(p.Primary, 0.04f));
+                SetBrush("AppBorder",      TintLight(p.Primary, 0.12f));
+            }
         }
 
         private static void SetBrush(string key, Color color)
@@ -58,6 +79,20 @@ namespace CAL_QR.Services
             if (Application.Current?.Resources.Contains(key) == true)
                 Application.Current.Resources[key] = new SolidColorBrush(color);
         }
+
+        // Blend primary hue into white at given ratio (0=white, 1=full primary)
+        private static Color TintLight(Color primary, float ratio) =>
+            Color.FromRgb(
+                (byte)(255 - (255 - primary.R) * ratio),
+                (byte)(255 - (255 - primary.G) * ratio),
+                (byte)(255 - (255 - primary.B) * ratio));
+
+        // Blend primary hue into a dark base (baseValue = brightness of dark layer)
+        private static Color TintDark(Color primary, float ratio, byte baseValue) =>
+            Color.FromRgb(
+                (byte)(baseValue + (primary.R - baseValue) * ratio),
+                (byte)(baseValue + (primary.G - baseValue) * ratio),
+                (byte)(baseValue + (primary.B - baseValue) * ratio));
 
         private static Color Darken(Color c, float factor) =>
             Color.FromRgb(
@@ -70,5 +105,16 @@ namespace CAL_QR.Services
                 (byte)Math.Min(255, c.R + delta),
                 (byte)Math.Min(255, c.G + delta),
                 (byte)Math.Min(255, c.B + delta));
+
+        private static bool IsSystemDark()
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                    @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+                return key?.GetValue("AppsUseLightTheme") is int v && v == 0;
+            }
+            catch { return false; }
+        }
     }
 }

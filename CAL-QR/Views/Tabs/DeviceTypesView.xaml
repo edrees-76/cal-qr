@@ -19,7 +19,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Data Table Border (DeviceTypes List) -->
-        <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+        <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />

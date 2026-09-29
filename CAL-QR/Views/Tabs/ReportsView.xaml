@@ -21,9 +21,9 @@
         </Grid.RowDefinitions>
 
         <!-- Header Card -->
-        <Border Grid.Row="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+        <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
             <StackPanel>
-                <TextBlock Text="التقارير والتصدير" FontSize="18" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="التقارير والتصدير" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="توليد وتصدير تقارير سجلات المعايرة المفلترة بصيغتي Excel و PDF" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
         </Border>
@@ -39,7 +39,7 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Panel: Filters -->
-                    <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,10,0">
+                    <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="20" Margin="0,0,10,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -47,7 +47,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="تصفية البيانات وفلترة السجلات" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Grid.Row="0" Text="تصفية البيانات وفلترة السجلات" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                             <!-- Filter Fields -->
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -123,7 +123,7 @@
                             </ScrollViewer>
 
                             <!-- Matching Count Indicator -->
-                            <Border Grid.Row="2" Background="#F8FAFC" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="12" Margin="0,15,0,0">
+                            <Border Grid.Row="2" Background="{DynamicResource AppSurfaceAlt}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="12" Margin="0,15,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -131,7 +131,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                         <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
-                                        <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="#1A3A6B" FontFamily="{StaticResource CairoFont}" />
+                                        <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                                     </StackPanel>
                                     <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="#C9A227" Width="26" Height="26" VerticalAlignment="Center" />
                                 </Grid>
@@ -140,7 +140,7 @@
                     </Border>
 
                     <!-- Right Panel: Export Options -->
-                    <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="10,0,0,0">
+                    <Border Grid.Column="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="20" Margin="10,0,0,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -148,7 +148,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="خيارات ونوع التقرير" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Grid.Row="0" Text="خيارات ونوع التقرير" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                             <!-- Options -->
                             <StackPanel Grid.Row="1">
@@ -191,14 +191,14 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Left Panel: Filters/Inputs -->
-                    <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,10,0">
+                    <Border Grid.Column="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="20" Margin="0,0,10,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="تحديد فترة ونطاق تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Grid.Row="0" Text="تحديد فترة ونطاق تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                                 <StackPanel Margin="0,0,5,0">
@@ -235,7 +235,7 @@
                     </Border>
 
                     <!-- Right Panel: Export Options & Actions -->
-                    <Border Grid.Column="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="10,0,0,0">
+                    <Border Grid.Column="1" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="20" Margin="10,0,0,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -243,7 +243,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="خيارات حفظ وتصدير تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Grid.Row="0" Text="خيارات حفظ وتصدير تقرير الأداء" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
 
                             <StackPanel Grid.Row="1">
                                 <!-- Format Type -->

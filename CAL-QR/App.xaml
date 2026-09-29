@@ -131,6 +131,7 @@
                 <Setter Property="BorderBrush"             Value="{DynamicResource AppBorder}" />
                 <Setter Property="Foreground"              Value="{DynamicResource MaterialDesignBody}" />
                 <Setter Property="RowStyle"                Value="{DynamicResource UnifiedDataGridRowHoverStyle}" />
+                <Setter Property="SelectionUnit"           Value="FullRow" />
             </Style>
 
             <Style TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">

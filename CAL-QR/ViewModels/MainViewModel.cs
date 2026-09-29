@@ -90,6 +90,9 @@ namespace CAL_QR.ViewModels
             ChangeTabCommand = new RelayCommand(ChangeTab);
             SelectSearchResultCommand = new RelayCommand(async (p) => await SelectSearchResultAsync(p));
             FocusSearchCommand = new RelayCommand(FocusSearch);
+            NavigateToDevicesCommand  = new RelayCommand(() => NavigateToTabIfAllowed(TabIndexDevices));
+            NavigateToReportsCommand  = new RelayCommand(() => NavigateToTabIfAllowed(TabIndexReports));
+            NavigateToSettingsCommand = new RelayCommand(() => NavigateToTabIfAllowed(TabIndexSettings));
 
             CalibrationEvents.CalibrationChanged += OnCalibrationChanged;
             SearchEvents.NavigateToDevice += OnNavigateToDevice;
@@ -228,6 +231,9 @@ namespace CAL_QR.ViewModels
         public ICommand ChangeTabCommand { get; }
         public ICommand SelectSearchResultCommand { get; }
         public ICommand FocusSearchCommand { get; }
+        public ICommand NavigateToDevicesCommand { get; }
+        public ICommand NavigateToReportsCommand { get; }
+        public ICommand NavigateToSettingsCommand { get; }
 
         private void ToggleTabHeader()
         {
@@ -240,6 +246,12 @@ namespace CAL_QR.ViewModels
             {
                 SelectedTabIndex = index;
             }
+        }
+
+        private void NavigateToTabIfAllowed(int tabIndex)
+        {
+            if (IsTabAllowed(tabIndex))
+                SelectedTabIndex = tabIndex;
         }
 
         private void OnSearchTextChanged()

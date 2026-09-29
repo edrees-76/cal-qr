@@ -5,14 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
-             xmlns:helpers="clr-namespace:CAL_QR.Helpers"
              mc:Ignorable="d"
              d:DesignHeight="700" d:DesignWidth="960"
              Background="Transparent">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-        <helpers:StringEqualityConverter x:Key="StringEqConv" />
 
         <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignFilledTextBox}">
             <Setter Property="FontSize" Value="14" />
@@ -95,82 +93,6 @@
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
         </Style>
 
-        <!-- Theme swatch button style -->
-        <Style x:Key="ThemeSwatchStyle" TargetType="RadioButton">
-            <Setter Property="GroupName" Value="ThemeChoice" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Width" Value="56" />
-            <Setter Property="Height" Value="56" />
-            <Setter Property="Margin" Value="6,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Border x:Name="SwatchOuter"
-                                    CornerRadius="28"
-                                    BorderBrush="Transparent"
-                                    BorderThickness="3"
-                                    Width="56" Height="56">
-                                <Border CornerRadius="22" Width="44" Height="44"
-                                        Background="{TemplateBinding Background}" />
-                            </Border>
-                            <materialDesign:PackIcon x:Name="CheckMark"
-                                Kind="Check" Width="20" Height="20"
-                                Foreground="White" HorizontalAlignment="Center"
-                                VerticalAlignment="Center" Visibility="Collapsed" />
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="SwatchOuter" Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Mode card style -->
-        <Style x:Key="ModeCardStyle" TargetType="RadioButton">
-            <Setter Property="GroupName" Value="ModeChoice" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="0,0,10,0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="ModeBorder"
-                                CornerRadius="8" BorderThickness="2"
-                                BorderBrush="{DynamicResource MaterialDesignDivider}" Padding="14,10"
-                                Background="Transparent">
-                            <StackPanel HorizontalAlignment="Center">
-                                <materialDesign:PackIcon x:Name="ModeIcon"
-                                    Kind="{TemplateBinding Tag}"
-                                    Width="24" Height="24"
-                                    Foreground="{DynamicResource MaterialDesignBody}"
-                                    HorizontalAlignment="Center" />
-                                <TextBlock x:Name="ModeLabel"
-                                    Text="{TemplateBinding Content}"
-                                    FontSize="12" FontFamily="{StaticResource CairoFont}"
-                                    Foreground="{DynamicResource MaterialDesignBody}"
-                                    HorizontalAlignment="Center"
-                                    Margin="0,4,0,0" />
-                            </StackPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="ModeBorder" Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
-                                <Setter TargetName="ModeIcon" Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
-                                <Setter TargetName="ModeLabel" Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ModeBorder" Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
     </UserControl.Resources>
 
     <Grid>
@@ -178,7 +100,6 @@
             <RowDefinition Height="Auto" />  <!-- Page header -->
             <RowDefinition Height="Auto" />  <!-- Hub cards -->
             <RowDefinition Height="*" />     <!-- Section panel -->
-            <RowDefinition Height="Auto" />  <!-- Danger zone -->
         </Grid.RowDefinitions>
 
         <!-- ══════════ Page Header ══════════ -->
@@ -195,12 +116,8 @@
         <UniformGrid Grid.Row="1" Rows="1" Columns="6" Margin="14,12,14,0">
 
             <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="{x:Static materialDesign:PackIconKind.Palette}" Content="المظهر"
-                         x:Name="CardAppearance" IsChecked="True" />
-
-            <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="{x:Static materialDesign:PackIconKind.Lock}" Content="الأمان"
-                         x:Name="CardSecurity" />
+                         Tag="Lock" Content="الأمان"
+                         x:Name="CardSecurity" IsChecked="True" />
 
             <RadioButton Style="{StaticResource HubCardStyle}"
                          Tag="{x:Static materialDesign:PackIconKind.FolderOpen}" Content="المسارات"
@@ -222,97 +139,17 @@
                          x:Name="CardGeneral"
                          IsEnabled="{Binding CanEdit}" />
 
+            <RadioButton Style="{StaticResource HubCardStyle}"
+                         Tag="AlertCircle" Content="إعادة الضبط"
+                         x:Name="CardReset"
+                         Unchecked="CardReset_Unchecked"
+                         Visibility="{Binding IsFactoryResetVisible, Converter={StaticResource BoolToVis}}" />
+
         </UniformGrid>
 
         <!-- ══════════ Section Panels ══════════ -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="14,10,14,10">
             <Grid>
-
-                <!-- ── Appearance Panel ── -->
-                <Border x:Name="PanelAppearance" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
-                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Setter Property="Visibility" Value="Collapsed" />
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsChecked, ElementName=CardAppearance}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <StackPanel>
-                        <TextBlock Text="🎨 المظهر والثيم" Style="{StaticResource SectionTitle}" />
-
-                        <!-- Palette row -->
-                        <TextBlock Text="لوحة الألوان" Style="{StaticResource FieldLabel}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                            <RadioButton Style="{StaticResource ThemeSwatchStyle}"
-                                         Background="#162D50"
-                                         IsChecked="{Binding SelectedThemeName, Converter={StaticResource StringEqConv}, ConverterParameter=Steel}"
-                                         ToolTip="Steel — أزرق مدنيّ" />
-                            <RadioButton Style="{StaticResource ThemeSwatchStyle}"
-                                         Background="#2C3040"
-                                         IsChecked="{Binding SelectedThemeName, Converter={StaticResource StringEqConv}, ConverterParameter=Gold}"
-                                         ToolTip="Gold — رصاصي ذهبيّ" />
-                            <RadioButton Style="{StaticResource ThemeSwatchStyle}"
-                                         Background="#0D2137"
-                                         IsChecked="{Binding SelectedThemeName, Converter={StaticResource StringEqConv}, ConverterParameter=Cobalt}"
-                                         ToolTip="Cobalt — أزرق كهربائيّ" />
-                            <RadioButton Style="{StaticResource ThemeSwatchStyle}"
-                                         Background="#172818"
-                                         IsChecked="{Binding SelectedThemeName, Converter={StaticResource StringEqConv}, ConverterParameter=Olive}"
-                                         ToolTip="Olive — أخضر زيتوني" />
-
-                            <!-- Colour name labels -->
-                            <StackPanel Orientation="Vertical" Margin="14,0,0,0" VerticalAlignment="Center">
-                                <TextBlock FontSize="13" FontFamily="{StaticResource CairoFont}" Foreground="#374151">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Text" Value="Steel — أزرق مدنيّ" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding SelectedThemeName}" Value="Gold">
-                                                    <Setter Property="Text" Value="Gold — رصاصي ذهبيّ" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedThemeName}" Value="Cobalt">
-                                                    <Setter Property="Text" Value="Cobalt — أزرق كهربائيّ" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding SelectedThemeName}" Value="Olive">
-                                                    <Setter Property="Text" Value="Olive — أخضر زيتونيّ" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock Text="اضغط «تطبيق» بعد الاختيار" FontSize="11"
-                                           Foreground="#9CA3AF" FontFamily="{StaticResource CairoFont}" Margin="0,3,0,0" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <!-- Mode row -->
-                        <TextBlock Text="وضع الإضاءة" Style="{StaticResource FieldLabel}" />
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                            <RadioButton Style="{StaticResource ModeCardStyle}"
-                                         Tag="{x:Static materialDesign:PackIconKind.WeatherSunny}" Content="فاتح"
-                                         IsChecked="{Binding AppearanceMode, Converter={StaticResource StringEqConv}, ConverterParameter=Light}" />
-                            <RadioButton Style="{StaticResource ModeCardStyle}"
-                                         Tag="{x:Static materialDesign:PackIconKind.WeatherNight}" Content="داكن"
-                                         IsChecked="{Binding AppearanceMode, Converter={StaticResource StringEqConv}, ConverterParameter=Dark}" />
-                            <RadioButton Style="{StaticResource ModeCardStyle}"
-                                         Tag="{x:Static materialDesign:PackIconKind.Monitor}" Content="النظام"
-                                         IsChecked="{Binding AppearanceMode, Converter={StaticResource StringEqConv}, ConverterParameter=System}" />
-                        </StackPanel>
-
-                        <Button Command="{Binding ApplyThemeCommand}"
-                                Content="تطبيق الثيم"
-                                Style="{StaticResource MaterialDesignRaisedButton}"
-                                Background="{DynamicResource PrimaryNavy}"
-                                BorderBrush="{DynamicResource PrimaryNavy}"
-                                Height="42" Width="160"
-                                HorizontalAlignment="Right"
-                                FontFamily="{StaticResource CairoFont}" />
-                    </StackPanel>
-                </Border>
 
                 <!-- ── Security Panel ── -->
                 <Border x:Name="PanelSecurity" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
@@ -642,60 +479,128 @@
                     </StackPanel>
                 </Border>
 
+                <!-- ── Reset Gate Panel (password verification before reset panel) ── -->
+                <Border x:Name="PanelResetGate" Background="White" CornerRadius="10"
+                        BorderBrush="#FEB2B2" BorderThickness="1" Padding="40,50">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsChecked, ElementName=CardReset}" Value="True" />
+                                        <Condition Binding="{Binding IsResetUnlocked}" Value="False" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel MaxWidth="380" HorizontalAlignment="Center" VerticalAlignment="Center">
+
+                        <materialDesign:PackIcon Kind="ShieldLockOutline" Width="52" Height="52"
+                                                 HorizontalAlignment="Center" Foreground="#C62828"
+                                                 Margin="0,0,0,14" />
+
+                        <TextBlock Text="تأكيد الهوية"
+                                   FontSize="20" FontWeight="Bold" Foreground="#C62828"
+                                   FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
+                                   Margin="0,0,0,8" />
+
+                        <TextBlock Text="أدخل كلمة مرور حسابك للوصول إلى بطاقة إعادة الضبط"
+                                   FontSize="13" Foreground="#6B7280" TextWrapping="Wrap"
+                                   FontFamily="{StaticResource CairoFont}" TextAlignment="Center"
+                                   Margin="0,0,0,24" />
+
+                        <TextBlock Text="كلمة المرور" Style="{StaticResource FieldLabel}" />
+                        <PasswordBox x:Name="TxtResetGatePassword" Height="40"
+                                     PasswordChanged="TxtResetGatePassword_PasswordChanged"
+                                     Margin="0,0,0,20" />
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Command="{Binding UnlockResetCommand}" Content="دخول"
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#C62828" BorderBrush="#C62828"
+                                    Height="40" FontFamily="{StaticResource CairoFont}" />
+                            <Button Grid.Column="2" x:Name="BtnCancelResetGate" Content="إلغاء"
+                                    Click="BtnCancelResetGate_Click"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    BorderBrush="#9CA3AF" Foreground="#6B7280"
+                                    Height="40" FontFamily="{StaticResource CairoFont}" />
+                        </Grid>
+
+                    </StackPanel>
+                </Border>
+
+                <!-- ── Reset Panel ── -->
+                <Border x:Name="PanelReset" Background="#FFF5F5" CornerRadius="10"
+                        BorderBrush="#FEB2B2" BorderThickness="1" Padding="24">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsResetUnlocked}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <StackPanel MaxWidth="540" HorizontalAlignment="Center">
+
+                        <TextBlock Text="⚠️ إعادة ضبط البرنامج"
+                                   FontSize="18" FontWeight="Bold" Foreground="#C62828"
+                                   FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
+                                   Margin="0,0,0,12" />
+
+                        <TextBlock Text="مسح كليّ شامل لكافة بيانات المعايرة والملفات وسجلات التدقيق وإعادة النظام لحالة التثبيت النظيفة. لا يمكن التراجع."
+                                   FontSize="13" Foreground="#9B2C2C" TextWrapping="Wrap"
+                                   FontFamily="{StaticResource CairoFont}" TextAlignment="Center"
+                                   Margin="0,0,0,12" />
+
+                        <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1"
+                                CornerRadius="6" Padding="12,10" Margin="0,0,0,20">
+                            <TextBlock Text="🛡️ تُؤخذ نسخة احتياطية إجبارية قبل الحذف. يُشترط ضبط «مجلد النسخ الاحتياطيّة» أوّلاً."
+                                       FontSize="12" Foreground="#92400E" TextWrapping="Wrap"
+                                       FontFamily="{StaticResource CairoFont}" />
+                        </Border>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="1) اكتب: RESET-ALL-DATA" FontSize="12" FontWeight="Bold"
+                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                <TextBox Text="{Binding FactoryResetConfirmationText, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="40" HorizontalContentAlignment="Center"
+                                         FontFamily="Consolas, Courier New, monospace"
+                                         FontWeight="Bold" Foreground="#C62828" VerticalContentAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="2) أدخل كلمة المرور الحالية" FontSize="12" FontWeight="Bold"
+                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                <PasswordBox x:Name="TxtFactoryResetPassword" Height="40"
+                                             PasswordChanged="TxtFactoryResetPassword_PasswordChanged" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Command="{Binding FactoryResetCommand}" Content="💥 تصفير كامل النظام"
+                                HorizontalAlignment="Stretch" Margin="0,16,0,0"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Background="#C62828" BorderBrush="#C62828"
+                                Height="44" FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
+                </Border>
+
             </Grid>
         </ScrollViewer>
-
-        <!-- ══════════ Danger Zone (Admin only) ══════════ -->
-        <Border Grid.Row="3" Margin="14,0,14,12"
-                Background="#FFF5F5" CornerRadius="10"
-                BorderBrush="#FEB2B2" BorderThickness="1" Padding="20"
-                Visibility="{Binding IsFactoryResetVisible, Converter={StaticResource BoolToVis}}">
-            <Expander Header="⚠️ منطقة الخطر: التصفير الكامل للنظام"
-                      Foreground="#C62828"
-                      FontFamily="{StaticResource CairoFont}"
-                      FontSize="13" FontWeight="Bold">
-                <StackPanel Margin="0,12,0,0">
-                    <TextBlock Text="مسح كليّ شامل لكافة بيانات المعايرة والملفات وسجلات التدقيق وإعادة النظام لحالة التثبيت النظيفة. لا يمكن التراجع."
-                               FontSize="12" Foreground="#9B2C2C" TextWrapping="Wrap"
-                               FontFamily="{StaticResource CairoFont}" Margin="0,0,0,10" />
-
-                    <Border Background="#FFFBEB" BorderBrush="#FDE68A" BorderThickness="1"
-                            CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
-                        <TextBlock Text="🛡️ تُؤخذ نسخة احتياطية إجبارية قبل الحذف. يُشترط ضبط «مجلد النسخ الاحتياطيّة» أوّلاً."
-                                   FontSize="11" Foreground="#92400E" TextWrapping="Wrap"
-                                   FontFamily="{StaticResource CairoFont}" />
-                    </Border>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="20" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="1) اكتب: RESET-ALL-DATA" FontSize="11" FontWeight="Bold"
-                                       Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
-                            <TextBox Text="{Binding FactoryResetConfirmationText, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="40" HorizontalContentAlignment="Center"
-                                     FontFamily="Consolas, Courier New, monospace"
-                                     FontWeight="Bold" Foreground="#C62828" VerticalContentAlignment="Center" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="2) أدخل كلمة سرّك الشخصية" FontSize="11" FontWeight="Bold"
-                                       Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
-                            <PasswordBox x:Name="TxtFactoryResetPassword" Height="40"
-                                         PasswordChanged="TxtFactoryResetPassword_PasswordChanged" />
-                        </StackPanel>
-                    </Grid>
-
-                    <Button Command="{Binding FactoryResetCommand}" Content="💥 تصفير كامل النظام"
-                            HorizontalAlignment="Stretch" Margin="0,12,0,0"
-                            Style="{StaticResource MaterialDesignRaisedButton}"
-                            Background="#C62828" BorderBrush="#C62828"
-                            Height="44" FontFamily="{StaticResource CairoFont}" />
-                </StackPanel>
-            </Expander>
-        </Border>
 
     </Grid>
 </UserControl>

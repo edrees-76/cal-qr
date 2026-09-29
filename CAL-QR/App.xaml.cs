@@ -68,15 +68,6 @@ namespace CAL_QR
                     DatabaseMigrator.RunMigrations(context);
                 }
 
-                // Apply saved theme before any window is shown
-                using (var scope = ServiceProvider.CreateScope())
-                {
-                    var ctx = scope.ServiceProvider.GetRequiredService<CalQrDbContext>();
-                    var themeName = ctx.AppSettings.FirstOrDefault(s => s.Key == "ThemeName")?.Value ?? "Steel";
-                    var themeMode = ctx.AppSettings.FirstOrDefault(s => s.Key == "AppearanceMode")?.Value ?? "Light";
-                    ThemeService.Apply(themeName, themeMode);
-                }
-
                 // Initialize HMAC key rotation service
                 var hmacService = ServiceProvider.GetRequiredService<IHmacService>();
                 hmacService.Initialize();

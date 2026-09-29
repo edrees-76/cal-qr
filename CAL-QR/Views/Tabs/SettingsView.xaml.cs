@@ -87,5 +87,30 @@ namespace CAL_QR.Views.Tabs
                 vm.FactoryResetPassword = ((PasswordBox)sender).Password;
             }
         }
+
+        private void TxtResetGatePassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.ResetGatePassword = ((PasswordBox)sender).Password;
+            }
+        }
+
+        private void CardReset_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.ResetUnlockState();
+            }
+        }
+
+        private void BtnCancelResetGate_Click(object sender, RoutedEventArgs e)
+        {
+            CardReset.IsChecked = false;
+            if (DataContext is SettingsViewModel vm)
+            {
+                vm.ResetUnlockState();
+            }
+        }
     }
 }

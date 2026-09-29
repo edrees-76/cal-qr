@@ -65,10 +65,6 @@ namespace CAL_QR.ViewModels
         private bool _backupPasswordIsSet;
         private string _backupPasswordStatusText = "الحالة: جارٍ الفحص…";
 
-        // Appearance / Theme Fields
-        private string _selectedThemeName = "Steel";
-        private string _appearanceMode = "Light";
-
         // Printing Fields
         private PaperTemplate? _selectedDefaultTemplate;
         private ObservableCollection<PaperTemplate> _templates = new();
@@ -113,6 +109,7 @@ namespace CAL_QR.ViewModels
             EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
             FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
+            UnlockResetCommand = new RelayCommand(async () => await UnlockResetAsync(), () => !string.IsNullOrEmpty(ResetGatePassword));
             SaveHelpSectionPasswordCommand = new RelayCommand(
                 async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword());
             ClearHelpSectionPasswordCommand = new RelayCommand(
@@ -120,8 +117,6 @@ namespace CAL_QR.ViewModels
 
             SaveBackupPasswordCommand = new RelayCommand(
                 async () => await SaveBackupPasswordAsync(), () => CanSaveBackupPassword());
-
-            ApplyThemeCommand = new RelayCommand(async () => await ApplyThemeAsync());
 
             _ = LoadSettingsAsync();
             _ = LoadHelpSectionPasswordStateAsync();
@@ -177,21 +172,6 @@ namespace CAL_QR.ViewModels
 
         public string HelpSectionPasswordStatusText =>
             HelpSectionPasswordIsSet ? "الحالة: مضبوطة ✔" : "الحالة: لم تُضبط بعد";
-
-        // Appearance Properties
-        public string SelectedThemeName
-        {
-            get => _selectedThemeName;
-            set => SetProperty(ref _selectedThemeName, value);
-        }
-
-        public string AppearanceMode
-        {
-            get => _appearanceMode;
-            set => SetProperty(ref _appearanceMode, value);
-        }
-
-        public ICommand ApplyThemeCommand { get; }
 
         // General Config Properties
         public int AlertDaysThreshold { get => _alertDaysThreshold; set => SetProperty(ref _alertDaysThreshold, value); }
@@ -322,16 +302,6 @@ namespace CAL_QR.ViewModels
                 var templatesList = await _templateRepository.GetAllAsync();
                 Templates = new ObservableCollection<PaperTemplate>(templatesList);
                 SelectedDefaultTemplate = Templates.FirstOrDefault(t => t.IsDefault);
-
-                // Load theme settings
-                var themeNameSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "ThemeName");
-                if (themeNameSetting != null) _selectedThemeName = themeNameSetting.Value;
-
-                var themeModeSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "AppearanceMode");
-                if (themeModeSetting != null) _appearanceMode = themeModeSetting.Value;
-
-                OnPropertyChanged(nameof(SelectedThemeName));
-                OnPropertyChanged(nameof(AppearanceMode));
 
                 // Notify view
                 OnPropertyChanged(nameof(AlertDaysThreshold));
@@ -939,6 +909,71 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        // ── بوّابة الدخول لبطاقة إعادة الضبط ──
+        private bool _isResetUnlocked;
+        public bool IsResetUnlocked
+        {
+            get => _isResetUnlocked;
+            set => SetProperty(ref _isResetUnlocked, value);
+        }
+
+        private string _resetGatePassword = string.Empty;
+        public string ResetGatePassword
+        {
+            get => _resetGatePassword;
+            set
+            {
+                if (SetProperty(ref _resetGatePassword, value))
+                    (UnlockResetCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public ICommand UnlockResetCommand { get; }
+
+        /// <summary>يُعيّن الحالة إلى مقفلة — يُستدعى من code-behind عند مغادرة البطاقة.</summary>
+        public void ResetUnlockState()
+        {
+            IsResetUnlocked = false;
+            ResetGatePassword = string.Empty;
+        }
+
+        private async Task UnlockResetAsync()
+        {
+            var currentUserId = _currentUserService.CurrentUser?.Id;
+            if (currentUserId == null)
+            {
+                MessageBox.Show("تعذّر تحديد المستخدم الحالي.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(currentUserId.Value);
+                bool valid = false;
+                if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
+                {
+                    try { valid = BCrypt.Net.BCrypt.Verify(ResetGatePassword, user.PasswordHash); }
+                    catch { valid = false; }
+                }
+
+                ResetGatePassword = string.Empty;
+
+                if (valid)
+                {
+                    IsResetUnlocked = true;
+                }
+                else
+                {
+                    MessageBox.Show("كلمة المرور غير صحيحة.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                ResetGatePassword = string.Empty;
+                MessageBox.Show($"خطأ أثناء التحقق من كلمة المرور: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         public ICommand FactoryResetCommand { get; }
 
         #region كلمة سرّ قسم «مفتاح التوقيع»
@@ -1157,23 +1192,6 @@ namespace CAL_QR.ViewModels
         }
 
         #endregion
-
-        private async Task ApplyThemeAsync()
-        {
-            try
-            {
-                ThemeService.Apply(SelectedThemeName, AppearanceMode);
-
-                using var context = await _contextFactory.CreateDbContextAsync();
-                await UpsertAppSettingAsync(context, "ThemeName", SelectedThemeName);
-                await UpsertAppSettingAsync(context, "AppearanceMode", AppearanceMode);
-                await context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"خطأ أثناء تطبيق الثيم: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         private static async Task UpsertAppSettingAsync(CalQrDbContext context, string key, string value)
         {

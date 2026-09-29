@@ -36,9 +36,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Border x:Name="CardBorder"
-                                Background="White"
+                                Background="{DynamicResource MaterialDesignPaper}"
                                 CornerRadius="10"
-                                BorderBrush="#E2E8F0"
+                                BorderBrush="{DynamicResource MaterialDesignDivider}"
                                 BorderThickness="1"
                                 Padding="16,14">
                             <Border.Effect>
@@ -54,7 +54,7 @@
                                     Text="{TemplateBinding Content}"
                                     FontSize="12" FontWeight="SemiBold"
                                     FontFamily="{StaticResource CairoFont}"
-                                    Foreground="#374151"
+                                    Foreground="{DynamicResource MaterialDesignBody}"
                                     HorizontalAlignment="Center"
                                     Margin="0,6,0,0" />
                             </StackPanel>
@@ -87,7 +87,7 @@
         <!-- Field label style -->
         <Style x:Key="FieldLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Foreground" Value="#374151" />
+            <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,0,0,5" />
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
@@ -103,7 +103,7 @@
         </Grid.RowDefinitions>
 
         <!-- ══════════ Page Header ══════════ -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="20,14">
+        <Border Grid.Row="0" Background="{DynamicResource MaterialDesignPaper}" BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="0,0,0,1" Padding="20,14">
             <StackPanel>
                 <TextBlock Text="الإعدادات" FontSize="20" FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
@@ -120,22 +120,22 @@
                          x:Name="CardSecurity" IsChecked="True" />
 
             <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="FolderOpen" Content="المسارات"
+                         Tag="{x:Static materialDesign:PackIconKind.FolderOpen}" Content="المسارات"
                          x:Name="CardPaths"
                          IsEnabled="{Binding CanEdit}" />
 
             <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="Printer" Content="الطباعة"
+                         Tag="{x:Static materialDesign:PackIconKind.Printer}" Content="الطباعة"
                          x:Name="CardPrint"
                          IsEnabled="{Binding CanEdit}" />
 
             <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="DatabaseSync" Content="النسخ الاحتياطيّ"
+                         Tag="{x:Static materialDesign:PackIconKind.DatabaseArrowRight}" Content="النسخ الاحتياطيّ"
                          x:Name="CardBackup"
                          Visibility="{Binding IsBackupRestoreVisible, Converter={StaticResource BoolToVis}}" />
 
             <RadioButton Style="{StaticResource HubCardStyle}"
-                         Tag="CogOutline" Content="عام"
+                         Tag="{x:Static materialDesign:PackIconKind.CogOutline}" Content="عام"
                          x:Name="CardGeneral"
                          IsEnabled="{Binding CanEdit}" />
 
@@ -152,8 +152,8 @@
             <Grid>
 
                 <!-- ── Security Panel ── -->
-                <Border x:Name="PanelSecurity" Background="White" CornerRadius="10"
-                        BorderBrush="#E2E8F0" BorderThickness="1" Padding="24"
+                <Border x:Name="PanelSecurity" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24"
                         IsEnabled="{Binding CanEdit}">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -229,8 +229,8 @@
                 </Border>
 
                 <!-- ── Paths Panel ── -->
-                <Border x:Name="PanelPaths" Background="White" CornerRadius="10"
-                        BorderBrush="#E2E8F0" BorderThickness="1" Padding="24"
+                <Border x:Name="PanelPaths" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24"
                         IsEnabled="{Binding CanEdit}">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -292,8 +292,8 @@
                 </Border>
 
                 <!-- ── Print Panel ── -->
-                <Border x:Name="PanelPrint" Background="White" CornerRadius="10"
-                        BorderBrush="#E2E8F0" BorderThickness="1" Padding="24"
+                <Border x:Name="PanelPrint" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24"
                         IsEnabled="{Binding CanEdit}">
                     <Border.Style>
                         <Style TargetType="Border">
@@ -340,8 +340,8 @@
                 </Border>
 
                 <!-- ── Backup Panel ── -->
-                <Border x:Name="PanelBackup" Background="White" CornerRadius="10"
-                        BorderBrush="#E2E8F0" BorderThickness="1" Padding="24">
+                <Border x:Name="PanelBackup" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -448,8 +448,8 @@
                 </Border>
 
                 <!-- ── General Panel ── -->
-                <Border x:Name="PanelGeneral" Background="White" CornerRadius="10"
-                        BorderBrush="#E2E8F0" BorderThickness="1" Padding="24"
+                <Border x:Name="PanelGeneral" Background="{DynamicResource MaterialDesignPaper}" CornerRadius="10"
+                        BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" Padding="24"
                         IsEnabled="{Binding CanEdit}">
                     <Border.Style>
                         <Style TargetType="Border">

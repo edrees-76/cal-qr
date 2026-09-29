@@ -156,7 +156,7 @@ namespace CAL_QR.Services
                             foreach (var file in files)
                             {
                                 string relativePath = Path.GetRelativePath(qrOutputPath, file).Replace('\\', '/');
-                                archive.CreateEntryFromFile(file, "QR_Output/" + relativePath);
+                                archive.CreateEntryFromFile(file, "poster/" + relativePath);
                             }
                         }
                     }
@@ -330,7 +330,10 @@ namespace CAL_QR.Services
                             Directory.CreateDirectory(tempAttachments);
                         }
 
-                        hasQrFolderInZip = archive.Entries.Any(e => e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
+                        // يدعم كلاً من "poster/" (النسخ الجديدة) و "QR_Output/" (النسخ القديمة)
+                        hasQrFolderInZip = archive.Entries.Any(e =>
+                            e.FullName.StartsWith("poster/", StringComparison.OrdinalIgnoreCase) ||
+                            e.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase));
                         if (hasQrFolderInZip)
                         {
                             Directory.CreateDirectory(tempQrOutput);
@@ -352,8 +355,23 @@ namespace CAL_QR.Services
                                     entry.ExtractToFile(destPath, true);
                                 }
                             }
+                            else if (entry.FullName.StartsWith("poster/", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string relativePath = entry.FullName.Substring("poster/".Length);
+                                if (!string.IsNullOrEmpty(relativePath))
+                                {
+                                    string destPath = Path.Combine(tempQrOutput, relativePath);
+                                    string destDir = Path.GetDirectoryName(destPath)!;
+                                    if (!Directory.Exists(destDir))
+                                    {
+                                        Directory.CreateDirectory(destDir);
+                                    }
+                                    entry.ExtractToFile(destPath, true);
+                                }
+                            }
                             else if (entry.FullName.StartsWith("QR_Output/", StringComparison.OrdinalIgnoreCase))
                             {
+                                // توافق خلفيّ مع النسخ القديمة التي تستخدم "QR_Output/"
                                 string relativePath = entry.FullName.Substring("QR_Output/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {

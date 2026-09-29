@@ -290,7 +290,7 @@ namespace CAL_QR.ViewModels
                 }
                 else
                 {
-                    QrOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output"));
+                    QrOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "poster"));
                 }
 
                 _originalDatabasePath = DatabasePath;
@@ -512,7 +512,7 @@ namespace CAL_QR.ViewModels
             var dialog = new Microsoft.Win32.OpenFolderDialog();
             if (dialog.ShowDialog() == true)
             {
-                QrOutputPath = Path.Combine(dialog.FolderName, "QR");
+                QrOutputPath = Path.Combine(dialog.FolderName, "poster");
             }
         }
 
@@ -679,7 +679,7 @@ namespace CAL_QR.ViewModels
                 {
                     if (string.IsNullOrWhiteSpace(QrOutputPath))
                     {
-                        MessageBox.Show("مسار مجلد مخرجات QR الجديد غير صالح.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("مسار مجلد مخرجات الملصق الجديد غير صالح.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
 

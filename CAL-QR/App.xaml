@@ -146,6 +146,7 @@
             <Style TargetType="{x:Type DataGridCell}" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
+                <Setter Property="BorderThickness" Value="0,0,0,1" />
                 <Setter Property="Foreground"  Value="{DynamicResource MaterialDesignBody}" />
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">

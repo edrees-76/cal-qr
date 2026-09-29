@@ -78,7 +78,7 @@ namespace CAL_QR.Tests
                 {
                     Assert.NotNull(archive.GetEntry("cal-qr.db"));
                     Assert.NotNull(archive.GetEntry("Attachments/test_file.txt"));
-                    Assert.NotNull(archive.GetEntry("QR_Output/test_qr.png"));
+                    Assert.NotNull(archive.GetEntry("poster/test_qr.png"));
                 }
 
                 // Delete mock files and modify database to test restore

@@ -27,6 +27,25 @@ namespace CAL_QR.Views
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
             _userRepository = userRepository;
+            Loaded += LoginWindow_Loaded;
+        }
+
+        private async void LoginWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var users = await _userRepository.GetAllAsync();
+                var activeUsernames = users
+                    .Where(u => u.IsActive)
+                    .Select(u => u.Username)
+                    .ToList();
+                TxtUsername.ItemsSource = activeUsernames;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading users for login dropdown: {ex.Message}");
+            }
+
             TxtUsername.Focus();
         }
 

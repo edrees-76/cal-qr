@@ -4,7 +4,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="تسجيل الدخول | Login" 
         Width="480"
-        MinHeight="600"
+        MinHeight="480"
         SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
@@ -53,47 +53,48 @@
                     </StackPanel>
  
                     <!-- Logo & Titles -->
-                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,5,0,15">
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,2,0,10">
                         <!-- SSDL Official Title -->
-                        <StackPanel FlowDirection="LeftToRight" HorizontalAlignment="Center" Margin="0,0,0,15">
-                            <TextBlock Text="SECONDARY STANDARD DOSIMETRY LABORATORY" 
-                                       FontSize="13" 
-                                       FontWeight="SemiBold" 
-                                       Foreground="{DynamicResource PrimaryNavy}" 
-                                       HorizontalAlignment="Center" 
+                        <StackPanel FlowDirection="LeftToRight" HorizontalAlignment="Center" Margin="0,0,0,8">
+                            <TextBlock Text="SECONDARY STANDARD DOSIMETRY LABORATORY"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A3A6B"
+                                       HorizontalAlignment="Center"
                                        TextAlignment="Center"
                                        TextWrapping="NoWrap"
                                        FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="(SSDL)" 
-                                       FontSize="12" 
-                                       FontWeight="SemiBold" 
-                                       Foreground="{DynamicResource PrimaryNavy}" 
-                                       HorizontalAlignment="Center" 
+                            <TextBlock Text="(SSDL)"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="#1A3A6B"
+                                       HorizontalAlignment="Center"
                                        TextAlignment="Center"
                                        TextWrapping="NoWrap"
-                                       Margin="0,3,0,0"
+                                       Margin="0,2,0,0"
                                        FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
-                        <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Height="75" Width="75" Margin="5" RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock Text="CAL-QR" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="14" Foreground="#707070" HorizontalAlignment="Center" Margin="0,4,0,0" FontFamily="{StaticResource CairoFont}" />
+                        <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Height="60" Width="60" Margin="3" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <TextBlock Text="CAL-QR" FontSize="22" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="13" Foreground="#707070" HorizontalAlignment="Center" Margin="0,2,0,0" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
  
                     <!-- Fields -->
-                    <StackPanel Grid.Row="2" Margin="10,0,10,12">
-                        <TextBlock Text="اسم المستخدم" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
-                        <TextBox x:Name="TxtUsername" 
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 materialDesign:HintAssist.Hint="أدخل اسم المستخدم" 
-                                 materialDesign:HintAssist.IsFloating="False"
-                                 Height="50"
-                                 Padding="12,8,12,8"
-                                 FontSize="15"
-                                 Margin="0,0,0,12"
-                                 FontFamily="{StaticResource CairoFont}"
-                                 KeyDown="TxtUsername_KeyDown"
-                                 VerticalContentAlignment="Center" />
+                    <StackPanel Grid.Row="2" Margin="10,0,10,8">
+                        <TextBlock Text="اسم المستخدم" FontSize="14" FontWeight="Bold" Foreground="#1A3A6B" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
+                        <ComboBox x:Name="TxtUsername"
+                                  IsEditable="True"
+                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  materialDesign:HintAssist.Hint="أدخل اسم المستخدم أو اختره"
+                                  materialDesign:HintAssist.IsFloating="False"
+                                  Height="50"
+                                  Padding="12,8,12,8"
+                                  FontSize="15"
+                                  Margin="0,0,0,12"
+                                  FontFamily="{StaticResource CairoFont}"
+                                  KeyDown="TxtUsername_KeyDown"
+                                  VerticalContentAlignment="Center" />
 
                         <TextBlock Text="كلمة المرور" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,6" Padding="0,2" FontFamily="{StaticResource CairoFont}" />
                         <Grid Margin="0,0,0,12">
@@ -144,17 +145,17 @@
                     </StackPanel>
  
                     <!-- Credits -->
-                    <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                        <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
+                    <StackPanel Grid.Row="3" Margin="0,5,0,0">
+                        <Separator Background="#E0E0E0" Margin="0,0,0,8" />
                         <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,10" FontFamily="{StaticResource CairoFont}" />
-                        
-                        <!-- Designer Logo Under Names -->
-                        <Image Source="/Assets/Logo/logo_original_4k.png" 
-                               Width="110" Height="110" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center" 
+                        <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,6" FontFamily="{StaticResource CairoFont}" />
+
+                        <!-- EFH Logo Under Names -->
+                        <Image Source="/Assets/Logo/efh-logo.jpg"
+                               Width="80" Height="60"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
                                RenderOptions.BitmapScalingMode="HighQuality" />
                     </StackPanel>
                 </Grid>
@@ -285,17 +286,17 @@
                     </Grid>
 
                     <!-- Credits -->
-                    <StackPanel Grid.Row="3" Margin="0,10,0,0">
-                        <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
+                    <StackPanel Grid.Row="3" Margin="0,5,0,0">
+                        <Separator Background="#E0E0E0" Margin="0,0,0,8" />
                         <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,10" FontFamily="{StaticResource CairoFont}" />
-                        
-                        <!-- Designer Logo Under Names -->
-                        <Image Source="/Assets/Logo/logo_original_4k.png" 
-                               Width="110" Height="110" 
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center" 
+                        <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="#808080" HorizontalAlignment="Center" Margin="0,3,0,6" FontFamily="{StaticResource CairoFont}" />
+
+                        <!-- EFH Logo Under Names -->
+                        <Image Source="/Assets/Logo/efh-logo.jpg"
+                               Width="80" Height="60"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
                                RenderOptions.BitmapScalingMode="HighQuality" />
                     </StackPanel>
                 </Grid>

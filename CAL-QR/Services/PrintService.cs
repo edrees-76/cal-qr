@@ -187,10 +187,9 @@ namespace CAL_QR.Services
             var cfLines = job.NuclideLines?.Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? new List<string>();
             if (cfLines.Count > 0)
             {
-                // السطور تحمل تسميتها (CF/CFavg) من مصدرها — لا بادئة ثابتة هنا.
-                string fullCfText = string.Join("\n", cfLines);
+                string fullCfText = string.Join("\n", cfLines.Select(l => $"CF {l}"));
                 if (!TryDraw(fullCfText, typefaceRegular, brushBody))
-                    TryDraw($"{job.CorrectionFactorLabel}: see certificate", typefaceRegular, brushBody);
+                    TryDraw("CF: see certificate", typefaceRegular, brushBody);
             }
 
             if (!string.IsNullOrWhiteSpace(job.Model))

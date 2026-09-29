@@ -259,13 +259,26 @@
                         </Grid>
 
                         <TextBlock Text="مجلد المرفقات" Style="{StaticResource FieldLabel}" />
-                        <Grid Margin="0,0,0,20">
+                        <Grid Margin="0,0,0,15">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0" Text="{Binding AttachmentsPath, UpdateSourceTrigger=PropertyChanged}" Height="40" />
                             <Button Grid.Column="1" Command="{Binding BrowseAttachmentsPathCommand}" Content="استعراض…" Margin="10,0,0,0" Height="40"
+                                    Style="{StaticResource MaterialDesignOutlinedButton}"
+                                    BorderBrush="{DynamicResource PrimaryNavy}" Foreground="{DynamicResource PrimaryNavy}"
+                                    FontFamily="{StaticResource CairoFont}" />
+                        </Grid>
+
+                        <TextBlock Text="مجلد مخرجات الملصق" Style="{StaticResource FieldLabel}" />
+                        <Grid Margin="0,0,0,20">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding QrOutputPath, UpdateSourceTrigger=PropertyChanged}" Height="40" />
+                            <Button Grid.Column="1" Command="{Binding BrowseQrOutputPathCommand}" Content="استعراض…" Margin="10,0,0,0" Height="40"
                                     Style="{StaticResource MaterialDesignOutlinedButton}"
                                     BorderBrush="{DynamicResource PrimaryNavy}" Foreground="{DynamicResource PrimaryNavy}"
                                     FontFamily="{StaticResource CairoFont}" />

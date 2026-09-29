@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using QRCoder;
 
 namespace CAL_QR.Services
 {
@@ -119,7 +122,32 @@ namespace CAL_QR.Services
             var brushBody = Brushes.DarkSlateGray;
 
             double padPx = Math.Max(4, Math.Min(widthPx, heightPx) * 0.06);
-            double innerWidth = widthPx - padPx * 2;
+
+            // ── صورة QR على يمين الملصق ──
+            double qrSizePx = 0;
+            if (!string.IsNullOrWhiteSpace(job.VerifyCode))
+            {
+                // حجم QR مربّع: يملأ ارتفاع الملصق مع الحواشي، لكن لا يتجاوز 40% من العرض
+                qrSizePx = Math.Min(heightPx - padPx * 2, widthPx * 0.40);
+                qrSizePx = Math.Max(qrSizePx, 20);
+
+                try
+                {
+                    var qrBitmap = GenerateQrBitmapSource(job.VerifyCode, (int)Math.Ceiling(qrSizePx));
+                    double qrX = xPx + widthPx - padPx - qrSizePx;
+                    double qrY = yPx + (heightPx - qrSizePx) / 2.0;
+                    dc.DrawImage(qrBitmap, new Rect(qrX, qrY, qrSizePx, qrSizePx));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[PrintService] QR generation failed: {ex.Message}");
+                    qrSizePx = 0;
+                }
+            }
+
+            // منطقة النص على اليسار (مع فراغ فاصل بين النص والـ QR)
+            double textGap = qrSizePx > 0 ? padPx : 0;
+            double innerWidth = widthPx - padPx * 2 - qrSizePx - textGap;
             double bodyFontSize = Math.Clamp(heightPx / 16.0, 6, 11);
             double titleFontSize = Math.Clamp(bodyFontSize + 3, bodyFontSize, 16);
 
@@ -131,11 +159,11 @@ namespace CAL_QR.Services
                 job.CertificateNumber ?? string.Empty,
                 System.Globalization.CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, typefaceBold, titleFontSize, brushDark, 96.0)
-            { MaxTextWidth = innerWidth };
+            { MaxTextWidth = Math.Max(1, innerWidth) };
             dc.DrawText(certText, new Point(cursorX, cursorY));
             cursorY += certText.Height + padPx * 0.5;
 
-            // ── كود التحقّق: مضمون دائمًا، يُحجز له مكانه أسفل الملصق مسبقًا ──
+            // ── كود التحقّق: يُحجز له مكانه أسفل الملصق مسبقًا (نصّ للقراءة اليدويّة) ──
             FormattedText? verifyText = null;
             double verifyBlockHeight = 0;
             if (!string.IsNullOrWhiteSpace(job.VerifyCode))
@@ -144,7 +172,7 @@ namespace CAL_QR.Services
                     $"Verify: {job.VerifyCode}",
                     System.Globalization.CultureInfo.CurrentCulture,
                     FlowDirection.LeftToRight, typefaceBold, bodyFontSize, brushDark, 96.0)
-                { MaxTextWidth = innerWidth };
+                { MaxTextWidth = Math.Max(1, innerWidth) };
                 verifyBlockHeight = verifyText.Height + padPx * 0.5;
             }
 
@@ -167,7 +195,7 @@ namespace CAL_QR.Services
                     text,
                     System.Globalization.CultureInfo.CurrentCulture,
                     FlowDirection.LeftToRight, tf, bodyFontSize, brush, 96.0)
-                { MaxTextWidth = innerWidth };
+                { MaxTextWidth = Math.Max(1, innerWidth) };
                 if (cursorY + ft.Height > bodyBottomY) return false;
                 dc.DrawText(ft, new Point(cursorX, cursorY));
                 cursorY += ft.Height;
@@ -199,11 +227,40 @@ namespace CAL_QR.Services
             if (!string.IsNullOrWhiteSpace(job.DeviceType))
                 TryDraw(job.DeviceType, typefaceRegular, brushBody);
 
-            // ── رسم كود التحقّق أسفل الملصق (بعد أن حُجز له مكانه) ──
+            // ── رسم كود التحقّق نصّاً أسفل الملصق (بعد أن حُجز له مكانه) ──
             if (verifyText != null)
             {
                 dc.DrawText(verifyText, new Point(cursorX, yPx + heightPx - padPx - verifyText.Height));
             }
+        }
+
+        // يولّد صورة QR من النصّ بحجم محدّد (بكسل)، بلا شعار (لاتّساع الملصق الصغير)
+        private static BitmapSource GenerateQrBitmapSource(string content, int sizePx)
+        {
+            using var qrGenerator = new QRCodeGenerator();
+            using var qrCodeData = qrGenerator.CreateQrCode(content, QRCodeGenerator.ECCLevel.H);
+            using var qrCode = new QRCode(qrCodeData);
+
+            int pixelsPerModule = Math.Max(1, sizePx / 33);
+            using var qrBitmap = qrCode.GetGraphic(
+                pixelsPerModule: pixelsPerModule,
+                darkColor: Color.Black,
+                lightColor: Color.White,
+                icon: null,
+                iconSizePercent: 0);
+
+            using var resized = new Bitmap(qrBitmap, new System.Drawing.Size(sizePx, sizePx));
+            using var ms = new MemoryStream();
+            resized.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            ms.Position = 0;
+
+            var bitmapImage = new BitmapImage();
+            bitmapImage.BeginInit();
+            bitmapImage.StreamSource = ms;
+            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+            bitmapImage.EndInit();
+            bitmapImage.Freeze();
+            return bitmapImage;
         }
 
         public BitmapSource RenderLabelPreview(QrPrintJob job, Models.PaperTemplate template)

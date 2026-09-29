@@ -75,7 +75,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- بطاقة 1: إجمالي الأجهزة — كحليّ -->
-            <Border Grid.Column="0" Margin="0,0,5,0" CornerRadius="8" Height="92" ClipToBounds="True">
+            <Border Grid.Column="0" Margin="0,0,5,0" CornerRadius="8" Height="100" ClipToBounds="True">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#0D2040" Offset="0.0" />
@@ -91,7 +91,7 @@
                         <TextBlock Text="إجمالي الأجهزة" FontSize="11" Foreground="#9ABDE8"
                                    FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding TotalDevices}" FontSize="30" FontWeight="Bold"
-                                   Foreground="White" FontFamily="{StaticResource CairoFont}" LineHeight="36" />
+                                   Foreground="White" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="جهاز مسجّل" FontSize="10" Foreground="#6890C0"
                                    FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
@@ -102,7 +102,7 @@
             </Border>
 
             <!-- بطاقة 2: سارية المفعول — أخضر -->
-            <Border Grid.Column="1" Margin="5,0,5,0" CornerRadius="8" Height="92" ClipToBounds="True">
+            <Border Grid.Column="1" Margin="5,0,5,0" CornerRadius="8" Height="100" ClipToBounds="True">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#1B5E20" Offset="0.0" />
@@ -118,7 +118,7 @@
                         <TextBlock Text="سارية المفعول" FontSize="11" Foreground="#A5D6A7"
                                    FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ValidDevices}" FontSize="30" FontWeight="Bold"
-                                   Foreground="White" FontFamily="{StaticResource CairoFont}" LineHeight="36" />
+                                   Foreground="White" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="شهادة نشطة" FontSize="10" Foreground="#66BB6A"
                                    FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
@@ -129,7 +129,7 @@
             </Border>
 
             <!-- بطاقة 3: تنتهي قريباً — عنبريّ -->
-            <Border Grid.Column="2" Margin="5,0,5,0" CornerRadius="8" Height="92" ClipToBounds="True">
+            <Border Grid.Column="2" Margin="5,0,5,0" CornerRadius="8" Height="100" ClipToBounds="True">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#BF6000" Offset="0.0" />
@@ -145,7 +145,7 @@
                         <TextBlock Text="تنتهي قريباً" FontSize="11" Foreground="#FFF9C4"
                                    FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ExpiringSoonDevices}" FontSize="30" FontWeight="Bold"
-                                   Foreground="White" FontFamily="{StaticResource CairoFont}" LineHeight="36" />
+                                   Foreground="White" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="تستحق المتابعة" FontSize="10" Foreground="#FFE082"
                                    FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
@@ -156,7 +156,7 @@
             </Border>
 
             <!-- بطاقة 4: منتهية الصلاحية — أحمر -->
-            <Border Grid.Column="3" Margin="5,0,0,0" CornerRadius="8" Height="92" ClipToBounds="True">
+            <Border Grid.Column="3" Margin="5,0,0,0" CornerRadius="8" Height="100" ClipToBounds="True">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#7F0000" Offset="0.0" />
@@ -172,7 +172,7 @@
                         <TextBlock Text="منتهية الصلاحية" FontSize="11" Foreground="#FFCDD2"
                                    FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding ExpiredDevices}" FontSize="30" FontWeight="Bold"
-                                   Foreground="White" FontFamily="{StaticResource CairoFont}" LineHeight="36" />
+                                   Foreground="White" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="تحتاج معايرة عاجلة" FontSize="10" Foreground="#EF9A9A"
                                    FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>

@@ -232,8 +232,19 @@
     - `CAL-QR.Tests/DevicesViewModelTests.cs` — **جديد**: 6 اختبارات (Stubs لـ `IQrService`، `IPrintService`، `IPaperTemplateRepository`، `ICertificateRepository` + `TestCurrentUserService` القائمة).
   - الاختبارات الجديدة: `CanEdit_AdminUser`، `CanEdit_NullUser`، `CanEdit_EditorUser`، `ToggleAdvancedSearch`، `LoadDataAsync_NonDeletedOnly`، `ClearFiltersAsync_Resets`.
   - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC ولا أنماط الواجهة.
-  - CI (PR #24، commit `e34ff91`): في انتظار النتيجة. لم يُشغَّل `dotnet build/test` محلّيّاً (لا .NET/Windows في بيئة الجلسة).
-  - **التحقّق البصريّ:** مطلوب من إدريس — التحقّق من أنّ Ctrl+N ينتقل إلى تبويب الأجهزة، Ctrl+B إلى الإعدادات، Ctrl+E إلى التقارير.
+  - `dotnet build` على `D:\cal-qr`: 0 أخطاء، 1 تحذير xUnit2013 (أُصلح في commit `0af3e4a`).
+  - `dotnet test` على جهاز إدريس: **395 نجح / 0 فشل / 0 تخطّى** (29 سبتمبر 2026).
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح.
+  - CI (PR #24، commit `bf2ae66`): لا workflow مُفعَّل في المستودع (0 check runs). دُمج في `main` (29 سبتمبر 2026).
+
+- **جولة تأثير التمرير على نهج Enjaz (نعم/لا)** — فرع `feat/batch-print-ui` (من `main` عند `bf2ae66`):
+  - السبب: طلب إدريس تطبيق نهج Enjaz-2026 في تأثير التمرير على الجداول — خلفية فاتحة جدّاً (#EEF2FB) عند التمرير وأزرق ناعم (#D4E3F7) عند التحديد، مع إبقاء النصّ داكناً بدلاً من إظهاره أبيض.
+  - **الملفّات المعدَّلة:**
+    - `CAL-QR/App.xaml` — إضافة رمزَي لون جديدَين `DataGridHoverBrush (#EEF2FB)` و`DataGridSelectionBrush (#D4E3F7)`؛ إضافة `SelectionUnit=FullRow` إلى نمط DataGrid العامّ؛ إضافة triggers التحديد إلى `DataGridCell`؛ استبدال `UnifiedDataGridRowHoverStyle` (الكحليّ الداكن + النصّ الأبيض) بالنسخة الناعمة على نهج Enjaz؛ تبسيط `UnifiedNavyDataGridIconStyle` و`UnifiedNavyDataGridTextBlockStyle` و`UnifiedSubtleDataGridTextBlockStyle` بحذف triggers White.
+    - `CAL-QR/Views/Tabs/DevicesView.xaml` — حذف 4 مجموعات DataTriggers كانت تغيّر Foreground الأيقونات/النصوص إلى White عند التمرير/التحديد (الإصلاح الضروري لأنّ الخلفية لم تعد داكنة).
+  - لا تغيير في المخطّط ولا الترحيلات ولا حمولة التوقيع ولا HMAC.
+  - dotnet build/test: يُشغَّلان على جهاز إدريس.
+  - **التحقّق البصريّ (إدريس، 29 سبتمبر 2026):** نجح — التمرير الناعم بلا تقسيمات أعمدة ✔.
 
 ## ملاحظات مفتوحة
 

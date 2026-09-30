@@ -162,7 +162,7 @@ namespace CAL_QR.ViewModels
                     nodes.Add(new TimelineNode
                     {
                         CertificateNumber = r.DisplayCertificateNumber,
-                        DateString = r.CalibrationDate.ToString("yyyy-MM-dd"),
+                        DateString = r.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                         ResultColor = r.Result == "Passed" ? "#2E7D32" : r.Result == "Failed" ? "#C62828" : "#F9A825",
                         IsPassed = r.Result == "Passed",
                         IsFailed = r.Result == "Failed",

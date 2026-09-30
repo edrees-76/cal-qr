@@ -411,7 +411,7 @@ namespace CAL_QR.ViewModels
             var saveFileDialog = new SaveFileDialog
             {
                 Filter = IsPdfFormat ? "PDF Files (*.pdf)|*.pdf" : "Excel Files (*.xlsx)|*.xlsx",
-                FileName = $"تقرير_المعايرة_{DateTime.Now:yyyyMMdd_HHmmss}"
+                FileName = $"تقرير_المعايرة_{DateTime.Now.ToString("yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture)}"
             };
 
             if (saveFileDialog.ShowDialog() == true)
@@ -472,7 +472,7 @@ namespace CAL_QR.ViewModels
             var saveFileDialog = new SaveFileDialog
             {
                 Filter = IsPerfPdf ? "PDF Files (*.pdf)|*.pdf" : "Excel Files (*.xlsx)|*.xlsx",
-                FileName = $"تقرير_أداء_وحدة_المعايرة_{DateTime.Now:yyyyMMdd_HHmmss}"
+                FileName = $"تقرير_أداء_وحدة_المعايرة_{DateTime.Now.ToString("yyyyMMdd_HHmmss", System.Globalization.CultureInfo.InvariantCulture)}"
             };
 
             if (saveFileDialog.ShowDialog() == true)
@@ -564,7 +564,7 @@ namespace CAL_QR.ViewModels
                     }
 
                     MessageBox.Show("تم تصدير تقرير الأداء بنجاح.", "تم التصدير", MessageBoxButton.OK, MessageBoxImage.Information);
-                    await _auditLogRepository.LogAsync("تصدير تقرير أداء", "نظام", "Reports", $"تصدير تقرير أداء وحدة المعايرة ({ (IsPerfDetailed ? "مفصل" : "مختصر") }) للفترة من {start:yyyy-MM-dd} إلى {end:yyyy-MM-dd} بصيغة {(IsPerfPdf ? "PDF" : "Excel")}");
+                    await _auditLogRepository.LogAsync("تصدير تقرير أداء", "نظام", "Reports", $"تصدير تقرير أداء وحدة المعايرة ({ (IsPerfDetailed ? "مفصل" : "مختصر") }) للفترة من {start.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)} إلى {end.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)} بصيغة {(IsPerfPdf ? "PDF" : "Excel")}");
                 }
                 catch (Exception ex)
                 {

@@ -15,8 +15,8 @@ namespace CAL_QR.Models.DisplayItems
         public string StatusColorHex { get; set; } = string.Empty;
 
         // Formatted properties for easy binding
-        public string LastCalibrationDateString => LastCalibrationDate?.ToString("yyyy-MM-dd") ?? "-";
-        public string ExpiryDateString => ExpiryDate?.ToString("yyyy-MM-dd") ?? "-";
+        public string LastCalibrationDateString => LastCalibrationDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
+        public string ExpiryDateString => ExpiryDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
         
         // Row background matching the status color
         public string RowBackground => StatusText == "سارية" ? "#E8F5E9" : StatusText == "قريبة الانتهاء" ? "#FFFDE7" : StatusText == "منتهية" ? "#FFEBEE" : "Transparent";

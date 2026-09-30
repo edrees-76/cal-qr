@@ -6,17 +6,17 @@ namespace CAL_QR.Helpers
     {
         public static string Format(DateTime date)
         {
-            return date.ToString("yyyy-MM-dd");
+            return date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         public static string Format(DateTime? date)
         {
-            return date?.ToString("yyyy-MM-dd") ?? string.Empty;
+            return date?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
         }
 
         public static DateTime? Parse(string dateStr)
         {
-            if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var date))
+            if (DateTime.TryParseExact(dateStr, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var date))
             {
                 return date;
             }

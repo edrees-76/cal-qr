@@ -245,7 +245,7 @@ namespace CAL_QR.ViewModels
         public DateTime ExpiryDate { get; set; }
         public int DaysRemaining { get; set; }
 
-        public string ExpiryDateString => ExpiryDate.ToString("yyyy-MM-dd");
+        public string ExpiryDateString => ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public class ExpiredDeviceDisplayItem
@@ -258,7 +258,7 @@ namespace CAL_QR.ViewModels
         public DateTime ExpiryDate { get; set; }
         public int DaysExpired { get; set; }
  
-        public string ExpiryDateString => ExpiryDate == DateTime.MinValue ? "بدون شهادة" : ExpiryDate.ToString("yyyy-MM-dd");
+        public string ExpiryDateString => ExpiryDate == DateTime.MinValue ? "بدون شهادة" : ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         public string DaysExpiredText => ExpiryDate == DateTime.MinValue ? "غير معاير" : (DaysExpired == 0 ? "منتهي اليوم" : $"{DaysExpired} يوم مضت");
     }
 

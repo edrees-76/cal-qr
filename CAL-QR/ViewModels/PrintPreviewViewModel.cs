@@ -259,8 +259,8 @@ namespace CAL_QR.ViewModels
                 DeviceType = certificate.CertificateTemplateType ?? "",
                 Model = certificate.DeviceModel,
                 SerialNumber = certificate.DeviceSerialNumber,
-                CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd"),
-                ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd"),
+                CalibrationDate = certificate.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+                ExpiryDate = certificate.DueDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
                 VerifyCode = certificate.VerifyCode ?? "",
                 NuclideLines = nuclideLines,
                 CorrectionFactorLabel = correctionFactorLabel

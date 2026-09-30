@@ -1066,8 +1066,8 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _isSelected, value);
         }
 
-        public string CalibrationDateString => CalibrationDate?.ToString("yyyy-MM-dd") ?? "-";
-        public string ExpiryDateString => ExpiryDate?.ToString("yyyy-MM-dd") ?? "-";
+        public string CalibrationDateString => CalibrationDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
+        public string ExpiryDateString => ExpiryDate?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "-";
         
         public string ResultAr => Result == "Passed" ? "✅ ناجح" : Result == "Failed" ? "❌ راسب" : Result == "Conditional" ? "⚠️ مشروط" : Result;
 

@@ -123,7 +123,7 @@ namespace CAL_QR.Services
                     ws.Cell(1, 1).Value = "مركز البحوث النووية";
                     ws.Cell(2, 1).Value = "إدارة الوقاية من الإشعاع";
                     ws.Cell(3, 1).Value = "قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة";
-                    ws.Cell(4, 1).Value = $"نوع التقرير: {(reportType == "Detailed" ? "مفصل" : "مختصر")} | تاريخ التوليد: {DateTime.Today:yyyy-MM-dd}";
+                    ws.Cell(4, 1).Value = $"نوع التقرير: {(reportType == "Detailed" ? "مفصل" : "مختصر")} | تاريخ التوليد: {DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)}";
 
                     for (int i = 1; i <= 4; i++)
                     {
@@ -179,8 +179,8 @@ namespace CAL_QR.Services
                             ws.Cell(row, 4).Value = record.Device?.DeviceType?.Name ?? "";
                             ws.Cell(row, 5).Value = record.Device?.Model ?? "";
                             ws.Cell(row, 6).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 7).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 8).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 7).Value = record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                            ws.Cell(row, 8).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                             ws.Cell(row, 9).Value = record.Result;
                             ws.Cell(row, 10).Value = record.EngineerName;
                             ws.Cell(row, 11).Value = record.CalibrationDescription;
@@ -192,7 +192,7 @@ namespace CAL_QR.Services
                             ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
                             ws.Cell(row, 4).Value = record.Device?.Model ?? "";
                             ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 6).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 6).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                             ws.Cell(row, 7).Value = record.Result;
                             ws.Cell(row, 8).Value = GetStatusText(record, alertDays);
                         }
@@ -251,7 +251,7 @@ namespace CAL_QR.Services
                                     column.Item().Text("مركز البحوث النووية").FontFamily("Cairo").Bold().FontSize(12).FontColor("#1A3A6B");
                                     column.Item().Text("إدارة الوقاية من الإشعاع").FontFamily("Cairo").FontSize(10);
                                     column.Item().Text("قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة").FontFamily("Cairo").FontSize(9);
-                                    column.Item().Text($"تاريخ التقرير: {DateTime.Today:yyyy-MM-dd}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
+                                    column.Item().Text($"تاريخ التقرير: {DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
                                 });
 
                                 if (_logoBytes != null)
@@ -370,8 +370,8 @@ namespace CAL_QR.Services
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
                                         AddCell(record.Device?.SerialNumber ?? "");
-                                        AddCell(record.CalibrationDate.ToString("yyyy-MM-dd"));
-                                        AddCell(record.ExpiryDate.ToString("yyyy-MM-dd"));
+                                        AddCell(record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
+                                        AddCell(record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
                                         AddCell(record.Result ?? "");
                                         AddCell(record.EngineerName ?? "");
                                     }
@@ -382,7 +382,7 @@ namespace CAL_QR.Services
                                         AddCell(record.Device?.Owner?.Name ?? "");
                                         AddCell(record.Device?.Model ?? "");
                                         AddCell(record.Device?.SerialNumber ?? "");
-                                        AddCell(record.ExpiryDate.ToString("yyyy-MM-dd"));
+                                        AddCell(record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
                                         AddCell(record.Result ?? "");
                                         
                                         string status = GetStatusText(record, alertDays);
@@ -446,7 +446,7 @@ namespace CAL_QR.Services
                                     column.Item().Text("مركز البحوث النووية").FontFamily("Cairo").Bold().FontSize(12).FontColor("#1A3A6B");
                                     column.Item().Text("إدارة الوقاية من الإشعاع").FontFamily("Cairo").FontSize(10);
                                     column.Item().Text("قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة").FontFamily("Cairo").FontSize(9);
-                                    column.Item().Text($"الفترة: من {data.StartDate:yyyy-MM-dd} إلى {data.EndDate:yyyy-MM-dd}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
+                                    column.Item().Text($"الفترة: من {data.StartDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)} إلى {data.EndDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)}").FontFamily("Cairo").FontSize(8).FontColor(Colors.Grey.Darken1);
                                 });
 
                                 if (_logoBytes != null)
@@ -649,8 +649,8 @@ namespace CAL_QR.Services
                                             AddCell(record.Device?.Owner?.Name ?? "");
                                             AddCell(record.Device?.Model ?? "");
                                             AddCell(record.Device?.SerialNumber ?? "");
-                                            AddCell(record.CalibrationDate.ToString("yyyy-MM-dd"));
-                                            AddCell(record.ExpiryDate.ToString("yyyy-MM-dd"));
+                                            AddCell(record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
+                                            AddCell(record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
                                             
                                             string resultColor = record.Result == "Passed" ? "#2E7D32" : (record.Result == "Failed" ? "#C62828" : "#F9A825");
                                             AddCell(record.Result ?? "", resultColor);
@@ -693,7 +693,7 @@ namespace CAL_QR.Services
                     ws.Cell(1, 1).Value = "مركز البحوث النووية";
                     ws.Cell(2, 1).Value = "إدارة الوقاية من الإشعاع";
                     ws.Cell(3, 1).Value = "قسم قياس وتقدير الجرعات الشخصية والمعايرة | وحدة المعايرة";
-                    ws.Cell(4, 1).Value = $"تقرير أداء وحدة المعايرة للفترة من {data.StartDate:yyyy-MM-dd} إلى {data.EndDate:yyyy-MM-dd} | تاريخ التوليد: {DateTime.Today:yyyy-MM-dd}";
+                    ws.Cell(4, 1).Value = $"تقرير أداء وحدة المعايرة للفترة من {data.StartDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)} إلى {data.EndDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)} | تاريخ التوليد: {DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)}";
 
                     for (int i = 1; i <= 4; i++)
                     {
@@ -882,8 +882,8 @@ namespace CAL_QR.Services
                             ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
                             ws.Cell(row, 4).Value = record.Device?.Model ?? "";
                             ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
-                            ws.Cell(row, 6).Value = record.CalibrationDate.ToString("yyyy-MM-dd");
-                            ws.Cell(row, 7).Value = record.ExpiryDate.ToString("yyyy-MM-dd");
+                            ws.Cell(row, 6).Value = record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+                            ws.Cell(row, 7).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                             ws.Cell(row, 8).Value = record.Result;
                             ws.Cell(row, 9).Value = record.EngineerName;
 

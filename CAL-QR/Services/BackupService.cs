@@ -101,7 +101,7 @@ namespace CAL_QR.Services
                 string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
 
-                string backupFileName = $"CalQR_Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}{BackupEncryption.FileExtension}";
+                string backupFileName = $"CalQR_Backup_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}";
                 string backupFilePath = Path.Combine(destinationFolder, backupFileName);
                 // الأرشيف المكشوف يُبنى في المجلّد المؤقّت وحده ويُحذف معه في finally؛
                 // ما يصل إلى مجلّد النسخ هو الملفّ المشفَّر فقط.
@@ -683,7 +683,7 @@ namespace CAL_QR.Services
                 }
 
                 DateTime lastBackup = DateTime.MinValue;
-                if (lastSetting != null && DateTime.TryParse(lastSetting.Value, out var dt))
+                if (lastSetting != null && DateTime.TryParse(lastSetting.Value, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
                 {
                     lastBackup = dt;
                 }
@@ -714,12 +714,12 @@ namespace CAL_QR.Services
                     var lastBkp = await updateContext.AppSettings.FirstOrDefaultAsync(s => s.Key == "LastBackupDateTime");
                     if (lastBkp == null)
                     {
-                        lastBkp = new AppSetting { Key = "LastBackupDateTime", Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") };
+                        lastBkp = new AppSetting { Key = "LastBackupDateTime", Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) };
                         updateContext.AppSettings.Add(lastBkp);
                     }
                     else
                     {
-                        lastBkp.Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        lastBkp.Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                     }
                     await updateContext.SaveChangesAsync();
                 }

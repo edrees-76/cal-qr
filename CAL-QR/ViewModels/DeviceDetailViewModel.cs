@@ -204,6 +204,12 @@ namespace CAL_QR.ViewModels
         {
             if (parameter is not Attachment att) return;
 
+            if (!AttachmentRules.IsAllowed(att.FilePath))
+            {
+                MessageBox.Show("لا يفتح البرنامج هذا النوع من الملفّات حمايةً من تشغيل ملفّات ضارّة. افتحه يدوياً من مجلّد المرفقات إن كنت واثقاً به.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 if (File.Exists(att.FilePath))

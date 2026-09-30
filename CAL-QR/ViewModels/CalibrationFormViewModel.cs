@@ -1063,7 +1063,7 @@ namespace CAL_QR.ViewModels
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "All Files (*.*)|*.*",
+                Filter = CAL_QR.Validation.AttachmentRules.DialogFilter,
                 Multiselect = true
             };
 
@@ -1071,6 +1071,11 @@ namespace CAL_QR.ViewModels
             {
                 foreach (string filePath in openFileDialog.FileNames)
                 {
+                    if (!CAL_QR.Validation.AttachmentRules.IsAllowed(filePath))
+                    {
+                        MessageBox.Show($"{Path.GetFileName(filePath)}\n{CAL_QR.Validation.AttachmentRules.RejectedMessage}", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        continue;
+                    }
                     Attachments.Add(new AttachmentItem
                     {
                         FileName = Path.GetFileName(filePath),

@@ -38,6 +38,8 @@ namespace CAL_QR.Services
                 return (false, "تأكيد غير صحيح. لم يتم تنفيذ أي عملية تصفير.", 0, 0, 0, 0, 0);
             }
 
+            using var maintenanceGate = await MaintenanceGate.EnterAsync();
+
             using var context = await contextFactory.CreateDbContextAsync();
 
             int ownersCount = await context.Owners.CountAsync();

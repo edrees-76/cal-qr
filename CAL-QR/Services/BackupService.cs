@@ -54,6 +54,30 @@ namespace CAL_QR.Services
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
         }
 
+        /// <summary>PRAGMA integrity_check على ملفّ قاعدة؛ يُلقي إن لم تكن النتيجة "ok".</summary>
+        private static void EnsureDatabaseIntegrity(string dbFile, string what)
+        {
+            string? result;
+            try
+            {
+                using var connection = new SqliteConnection($"Data Source={dbFile};Pooling=False");
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "PRAGMA integrity_check;";
+                result = cmd.ExecuteScalar() as string;
+            }
+            catch (SqliteException ex)
+            {
+                // ملفّ ليس قاعدة SQLite أصلاً (تالف كلّيّاً).
+                throw new InvalidOperationException($"فشل فحص سلامة {what}: {ex.Message}", ex);
+            }
+
+            if (result != "ok")
+            {
+                throw new InvalidOperationException($"فشل فحص سلامة {what}: {result}");
+            }
+        }
+
         private async Task<string> GetQrOutputPathAsync()
         {
             using var context = await _contextFactory.CreateDbContextAsync();
@@ -76,6 +100,8 @@ namespace CAL_QR.Services
         {
             return await Task.Run(async () =>
             {
+                using var maintenanceGate = await MaintenanceGate.EnterAsync();
+
                 if (string.IsNullOrWhiteSpace(destinationFolder) || !Path.IsPathRooted(destinationFolder))
                 {
                     throw new ArgumentException("لم يتم تحديد مسار مطلق صالح لحفظ النسخة الاحتياطية.");
@@ -133,6 +159,9 @@ namespace CAL_QR.Services
 
                     // Force release SQLite pooled connection handles on the temp database file
                     SqliteConnection.ClearAllPools();
+
+                    // نسخة من قاعدة تالفة لا تُحفظ على أنّها نسخة سليمة.
+                    EnsureDatabaseIntegrity(tempDbPath, "لقطة القاعدة");
 
                     // 2. Compress into ZIP
                     using (var zipStream = new FileStream(plainZipPath, FileMode.Create))
@@ -278,6 +307,8 @@ namespace CAL_QR.Services
         {
             await Task.Run(async () =>
             {
+                using var maintenanceGate = await MaintenanceGate.EnterAsync();
+
                 if (string.IsNullOrWhiteSpace(backupFilePath) || !File.Exists(backupFilePath))
                 {
                     throw new FileNotFoundException("ملف النسخة الاحتياطية المحدد غير موجود أو غير صالح.");
@@ -416,6 +447,9 @@ namespace CAL_QR.Services
                             }
                         }
                     }
+
+                    // القاعدة المستخرجة تُفحص قبل أيّ مساس بالنظام الحيّ: نسخة تالفة تُرفض هنا.
+                    EnsureDatabaseIntegrity(tempDbPath, "القاعدة داخل النسخة الاحتياطيّة");
 
                     // المرحلة ٢ — كلّ ما قبل هذه النقطة تحضير لا يمسّ النظام؛ وهنا وحدها
                     // تبدأ العمليّات المدمّرة، مرتّبة بحيث يكون الأثقل تراجعًا آخرها.

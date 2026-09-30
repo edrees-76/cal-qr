@@ -32,6 +32,13 @@ namespace CAL_QR.Views
             _recoveryAnswerService = recoveryAnswerService;
             _auditLogRepository = auditLogRepository;
             Loaded += LoginWindow_Loaded;
+            TxtUsername.LostKeyboardFocus += (_, _) => _ = RefreshAccountLockAsync();
+            TxtUsername.SelectionChanged += (_, _) => _ = RefreshAccountLockAsync();
+            Closed += (_, _) =>
+            {
+                _accountLockTimer?.Stop();
+                _lockoutTimer?.Stop();
+            };
         }
 
         private async void LoginWindow_Loaded(object sender, RoutedEventArgs e)
@@ -51,6 +58,7 @@ namespace CAL_QR.Views
             }
 
             TxtUsername.Focus();
+            await RefreshAccountLockAsync();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

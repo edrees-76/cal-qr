@@ -28,6 +28,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
       - name: Restore Dependencies
         run: dotnet restore CAL-QR.sln
 
@@ -36,4 +43,12 @@ jobs:
 
       - name: Run Unit Tests
         timeout-minutes: 10
-        run: dotnet test CAL-QR.Tests/CAL-QR.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal" --blame-hang --blame-hang-timeout 5m
+        run: dotnet test CAL-QR.Tests/CAL-QR.Tests.csproj --configuration Release --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results.trx" --results-directory TestResults --blame-hang --blame-hang-timeout 5m
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore

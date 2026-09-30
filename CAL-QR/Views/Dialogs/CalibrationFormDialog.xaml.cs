@@ -13,6 +13,7 @@ namespace CAL_QR.Views.Dialogs
         public CalibrationFormDialog()
         {
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
             if (App.ServiceProvider != null)
             {
                 var vm = App.ServiceProvider.GetRequiredService<CalibrationFormViewModel>();

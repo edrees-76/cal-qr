@@ -19,6 +19,7 @@ namespace CAL_QR.Views.Dialogs
         public PrintPreviewDialog(int calibrationRecordId)
         {
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
             _calibrationRecordId = calibrationRecordId;
 
             if (App.ServiceProvider != null)

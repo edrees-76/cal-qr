@@ -24,6 +24,11 @@ namespace CAL_QR.Views
         private DispatcherTimer? _lockoutTimer;
         private DateTime _lockoutEndsUtc;
 
+        // قفل الحساب المحفوظ: عدّاد تنازليّ حيّ يظهر بمجرّد اختيار الحساب المقفول (لا بعد محاولة دخول).
+        private DispatcherTimer? _accountLockTimer;
+        private DateTime _accountLockEndsUtc;
+        private bool _showingAccountLock;
+
         public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository, IRecoveryAnswerService recoveryAnswerService, IAuditLogRepository auditLogRepository)
         {
             InitializeComponent();
@@ -33,6 +38,13 @@ namespace CAL_QR.Views
             _recoveryAnswerService = recoveryAnswerService;
             _auditLogRepository = auditLogRepository;
             Loaded += LoginWindow_Loaded;
+            TxtUsername.LostKeyboardFocus += (_, _) => _ = RefreshAccountLockAsync();
+            TxtUsername.SelectionChanged += (_, _) => _ = RefreshAccountLockAsync();
+            Closed += (_, _) =>
+            {
+                _accountLockTimer?.Stop();
+                _lockoutTimer?.Stop();
+            };
         }
 
         private async void LoginWindow_Loaded(object sender, RoutedEventArgs e)
@@ -52,6 +64,7 @@ namespace CAL_QR.Views
             }
 
             TxtUsername.Focus();
+            await RefreshAccountLockAsync();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -187,7 +200,7 @@ namespace CAL_QR.Views
             if (persistedLock != null)
             {
                 // القفل خاصّ بحساب واحد: تبقى الحقول مفعَّلة ليدخل مستخدم آخر بحسابه.
-                ShowError(LockMessage(persistedLock.Value));
+                StartAccountLockDisplay(DateTime.UtcNow + persistedLock.Value);
                 TxtPassword.Password = string.Empty;
                 TxtPasswordReveal.Text = string.Empty;
                 TxtUsername.Focus();
@@ -222,6 +235,62 @@ namespace CAL_QR.Views
             catch (Exception ex)
             {
                 AppLog.Error($"Audit '{action}' for user {user.Username}", ex);
+            }
+        }
+
+        /// <summary>يفحص قفل الحساب المكتوب في خانة الاسم ويعرض العدّاد أو يُخفيه.</summary>
+        private async System.Threading.Tasks.Task RefreshAccountLockAsync()
+        {
+            try
+            {
+                string name = TxtUsername.Text?.Trim() ?? string.Empty;
+                Models.User? user = string.IsNullOrEmpty(name) ? null : await _userRepository.GetByUsernameAsync(name);
+
+                // النتيجة قديمة إن تغيّر الاسم أثناء القراءة.
+                if (!string.Equals(name, TxtUsername.Text?.Trim() ?? string.Empty, StringComparison.Ordinal)) return;
+
+                var remaining = LoginLockoutRules.RemainingLock(user?.LockedUntil, DateTime.UtcNow);
+                if (remaining != null)
+                {
+                    StartAccountLockDisplay(DateTime.UtcNow + remaining.Value);
+                }
+                else
+                {
+                    StopAccountLockDisplay();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("RefreshAccountLock", ex);
+            }
+        }
+
+        private void StartAccountLockDisplay(DateTime endsUtc)
+        {
+            _accountLockEndsUtc = endsUtc;
+            _showingAccountLock = true;
+            ShowError(LockMessage(endsUtc - DateTime.UtcNow));
+
+            _accountLockTimer?.Stop();
+            _accountLockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _accountLockTimer.Tick += (_, _) =>
+            {
+                var left = _accountLockEndsUtc - DateTime.UtcNow;
+                if (left <= TimeSpan.Zero)
+                    StopAccountLockDisplay();
+                else
+                    ShowError(LockMessage(left));
+            };
+            _accountLockTimer.Start();
+        }
+
+        private void StopAccountLockDisplay()
+        {
+            _accountLockTimer?.Stop();
+            if (_showingAccountLock)
+            {
+                _showingAccountLock = false;
+                TxtError.Visibility = Visibility.Collapsed;
             }
         }
 

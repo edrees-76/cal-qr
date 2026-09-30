@@ -56,3 +56,8 @@ CAL-QR_NotebookLM_Source.txt
 
 # IDE workspace files
 *.code-workspace
+
+## Installer build outputs (deploy/)
+deploy/output/
+deploy/Release/
+deploy/assets/*.bmp

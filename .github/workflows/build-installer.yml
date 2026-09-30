@@ -1,0 +1,128 @@
+name: Build Installer
+
+# يبني مثبِّت Windows (CAL-QRSetup_vX.exe) على عدّاء ويندوز نظيف بنفس deploy/build-installer.ps1 المستخدم محلياً،
+# ثم يجري اختبار دخان حقيقياً: تثبيت صامت تحت Program Files، تشغيل البرنامج والتحقق أنّ قاعدته تُنشأ تحت
+# ProgramData\CAL-QR (لا بجوار الملف التنفيذي للقراءة فقط)، ثم إلغاء التثبيت والتحقق من بقاء البيانات.
+# يرفع المثبِّت وبصمة SHA256 كـ artifact. لا توقيع كود. لا نشر تلقائي على GitHub (قرار إدريس: التجربة اليدوية أولاً).
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'deploy/**'
+      - 'CAL-QR/CAL-QR.csproj'
+      - '.github/workflows/build-installer.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-installer:
+    name: Build Installer
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # نصوص الخطوات المضمَّنة ASCII فقط: Windows PowerShell 5.1 يقرأ ملف الخطوة المؤقت بترميز ANSI
+      # فتتلف النصوص العربية. وكتابة GITHUB_OUTPUT بـ -Encoding ascii لأن utf8 في 5.1 يضيف BOM.
+      - name: Ensure Inno Setup 6
+        id: inno
+        shell: powershell
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "choco install innosetup failed (exit $LASTEXITCODE)." }
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install: $iscc" }
+          $arabic = Join-Path (Split-Path $iscc) "Languages\Arabic.isl"
+          if (-not (Test-Path $arabic)) { throw "Arabic.isl not found in Inno Setup: $arabic" }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "iscc=$iscc" -Encoding ascii
+
+      - name: Build Installer
+        shell: powershell
+        run: |
+          & .\deploy\build-installer.ps1 -Configuration Release -InnoSetupCompiler "${{ steps.inno.outputs.iscc }}"
+
+      - name: Hash Installer
+        id: hash
+        shell: powershell
+        run: |
+          $file = Get-ChildItem -Path deploy\Release -Recurse -Filter "CAL-QRSetup_v*.exe" | Select-Object -First 1
+          if (-not $file) { throw "Archived installer not found under deploy\Release." }
+          $hash = (Get-FileHash -Algorithm SHA256 -Path $file.FullName).Hash
+          $sizeMb = [math]::Round($file.Length / 1MB, 1)
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "name=$($file.BaseName)" -Encoding ascii
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "path=$($file.FullName)" -Encoding ascii
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### $($file.Name)`n`n- Size: $sizeMb MB`n- SHA256: ``$hash``" -Encoding ascii
+          Set-Content -Path "$($file.FullName).sha256" -Value "$hash  $($file.Name)" -Encoding ascii
+          Write-Host "Installer: $($file.FullName) ($sizeMb MB) SHA256=$hash"
+
+      # اختبار دخان: يثبت البرنامج فعلياً تحت Program Files ويتحقق من فصل البيانات.
+      - name: Smoke test - silent install
+        shell: powershell
+        run: |
+          $installer = "${{ steps.hash.outputs.path }}"
+          $log = Join-Path $env:RUNNER_TEMP "install.log"
+          $p = Start-Process -FilePath $installer -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',"/LOG=$log" -Wait -PassThru
+          if ($p.ExitCode -ne 0) {
+            if (Test-Path $log) { Get-Content $log -Tail 60 }
+            throw "Silent install failed (exit $($p.ExitCode))."
+          }
+          $exe = "C:\Program Files\CAL-QR\CAL-QR.exe"
+          if (-not (Test-Path $exe)) { throw "Installed exe not found: $exe" }
+          $data = "C:\ProgramData\CAL-QR"
+          if (-not (Test-Path $data)) { throw "Data folder was not created: $data" }
+          $acl = (& icacls $data) -join "`n"
+          Write-Host $acl
+          if ($acl -notmatch "Users") { throw "Users have no explicit permission on $data" }
+
+      - name: Smoke test - first run writes data under ProgramData
+        shell: powershell
+        run: |
+          $exe = "C:\Program Files\CAL-QR\CAL-QR.exe"
+          $db = "C:\ProgramData\CAL-QR\cal-qr.db"
+          $app = Start-Process -FilePath $exe -PassThru
+          $deadline = (Get-Date).AddSeconds(60)
+          while (-not (Test-Path $db) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 2 }
+          $exists = Test-Path $db
+          $alive = -not $app.HasExited
+          Write-Host "db exists: $exists ; app still running: $alive"
+          Get-Process -Name "CAL-QR" -ErrorAction SilentlyContinue | Stop-Process -Force
+          Start-Sleep -Seconds 3
+          if (-not $exists) { throw "First run did not create the database under ProgramData: $db" }
+          $beside = Get-ChildItem "C:\Program Files\CAL-QR" -Filter "*.db" -ErrorAction SilentlyContinue
+          if ($beside) { throw "Database files were written beside the program: $($beside.FullName)" }
+
+      - name: Smoke test - uninstall keeps user data
+        shell: powershell
+        run: |
+          $unins = "C:\Program Files\CAL-QR\unins000.exe"
+          if (-not (Test-Path $unins)) { throw "Uninstaller not found: $unins" }
+          $p = Start-Process -FilePath $unins -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Silent uninstall failed (exit $($p.ExitCode))." }
+          Start-Sleep -Seconds 3
+          if (Test-Path "C:\Program Files\CAL-QR\CAL-QR.exe") { throw "Program files were not removed." }
+          if (-not (Test-Path "C:\ProgramData\CAL-QR\cal-qr.db")) { throw "User database was deleted by the uninstaller." }
+
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.hash.outputs.name }}
+          path: |
+            ${{ steps.hash.outputs.path }}
+            ${{ steps.hash.outputs.path }}.sha256
+          if-no-files-found: error
+          retention-days: 30

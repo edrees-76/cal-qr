@@ -265,6 +265,9 @@ namespace CAL_QR.ViewModels
                         PasswordHash = !string.IsNullOrEmpty(Password) ? BCrypt.Net.BCrypt.HashPassword(Password) : string.Empty
                     };
                     await _userRepository.UpdateAsync(user);
+                    // مدير أعاد ضبط كلمة المرور: يُرفع قفل الدخول المتراكم عن الحساب.
+                    if (!string.IsNullOrEmpty(Password))
+                        await _userRepository.ResetLoginFailuresAsync(user.Id);
                 }
                 else
                 {

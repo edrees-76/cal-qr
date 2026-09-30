@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
 using CAL_QR.Models;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Repositories
 {
@@ -76,8 +77,8 @@ namespace CAL_QR.Repositories
             existing.Permissions = user.Permissions;
             existing.IsEditor = user.IsEditor;
             existing.IsActive = user.IsActive;
-            existing.FailedLoginAttempts = user.FailedLoginAttempts;
-            existing.LockedUntil = user.LockedUntil;
+            // FailedLoginAttempts / LockedUntil are owned by RegisterFailedLoginAsync / ResetLoginFailuresAsync;
+            // copying them from a possibly stale in-memory user would silently clear a lock.
             existing.LastLoginAt = user.LastLoginAt;
 
             // Only update password hash if a new one is set
@@ -95,6 +96,30 @@ namespace CAL_QR.Repositories
             return await context.Users
                 .AsNoTracking()
                 .CountAsync(u => u.Role == UserRole.Admin && u.IsActive);
+        }
+
+        public async Task<DateTime?> RegisterFailedLoginAsync(int userId, DateTime nowUtc)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return null;
+
+            var (attempts, lockedUntil) = LoginLockoutRules.RegisterFailure(
+                user.FailedLoginAttempts, user.LockedUntil, nowUtc);
+            user.FailedLoginAttempts = attempts;
+            user.LockedUntil = lockedUntil;
+            await context.SaveChangesAsync();
+            return lockedUntil;
+        }
+
+        public async Task ResetLoginFailuresAsync(int userId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null || (user.FailedLoginAttempts == 0 && user.LockedUntil == null)) return;
+            user.FailedLoginAttempts = 0;
+            user.LockedUntil = null;
+            await context.SaveChangesAsync();
         }
 
         public async Task<User?> GetFirstActiveAdminAsync()

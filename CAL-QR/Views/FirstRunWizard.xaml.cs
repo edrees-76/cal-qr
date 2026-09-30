@@ -79,9 +79,10 @@ namespace CAL_QR.Views
                     return;
                 }
 
-                if (string.IsNullOrWhiteSpace(_password) || _password.Length < 4)
+                var passwordError = CAL_QR.Validation.UserPasswordRules.Validate(_password);
+                if (passwordError != null)
                 {
-                    ShowStepError("كلمة المرور يجب أن تكون 4 أحرف على الأقل.");
+                    ShowStepError(passwordError);
                     return;
                 }
 

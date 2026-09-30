@@ -459,6 +459,13 @@ namespace CAL_QR.Views
                 return;
             }
 
+            var lengthError = UserPasswordRules.Validate(newPassword);
+            if (lengthError != null)
+            {
+                MessageBox.Show(lengthError, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             if (newPassword != confirmPassword)
             {
                 MessageBox.Show("كلمتا المرور غير متطابقتين!", "خطأ في التأكيد", MessageBoxButton.OK, MessageBoxImage.Error);

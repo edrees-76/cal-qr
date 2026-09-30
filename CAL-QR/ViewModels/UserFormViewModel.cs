@@ -184,6 +184,17 @@ namespace CAL_QR.ViewModels
             // Username validation
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(FullName)) return;
 
+            // كلمة المرور إلزاميّة عند الإنشاء، واختياريّة عند التعديل (فارغة = بلا تغيير).
+            if (!IsEditMode || !string.IsNullOrEmpty(Password))
+            {
+                var passwordError = UserPasswordRules.Validate(Password);
+                if (passwordError != null)
+                {
+                    ShowMessage(passwordError, "تنبيه");
+                    return;
+                }
+            }
+
             _isSaving = true;
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
 

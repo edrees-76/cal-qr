@@ -16,6 +16,15 @@ namespace CAL_QR.Tests
         [Fact]
         public async Task SimulateRealisticData()
         {
+            // هذا الاختبار يكتب فوق CAL-QR\bin\Debug\net8.0-windows\cal-qr-simulation.db، وهي قاعدة البرنامج
+            // الافتراضيّة، عند كلّ dotnet test (File.Copy بـoverwrite). أيّ بيانات حقيقيّة هناك كانت تضيع.
+            // صار اختياريّاً: يعمل فقط حين يُضبط CALQR_WRITE_SIMULATION_DB=1 (لتوليد قاعدة محاكاة عمداً).
+            // لقاعدة تجريبيّة كاملة استعمل tools\CAL-QR.DemoData بدل ذلك.
+            if (Environment.GetEnvironmentVariable("CALQR_WRITE_SIMULATION_DB") != "1")
+            {
+                return;
+            }
+
             // 1. Resolve paths to the WPF bin directory
             string testDir = AppDomain.CurrentDomain.BaseDirectory;
             string sourceDb = Path.GetFullPath(Path.Combine(testDir, @"..\..\..\..\CAL-QR\bin\Debug\net8.0-windows\cal-qr.db"));

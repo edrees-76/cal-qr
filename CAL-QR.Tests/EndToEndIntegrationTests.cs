@@ -49,6 +49,7 @@ namespace CAL_QR.Tests
             // Arrange
             string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "E2E_Scenario1_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(testDir);
+            _testDirs.Add(testDir);
             string dbPath = Path.Combine(testDir, "test.db");
 
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
@@ -167,8 +168,6 @@ namespace CAL_QR.Tests
             Assert.Equal(owner.Name, verifyVm.Owner);
             Assert.Equal(device.Model, verifyVm.Model);
 
-            // Cleanup
-            try { Directory.Delete(testDir, true); } catch {}
         }
 
         [Fact]
@@ -177,6 +176,7 @@ namespace CAL_QR.Tests
             // Arrange
             string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "E2E_Scenario2_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(testDir);
+            _testDirs.Add(testDir);
             string dbPath = Path.Combine(testDir, "test.db");
 
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
@@ -269,8 +269,6 @@ namespace CAL_QR.Tests
             // Standard user cannot delete
             Assert.False(detailVm.DeleteRecordCommand.CanExecute(detailVm.Calibrations[0]));
 
-            // Cleanup
-            try { Directory.Delete(testDir, true); } catch {}
         }
 
         [Fact]
@@ -279,6 +277,7 @@ namespace CAL_QR.Tests
             // Arrange
             string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "E2E_Scenario3_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(testDir);
+            _testDirs.Add(testDir);
             string dbPath = Path.Combine(testDir, "test.db");
             string backupFolder = Path.Combine(testDir, "Backups");
             Directory.CreateDirectory(backupFolder);
@@ -336,13 +335,15 @@ namespace CAL_QR.Tests
                 Assert.Equal("Owner Backup", restoredOwners[0].Name);
             }
 
-            // Cleanup
-            try { Directory.Delete(testDir, true); } catch {}
         }
+
+        // كلّ مجلّد يُنشأ يُسجَّل هنا ويُحذف في Dispose (ينفَّذ حتّى لو فشل الاختبار).
+        private readonly System.Collections.Generic.List<string> _testDirs = new();
 
         public void Dispose()
         {
             DeviceDetailViewModel.MessageBoxShowMock = null;
+            foreach (var dir in _testDirs) TestDirectory.Delete(dir);
         }
     }
 }

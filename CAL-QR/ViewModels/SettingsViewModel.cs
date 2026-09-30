@@ -728,30 +728,7 @@ namespace CAL_QR.ViewModels
 
                 try
                 {
-                    // Clear connection pools to release sqlite files
-                    SqliteConnection.ClearAllPools();
-
-                    // تحرير قفل النسخة الواحدة قبل إطلاق النسخة الجديدة، وإلا رأت
-                    // القفل محجوزاً من هذه العملية ورفضت العمل.
-                    App.ReleaseSingleInstanceMutex();
-
-                    var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-                    if (!string.IsNullOrEmpty(exePath))
-                    {
-                        var startInfo = new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = exePath,
-                            WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
-                            UseShellExecute = true
-                        };
-                        System.Diagnostics.Process.Start(startInfo);
-                        App.MarkRestarting();
-                        Application.Current.Shutdown();
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("تعذر العثور على المسار التنفيذي للتطبيق.");
-                    }
+                    App.RestartApplication();
                 }
                 catch (Exception restartEx)
                 {
@@ -838,13 +815,30 @@ namespace CAL_QR.ViewModels
                             openFileDialog.FileName,
                             string.IsNullOrEmpty(RestorePassword) ? null : RestorePassword);
 
-                        // على جهاز جديد لا تبقى كلمة سرّ نسخ بعد الاستعادة، فتُحدَّث الحالة المعروضة.
-                        await LoadBackupPasswordStateAsync();
-                        
-                        // Force update
-                        CalibrationEvents.RaiseCalibrationChanged();
+                        // مفتاح التوقيع المخبّأ في HmacService والمخطّط يُقرآن عند الإقلاع فقط، فلا يصحّ
+                        // إكمال الجلسة بعد الاستعادة (خصوصاً من جهاز آخر): شهادة تُصدَر الآن كانت ستُوقَّع بمفتاح
+                        // غير موجود في القاعدة المستعادة. إعادة التشغيل تحمّل المفتاح وتشغّل الترحيلات،
+                        // ولا تُطلق أحداث تحديث قبلها لأنّ مخطّط نسخة أقدم قد يفتقد أعمدة.
+                        MessageBox.Show(
+                            "تمت استعادة البيانات بنجاح.\n\nسيُعاد تشغيل البرنامج الآن لتحميل مفتاح التوقيع والمخطّط من النسخة المستعادة.",
+                            "تمت الاستعادة",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
 
-                        MessageBox.Show("تمت استعادة البيانات بنجاح.", "تمت الاستعادة", MessageBoxButton.OK, MessageBoxImage.Information);
+                        try
+                        {
+                            App.RestartApplication();
+                        }
+                        catch (Exception restartEx)
+                        {
+                            MessageBox.Show(
+                                $"تمّت الاستعادة، لكن تعذّرت إعادة التشغيل التلقائي: {restartEx.Message}\n\nسيُغلق البرنامج الآن؛ افتحه يدوياً قبل إصدار أيّ شهادة.",
+                                "تنبيه",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                            App.MarkRestarting();
+                            Application.Current.Shutdown();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -1419,29 +1413,7 @@ namespace CAL_QR.ViewModels
                 // ثم تشغيل نسخة جديدة وإغلاق الحالية، فتُعاد كل الحالة من قاعدة نظيفة.
                 try
                 {
-                    SqliteConnection.ClearAllPools();
-
-                    // تحرير قفل النسخة الواحدة قبل إطلاق النسخة الجديدة، وإلا رأت
-                    // القفل محجوزاً من هذه العملية ورفضت العمل.
-                    App.ReleaseSingleInstanceMutex();
-
-                    var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
-                    if (!string.IsNullOrEmpty(exePath))
-                    {
-                        var startInfo = new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = exePath,
-                            WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
-                            UseShellExecute = true
-                        };
-                        System.Diagnostics.Process.Start(startInfo);
-                        App.MarkRestarting();
-                        Application.Current.Shutdown();
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("تعذر العثور على المسار التنفيذي للتطبيق.");
-                    }
+                    App.RestartApplication();
                 }
                 catch (Exception restartEx)
                 {

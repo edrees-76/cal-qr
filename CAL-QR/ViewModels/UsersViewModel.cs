@@ -9,6 +9,7 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -203,6 +204,13 @@ namespace CAL_QR.ViewModels
             if (!CanEdit) return;
             if (parameter is not User user) return;
 
+            string? denial = UserManagementRules.CanModifyUser(_currentUserService.CurrentUser?.Role ?? UserRole.Viewer, user.Role);
+            if (denial != null)
+            {
+                MessageBox.Show(denial, "تنبيه الحماية", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                return;
+            }
+
             var dialog = _userFormDialogFactory();
             if (dialog.DataContext is UserFormViewModel vm)
             {
@@ -220,6 +228,13 @@ namespace CAL_QR.ViewModels
         {
             if (!CanEdit) return;
             if (parameter is not User user) return;
+
+            string? denial = UserManagementRules.CanModifyUser(_currentUserService.CurrentUser?.Role ?? UserRole.Viewer, user.Role);
+            if (denial != null)
+            {
+                MessageBox.Show(denial, "تنبيه الحماية", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                return;
+            }
 
             int? currentUserId = _currentUserService.CurrentUser?.Id; 
             int activeAdmins = await _userRepository.GetActiveAdminsCountAsync();

@@ -268,5 +268,74 @@ namespace CAL_QR.Tests
             Assert.NotNull(stored.RevokedAt);
             Assert.InRange(stored.RevokedAt!.Value, before, after);
         }
+
+        [Fact]
+        public async Task RevokedAfterAmendment_BothTheOldAndTheCurrentCode_ReportRevoked()
+        {
+            using var harness = new Harness("chain");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            string oldCode = issued!.VerifyCode!;
+
+            issued.CalibrationResults.Single().MeasuredReading = "5.25";
+            Assert.True(await harness.Repository.UpdateAsync(issued));
+
+            var amended = await harness.Repository.GetByCertificateNumberAsync(number);
+            string currentCode = amended!.VerifyCode!;
+            Assert.NotEqual(oldCode, currentCode);
+
+            await harness.Repository.RevokeAsync(amended.Id, "م. خالد العتيبي", "خطأ في القراءة");
+
+            var viaCurrent = await harness.Repository.VerifyByCodeAsync(currentCode);
+            var viaOld = await harness.Repository.VerifyByCodeAsync(oldCode);
+
+            Assert.Equal(CertificateVerificationStatus.Revoked, viaCurrent.Status);
+            Assert.Equal(CertificateVerificationStatus.Revoked, viaOld.Status);
+            Assert.Equal("خطأ في القراءة", viaOld.RevocationReason);
+            Assert.Equal("م. خالد العتيبي", viaOld.RevokedByName);
+            Assert.NotNull(viaOld.RevokedAt);
+        }
+
+        [Fact]
+        public async Task AmendedButNotRevoked_OldCode_StillReportsAuthenticAmended()
+        {
+            using var harness = new Harness("amendonly");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            string oldCode = issued!.VerifyCode!;
+
+            issued.CalibrationResults.Single().MeasuredReading = "5.25";
+            Assert.True(await harness.Repository.UpdateAsync(issued));
+
+            var viaOld = await harness.Repository.VerifyByCodeAsync(oldCode);
+
+            Assert.Equal(CertificateVerificationStatus.AuthenticAmended, viaOld.Status);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_OnACertificateRevokedAfterTheObjectWasLoaded_ThrowsAndKeepsItRevoked()
+        {
+            using var harness = new Harness("stale");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var staleCopy = await harness.Repository.GetByCertificateNumberAsync(number);
+
+            // شهادة تُلغى بعد أن حُمّلت هذه النسخة (نافذة تعديل مفتوحة مثلاً).
+            await harness.Repository.RevokeAsync(staleCopy!.Id, "م. سامي", "استبدال الجهاز");
+
+            staleCopy.CalibrationResults.Single().MeasuredReading = "5.25";
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => harness.Repository.UpdateAsync(staleCopy));
+
+            using var context = new CalQrDbContext(harness.Options);
+            var stored = context.Certificates.Single(c => c.Id == staleCopy.Id);
+            Assert.True(stored.IsRevoked);
+            Assert.True(stored.IsDeleted);
+            Assert.NotNull(stored.RevokedAt);
+            Assert.Equal("م. سامي", stored.RevokedByName);
+            Assert.Equal("استبدال الجهاز", stored.RevocationReason);
+        }
     }
 }

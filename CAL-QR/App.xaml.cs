@@ -98,6 +98,35 @@ namespace CAL_QR
         public static void MarkRestarting() => IsRestarting = true;
 
         /// <summary>
+        /// يُعيد تشغيل البرنامج لنفسه: يحرّر أقفال SQLite وقفل النسخة الواحدة، يُطلق نسخة جديدة،
+        /// ثمّ يرفع IsRestarting ويغلق الحاليّة. يُلقي إن تعذّر إيجاد المسار التنفيذيّ أو تشغيله،
+        /// ولا يغلق الحاليّة في تلك الحالة؛ على المستدعي أن يعرض الرسالة المناسبة.
+        /// </summary>
+        public static void RestartApplication()
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+            // تحرير قفل النسخة الواحدة قبل إطلاق النسخة الجديدة، وإلا رأت
+            // القفل محجوزاً من هذه العملية ورفضت العمل.
+            ReleaseSingleInstanceMutex();
+
+            var exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+            if (string.IsNullOrEmpty(exePath))
+            {
+                throw new InvalidOperationException("تعذر العثور على المسار التنفيذي للتطبيق.");
+            }
+
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = exePath,
+                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
+                UseShellExecute = true
+            });
+            MarkRestarting();
+            Current.Shutdown();
+        }
+
+        /// <summary>
         /// يُحرّر قفل النسخة الواحدة صراحةً قبل إعادة تشغيل التطبيق لنفسه
         /// (بعد تغيير المسارات أو التصفير الكامل). بدونه تُقلع النسخة الجديدة
         /// بينما لا يزال القفل محجوزاً من العملية القديمة التي لم تُغلق بعد،

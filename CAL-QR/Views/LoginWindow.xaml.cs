@@ -17,16 +17,18 @@ namespace CAL_QR.Views
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ICurrentUserService _currentUserService;
         private readonly IUserRepository _userRepository;
+        private readonly IRecoveryAnswerService _recoveryAnswerService;
         private int _failedAttempts = 0;
         private DispatcherTimer? _lockoutTimer;
         private int _lockoutSecondsRemaining = 0;
 
-        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository)
+        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository, IRecoveryAnswerService recoveryAnswerService)
         {
             InitializeComponent();
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
             _userRepository = userRepository;
+            _recoveryAnswerService = recoveryAnswerService;
             Loaded += LoginWindow_Loaded;
         }
 
@@ -333,25 +335,34 @@ namespace CAL_QR.Views
 
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
-                {
-                    var answerSetting = context.AppSettings.FirstOrDefault(s => s.Key == "SecurityAnswer");
-                    string storedAnswerHash = answerSetting?.Value ?? string.Empty;
+                var result = _recoveryAnswerService.Verify(inputAnswer);
 
-                    if (PasswordHelper.VerifyPassword(inputAnswer, storedAnswerHash))
-                    {
+                switch (result.Status)
+                {
+                    case RecoveryAnswerStatus.Success:
                         // Transition to password reset state
                         PanelVerifyQuestion.Visibility = Visibility.Collapsed;
                         PanelResetPassword.Visibility = Visibility.Visible;
                         TxtNewPassword.Focus();
-                    }
-                    else
-                    {
-                        // Show recovery master message on wrong answer
-                        ShowRecoverySupportMessage();
+                        break;
+
+                    case RecoveryAnswerStatus.WrongAnswer:
+                        // Show recovery master message on wrong answer, with remaining attempts in the same dialog
+                        ShowRecoverySupportMessage($"الإجابة غير صحيحة. المحاولات المتبقّية: {result.RemainingAttempts}", MessageBoxImage.Warning);
                         TxtSecurityAnswerInput.Focus();
                         TxtSecurityAnswerInput.SelectAll();
-                    }
+                        break;
+
+                    case RecoveryAnswerStatus.LockedOut:
+                        int minutes = (int)Math.Ceiling((result.RemainingLock ?? TimeSpan.Zero).TotalMinutes);
+                        if (minutes < 1) minutes = 1;
+                        MessageBox.Show($"تمّ إيقاف محاولات الاسترداد مؤقّتاً بعد محاولات خاطئة متكرّرة. حاول بعد {minutes} دقيقة.", "استرداد كلمة المرور", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                        break;
+
+                    case RecoveryAnswerStatus.NotConfigured:
+                    default:
+                        ShowRecoverySupportMessage();
+                        break;
                 }
             }
             catch (Exception ex)
@@ -466,9 +477,11 @@ namespace CAL_QR.Views
             }
         }
 
-        private void ShowRecoverySupportMessage()
+        private void ShowRecoverySupportMessage(string? prefix = null, MessageBoxImage icon = MessageBoxImage.Information)
         {
-            MessageBox.Show("لاسترداد كلمة المرور، تأكّد من إجابة السؤال السري، أو اطلب من مدير آخر إعادة ضبط كلمتك من تبويب المستخدمين.", "استرداد كلمة المرور", MessageBoxButton.OK, MessageBoxImage.Information);
+            const string support = "لاسترداد كلمة المرور، تأكّد من إجابة السؤال السري، أو اطلب من مدير آخر إعادة ضبط كلمتك من تبويب المستخدمين.";
+            string text = string.IsNullOrEmpty(prefix) ? support : prefix + "\n\n" + support;
+            MessageBox.Show(text, "استرداد كلمة المرور", MessageBoxButton.OK, icon);
         }
     }
 }

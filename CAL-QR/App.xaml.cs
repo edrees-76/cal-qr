@@ -147,6 +147,7 @@ namespace CAL_QR
             services.AddSingleton<ISearchService, SearchService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<ICertificateNumberService, CertificateNumberService>();
+            services.AddSingleton<IRecoveryAnswerService, RecoveryAnswerService>();
             services.AddSingleton<ICertificateSignatureService, CertificateSignatureService>();
             services.AddSingleton<IdleLockService>();
             // بانِي المسوّدة صرف بلا حالة ولا DbContext ⇒ Singleton آمن.

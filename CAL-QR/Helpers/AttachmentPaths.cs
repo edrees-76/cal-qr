@@ -15,7 +15,7 @@ namespace CAL_QR.Helpers
     {
         public static async Task<string> ResolveRootAsync(IDbContextFactory<CalQrDbContext> contextFactory)
         {
-            string attachmentsRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            string attachmentsRoot = AppPaths.DefaultAttachmentsFolder();
             using (var context = await contextFactory.CreateDbContextAsync())
             {
                 var setting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "AttachmentsPath");

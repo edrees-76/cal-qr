@@ -51,7 +51,7 @@ namespace CAL_QR.Services
             {
                 return setting.Value;
             }
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            return CAL_QR.Helpers.AppPaths.DefaultAttachmentsFolder();
         }
 
         /// <summary>PRAGMA integrity_check على ملفّ قاعدة؛ يُلقي إن لم تكن النتيجة "ok".</summary>
@@ -350,7 +350,7 @@ namespace CAL_QR.Services
                 string? stagingParent = Path.GetDirectoryName(attachmentsPath);
                 if (string.IsNullOrWhiteSpace(stagingParent))
                 {
-                    stagingParent = AppDomain.CurrentDomain.BaseDirectory;
+                    stagingParent = CAL_QR.Helpers.AppPaths.DataRoot;
                 }
                 string tempDir = Path.Combine(stagingParent, "CalQrRestoreStaging_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);

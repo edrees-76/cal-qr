@@ -183,10 +183,10 @@ namespace CAL_QR
 
         private void ConfigureServices(IServiceCollection services)
         {
-            string dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr-simulation.db");
+            string dbPath = CAL_QR.Helpers.AppPaths.DefaultDbPath();
 
-            string configPathFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db_path.txt");
-            if (File.Exists(configPathFile))
+            string? configPathFile = CAL_QR.Helpers.AppPaths.FindPointerFile();
+            if (configPathFile != null)
             {
                 try
                 {
@@ -205,6 +205,13 @@ namespace CAL_QR
                     AppLog.Error($"Failed to read db_path.txt ({configPathFile})", ex);
                     _dbPathProblem = $"تعذّرت قراءة الملفّ db_path.txt:\n{configPathFile}\n{ex.Message}";
                 }
+            }
+
+            // SQLite لا تنشئ المجلّدات: تُنشأ هنا (مجلّد بيانات ProgramData في التثبيت الجديد). لا يُنشأ
+            // شيء إن كان المسار المحدَّد في المؤشّر ناقصاً، فالإقلاع سيتوقّف برسالة قبل أيّ قاعدة جديدة.
+            if (_dbPathProblem == null)
+            {
+                CAL_QR.Helpers.AppPaths.EnsureDirectory(Path.GetDirectoryName(dbPath));
             }
 
             services.AddDbContextFactory<CalQrDbContext>(options =>

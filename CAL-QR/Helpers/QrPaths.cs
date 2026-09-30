@@ -11,7 +11,6 @@ namespace CAL_QR.Helpers
     {
         public const string DefaultFolderName = "poster";
 
-        public static string DefaultFolder() =>
-            Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, DefaultFolderName));
+        public static string DefaultFolder() => AppPaths.DefaultQrFolder();
     }
 }

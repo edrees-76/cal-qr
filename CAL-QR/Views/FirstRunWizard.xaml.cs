@@ -32,7 +32,7 @@ namespace CAL_QR.Views
             _recoveryAnswerService = recoveryAnswerService;
 
             // Set default path
-            _databasePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr.db"));
+            _databasePath = CAL_QR.Helpers.AppPaths.DefaultDbPath();
             TxtDatabasePath.Text = _databasePath;
 
             UpdateStepUI();

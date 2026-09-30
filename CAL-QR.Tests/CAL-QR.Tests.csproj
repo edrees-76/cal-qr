@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CAL-QR\CAL-QR.csproj" />
+    <ProjectReference Include="..\tools\CAL-QR.DemoData\CAL-QR.DemoData.csproj" />
   </ItemGroup>
 
 </Project>

@@ -119,7 +119,7 @@ namespace CAL_QR.ViewModels
         {
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "PDF و الصور|*.pdf;*.jpg;*.jpeg;*.png|كلّ الملفّات (*.*)|*.*",
+                Filter = CAL_QR.Validation.AttachmentRules.DialogFilter,
                 Multiselect = true
             };
 
@@ -131,6 +131,11 @@ namespace CAL_QR.ViewModels
 
             foreach (string filePath in openFileDialog.FileNames)
             {
+                if (!CAL_QR.Validation.AttachmentRules.IsAllowed(filePath))
+                {
+                    MessageBox.Show($"{Path.GetFileName(filePath)}\n{CAL_QR.Validation.AttachmentRules.RejectedMessage}");
+                    continue;
+                }
                 try
                 {
                     string fileName = Path.GetFileName(filePath);

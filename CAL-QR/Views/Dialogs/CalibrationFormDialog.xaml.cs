@@ -182,6 +182,12 @@ namespace CAL_QR.Views.Dialogs
                 return;
             }
 
+            if (!CAL_QR.Validation.AttachmentRules.IsAllowed(item.FullPath))
+            {
+                MessageBox.Show("لا يفتح البرنامج هذا النوع من الملفّات حمايةً من تشغيل ملفّات ضارّة. افتحه يدوياً من مجلّد المرفقات إن كنت واثقاً به.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 var psi = new System.Diagnostics.ProcessStartInfo(item.FullPath)

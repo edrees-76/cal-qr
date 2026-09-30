@@ -111,8 +111,9 @@ namespace CAL_QR.Views
                     return firstRunSetting == null || string.IsNullOrEmpty(firstRunSetting.Value);
                 }
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("SplashWindow.xaml.cs:114", swallowEx1);
                 return true;
             }
         }

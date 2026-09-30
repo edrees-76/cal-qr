@@ -21,6 +21,9 @@ namespace CAL_QR
         // لا حماية بيانات — تخصيص الأرقام ذرّيّ وآمن للتزامن أصلاً (AllocateAsync).
         private static Mutex? _singleInstanceMutex;
 
+        // يُملأ في ConfigureServices إن كان db_path.txt يشير إلى قاعدة غير موجودة أو تعذّرت قراءته.
+        private string? _dbPathProblem;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             try
@@ -46,15 +49,43 @@ namespace CAL_QR
                 // Prevent app from auto-closing when transitioning between windows
                 ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                // Catch any unhandled exceptions and show them instead of silently crashing
+                // أيّ استثناء غير معالَج يُسجَّل في الملفّ ويُعرض للمستخدم بلا تتبّع المكدّس.
                 DispatcherUnhandledException += (s, args) =>
                 {
-                    MessageBox.Show($"خطأ غير متوقع:\n{args.Exception.Message}\n\n{args.Exception.StackTrace}",
+                    AppLog.Error("DispatcherUnhandledException", args.Exception);
+                    MessageBox.Show(
+                        "حدث خطأ غير متوقّع. سُجّلت التفاصيل في ملفّ السجلّ:\n" + AppLog.LogDirectory +
+                        "\n\nالرسالة: " + args.Exception.Message,
                         "خطأ في التطبيق", MessageBoxButton.OK, MessageBoxImage.Error);
                     args.Handled = true;
                 };
+                AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+                {
+                    if (args.ExceptionObject is Exception unhandled)
+                        AppLog.Error("AppDomain.UnhandledException", unhandled);
+                };
+                System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (s, args) =>
+                {
+                    AppLog.Error("UnobservedTaskException", args.Exception);
+                    args.SetObserved();
+                };
                 var serviceCollection = new ServiceCollection();
                 ConfigureServices(serviceCollection);
+
+                if (_dbPathProblem != null)
+                {
+                    // لا نُنشئ قاعدة فارغة بصمت: ذلك يُعيد عدّاد الشهادات من الصفر على قاعدة جديدة.
+                    AppLog.Warn(_dbPathProblem);
+                    MessageBox.Show(
+                        _dbPathProblem +
+                        "\n\nأعد توصيل القرص/المجلّد الذي فيه قاعدة البيانات ثمّ شغّل البرنامج مجدّداً." +
+                        "\nإن كنت تريد فعلاً العودة إلى المسار الافتراضيّ فاحذف الملفّ db_path.txt من مجلّد البرنامج." +
+                        "\nلم يُغيَّر شيء في بياناتك.",
+                        "قاعدة البيانات غير متاحة", MessageBoxButton.OK, MessageBoxImage.Error,
+                        MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                    Shutdown();
+                    return;
+                }
 
                 ServiceProvider = serviceCollection.BuildServiceProvider();
 
@@ -163,12 +194,16 @@ namespace CAL_QR
                     if (!string.IsNullOrWhiteSpace(savedPath))
                     {
                         dbPath = savedPath;
+                        if (!File.Exists(savedPath))
+                        {
+                            _dbPathProblem = $"ملفّ قاعدة البيانات المحدَّد في db_path.txt غير موجود:\n{savedPath}";
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    // تعذّرت قراءة db_path.txt: يُبقى المسار الافتراضي (سلوك احتياطي) لكن يُسجَّل الخطأ.
-                    System.Diagnostics.Debug.WriteLine($"[App] Failed to read db_path.txt ({configPathFile}); falling back to default database path: {ex.Message}");
+                    AppLog.Error($"Failed to read db_path.txt ({configPathFile})", ex);
+                    _dbPathProblem = $"تعذّرت قراءة الملفّ db_path.txt:\n{configPathFile}\n{ex.Message}";
                 }
             }
 

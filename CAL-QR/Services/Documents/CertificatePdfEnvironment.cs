@@ -56,7 +56,7 @@ namespace CAL_QR.Services.Documents
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CertificatePdfEnvironment] Error registering font '{fileName}': {ex.Message}");
+                AppLog.Error($"CertificatePdfEnvironment: failed to register font '{fileName}'", ex);
             }
         }
     }

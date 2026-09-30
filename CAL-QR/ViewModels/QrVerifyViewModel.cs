@@ -172,14 +172,14 @@ namespace CAL_QR.ViewModels
 
                 case CertificateVerificationStatus.AuthenticAmended:
                     FillCertificateDisplay(result.Certificate);
-                    AmendedAt = result.AmendedAt?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    AmendedAt = result.AmendedAt?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
                     DisplayState = VerificationDisplayState.Amended;
                     Message = $"⚠️ شهادة أصلية، لكنها عُدِّلت بعد إصدارها بتاريخ {AmendedAt}.";
                     break;
 
                 case CertificateVerificationStatus.Revoked:
                     FillCertificateDisplay(result.Certificate);
-                    RevokedAt = result.RevokedAt?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    RevokedAt = result.RevokedAt?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
                     RevokedBy = result.RevokedByName ?? string.Empty;
                     RevocationReason = result.RevocationReason ?? string.Empty;
                     DisplayState = VerificationDisplayState.Revoked;
@@ -222,8 +222,8 @@ namespace CAL_QR.ViewModels
             Model = certificate.DeviceModel;
             Serial = certificate.DeviceSerialNumber;
             CertNo = certificate.CertificateNumber;
-            CalDate = certificate.CalibrationDate.ToString("yyyy-MM-dd");
-            ExpDate = certificate.DueDate.ToString("yyyy-MM-dd");
+            CalDate = certificate.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            ExpDate = certificate.DueDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
             Result = certificate.ComplianceVerdict ?? string.Empty;
         }
 

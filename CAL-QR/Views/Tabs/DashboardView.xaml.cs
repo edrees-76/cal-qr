@@ -7,13 +7,27 @@ namespace CAL_QR.Views.Tabs
 {
     public partial class DashboardView : UserControl
     {
+        private bool _closeHooked;
+
         public DashboardView()
         {
             InitializeComponent();
             if (App.ServiceProvider != null)
             {
                 DataContext = App.ServiceProvider.GetRequiredService<DashboardViewModel>();
-                Loaded += (s, e) => _ = ((DashboardViewModel)DataContext).LoadDataAsync();
+                Loaded += (s, e) =>
+                {
+                    var vm = (DashboardViewModel)DataContext;
+                    _ = vm.LoadDataAsync();
+
+                    // فكّ اشتراك CalibrationChanged عند إغلاق النافذة المستضيفة (لا عند Unloaded:
+                    // تبديل التبويب يُطلق Unloaded ثمّ Loaded ويجب أن يبقى الاشتراك).
+                    if (!_closeHooked && System.Windows.Window.GetWindow(this) is System.Windows.Window host)
+                    {
+                        _closeHooked = true;
+                        host.Closed += (_, _) => vm.Dispose();
+                    }
+                };
             }
         }
 

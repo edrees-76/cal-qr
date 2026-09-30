@@ -107,8 +107,8 @@ namespace CAL_QR.Tests
                 {
                     DeviceId = device.Id,
                     CertificateNumber = legacyCertNo,
-                    CalibrationDate = DateTime.Parse(calDateStr),
-                    ExpiryDate = DateTime.Parse(expDateStr),
+                    CalibrationDate = DateTime.Parse(calDateStr, System.Globalization.CultureInfo.InvariantCulture),
+                    ExpiryDate = DateTime.Parse(expDateStr, System.Globalization.CultureInfo.InvariantCulture),
                     Result = result,
                     EngineerName = engineer,
                     HmacSignature = legacySignature
@@ -131,8 +131,8 @@ namespace CAL_QR.Tests
                 ClientName = owner.Name,
                 DeviceModel = device.Model,
                 DeviceSerialNumber = device.SerialNumber,
-                CalibrationDate = DateTime.Parse(calDateStr),
-                IssueDate = DateTime.Parse(calDateStr)
+                CalibrationDate = DateTime.Parse(calDateStr, System.Globalization.CultureInfo.InvariantCulture),
+                IssueDate = DateTime.Parse(calDateStr, System.Globalization.CultureInfo.InvariantCulture)
             };
 
             string certNo = await certificateRepository.AddAsync(certificate);

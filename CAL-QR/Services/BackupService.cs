@@ -230,7 +230,10 @@ namespace CAL_QR.Services
                     {
                         await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"فشل إنشاء نسخة احتياطية: {ex.Message}");
                     }
-                    catch { }
+                    catch (Exception logEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل العمليّة في سجلّ التدقيق: {logEx.Message}");
+                    }
                     throw;
                 }
                 finally
@@ -242,6 +245,33 @@ namespace CAL_QR.Services
                     }
                 }
             });
+        }
+
+        /// <summary>
+        /// يحسم مسار الاستخراج ويتحقّق أنّه داخل مجلّد المسرح (منع Zip-Slip).
+        /// أيّ اسم مطلق أو يخرج بـ ".." يُرفض برسالة واضحة قبل أيّ مرحلة مدمِّرة.
+        /// </summary>
+        private static string ResolveSafeExtractionPath(string stagingRoot, string relativePath)
+        {
+            string root = Path.GetFullPath(stagingRoot);
+            if (!root.EndsWith(Path.DirectorySeparatorChar))
+            {
+                root += Path.DirectorySeparatorChar;
+            }
+
+            string normalized = relativePath.Replace('/', Path.DirectorySeparatorChar);
+            if (Path.IsPathRooted(relativePath) || Path.IsPathRooted(normalized))
+            {
+                throw new InvalidDataException($"ملف النسخة الاحتياطية غير آمن: المسار المطلق غير مسموح ({relativePath}).");
+            }
+
+            string full = Path.GetFullPath(Path.Combine(root, normalized));
+            if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException($"ملف النسخة الاحتياطية غير آمن: مسار يخرج عن مجلّد الاستعادة ({relativePath}).");
+            }
+
+            return full;
         }
 
         public async Task RestoreAsync(string backupFilePath, string? password = null)
@@ -346,7 +376,7 @@ namespace CAL_QR.Services
                                 string relativePath = entry.FullName.Substring("Attachments/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
-                                    string destPath = Path.Combine(tempAttachments, relativePath);
+                                    string destPath = ResolveSafeExtractionPath(tempAttachments, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -360,7 +390,7 @@ namespace CAL_QR.Services
                                 string relativePath = entry.FullName.Substring("poster/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
-                                    string destPath = Path.Combine(tempQrOutput, relativePath);
+                                    string destPath = ResolveSafeExtractionPath(tempQrOutput, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -375,7 +405,7 @@ namespace CAL_QR.Services
                                 string relativePath = entry.FullName.Substring("QR_Output/".Length);
                                 if (!string.IsNullOrEmpty(relativePath))
                                 {
-                                    string destPath = Path.Combine(tempQrOutput, relativePath);
+                                    string destPath = ResolveSafeExtractionPath(tempQrOutput, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
                                     if (!Directory.Exists(destDir))
                                     {
@@ -590,7 +620,10 @@ namespace CAL_QR.Services
                             await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup",
                                 $"فشل استعادة نسخة احتياطية وتمّ التراجع عن التغييرات. آثار محفوظة: {artifactsMessage}");
                         }
-                        catch { }
+                        catch (Exception logEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل الاستعادة في سجلّ التدقيق: {logEx.Message}");
+                        }
 
                         throw;
                     }
@@ -610,7 +643,10 @@ namespace CAL_QR.Services
                     {
                         await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"فشل استعادة نسخة احتياطية: {ex.Message}");
                     }
-                    catch { }
+                    catch (Exception logEx)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل العمليّة في سجلّ التدقيق: {logEx.Message}");
+                    }
                     throw;
                 }
                 finally

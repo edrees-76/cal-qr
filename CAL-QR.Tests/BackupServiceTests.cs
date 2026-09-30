@@ -923,6 +923,72 @@ namespace CAL_QR.Tests
             }
         }
 
+        [Theory]
+        [InlineData("Attachments/../escaped.txt")]
+        [InlineData("poster/../escaped.txt")]
+        [InlineData("QR_Output/../../escaped.txt")]
+        [InlineData("Attachments//etc/escaped.txt")]
+        public async Task Restore_ZipSlipEntry_FailsBeforeDestructivePhase_AndWritesNothingOutside(string maliciousEntryName)
+        {
+            // Arrange
+            string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Test_ZipSlip_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDir);
+
+            string testDbFilePath = Path.Combine(testDir, "test-active.db");
+            string testBackupFolder = Path.Combine(testDir, "Backups");
+            Directory.CreateDirectory(testBackupFolder);
+
+            string attachmentsPath = Path.Combine(testDir, "Attachments");
+            Directory.CreateDirectory(attachmentsPath);
+            string keepFile = Path.Combine(attachmentsPath, "keep_me.txt");
+            await File.WriteAllTextAsync(keepFile, "Do not delete this!");
+
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseSqlite($"Data Source={testDbFilePath}")
+                .Options;
+            var factory = new TestDbContextFactory(options);
+            using (var context = new CalQrDbContext(options))
+            {
+                context.Database.EnsureCreated();
+                context.AppSettings.Add(new AppSetting { Key = "AttachmentsPath", Value = attachmentsPath });
+                await context.SaveChangesAsync();
+            }
+
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            var backupService = new BackupService(factory, auditLogRepo, new TestBackupPasswordStore());
+
+            // The db entry is only copied during staging (before the destructive phase), so dummy bytes suffice.
+            string zipPath = Path.Combine(testBackupFolder, "slip.zip");
+            using (var fs = new FileStream(zipPath, FileMode.Create))
+            using (var archive = new ZipArchive(fs, ZipArchiveMode.Create))
+            {
+                var dbEntry = archive.CreateEntry("cal-qr.db");
+                using (var w = new StreamWriter(dbEntry.Open())) w.Write("dummy");
+                var evil = archive.CreateEntry(maliciousEntryName);
+                using (var w = new StreamWriter(evil.Open())) w.Write("pwned");
+            }
+
+            try
+            {
+                // Act & Assert
+                await Assert.ThrowsAsync<InvalidDataException>(async () => await backupService.RestoreAsync(zipPath));
+
+                // Nothing escaped the staging area (which lives beside the attachments folder inside testDir)
+                Assert.Empty(Directory.GetFiles(testDir, "escaped.txt", SearchOption.AllDirectories));
+                string? parentOfTestDir = Path.GetDirectoryName(testDir);
+                Assert.False(File.Exists(Path.Combine(parentOfTestDir!, "escaped.txt")));
+
+                // Live data untouched
+                Assert.True(File.Exists(keepFile));
+                Assert.Equal("Do not delete this!", await File.ReadAllTextAsync(keepFile));
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(testDir)) Directory.Delete(testDir, true);
+            }
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

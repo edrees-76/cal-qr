@@ -86,7 +86,11 @@ namespace CAL_QR.Views
                         return false;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // تعذّرت قراءة db_path.txt: يستمرّ التحقّق عبر إعداد قاعدة البيانات، مع تسجيل الخطأ.
+                    System.Diagnostics.Debug.WriteLine($"[Splash] Failed to read db_path.txt ({configPathFile}): {ex.Message}");
+                }
             }
             else
             {

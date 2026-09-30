@@ -303,6 +303,41 @@ namespace CAL_QR.Tests
             Assert.True(verified);
         }
 
+        [Theory]
+        [InlineData("ar-SA")]
+        [InlineData("en-US")]
+        public void VerifySignature_NullRecordCreatedAt_LegacyCalDate_IsCultureIndependent(string cultureName)
+        {
+            var original = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(cultureName);
+
+                string certNo = "CERT-OFFLINE-OLD";
+                string model = "Geiger-A";
+                string serial = "SN-9999";
+                string ownerName = "T.N.R.C";
+                string calDate = "2026-07-13";
+                string expDate = "2027-07-13";
+                string result = "Passed";
+                string engineerName = "Edrees";
+
+                string rawData = $"{certNo}|{model}|{serial}|{ownerName}|{calDate}|{expDate}|{result}|{engineerName}";
+                using var hmac = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes("CalQR-Nuclear-Center-2026-SecretKey"));
+                string legacy = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(rawData))).Substring(0, 16).ToUpper();
+
+                bool verified = _hmacService.VerifySignature(
+                    certNo, model, serial, ownerName, calDate, expDate, result, engineerName,
+                    legacy.Substring(0, 8), recordCreatedAt: null);
+
+                Assert.True(verified);
+            }
+            finally
+            {
+                System.Globalization.CultureInfo.CurrentCulture = original;
+            }
+        }
+
         [Fact]
         public void VerifySignature_NullRecordCreatedAt_NewCalDate_With8CharSignature_Fails()
         {

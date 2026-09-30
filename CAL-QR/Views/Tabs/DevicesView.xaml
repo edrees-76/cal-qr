@@ -67,6 +67,8 @@
                             </DataTemplate>
                         </Button.ContentTemplate>
                     </Button>
+
+                    <TextBlock Text="{Binding SelectionSummaryText}" Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" FontSize="12" ToolTip="التحديد يخصّ الصفحة المعروضة ويُلغى عند الانتقال إلى صفحة أخرى أو تغيير البحث." />
                 </StackPanel>
 
                 <!-- Search -->

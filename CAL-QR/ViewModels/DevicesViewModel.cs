@@ -151,15 +151,74 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        /// <summary>عدد الأجهزة المحدّدة للطباعة الدفعيّة في الصفحة المعروضة.</summary>
+        public int SelectedCount => _devices.Count(d => d.IsSelected);
+
+        public bool HasSelection => SelectedCount > 0;
+
+        /// <summary>«المحدّد: N»، مع التنبيه أنّ التحديد لهذه الصفحة فقط حين توجد صفحات متعدّدة.</summary>
+        public string SelectionSummaryText => BuildSelectionSummary(SelectedCount, TotalPages);
+
+        /// <summary>
+        /// دالّة نقيّة: التحديد يخصّ الصفحة المعروضة (تحميل صفحة أخرى أو تغيير البحث يبني
+        /// قائمة جديدة فيُلغى التحديد)، فيُنبَّه المستخدم حين يكون هناك أكثر من صفحة.
+        /// نصّ فارغ حين لا تحديد.
+        /// </summary>
+        public static string BuildSelectionSummary(int selectedCount, int totalPages)
+        {
+            if (selectedCount <= 0) return string.Empty;
+            string text = $"المحدّد: {selectedCount}";
+            return totalPages > 1 ? text + " (في هذه الصفحة فقط)" : text;
+        }
+
+        private void NotifySelectionChanged()
+        {
+            OnPropertyChanged(nameof(SelectedCount));
+            OnPropertyChanged(nameof(HasSelection));
+            OnPropertyChanged(nameof(SelectionSummaryText));
+        }
+
+        private void AttachSelectionTracking(ObservableCollection<DeviceDisplayItem>? items)
+        {
+            if (items == null) return;
+            foreach (var item in items) item.PropertyChanged += OnDeviceItemPropertyChanged;
+            items.CollectionChanged += OnDevicesCollectionChanged;
+        }
+
+        private void DetachSelectionTracking(ObservableCollection<DeviceDisplayItem>? items)
+        {
+            if (items == null) return;
+            foreach (var item in items) item.PropertyChanged -= OnDeviceItemPropertyChanged;
+            items.CollectionChanged -= OnDevicesCollectionChanged;
+        }
+
+        private void OnDevicesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            if (e.OldItems != null)
+                foreach (DeviceDisplayItem item in e.OldItems) item.PropertyChanged -= OnDeviceItemPropertyChanged;
+            if (e.NewItems != null)
+                foreach (DeviceDisplayItem item in e.NewItems) item.PropertyChanged += OnDeviceItemPropertyChanged;
+            NotifySelectionChanged();
+        }
+
+        private void OnDeviceItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(DeviceDisplayItem.IsSelected)) NotifySelectionChanged();
+        }
+
         #region Properties
         public ObservableCollection<DeviceDisplayItem> Devices
         {
             get => _devices;
             set
             {
+                var previous = _devices;
                 if (SetProperty(ref _devices, value))
                 {
+                    DetachSelectionTracking(previous);
+                    AttachSelectionTracking(value);
                     OnPropertyChanged(nameof(HasNoResults));
+                    NotifySelectionChanged();
                 }
             }
         }
@@ -318,7 +377,13 @@ namespace CAL_QR.ViewModels
         public int TotalPages
         {
             get => _totalPages;
-            set => SetProperty(ref _totalPages, value);
+            set
+            {
+                if (SetProperty(ref _totalPages, value))
+                {
+                    OnPropertyChanged(nameof(SelectionSummaryText));
+                }
+            }
         }
 
         public int TotalCount
@@ -952,6 +1017,7 @@ namespace CAL_QR.ViewModels
         {
             SearchEvents.NavigateToDevice -= OnNavigateToDevice;
             SearchEvents.NavigateToCalibrationRecord -= OnNavigateToCalibrationRecord;
+            DetachSelectionTracking(_devices);
         }
     }
 

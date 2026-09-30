@@ -745,6 +745,7 @@ namespace CAL_QR.ViewModels
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(startInfo);
+                        App.MarkRestarting();
                         Application.Current.Shutdown();
                     }
                     else
@@ -1291,9 +1292,33 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
+            // المرحلة 2.5: ما سيُمسّ فعلاً — المسارات الحقيقيّة وعدد الشهادات. تُقرأ بالدالّتين
+            // نفسيهما اللتين ينفّذ بهما التصفير، فما يُعرض هو ما يُنظَّف.
+            string qrFolderToClean;
+            string attachmentsFolderToClean;
+            int certificatesCount;
+            try
+            {
+                (qrFolderToClean, attachmentsFolderToClean) = await SystemResetService.ResolveCleanupFoldersAsync(_contextFactory);
+                certificatesCount = await SystemResetService.CountCertificatesAsync(_contextFactory);
+            }
+            catch (Exception ex)
+            {
+                FactoryResetPassword = string.Empty;
+                MessageBox.Show(
+                    $"تعذّرت قراءة مسارات التنظيف أو عدد الشهادات، لذا لم يُنفَّذ أيّ تصفير.\n\nالتفاصيل: {ex.Message}",
+                    "خطأ",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                return;
+            }
+
             // المرحلة 3: التأكيد النهائي.
             var confirm = MessageBox.Show(
-                "⚠️ تحذير شديد الخطورة!\n\nأنت على وشك مسح جميع البيانات والملفات في النظام نهائياً وإعادته لحالة التثبيت النظيفة. هذه العملية لا يمكن التراجع عنها.\n\nهل أنت متأكد 100% من تنفيذ التصفير الكامل؟",
+                "⚠️ تحذير شديد الخطورة!\n\nأنت على وشك مسح جميع البيانات والملفات في النظام نهائياً وإعادته لحالة التثبيت النظيفة. هذه العملية لا يمكن التراجع عنها.\n\n"
+                + $"سيُفرَّغ محتوى المجلّدين التاليين:\n• QR: {qrFolderToClean}\n• المرفقات: {attachmentsFolderToClean}\n\n"
+                + $"عدد الشهادات في النظام: {certificatesCount}\n\n"
+                + "هل أنت متأكد 100% من تنفيذ التصفير الكامل؟",
                 "تأكيد التصفير الكامل للنظام (Factory Reset)",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
@@ -1302,6 +1327,24 @@ namespace CAL_QR.ViewModels
             {
                 FactoryResetPassword = string.Empty;
                 return;
+            }
+
+            // المرحلة 3.5: نوع التصفير. حين توجد شهادات لا يمكن للكود التمييز بين تجريبيّة وحقيقيّة،
+            // فيُسأل المدير صراحةً؛ الافتراضيّ «لا» (نظام حيّ) الأكثر أماناً: يبقى عدّاد الترقيم فلا
+            // يتكرّر رقم شهادة ورقيّة سابقة (ISO/IEC 17025)، ويبقى سجلّ التدقيق أثراً.
+            bool testDataOnly = true;
+            if (certificatesCount > 0)
+            {
+                var kind = MessageBox.Show(
+                    $"يوجد {certificatesCount} شهادة في النظام.\n\nهل هذه بيانات تجريبيّة فقط؟\n\n"
+                    + "• نعم: تنظيف كامل — يُعاد الترقيم من 0001 ويُمسح سجلّ التدقيق.\n"
+                    + "• لا: نظام حيّ — يبقى عدّاد الترقيم (فلا يتكرّر رقم شهادة سابقة) ويبقى سجلّ التدقيق.",
+                    "نوع التصفير",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+                testDataOnly = kind == MessageBoxResult.Yes;
             }
 
             // شرط حزام الأمان: لا تصفير بلا مسار نسخ احتياطي مضبوط.
@@ -1350,7 +1393,13 @@ namespace CAL_QR.ViewModels
             // التصفير الفعلي.
             try
             {
-                var result = await SystemResetService.FactoryResetAsync(_contextFactory, FactoryResetConfirmationText.Trim(), _auditLogRepository);
+                var result = await SystemResetService.FactoryResetAsync(
+                    _contextFactory,
+                    FactoryResetConfirmationText.Trim(),
+                    _auditLogRepository,
+                    resetCertificateSequence: testDataOnly,
+                    clearAuditLog: testDataOnly,
+                    protectedPaths: new[] { BackupPath });
                 FactoryResetConfirmationText = string.Empty;
                 FactoryResetPassword = string.Empty;
 
@@ -1386,6 +1435,7 @@ namespace CAL_QR.ViewModels
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(startInfo);
+                        App.MarkRestarting();
                         Application.Current.Shutdown();
                     }
                     else

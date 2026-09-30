@@ -208,6 +208,199 @@ namespace CAL_QR.Tests
             }
         }
 
+        private static DbContextOptions<CalQrDbContext> NewSqliteOptions(string dbPath) =>
+            new DbContextOptionsBuilder<CalQrDbContext>().UseSqlite($"Data Source={dbPath}").Options;
+
+        private static void CleanUp(string dbPath, params string[] folders)
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(dbPath))
+            {
+                try { File.Delete(dbPath); } catch (IOException) { /* ملفّ مؤقّت ما زال مقفلاً؛ بقايا غير مؤذية */ }
+            }
+            foreach (var folder in folders)
+            {
+                try { Directory.Delete(folder, recursive: true); } catch (IOException) { /* كما أعلاه */ }
+            }
+        }
+
+        [Fact]
+        public void IsSafeToClean_RejectsEmptyDriveRootAndFoldersContainingProtectedPaths()
+        {
+            string tempRoot = Path.Combine(Path.GetTempPath(), "cal_qr_guard_" + Guid.NewGuid().ToString("N"));
+            string backups = Path.Combine(tempRoot, "backups");
+            var protectedPaths = new[] { backups };
+
+            Assert.False(SystemResetService.IsSafeToClean("   ", protectedPaths, out _));
+            Assert.False(SystemResetService.IsSafeToClean(Path.GetPathRoot(tempRoot)!, protectedPaths, out string rootReason));
+            Assert.Contains("جذر", rootReason);
+
+            // يحتوي المسار المحميّ ⇒ مرفوض
+            Assert.False(SystemResetService.IsSafeToClean(tempRoot, protectedPaths, out string containsReason));
+            Assert.Contains("محميّ", containsReason);
+            // يساويه ⇒ مرفوض
+            Assert.False(SystemResetService.IsSafeToClean(backups, protectedPaths, out _));
+
+            // داخل المسار المحميّ أو بجواره ⇒ مسموح
+            Assert.True(SystemResetService.IsSafeToClean(Path.Combine(backups, "poster"), protectedPaths, out _));
+            Assert.True(SystemResetService.IsSafeToClean(Path.Combine(tempRoot, "poster"), protectedPaths, out _));
+        }
+
+        [Fact]
+        public async Task ResolveCleanupFoldersAsync_ReturnsSettingsAndFallsBackToDefaults()
+        {
+            string dbPath = Path.Combine(Path.GetTempPath(), $"cal_qr_resolve_test_{Guid.NewGuid():N}.db");
+            var options = NewSqliteOptions(dbPath);
+            var factory = new TestDbContextFactory(options);
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = @"X:\custom\poster";
+                    context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = string.Empty;
+                    context.SaveChanges();
+                }
+
+                var (qr, attachments) = await SystemResetService.ResolveCleanupFoldersAsync(factory);
+                Assert.Equal(@"X:\custom\poster", qr);
+                Assert.Equal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments"), attachments);
+                Assert.Equal(0, await SystemResetService.CountCertificatesAsync(factory));
+            }
+            finally
+            {
+                CleanUp(dbPath);
+            }
+        }
+
+        [Fact]
+        public async Task FactoryResetAsync_DefaultMode_ResetsCertificateSequence()
+        {
+            string dbPath = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_seq_default_{Guid.NewGuid():N}.db");
+            var options = NewSqliteOptions(dbPath);
+            var factory = new TestDbContextFactory(options);
+            string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_qr_{Guid.NewGuid():N}");
+            string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_att_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(qrFolder);
+            Directory.CreateDirectory(attachmentsFolder);
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
+                    context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
+                    context.CertificateSequence.Add(new CertificateSequence { Year = 2026, LastNumber = 42 });
+                    context.SaveChanges();
+                }
+
+                var result = await SystemResetService.FactoryResetAsync(factory, "RESET-ALL-DATA");
+
+                Assert.True(result.Success);
+                using var check = new CalQrDbContext(options);
+                Assert.Equal(0, await check.CertificateSequence.CountAsync());
+            }
+            finally
+            {
+                CleanUp(dbPath, qrFolder, attachmentsFolder);
+            }
+        }
+
+        [Fact]
+        public async Task FactoryResetAsync_LiveSystemMode_KeepsCertificateSequenceAndAuditLog()
+        {
+            string dbPath = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_live_{Guid.NewGuid():N}.db");
+            var options = NewSqliteOptions(dbPath);
+            var factory = new TestDbContextFactory(options);
+            string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_qr_{Guid.NewGuid():N}");
+            string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_att_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(qrFolder);
+            Directory.CreateDirectory(attachmentsFolder);
+            var auditLogRepo = new AuditLogRepository(factory, new TestCurrentUserService());
+            try
+            {
+                int logsBefore;
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
+                    context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
+                    context.CertificateSequence.Add(new CertificateSequence { Year = 2026, LastNumber = 42 });
+                    context.AuditLogs.Add(new AuditLog { Action = "إجراء قديم", EntityName = "Test", EntityId = "1", Details = "سطر قديم" });
+                    context.SaveChanges();
+                    logsBefore = context.AuditLogs.Count();
+                }
+                await SeedManualDataAsync(factory);
+
+                var result = await SystemResetService.FactoryResetAsync(
+                    factory, "RESET-ALL-DATA", auditLogRepo,
+                    resetCertificateSequence: false, clearAuditLog: false);
+
+                Assert.True(result.Success);
+                Assert.Contains("عدّاد ترقيم", result.Message);
+
+                using var check = new CalQrDbContext(options);
+                Assert.Equal(0, await check.Owners.CountAsync());
+                Assert.Equal(0, await check.CalibrationRecords.CountAsync());
+
+                var sequences = await check.CertificateSequence.ToListAsync();
+                Assert.Contains(sequences, x => x.Year == 2026 && x.LastNumber == 42);
+
+                var logs = await check.AuditLogs.OrderBy(l => l.Id).ToListAsync();
+                Assert.Contains(logs, l => l.Action == "إجراء قديم");
+                Assert.Equal("تصفير كامل للنظام", logs.Last().Action);
+                Assert.True(logs.Count >= logsBefore + 1);
+            }
+            finally
+            {
+                CleanUp(dbPath, qrFolder, attachmentsFolder);
+            }
+        }
+
+        [Fact]
+        public async Task FactoryResetAsync_SkipsFolderContainingProtectedPath_AndStillCleansTheOther()
+        {
+            string dbPath = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_guard_{Guid.NewGuid():N}.db");
+            var options = NewSqliteOptions(dbPath);
+            var factory = new TestDbContextFactory(options);
+            string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_qr_{Guid.NewGuid():N}");
+            string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_att_{Guid.NewGuid():N}");
+            string protectedInsideQr = Path.Combine(qrFolder, "backups");
+            Directory.CreateDirectory(protectedInsideQr);
+            Directory.CreateDirectory(attachmentsFolder);
+            string qrFile = Path.Combine(qrFolder, "label.png");
+            string backupFile = Path.Combine(protectedInsideQr, "backup.cqbak");
+            File.WriteAllText(qrFile, "QR");
+            File.WriteAllText(backupFile, "BACKUP");
+            string attachmentChild = Path.Combine(attachmentsFolder, "77");
+            Directory.CreateDirectory(attachmentChild);
+            File.WriteAllText(Path.Combine(attachmentChild, "report.pdf"), "PDF");
+            try
+            {
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
+                    context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
+                    context.SaveChanges();
+                }
+
+                var result = await SystemResetService.FactoryResetAsync(
+                    factory, "RESET-ALL-DATA", protectedPaths: new[] { protectedInsideQr });
+
+                Assert.True(result.Success);
+                Assert.Contains("تُخطّي", result.Message);
+                Assert.Equal(0, result.QrFilesRemoved);
+                Assert.True(File.Exists(qrFile), "مجلّد QR يحتوي مساراً محميّاً فلا يُنظَّف");
+                Assert.True(File.Exists(backupFile), "النسخة الاحتياطيّة لا تُمسّ أبداً");
+                Assert.False(Directory.Exists(attachmentChild), "مجلّد المرفقات الآخر يُنظَّف كالمعتاد");
+            }
+            finally
+            {
+                CleanUp(dbPath, qrFolder, attachmentsFolder);
+            }
+        }
+
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
             private readonly DbContextOptions<CalQrDbContext> _options;

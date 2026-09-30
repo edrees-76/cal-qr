@@ -48,7 +48,7 @@ namespace CAL_QR
 
         private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            if (_isLoggingOut)
+            if (_isLoggingOut || App.IsRestarting)
             {
                 return;
             }

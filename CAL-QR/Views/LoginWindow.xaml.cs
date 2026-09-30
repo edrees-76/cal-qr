@@ -18,17 +18,19 @@ namespace CAL_QR.Views
         private readonly ICurrentUserService _currentUserService;
         private readonly IUserRepository _userRepository;
         private readonly IRecoveryAnswerService _recoveryAnswerService;
+        private readonly IAuditLogRepository _auditLogRepository;
         private int _failedAttempts = 0;
         private DispatcherTimer? _lockoutTimer;
         private int _lockoutSecondsRemaining = 0;
 
-        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository, IRecoveryAnswerService recoveryAnswerService)
+        public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository, IRecoveryAnswerService recoveryAnswerService, IAuditLogRepository auditLogRepository)
         {
             InitializeComponent();
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
             _userRepository = userRepository;
             _recoveryAnswerService = recoveryAnswerService;
+            _auditLogRepository = auditLogRepository;
             Loaded += LoginWindow_Loaded;
         }
 
@@ -454,17 +456,37 @@ namespace CAL_QR.Views
 
             try
             {
+                // حساب المدير النشط: "admin" إن كان مديراً نشطاً، وإلا أوّل مدير نشط (بالمعرّف)
                 var adminUser = await _userRepository.GetByUsernameAsync("admin");
+                if (adminUser == null || adminUser.Role != Models.UserRole.Admin || !adminUser.IsActive)
+                {
+                    adminUser = await _userRepository.GetFirstActiveAdminAsync();
+                }
                 if (adminUser == null)
                 {
-                    MessageBox.Show("تعذّر العثور على حساب المدير (admin) لإعادة الضبط. يرجى مراجعة مدير آخر من تبويب المستخدمين.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("تعذّر العثور على حساب مدير نشط لإعادة الضبط. يرجى مراجعة مدير آخر من تبويب المستخدمين.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
                 await _userRepository.UpdateAsync(adminUser);
 
-                MessageBox.Show("تم تغيير كلمة مرور حساب admin بنجاح. يمكنك الآن تسجيل الدخول بها.", "تم بنجاح", MessageBoxButton.OK, MessageBoxImage.Information);
+                try
+                {
+                    await _auditLogRepository.LogAsync(
+                        "إعادة ضبط كلمة المرور عبر سؤال الاسترداد",
+                        "User",
+                        adminUser.Id.ToString(),
+                        $"إعادة ضبط كلمة المرور عبر سؤال الاسترداد للحساب {adminUser.Username}.",
+                        adminUser.Id,
+                        adminUser.Username);
+                }
+                catch (Exception auditEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Audit log failed after password recovery: {auditEx.Message}");
+                }
+
+                MessageBox.Show($"تم تغيير كلمة مرور حساب {adminUser.Username} بنجاح. يمكنك الآن تسجيل الدخول بها.", "تم بنجاح", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 // Go back to login screen
                 GridForgotPassword.Visibility = Visibility.Collapsed;

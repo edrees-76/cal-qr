@@ -12,5 +12,6 @@ namespace CAL_QR.Repositories
         Task AddAsync(User user);
         Task UpdateAsync(User user);
         Task<int> GetActiveAdminsCountAsync();
+        Task<User?> GetFirstActiveAdminAsync();
     }
 }

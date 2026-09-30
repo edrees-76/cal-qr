@@ -151,6 +151,15 @@ namespace CAL_QR.Repositories
                     $"لا توجد شهادة بالمعرّف {certificate.Id}.");
             }
 
+            // الشهادة الملغاة أو المحذوفة وثيقة منتهية لا تُعدَّل. الكائن الوارد قد يكون نسخة
+            // مفصولة قديمة حُمّلت قبل الإلغاء (نافذة مفتوحة أو مستدعٍ آخر)؛ نسخ قيمه فوق
+            // المخزَّن كان سيعيد الشهادة صالحة ويمحو بيانات الإلغاء.
+            if (stored.IsRevoked || stored.IsDeleted)
+            {
+                throw new InvalidOperationException(
+                    $"لا يمكن تعديل الشهادة {stored.CertificateNumber}: هي ملغاة أو محذوفة.");
+            }
+
             var validation = CertificateDateRules.Validate(
                 certificate.CalibrationDate,
                 certificate.IssueDate,
@@ -183,6 +192,12 @@ namespace CAL_QR.Repositories
             // «بانتظار النسخة الموقّعة» عند كلّ تعديل.
             certificate.IsSignedCopyAttached = stored.IsSignedCopyAttached;
             certificate.SignedCopyConfirmedAt = stored.SignedCopyConfirmedAt;
+            // حالة الإلغاء يملكها RevokeAsync وحده؛ لا يكتبها التعديل أبداً (دفاع ثانٍ بعد الرفض أعلاه).
+            certificate.IsRevoked = stored.IsRevoked;
+            certificate.IsDeleted = stored.IsDeleted;
+            certificate.RevokedAt = stored.RevokedAt;
+            certificate.RevokedByName = stored.RevokedByName;
+            certificate.RevocationReason = stored.RevocationReason;
             certificate.DueDate = CertificateDateRules.ComputeDueDate(certificate.CalibrationDate);
             certificate.UpdatedAt = DateTime.UtcNow;
             // الترتيب إلزاميّ: SanitizeUserText قبل NormalizeDerivedValues.
@@ -372,9 +387,24 @@ namespace CAL_QR.Repositories
                     .Include(c => c.CalibrationResults)
                     .Include(c => c.UncertaintyComponents)
                     .Include(c => c.FunctionalChecks)
-                    .FirstOrDefaultAsync(c => c.Id == historical.CertificateId && !c.IsDeleted);
+                    .FirstOrDefaultAsync(c => c.Id == historical.CertificateId);
 
-                if (certificate != null)
+                // شهادة عُدّلت ثمّ أُلغيت: الإلغاء يضع IsDeleted=true، ورمزها الأوّل المطبوع على
+                // الورقة الأولى في الأرشيف. بلا هذا الفرع كان مسحه يعود «غير موجودة» فتبدو
+                // وثيقة أصليّة مزوّرة، بينما رمزها الحاليّ يعود «ملغاة».
+                if (certificate != null && certificate.IsRevoked)
+                {
+                    return new CertificateVerificationResult
+                    {
+                        Status = CertificateVerificationStatus.Revoked,
+                        Certificate = certificate,
+                        RevokedAt = certificate.RevokedAt,
+                        RevokedByName = certificate.RevokedByName,
+                        RevocationReason = certificate.RevocationReason
+                    };
+                }
+
+                if (certificate != null && !certificate.IsDeleted)
                 {
                     return new CertificateVerificationResult
                     {

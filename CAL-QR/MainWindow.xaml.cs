@@ -89,7 +89,14 @@ namespace CAL_QR
 
                 try
                 {
-                    window.Close();
+                    if (window is Views.Dialogs.CertificateFormDialog certificateForm)
+                    {
+                        certificateForm.CloseWithoutPrompt();
+                    }
+                    else
+                    {
+                        window.Close();
+                    }
                 }
                 catch
                 {

@@ -96,5 +96,15 @@ namespace CAL_QR.Repositories
                 .AsNoTracking()
                 .CountAsync(u => u.Role == UserRole.Admin && u.IsActive);
         }
+
+        public async Task<User?> GetFirstActiveAdminAsync()
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Users
+                .AsNoTracking()
+                .Where(u => u.Role == UserRole.Admin && u.IsActive)
+                .OrderBy(u => u.Id)
+                .FirstOrDefaultAsync();
+        }
     }
 }

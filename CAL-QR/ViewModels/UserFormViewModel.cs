@@ -5,12 +5,19 @@ using System.Windows.Input;
 using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
+using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
     public class UserFormViewModel : BaseViewModel
     {
         private readonly IUserRepository _userRepository;
+        private readonly ICurrentUserService _currentUserService;
+
+        // الحالة الأصلية للحساب المحرَّر وقت تحميل النموذج (لقواعد UserManagementRules)
+        private UserRole? _originalRole;
+        private bool _originalIsActive;
 
         private string _fullName = string.Empty;
         private string _username = string.Empty;
@@ -31,9 +38,10 @@ namespace CAL_QR.ViewModels
         private bool _canManageSettings;
         private bool _canManageUsers;
 
-        public UserFormViewModel(IUserRepository userRepository)
+        public UserFormViewModel(IUserRepository userRepository, ICurrentUserService currentUserService)
         {
             _userRepository = userRepository;
+            _currentUserService = currentUserService;
 
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
             CancelCommand = new RelayCommand(Cancel);
@@ -120,6 +128,11 @@ namespace CAL_QR.ViewModels
 
         public Action<bool>? CloseWindowAction { get; set; }
 
+        /// <summary>عرض رسالة رفض للمستخدم؛ قابل للاستبدال في الاختبارات.</summary>
+        public Action<string, string> ShowMessage { get; set; } = (text, title) =>
+            MessageBox.Show(text, title, MessageBoxButton.OK, MessageBoxImage.Warning,
+                MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         #endregion
@@ -132,6 +145,8 @@ namespace CAL_QR.ViewModels
             Role = user.Role;
             IsEditor = user.IsEditor;
             IsActive = user.IsActive;
+            _originalRole = user.Role;
+            _originalIsActive = user.IsActive;
             IsEditMode = true;
             Password = string.Empty; // Keep empty unless updating
 
@@ -174,6 +189,35 @@ namespace CAL_QR.ViewModels
 
             try
             {
+                // قواعد من يحقّ له إسناد/تعديل دور المدير (قبل أيّ كتابة)
+                var actorRole = _currentUserService.CurrentUser?.Role ?? UserRole.Viewer;
+
+                string? denial = UserManagementRules.CanAssignRole(actorRole, Role);
+                if (denial == null && IsEditMode && _originalRole.HasValue)
+                {
+                    denial = UserManagementRules.CanModifyUser(actorRole, _originalRole.Value);
+                }
+                if (denial != null)
+                {
+                    ShowMessage(denial, "تنبيه الحماية");
+                    return;
+                }
+
+                if (IsEditMode && _originalRole.HasValue)
+                {
+                    bool wasActiveAdmin = UserManagementRules.IsActiveAdmin(_originalRole.Value, _originalIsActive);
+                    bool willBeActiveAdmin = UserManagementRules.IsActiveAdmin(Role, IsActive);
+                    if (wasActiveAdmin && !willBeActiveAdmin)
+                    {
+                        int activeAdmins = await _userRepository.GetActiveAdminsCountAsync();
+                        if (UserManagementRules.WouldLeaveNoActiveAdmin(wasActiveAdmin, willBeActiveAdmin, activeAdmins))
+                        {
+                            ShowMessage(UserManagementRules.LastActiveAdminMessage, "تنبيه الحماية");
+                            return;
+                        }
+                    }
+                }
+
                 // Check if username is unique
                 var existing = await _userRepository.GetByUsernameAsync(Username);
                 if (existing != null && (!IsEditMode || existing.Id != UserId))

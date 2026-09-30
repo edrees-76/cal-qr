@@ -31,7 +31,12 @@ namespace CAL_QR.Views.Dialogs
             Closing += Window_Closing;
         }
 
-        private void CloseWithoutPrompt()
+        /// <summary>
+        /// إغلاق بلا سؤال «تغييرات غير محفوظة». يستعمله الـViewModel بعد نجاح الحفظ/الإصدار/الإلغاء،
+        /// وتستعمله النافذة الرئيسيّة حين تنتهي الجلسة قسراً (قفل خمول أو خروج): سؤال حوار
+        /// ينتظر إجابة شخص غادر كان يُبقي الجلسة مكشوفة ويوقف القفل.
+        /// </summary>
+        public void CloseWithoutPrompt()
         {
             _closeWithoutPrompt = true;
             Close();

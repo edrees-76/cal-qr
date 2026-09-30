@@ -11,6 +11,10 @@ namespace CAL_QR.Views.Dialogs
     {
         private readonly CertificateFormViewModel _viewModel;
 
+        // يُرفع فقط حين يغلق الـViewModel النافذة بعد حفظ/إصدار/إلغاء ناجح:
+        // ذلك المسار لا يسأل عن تغييرات غير محفوظة أبداً.
+        private bool _closeWithoutPrompt;
+
         /// <summary>
         /// الـViewModel يصل عبر مصنع محقون لا عبر App.ServiceProvider: الحوار لا يعرف
         /// حاوية الخدمات، فيبقى قابلاً للإنشاء في اختبار بلا إقلاع تطبيق كامل.
@@ -23,7 +27,34 @@ namespace CAL_QR.Views.Dialogs
 
             _viewModel = viewModelFactory();
             DataContext = _viewModel;
-            _viewModel.CloseWindowAction = Close;
+            _viewModel.CloseWindowAction = CloseWithoutPrompt;
+            Closing += Window_Closing;
+        }
+
+        private void CloseWithoutPrompt()
+        {
+            _closeWithoutPrompt = true;
+            Close();
+        }
+
+        /// <summary>
+        /// نقطة واحدة تغطّي زرّي الإغلاق/الإلغاء وزرّ X وAlt+F4: كلّها تمرّ بـClosing.
+        /// السؤال يظهر فقط إذا وُجدت تغييرات غير محفوظة ولم يكن الإغلاق من مسار النجاح.
+        /// </summary>
+        private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            if (_closeWithoutPrompt || !_viewModel.HasUnsavedChanges) return;
+
+            var answer = MessageBox.Show(
+                this,
+                "هناك تغييرات غير محفوظة. هل تريد تجاهلها وإغلاق النموذج؟",
+                "تغييرات غير محفوظة",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No,
+                MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+
+            if (answer != MessageBoxResult.Yes) e.Cancel = true;
         }
 
         /// <summary>يُكشف ليشترك المستدعي في CertificateIssued قبل العرض.</summary>
@@ -93,7 +124,10 @@ namespace CAL_QR.Views.Dialogs
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (DataContext is CertificateFormViewModel vm)
+                {
+                    vm.MarkDirty();
                     vm.RunTemplateConsistencyChecks();
+                }
             }), DispatcherPriority.Background);
         }
 
@@ -108,6 +142,7 @@ namespace CAL_QR.Views.Dialogs
             {
                 if (DataContext is CertificateFormViewModel vm)
                 {
+                    vm.MarkDirty();
                     vm.RunTemplateConsistencyChecks();
                     vm.RefreshCorrectionFactorLabels();
                 }
@@ -122,7 +157,10 @@ namespace CAL_QR.Views.Dialogs
             Dispatcher.BeginInvoke(new Action(() =>
             {
                 if (DataContext is CertificateFormViewModel vm)
+                {
+                    vm.MarkDirty();
                     vm.RefreshCorrectionFactorLabels();
+                }
             }), DispatcherPriority.Background);
         }
 

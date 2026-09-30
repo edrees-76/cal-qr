@@ -38,11 +38,7 @@
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                     <TextBlock Text="لقد تم رصد أجهزة تتطلب انتباهاً عاجلاً!" FontSize="14" FontWeight="Bold" Foreground="#2D3748" HorizontalAlignment="Center" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
                     
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
-                        <TextBlock Text="إجمالي التنبيهات النشطة: " FontSize="13" Foreground="#4A5568" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="{Binding TotalAlerts}" FontSize="15" FontWeight="Bold" Foreground="#C62828" Margin="5,0" />
-                        <TextBlock Text=" جهاز" FontSize="13" Foreground="#4A5568" FontFamily="{StaticResource CairoFont}" />
-                    </StackPanel>
+                    <TextBlock Text="{Binding AlertSummaryText}" FontSize="13" Foreground="#4A5568" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
                     <TextBlock Text="يرجى مراجعة لوحة البيانات للتعرف على قائمة الأجهزة المنتهية أو قريبة الانتهاء لتفادي استخدامها في عمليات القياس." FontSize="11" Foreground="#718096" TextWrapping="Wrap" TextAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>

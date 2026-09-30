@@ -85,6 +85,14 @@
                     </Button>
 
                     <Button Command="{Binding ToggleAdvancedSearchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Content="بحث متقدم" FontFamily="{StaticResource CairoFont}" />
+
+                    <Button Command="{Binding ClearFiltersCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{DynamicResource PrimaryNavy}" Height="40" Margin="10,0,0,0" FontFamily="{StaticResource CairoFont}" FontSize="12" ToolTip="مسح الفلاتر" Visibility="{Binding HasActiveFilters, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock>
+                            <Run Text="فلاتر فعّالة:" />
+                            <Run Text="{Binding ActiveFilterCount, Mode=OneWay}" />
+                            <Run Text="  ✕" />
+                        </TextBlock>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -540,6 +548,12 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+
+            <!-- Empty-result message (list empty, not loading) -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{Binding HasNoResults, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="لا توجد أجهزة مطابقة للبحث الحالي." FontFamily="{StaticResource CairoFont}" FontSize="14" Foreground="{DynamicResource MaterialDesignBodyLight}" HorizontalAlignment="Center" />
+                <TextBlock Text="جرّب مسح الفلاتر." FontFamily="{StaticResource CairoFont}" FontSize="12" Foreground="{DynamicResource MaterialDesignBodyLight}" HorizontalAlignment="Center" Margin="0,5,0,0" Visibility="{Binding HasActiveFilters, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </StackPanel>
         </Grid>
 
         <!-- Pagination Bar -->

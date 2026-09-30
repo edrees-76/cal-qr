@@ -204,5 +204,108 @@ namespace CAL_QR.Tests
             Assert.Equal(string.Empty, vm.SearchText);
             Assert.Equal(string.Empty, vm.FilterModel);
         }
+
+        private static async Task SeedTwoDevicesAsync(DbContextOptions<CalQrDbContext> options)
+        {
+            using var context = new CalQrDbContext(options);
+            var owner = new Owner { Name = "جهة الاختبار" };
+            var type = new DeviceType { Name = "نوع الاختبار" };
+            context.Owners.Add(owner);
+            context.DeviceTypes.Add(type);
+            await context.SaveChangesAsync();
+
+            var d1 = new Device { Model = "A100", SerialNumber = "SN-A100", OwnerId = owner.Id, DeviceTypeId = type.Id };
+            var d2 = new Device { Model = "B200", SerialNumber = "SN-B200", OwnerId = owner.Id, DeviceTypeId = type.Id };
+            context.Devices.AddRange(d1, d2);
+            await context.SaveChangesAsync();
+
+            foreach (var (d, n) in new[] { (d1, "1"), (d2, "2") })
+            {
+                context.CalibrationRecords.Add(new CalibrationRecord
+                {
+                    DeviceId = d.Id, CertificateNumber = "TNRC-2024-000" + n,
+                    CalibrationDate = DateTime.Today, ExpiryDate = DateTime.Today.AddYears(1),
+                    EngineerName = "إدريس", Result = "Passed", HmacSignature = "H" + n
+                });
+            }
+            await context.SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task LoadDataAsync_AdvancedFilterSet_PanelClosed_StillFiltersList()
+        {
+            var options = NewInMemoryOptions();
+            await SeedTwoDevicesAsync(options);
+
+            using var vm = BuildVm(options, null);
+            vm.IsAdvancedSearchVisible = false;
+            vm.FilterModel = "B200";
+            await vm.LoadDataAsync();
+
+            var single = Assert.Single(vm.Devices);
+            Assert.Equal("B200", single.Model);
+            Assert.Equal(1, vm.TotalCount);
+        }
+
+        [Fact]
+        public void ActiveFilterCount_CountsOnlyNonDefaultAdvancedFilters_AndNotifies()
+        {
+            var options = NewInMemoryOptions();
+            using var vm = BuildVm(options, null);
+
+            var changed = new List<string?>();
+            vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+            Assert.Equal(0, vm.ActiveFilterCount);
+
+            vm.FilterModel = "A";
+            Assert.Equal(1, vm.ActiveFilterCount);
+            Assert.Contains(nameof(DevicesViewModel.ActiveFilterCount), changed);
+
+            vm.FilterResult = "ناجح";
+            vm.FilterStartDate = DateTime.Today;
+            Assert.Equal(3, vm.ActiveFilterCount);
+
+            // نصّ البحث وسنة المعايرة ليسا من الفلاتر المتقدّمة
+            vm.SearchText = "x";
+            vm.SelectedOwnerFilter = new Owner { Id = 1, Name = "o" };
+            Assert.Equal(4, vm.ActiveFilterCount);
+
+            vm.FilterResult = "الكل";
+            vm.FilterModel = "   ";
+            Assert.Equal(2, vm.ActiveFilterCount);
+        }
+
+        [Fact]
+        public async Task ClearFilters_ResetsActiveFilterCountToZero()
+        {
+            var options = NewInMemoryOptions();
+            using var vm = BuildVm(options, null);
+            vm.FilterModel = "A";
+            vm.FilterStatus = "منتهية";
+            Assert.Equal(2, vm.ActiveFilterCount);
+
+            vm.ClearFiltersCommand.Execute(null);
+            await Task.Delay(100);
+
+            Assert.Equal(0, vm.ActiveFilterCount);
+            Assert.False(vm.HasActiveFilters);
+        }
+
+        [Fact]
+        public async Task HasNoResults_FalseBeforeLoad_TrueWhenLoadedEmpty_FalseWhenRows()
+        {
+            var options = NewInMemoryOptions();
+            using var vm = BuildVm(options, null);
+            Assert.False(vm.HasNoResults);
+
+            await vm.LoadDataAsync();
+            Assert.False(vm.IsLoading);
+            Assert.True(vm.HasNoResults);
+
+            await SeedTwoDevicesAsync(options);
+            await vm.LoadDataAsync();
+            Assert.False(vm.HasNoResults);
+        }
     }
 }

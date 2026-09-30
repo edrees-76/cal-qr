@@ -428,5 +428,77 @@ namespace CAL_QR.Tests
             Assert.Equal("Average Correction Factor (CFavg)", vm.CorrectionFactorColumnHeader);
             Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
         }
+
+        [Fact]
+        public async Task HasUnsavedChanges_FalseAfterLoadForRecord()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForRecord(recordId);
+
+            Assert.False(vm.HasUnsavedChanges);
+        }
+
+        [Fact]
+        public async Task HasUnsavedChanges_FalseAfterLoadForStatusReport()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Failed");
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForStatusReport(recordId);
+
+            Assert.False(vm.HasUnsavedChanges);
+        }
+
+        [Fact]
+        public async Task HasUnsavedChanges_TrueAfterEditingAField()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            vm.Notes = "ملاحظة جديدة " + Guid.NewGuid();
+
+            Assert.True(vm.HasUnsavedChanges);
+        }
+
+        [Fact]
+        public async Task HasUnsavedChanges_TrueAfterAddingTableRow()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            vm.FunctionalChecks.Add(new CertificateFunctionalCheck());
+
+            Assert.True(vm.HasUnsavedChanges);
+        }
+
+        [Fact]
+        public async Task HasUnsavedChanges_TrueAfterMarkDirty_ButNotBeforeLoad()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+
+            vm.MarkDirty();
+            Assert.False(vm.HasUnsavedChanges);
+
+            vm.LoadForRecord(recordId);
+            vm.MarkDirty();
+            Assert.True(vm.HasUnsavedChanges);
+        }
+
+        [Fact]
+        public async Task HasUnsavedChanges_UnaffectedByValidationErrorsOnly()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+            vm.LoadForRecord(recordId);
+
+            vm.ValidationErrors = "خطأ ما";
+
+            Assert.False(vm.HasUnsavedChanges);
+        }
     }
 }

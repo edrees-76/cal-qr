@@ -128,6 +128,8 @@ namespace CAL_QR
             // Clean up to prevent leaks
             _idleLockService.LockRequested -= ViewModel_LockRequested;
             _viewModel.SearchFocusRequested -= ViewModel_SearchFocusRequested;
+            // يفكّ اشتراكات الأحداث الساكنة والمؤقّت: بدونه يبقى VM النافذة المغلقة (بعد تسجيل الخروج) حيّاً.
+            _viewModel.Dispose();
             _idleLockService.Stop();
 
             // If no other windows are open (user closed via X), shut down app

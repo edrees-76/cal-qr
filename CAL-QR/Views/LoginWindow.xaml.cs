@@ -154,6 +154,11 @@ namespace CAL_QR.Views
                         {
                             var lockedUntil = await _userRepository.RegisterFailedLoginAsync(user.Id, DateTime.UtcNow);
                             persistedLock = LoginLockoutRules.RemainingLock(lockedUntil, DateTime.UtcNow);
+                            if (persistedLock != null)
+                            {
+                                await TryAuditAsync("قفل الدخول", user,
+                                    $"قُفل الدخول للحساب {user.Username} مؤقّتاً بعد {LoginLockoutRules.MaxAttempts} محاولات خاطئة.");
+                            }
                         }
                     }
                 }
@@ -169,6 +174,7 @@ namespace CAL_QR.Views
             if (loginSuccess && targetUser != null)
             {
                 _currentUserService.SetCurrentUser(targetUser);
+                await TryAuditAsync("تسجيل دخول", targetUser, $"تسجيل دخول ناجح للحساب {targetUser.Username}.");
 
                 var mainWindow = App.ServiceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
@@ -200,6 +206,18 @@ namespace CAL_QR.Views
                     TxtPassword.Focus();
                 else
                     TxtPasswordReveal.Focus();
+            }
+        }
+
+        private async System.Threading.Tasks.Task TryAuditAsync(string action, Models.User user, string details)
+        {
+            try
+            {
+                await _auditLogRepository.LogAsync(action, "User", user.Id.ToString(), details, user.Id, user.Username);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"Audit '{action}' for user {user.Username}", ex);
             }
         }
 

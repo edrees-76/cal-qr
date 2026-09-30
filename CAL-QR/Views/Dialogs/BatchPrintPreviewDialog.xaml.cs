@@ -22,6 +22,7 @@ namespace CAL_QR.Views.Dialogs
         public BatchPrintPreviewDialog(List<int> calibrationRecordIds)
         {
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
             _calibrationRecordIds = calibrationRecordIds;
 
             if (App.ServiceProvider != null)

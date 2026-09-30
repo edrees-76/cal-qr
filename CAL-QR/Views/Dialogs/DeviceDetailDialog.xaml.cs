@@ -10,6 +10,7 @@ namespace CAL_QR.Views.Dialogs
         public DeviceDetailDialog()
         {
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
             if (App.ServiceProvider != null)
             {
                 DataContext = App.ServiceProvider.GetRequiredService<DeviceDetailViewModel>();

@@ -24,6 +24,7 @@ namespace CAL_QR.Views.Dialogs
             if (viewModelFactory == null) throw new ArgumentNullException(nameof(viewModelFactory));
 
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
 
             _viewModel = viewModelFactory();
             DataContext = _viewModel;

@@ -10,6 +10,7 @@ namespace CAL_QR.Views.Dialogs
         public DeviceTypeFormDialog()
         {
             InitializeComponent();
+            CAL_QR.Helpers.WindowSizing.ClampToWorkArea(this);
             
             if (App.ServiceProvider != null)
             {

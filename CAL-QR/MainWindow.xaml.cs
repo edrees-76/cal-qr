@@ -138,6 +138,10 @@ namespace CAL_QR
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
+            // أوّل نافذة تُنشأ (الشاشة الافتتاحيّة) تصير Application.MainWindow تلقائيّاً وتُغلق لاحقاً؛
+            // ونوافذ الحوار تستعمله مالكاً لها، فيُضبط صراحةً على النافذة الرئيسيّة الحيّة.
+            Application.Current.MainWindow = this;
+
             await _viewModel.CheckAlertsAsync();
             if (_viewModel.ShouldShowAlertPopup)
             {

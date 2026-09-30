@@ -11,6 +11,8 @@ using QuestPDF.Infrastructure;
 using CAL_QR.Models;
 using CAL_QR.Data;
 using CAL_QR.Validation;
+using CAL_QR.Helpers;
+using CAL_QR.Services.Documents;
 
 namespace CAL_QR.Services
 {
@@ -23,14 +25,9 @@ namespace CAL_QR.Services
         {
             _contextFactory = contextFactory;
 
-            try
-            {
-                QuestPDF.Settings.License = LicenseType.Community;
-            }
-            catch
-            {
-                // Already registered
-            }
+            // ترخيص QuestPDF وتسجيل خطّ Cairo مركزيّان في CertificatePdfEnvironment: بدونه قد تُولَّد
+            // تقارير PDF قبل أيّ شهادة بخطّ بديل. الاستدعاء متكرّر الأمان.
+            CertificatePdfEnvironment.EnsureInitialized();
 
             LoadLogoBytes();
         }
@@ -175,25 +172,25 @@ namespace CAL_QR.Services
                         {
                             ws.Cell(row, 1).Value = idx;
                             ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
-                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.DeviceType?.Name ?? "";
-                            ws.Cell(row, 5).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 6).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 3).Value = ExcelSafe.Text(record.Device?.Owner?.Name ?? "");
+                            ws.Cell(row, 4).Value = ExcelSafe.Text(record.Device?.DeviceType?.Name ?? "");
+                            ws.Cell(row, 5).Value = ExcelSafe.Text(record.Device?.Model ?? "");
+                            ws.Cell(row, 6).Value = ExcelSafe.Text(record.Device?.SerialNumber ?? "");
                             ws.Cell(row, 7).Value = record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                             ws.Cell(row, 8).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                            ws.Cell(row, 9).Value = record.Result;
-                            ws.Cell(row, 10).Value = record.EngineerName;
-                            ws.Cell(row, 11).Value = record.CalibrationDescription;
+                            ws.Cell(row, 9).Value = ExcelSafe.Text(record.Result);
+                            ws.Cell(row, 10).Value = ExcelSafe.Text(record.EngineerName);
+                            ws.Cell(row, 11).Value = ExcelSafe.Text(record.CalibrationDescription);
                         }
                         else
                         {
                             ws.Cell(row, 1).Value = idx;
                             ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
-                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 3).Value = ExcelSafe.Text(record.Device?.Owner?.Name ?? "");
+                            ws.Cell(row, 4).Value = ExcelSafe.Text(record.Device?.Model ?? "");
+                            ws.Cell(row, 5).Value = ExcelSafe.Text(record.Device?.SerialNumber ?? "");
                             ws.Cell(row, 6).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                            ws.Cell(row, 7).Value = record.Result;
+                            ws.Cell(row, 7).Value = ExcelSafe.Text(record.Result);
                             ws.Cell(row, 8).Value = GetStatusText(record, alertDays);
                         }
 
@@ -798,7 +795,7 @@ namespace CAL_QR.Services
                     int rIdx = 17;
                     foreach (var item in data.ByOwner)
                     {
-                        ws.Cell(rIdx, 1).Value = item.Name;
+                        ws.Cell(rIdx, 1).Value = ExcelSafe.Text(item.Name);
                         ws.Cell(rIdx, 2).Value = item.Count;
                         ws.Cell(rIdx, 1).Style.Font.FontName = "Cairo";
                         ws.Cell(rIdx, 2).Style.Font.FontName = "Cairo";
@@ -820,7 +817,7 @@ namespace CAL_QR.Services
                     rIdx = 17;
                     foreach (var item in data.ByDeviceType)
                     {
-                        ws.Cell(rIdx, colStart).Value = item.Name;
+                        ws.Cell(rIdx, colStart).Value = ExcelSafe.Text(item.Name);
                         ws.Cell(rIdx, colStart + 1).Value = item.Count;
                         ws.Cell(rIdx, colStart).Style.Font.FontName = "Cairo";
                         ws.Cell(rIdx, colStart + 1).Style.Font.FontName = "Cairo";
@@ -842,7 +839,7 @@ namespace CAL_QR.Services
                     rIdx = 17;
                     foreach (var item in data.ByEngineer)
                     {
-                        ws.Cell(rIdx, colStart).Value = item.Name;
+                        ws.Cell(rIdx, colStart).Value = ExcelSafe.Text(item.Name);
                         ws.Cell(rIdx, colStart + 1).Value = item.Count;
                         ws.Cell(rIdx, colStart).Style.Font.FontName = "Cairo";
                         ws.Cell(rIdx, colStart + 1).Style.Font.FontName = "Cairo";
@@ -879,13 +876,13 @@ namespace CAL_QR.Services
                             ws.Row(row).Style.Font.FontName = "Cairo";
                             ws.Cell(row, 1).Value = idx;
                             ws.Cell(row, 2).Value = record.DisplayCertificateNumber;
-                            ws.Cell(row, 3).Value = record.Device?.Owner?.Name ?? "";
-                            ws.Cell(row, 4).Value = record.Device?.Model ?? "";
-                            ws.Cell(row, 5).Value = record.Device?.SerialNumber ?? "";
+                            ws.Cell(row, 3).Value = ExcelSafe.Text(record.Device?.Owner?.Name ?? "");
+                            ws.Cell(row, 4).Value = ExcelSafe.Text(record.Device?.Model ?? "");
+                            ws.Cell(row, 5).Value = ExcelSafe.Text(record.Device?.SerialNumber ?? "");
                             ws.Cell(row, 6).Value = record.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
                             ws.Cell(row, 7).Value = record.ExpiryDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
-                            ws.Cell(row, 8).Value = record.Result;
-                            ws.Cell(row, 9).Value = record.EngineerName;
+                            ws.Cell(row, 8).Value = ExcelSafe.Text(record.Result);
+                            ws.Cell(row, 9).Value = ExcelSafe.Text(record.EngineerName);
 
                             for (int col = 1; col <= detailedHeaders.Length; col++)
                             {

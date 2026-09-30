@@ -341,8 +341,9 @@ namespace CAL_QR.ViewModels
 
                 MatchingCount = await query.CountAsync();
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("ReportsViewModel.cs:344", swallowEx1);
                 MatchingCount = 0;
             }
         }

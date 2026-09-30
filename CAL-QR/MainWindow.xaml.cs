@@ -98,8 +98,9 @@ namespace CAL_QR
                         window.Close();
                     }
                 }
-                catch
+                catch (System.Exception swallowEx1)
                 {
+                    CAL_QR.Services.AppLog.Error("MainWindow.xaml.cs:101", swallowEx1);
                     // فشل إغلاق نافذة واحدة لا يمنع إغلاق البقيّة.
                 }
             }

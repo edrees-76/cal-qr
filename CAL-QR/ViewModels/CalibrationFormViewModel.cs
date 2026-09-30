@@ -504,8 +504,9 @@ namespace CAL_QR.ViewModels
             {
                 await PersistCertificateNumberAsync(e.CalibrationRecordId, e.CertificateNumber);
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("CalibrationFormViewModel.cs:507", swallowEx1);
                 // الشهادة حُفظت بالفعل في جدول Certificates —
                 // فشل ربط الرقم بـ CalibrationRecord لا يُعطّل العملية.
             }

@@ -996,8 +996,9 @@ namespace CAL_QR.ViewModels
                 HelpSectionPasswordIsSet = !string.IsNullOrWhiteSpace(hash?.Value);
                 HelpSectionPasswordHint = hint?.Value ?? string.Empty;
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("SettingsViewModel.cs:999", swallowEx1);
                 HelpSectionPasswordIsSet = false;
                 HelpSectionPasswordHint = string.Empty;
             }
@@ -1264,14 +1265,16 @@ namespace CAL_QR.ViewModels
                     {
                         passwordValid = BCrypt.Net.BCrypt.Verify(FactoryResetPassword, user.PasswordHash);
                     }
-                    catch
+                    catch (System.Exception swallowEx2)
                     {
+                        CAL_QR.Services.AppLog.Error("SettingsViewModel.cs:1267", swallowEx2);
                         passwordValid = false;
                     }
                 }
             }
-            catch
+            catch (System.Exception swallowEx3)
             {
+                CAL_QR.Services.AppLog.Error("SettingsViewModel.cs:1273", swallowEx3);
                 passwordValid = false;
             }
 

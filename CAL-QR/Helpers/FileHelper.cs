@@ -22,8 +22,9 @@ namespace CAL_QR.Helpers
                 var driveInfo = new DriveInfo(root);
                 return driveInfo.AvailableFreeSpace >= requiredBytes;
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("FileHelper.cs:25", swallowEx1);
                 return true;
             }
         }
@@ -36,8 +37,9 @@ namespace CAL_QR.Helpers
                 var driveInfo = new DriveInfo(root);
                 return driveInfo.AvailableFreeSpace;
             }
-            catch
+            catch (System.Exception swallowEx2)
             {
+                CAL_QR.Services.AppLog.Error("FileHelper.cs:39", swallowEx2);
                 return -1;
             }
         }

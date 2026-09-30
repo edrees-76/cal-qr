@@ -62,8 +62,9 @@ namespace CAL_QR.Services
                     return days;
                 }
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("ExportService.cs:65", swallowEx1);
                 // Fallback
             }
             return 30;
@@ -144,7 +145,7 @@ namespace CAL_QR.Services
                                 picture.Height = 60;
                             }
                         }
-                        catch { }
+                        catch (System.Exception swallowEx2) { CAL_QR.Services.AppLog.Warn("ExportService.cs:147: " + swallowEx2.Message); }
                     }
 
                     int startRow = 6;
@@ -712,7 +713,7 @@ namespace CAL_QR.Services
                                 picture.Height = 60;
                             }
                         }
-                        catch { }
+                        catch (System.Exception swallowEx3) { CAL_QR.Services.AppLog.Warn("ExportService.cs:715: " + swallowEx3.Message); }
                     }
 
                     // Section 1: Summary Table

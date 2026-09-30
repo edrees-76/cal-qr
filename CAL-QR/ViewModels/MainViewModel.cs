@@ -81,8 +81,9 @@ namespace CAL_QR.ViewModels
                     ? fileName
                     : System.IO.Path.Combine(parentDir, fileName);
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("MainViewModel.cs:84", swallowEx1);
                 // فشل الاشتقاق لا يمنع إقلاع الواجهة؛ تبقى القيمة الافتراضيّة "—".
             }
 
@@ -518,8 +519,9 @@ namespace CAL_QR.ViewModels
 
                 ShouldShowAlertPopup = false;
             }
-            catch
+            catch (System.Exception swallowEx2)
             {
+                CAL_QR.Services.AppLog.Error("MainViewModel.cs:521", swallowEx2);
                 // Suppress
             }
         }

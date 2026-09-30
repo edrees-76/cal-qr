@@ -125,7 +125,70 @@ namespace CAL_QR.ViewModels
             // معادلة القراءة المصحّحة تتبع التسمية نفسها (CF/CFavg) — للسبب ذاته.
             CalibrationResults.CollectionChanged += (_, _) => ApplyCorrectedReadingFormulaRule();
             NuclideSummaries.CollectionChanged += (_, _) => ApplyCorrectedReadingFormulaRule();
+
+            // تتبّع التغييرات غير المحفوظة: إضافة/حذف صفّ في أيّ جدول تغيير من المستخدم.
+            CalibrationResults.CollectionChanged += (_, _) => MarkDirty();
+            NuclideSummaries.CollectionChanged += (_, _) => MarkDirty();
+            UncertaintyComponents.CollectionChanged += (_, _) => MarkDirty();
+            FunctionalChecks.CollectionChanged += (_, _) => MarkDirty();
         }
+
+        #region تتبّع التغييرات غير المحفوظة
+
+        // خصائص لا تمثّل بيانات يدخلها المستخدم (حالة عرض/تحقّق/عناوين مشتقّة):
+        // تتغيّر عند محاولة الحفظ أو تبديل الوضع دون أيّ تحرير، فلا تُعدّ تغييراً.
+        private static readonly HashSet<string> NonDataProperties = new(StringComparer.Ordinal)
+        {
+            nameof(HasUnsavedChanges),
+            nameof(ValidationErrors),
+            nameof(HasValidationErrors),
+            nameof(ShowMissingFieldHints),
+            nameof(HasNoTemplateWarning),
+            nameof(NoTemplateWarningText),
+            nameof(FormTitle),
+            nameof(SaveButtonText),
+            nameof(IsStatusReport),
+            nameof(IsCalibrationCertificate),
+            nameof(CorrectionFactorColumnHeader),
+        };
+
+        private bool _dirtyTrackingArmed;
+        private bool _hasUnsavedChanges;
+
+        /// <summary>
+        /// true إذا عدّل المستخدم شيئاً بعد اكتمال التحميل. لا يُسلَّح قبل انتهاء
+        /// LoadForRecord/LoadForStatusReport/LoadForEdit، فالتعبئة الأوليّة لا تُحسب تغييراً.
+        /// تحرير خلايا الجداول (لا يطلق CollectionChanged) يُبلَّغ عبر MarkDirty من الواجهة.
+        /// </summary>
+        public bool HasUnsavedChanges
+        {
+            get => _hasUnsavedChanges;
+            private set => SetProperty(ref _hasUnsavedChanges, value);
+        }
+
+        /// <summary>يُسلِّح التتبّع ويصفّر العلَم: يُستدعى في نهاية كلّ تحميل ناجح.</summary>
+        private void ResetDirtyTracking()
+        {
+            _dirtyTrackingArmed = true;
+            HasUnsavedChanges = false;
+        }
+
+        /// <summary>يُعلِّم النموذج بأنّ المستخدم غيّر شيئاً (لا أثر قبل اكتمال التحميل).</summary>
+        public void MarkDirty()
+        {
+            if (_dirtyTrackingArmed) HasUnsavedChanges = true;
+        }
+
+        protected override void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+        {
+            base.OnPropertyChanged(propertyName);
+            if (_dirtyTrackingArmed && !string.IsNullOrEmpty(propertyName) && !NonDataProperties.Contains(propertyName))
+            {
+                _hasUnsavedChanges = true;
+            }
+        }
+
+        #endregion
 
         #region ١. بيانات الجهة والجهاز
 
@@ -890,6 +953,7 @@ namespace CAL_QR.ViewModels
                 LoadDefaultSigners();
 
                 _isLoaded = true;
+                ResetDirtyTracking();
                 CommandManager.InvalidateRequerySuggested();
             }
             catch (Exception ex)
@@ -928,6 +992,9 @@ namespace CAL_QR.ViewModels
             // "شهادة معايرة"، فأنتجت تحذيرات تطابق نويدات لا معنى لها في تقرير
             // بلا جدول نتائج أصلاً.
             RunTemplateConsistencyChecks();
+
+            // تعديلات الوضع أعلاه جزء من التحميل لا من عمل المستخدم.
+            if (_isLoaded) ResetDirtyTracking();
         }
 
         /// <summary>
@@ -991,6 +1058,7 @@ namespace CAL_QR.ViewModels
                 AuthorizedByDate = certificate.AuthorizedByDate;
 
                 _isLoaded = true;
+                ResetDirtyTracking();
                 OnPropertyChanged(nameof(FormTitle));
                 CommandManager.InvalidateRequerySuggested();
             }

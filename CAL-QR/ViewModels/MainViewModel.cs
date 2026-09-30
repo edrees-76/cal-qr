@@ -188,6 +188,45 @@ namespace CAL_QR.ViewModels
             set => SetProperty(ref _totalAlerts, value);
         }
 
+        private int _expiredAlertCount;
+        /// <summary>أجهزة منتهية الصلاحية (تشمل الأجهزة بلا سجلّ معايرة، كما في العدّ الحاليّ).</summary>
+        public int ExpiredAlertCount
+        {
+            get => _expiredAlertCount;
+            private set
+            {
+                if (SetProperty(ref _expiredAlertCount, value))
+                    OnPropertyChanged(nameof(AlertSummaryText));
+            }
+        }
+
+        private int _expiringAlertCount;
+        /// <summary>أجهزة تنتهي صلاحيتها خلال مهلة التنبيه ولم تنتهِ بعد.</summary>
+        public int ExpiringAlertCount
+        {
+            get => _expiringAlertCount;
+            private set
+            {
+                if (SetProperty(ref _expiringAlertCount, value))
+                    OnPropertyChanged(nameof(AlertSummaryText));
+            }
+        }
+
+        /// <summary>نصّ نافذة التنبيه: يفصل المنتهي عن القريب من الانتهاء.</summary>
+        public string AlertSummaryText => BuildAlertSummaryText(_expiredAlertCount, _expiringAlertCount);
+
+        /// <summary>
+        /// دالّة نقيّة: «N جهاز منتهي الصلاحية، M جهاز يقترب انتهاؤه» مع حذف الجزء الذي عدّه صفر.
+        /// نصّ فارغ حين لا توجد تنبيهات.
+        /// </summary>
+        public static string BuildAlertSummaryText(int expiredCount, int expiringCount)
+        {
+            var parts = new System.Collections.Generic.List<string>(2);
+            if (expiredCount > 0) parts.Add($"{expiredCount} جهاز منتهي الصلاحية");
+            if (expiringCount > 0) parts.Add($"{expiringCount} جهاز يقترب انتهاؤه");
+            return string.Join("، ", parts);
+        }
+
         public bool HasAlerts
         {
             get => _hasAlerts;
@@ -428,13 +467,16 @@ namespace CAL_QR.ViewModels
                     }
                 }
 
+                ExpiredAlertCount = expiredCount;
+                ExpiringAlertCount = expiringCount;
                 TotalAlerts = expiringCount + expiredCount;
                 HasAlerts = TotalAlerts > 0;
                 ShouldShowAlertPopup = unacknowledgedExpiredCount > 0;
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback
+                // لا مسجّل (ILogger) في المشروع: يُسجَّل السبب في مخرجات التشخيص ويبقى التدفّق كما هو.
+                System.Diagnostics.Debug.WriteLine($"[MainViewModel] CheckAlertsAsync failed: {ex.Message}");
             }
         }
 

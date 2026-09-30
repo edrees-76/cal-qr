@@ -69,6 +69,8 @@ namespace CAL_QR.ViewModels
         private int _currentPage = 1;
         private int _totalPages = 1;
         private int _totalCount = 0;
+        private int _loadsInFlight;
+        private bool _hasLoadedSuccessfully;
 
         public DevicesViewModel(
             IDeviceRepository deviceRepository,
@@ -153,7 +155,13 @@ namespace CAL_QR.ViewModels
         public ObservableCollection<DeviceDisplayItem> Devices
         {
             get => _devices;
-            set => SetProperty(ref _devices, value);
+            set
+            {
+                if (SetProperty(ref _devices, value))
+                {
+                    OnPropertyChanged(nameof(HasNoResults));
+                }
+            }
         }
 
         public ObservableCollection<Owner> OwnersFilter
@@ -183,50 +191,88 @@ namespace CAL_QR.ViewModels
         public Owner? SelectedOwnerFilter
         {
             get => _selectedOwnerFilter;
-            set => SetProperty(ref _selectedOwnerFilter, value);
+            set => SetFilterProperty(ref _selectedOwnerFilter, value);
         }
 
         public DeviceType? SelectedDeviceTypeFilter
         {
             get => _selectedDeviceTypeFilter;
-            set => SetProperty(ref _selectedDeviceTypeFilter, value);
+            set => SetFilterProperty(ref _selectedDeviceTypeFilter, value);
         }
 
         public string FilterModel
         {
             get => _filterModel;
-            set => SetProperty(ref _filterModel, value);
+            set => SetFilterProperty(ref _filterModel, value);
         }
 
         public string FilterSerialNumber
         {
             get => _filterSerialNumber;
-            set => SetProperty(ref _filterSerialNumber, value);
+            set => SetFilterProperty(ref _filterSerialNumber, value);
         }
 
         public DateTime? FilterStartDate
         {
             get => _filterStartDate;
-            set => SetProperty(ref _filterStartDate, value);
+            set => SetFilterProperty(ref _filterStartDate, value);
         }
 
         public DateTime? FilterEndDate
         {
             get => _filterEndDate;
-            set => SetProperty(ref _filterEndDate, value);
+            set => SetFilterProperty(ref _filterEndDate, value);
         }
 
         public string FilterResult
         {
             get => _filterResult;
-            set => SetProperty(ref _filterResult, value);
+            set => SetFilterProperty(ref _filterResult, value);
         }
 
         public string FilterStatus
         {
             get => _filterStatus;
-            set => SetProperty(ref _filterStatus, value);
+            set => SetFilterProperty(ref _filterStatus, value);
         }
+
+        /// <summary>
+        /// عدد الفلاتر المتقدّمة غير الافتراضيّة (المالك، النوع، الموديل، الرقم التسلسليّ،
+        /// من/إلى، النتيجة، الحالة). لا يشمل نصّ البحث ولا سنة المعايرة: لكلٍّ منهما
+        /// عنصره الظاهر دائماً في الواجهة.
+        /// </summary>
+        public int ActiveFilterCount =>
+            (SelectedOwnerFilter != null ? 1 : 0) +
+            (SelectedDeviceTypeFilter != null ? 1 : 0) +
+            (!string.IsNullOrWhiteSpace(FilterModel) ? 1 : 0) +
+            (!string.IsNullOrWhiteSpace(FilterSerialNumber) ? 1 : 0) +
+            (FilterStartDate.HasValue ? 1 : 0) +
+            (FilterEndDate.HasValue ? 1 : 0) +
+            (!IsAllChoice(FilterResult) ? 1 : 0) +
+            (!IsAllChoice(FilterStatus) ? 1 : 0);
+
+        public bool HasActiveFilters => ActiveFilterCount > 0;
+
+        private static bool IsAllChoice(string? value) =>
+            string.IsNullOrWhiteSpace(value) || value == "الكل";
+
+        private void SetFilterProperty<T>(ref T field, T value, [System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+        {
+            if (SetProperty(ref field, value, propertyName))
+            {
+                OnPropertyChanged(nameof(ActiveFilterCount));
+                OnPropertyChanged(nameof(HasActiveFilters));
+            }
+        }
+
+        /// <summary>true أثناء أيّ تحميل جارٍ للقائمة.</summary>
+        public bool IsLoading => _loadsInFlight > 0;
+
+        /// <summary>
+        /// true حين اكتمل تحميل ناجح واحد على الأقلّ والقائمة فارغة وليس هناك تحميل جارٍ؛
+        /// لا يظهر قبل أوّل تحميل ولا بعد فشله.
+        /// </summary>
+        public bool HasNoResults => _hasLoadedSuccessfully && !IsLoading && Devices.Count == 0;
 
         public ObservableCollection<string> AvailableYears => _availableYears;
 
@@ -299,6 +345,9 @@ namespace CAL_QR.ViewModels
 
         public async Task LoadDataAsync()
         {
+            _loadsInFlight++;
+            OnPropertyChanged(nameof(IsLoading));
+            OnPropertyChanged(nameof(HasNoResults));
             try
             {
                 if (OwnersFilter.Count == 0)
@@ -354,64 +403,59 @@ namespace CAL_QR.ViewModels
                         query = query.Where(r => r.CalibrationDate.Year == _selectedYear.Value);
                     }
 
-                    if (IsAdvancedSearchVisible)
+                    // الفلاتر المتقدّمة تُطبَّق بقيمها لا بحالة اللوحة: إغلاق اللوحة لا يُلغيها.
+                    if (SelectedOwnerFilter != null)
                     {
-                        if (SelectedOwnerFilter != null)
-                        {
-                            query = query.Where(r => r.Device!.OwnerId == SelectedOwnerFilter.Id);
-                        }
+                        query = query.Where(r => r.Device!.OwnerId == SelectedOwnerFilter.Id);
+                    }
 
-                        if (SelectedDeviceTypeFilter != null)
-                        {
-                            query = query.Where(r => r.Device!.DeviceTypeId == SelectedDeviceTypeFilter.Id);
-                        }
+                    if (SelectedDeviceTypeFilter != null)
+                    {
+                        query = query.Where(r => r.Device!.DeviceTypeId == SelectedDeviceTypeFilter.Id);
+                    }
 
-                        if (!string.IsNullOrWhiteSpace(FilterModel))
-                        {
-                            var modelFilter = FilterModel.ToLower();
-                            query = query.Where(r => r.Device!.Model.ToLower().Contains(modelFilter));
-                        }
+                    if (!string.IsNullOrWhiteSpace(FilterModel))
+                    {
+                        var modelFilter = FilterModel.ToLower();
+                        query = query.Where(r => r.Device!.Model.ToLower().Contains(modelFilter));
+                    }
 
-                        if (!string.IsNullOrWhiteSpace(FilterSerialNumber))
+                    if (!string.IsNullOrWhiteSpace(FilterSerialNumber))
+                    {
+                        var snFilter = FilterSerialNumber.ToLower();
+                        query = query.Where(r => r.Device!.SerialNumber.ToLower().Contains(snFilter));
+                    }
+
+                    if (!IsAllChoice(FilterResult))
+                    {
+                        string mappedResult = FilterResult == "ناجح" ? "Passed" : FilterResult == "راسب" ? "Failed" : FilterResult == "مشروط" ? "Conditional" : "غير معاير";
+                        query = query.Where(r => r.Result == mappedResult);
+                    }
+
+                    if (!IsAllChoice(FilterStatus))
+                    {
+                        if (FilterStatus == "منتهية")
                         {
-                            var snFilter = FilterSerialNumber.ToLower();
-                            query = query.Where(r => r.Device!.SerialNumber.ToLower().Contains(snFilter));
+                            query = query.Where(r => r.ExpiryDate < today);
+                        }
+                        else if (FilterStatus == "قريبة الانتهاء")
+                        {
+                            query = query.Where(r => r.ExpiryDate >= today && r.ExpiryDate <= alertLimit);
+                        }
+                        else if (FilterStatus == "سارية")
+                        {
+                            query = query.Where(r => r.ExpiryDate > alertLimit);
                         }
                     }
 
-                    if (IsAdvancedSearchVisible)
+                    if (FilterStartDate.HasValue)
                     {
-                        if (FilterResult != "الكل")
-                        {
-                            string mappedResult = FilterResult == "ناجح" ? "Passed" : FilterResult == "راسب" ? "Failed" : FilterResult == "مشروط" ? "Conditional" : "غير معاير";
-                            query = query.Where(r => r.Result == mappedResult);
-                        }
+                        query = query.Where(r => r.CalibrationDate >= FilterStartDate.Value);
+                    }
 
-                        if (FilterStatus != "الكل")
-                        {
-                            if (FilterStatus == "منتهية")
-                            {
-                                query = query.Where(r => r.ExpiryDate < today);
-                            }
-                            else if (FilterStatus == "قريبة الانتهاء")
-                            {
-                                query = query.Where(r => r.ExpiryDate >= today && r.ExpiryDate <= alertLimit);
-                            }
-                            else if (FilterStatus == "سارية")
-                            {
-                                query = query.Where(r => r.ExpiryDate > alertLimit);
-                            }
-                        }
-
-                        if (FilterStartDate.HasValue)
-                        {
-                            query = query.Where(r => r.CalibrationDate >= FilterStartDate.Value);
-                        }
-
-                        if (FilterEndDate.HasValue)
-                        {
-                            query = query.Where(r => r.CalibrationDate <= FilterEndDate.Value);
-                        }
+                    if (FilterEndDate.HasValue)
+                    {
+                        query = query.Where(r => r.CalibrationDate <= FilterEndDate.Value);
                     }
 
                     TotalCount = await query.CountAsync();
@@ -511,11 +555,18 @@ namespace CAL_QR.ViewModels
 
                     _isAllSelected = false;
                     OnPropertyChanged(nameof(IsAllSelected));
+                    _hasLoadedSuccessfully = true;
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"خطأ في تحميل الشهادات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                _loadsInFlight--;
+                OnPropertyChanged(nameof(IsLoading));
+                OnPropertyChanged(nameof(HasNoResults));
             }
         }
 

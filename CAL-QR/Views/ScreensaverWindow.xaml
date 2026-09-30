@@ -53,8 +53,8 @@
                     </Ellipse.Effect>
                 </Ellipse>
                 
-                <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png"
-                       Width="175" Height="175"
+                <Image Source="/Assets/Logo/cal-qr-logo-flat.png"
+                       Width="150" Height="150"
                        RenderOptions.BitmapScalingMode="HighQuality"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />

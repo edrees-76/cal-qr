@@ -39,7 +39,7 @@ namespace CAL_QR.Services
         {
             try
             {
-                var uri = new Uri("pack://application:,,,/Assets/Logo/cal-qr-3d-logo-new.png");
+                var uri = new Uri("pack://application:,,,/Assets/Logo/cal-qr-mark.png");
                 var streamResourceInfo = System.Windows.Application.GetResourceStream(uri);
                 if (streamResourceInfo != null)
                 {

@@ -307,5 +307,78 @@ namespace CAL_QR.Tests
             await vm.LoadDataAsync();
             Assert.False(vm.HasNoResults);
         }
+
+        [Fact]
+        public void SelectedCount_TracksItemSelection_AndRaisesNotifications()
+        {
+            using var vm = BuildVm(NewInMemoryOptions(), null);
+            vm.Devices = new System.Collections.ObjectModel.ObservableCollection<DeviceDisplayItem>
+            {
+                new DeviceDisplayItem { Id = 1 },
+                new DeviceDisplayItem { Id = 2 },
+                new DeviceDisplayItem { Id = 3 },
+            };
+            Assert.Equal(0, vm.SelectedCount);
+            Assert.False(vm.HasSelection);
+
+            var raised = new System.Collections.Generic.List<string?>();
+            vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+            vm.Devices[0].IsSelected = true;
+            vm.Devices[2].IsSelected = true;
+            Assert.Equal(2, vm.SelectedCount);
+            Assert.True(vm.HasSelection);
+            Assert.Contains(nameof(DevicesViewModel.SelectedCount), raised);
+            Assert.Contains(nameof(DevicesViewModel.SelectionSummaryText), raised);
+
+            vm.Devices[0].IsSelected = false;
+            Assert.Equal(1, vm.SelectedCount);
+        }
+
+        [Fact]
+        public void IsAllSelected_SelectsEverything_AndReplacingListResetsSelection()
+        {
+            using var vm = BuildVm(NewInMemoryOptions(), null);
+            vm.Devices = new System.Collections.ObjectModel.ObservableCollection<DeviceDisplayItem>
+            {
+                new DeviceDisplayItem { Id = 1 },
+                new DeviceDisplayItem { Id = 2 },
+            };
+
+            vm.IsAllSelected = true;
+            Assert.Equal(2, vm.SelectedCount);
+
+            vm.Devices = new System.Collections.ObjectModel.ObservableCollection<DeviceDisplayItem>
+            {
+                new DeviceDisplayItem { Id = 3 },
+            };
+            Assert.Equal(0, vm.SelectedCount);
+            Assert.False(vm.HasSelection);
+        }
+
+        [Fact]
+        public void SelectedCount_FollowsItemsAddedToTheCurrentList()
+        {
+            using var vm = BuildVm(NewInMemoryOptions(), null);
+            vm.Devices = new System.Collections.ObjectModel.ObservableCollection<DeviceDisplayItem>();
+
+            var added = new DeviceDisplayItem { Id = 9 };
+            vm.Devices.Add(added);
+            added.IsSelected = true;
+            Assert.Equal(1, vm.SelectedCount);
+
+            vm.Devices.Remove(added);
+            Assert.Equal(0, vm.SelectedCount);
+        }
+
+        [Theory]
+        [InlineData(0, 1, "")]
+        [InlineData(0, 5, "")]
+        [InlineData(3, 1, "المحدّد: 3")]
+        [InlineData(2, 4, "المحدّد: 2 (في هذه الصفحة فقط)")]
+        public void BuildSelectionSummary_AddsPageNoteOnlyWhenSeveralPages(int selected, int pages, string expected)
+        {
+            Assert.Equal(expected, DevicesViewModel.BuildSelectionSummary(selected, pages));
+        }
     }
 }

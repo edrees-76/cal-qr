@@ -97,7 +97,7 @@
                              materialDesign:HintAssist.Hint="مثال: admin"
                              VerticalContentAlignment="Center" />
 
-                    <TextBlock Text="كلمة المرور * (4 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="كلمة المرور * (8 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
                     <Grid Margin="0,0,0,10">
                         <PasswordBox x:Name="TxtWizardPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"

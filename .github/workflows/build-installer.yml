@@ -3,9 +3,13 @@ name: Build Installer
 # يبني مثبِّت Windows (CAL-QRSetup_vX.exe) على عدّاء ويندوز نظيف بنفس deploy/build-installer.ps1 المستخدم محلياً،
 # ثم يجري اختبار دخان حقيقياً: تثبيت صامت تحت Program Files، تشغيل البرنامج والتحقق أنّ قاعدته تُنشأ تحت
 # ProgramData\CAL-QR (لا بجوار الملف التنفيذي للقراءة فقط)، ثم إلغاء التثبيت والتحقق من بقاء البيانات.
-# يرفع المثبِّت وبصمة SHA256 كـ artifact. لا توقيع كود. لا نشر تلقائي على GitHub (قرار إدريس: التجربة اليدوية أولاً).
+# يرفع المثبِّت وبصمة SHA256 كـ artifact. لا توقيع كود.
+# النشر على GitHub Releases يحدث فقط عند دفع وسم إصدار (vX.Y.Z) بعد نجاح اختبار الدخان، بطلب إدريس الصريح؛ لا نشر من الفروع.
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
     paths:
@@ -25,6 +29,8 @@ jobs:
     name: Build Installer
     runs-on: windows-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Code
@@ -126,3 +132,18 @@ jobs:
             ${{ steps.hash.outputs.path }}.sha256
           if-no-files-found: error
           retention-days: 30
+
+      # النشر: فقط عند وسم vX.Y.Z، ويجب أن يطابق <Version> في CAL-QR.csproj. gh مثبَّت على العدّاء (بلا إجراء طرف ثالث).
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $csproj = [xml](Get-Content -Path "CAL-QR\CAL-QR.csproj")
+          $ver = ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1)
+          if ("v$ver" -ne $tag) { throw "Tag $tag does not match csproj Version $ver." }
+          $exe = "${{ steps.hash.outputs.path }}"
+          gh release create $tag $exe "$exe.sha256" --title "CAL-QR $tag" --notes "Windows installer for CAL-QR $tag. Verify the download against the attached .sha256 file. Not code-signed: SmartScreen may show a warning."
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed (exit $LASTEXITCODE)." }

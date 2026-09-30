@@ -139,7 +139,7 @@ namespace CAL_QR.Tests
                 // Act
                 // Since db_path.txt exists and points to an existing file (migrated.db),
                 // SplashWindow.DetermineFirstRun should return false (not first run), without even querying the DB.
-                bool result = CAL_QR.Views.SplashWindow.DetermineFirstRun(tempDir, factory);
+                bool result = CAL_QR.Views.SplashWindow.DetermineFirstRun(tempDir, factory, System.IO.Path.Combine(tempDir, "data"));
 
                 // Assert
                 Assert.False(result);
@@ -170,7 +170,7 @@ namespace CAL_QR.Tests
 
                 // Act
                 // Since neither db_path.txt nor the default DB (cal-qr-simulation.db) exists, it should return true (first run)
-                bool result = CAL_QR.Views.SplashWindow.DetermineFirstRun(tempDir, factory);
+                bool result = CAL_QR.Views.SplashWindow.DetermineFirstRun(tempDir, factory, System.IO.Path.Combine(tempDir, "data"));
 
                 // Assert
                 Assert.True(result);

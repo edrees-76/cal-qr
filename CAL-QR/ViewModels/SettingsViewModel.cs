@@ -280,7 +280,7 @@ namespace CAL_QR.ViewModels
                 }
                 else
                 {
-                    AttachmentsPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments"));
+                    AttachmentsPath = CAL_QR.Helpers.AppPaths.DefaultAttachmentsFolder();
                 }
 
                 var qrPathSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "QrOutputPath");
@@ -603,7 +603,9 @@ namespace CAL_QR.ViewModels
                     }
 
                     // Save local path file db_path.txt
-                    string configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db_path.txt");
+                    // المؤشّر يُكتب في مجلّد البيانات لا بجوار البرنامج (Program Files للقراءة فقط).
+                    string configFilePath = CAL_QR.Helpers.AppPaths.PointerFileForWrite();
+                    CAL_QR.Helpers.AppPaths.EnsureDirectory(Path.GetDirectoryName(configFilePath));
                     await File.WriteAllTextAsync(configFilePath, DatabasePath);
 
                     // Write DatabasePath to the AppSettings table inside the new database

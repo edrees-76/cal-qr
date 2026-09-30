@@ -71,11 +71,11 @@ namespace CAL_QR.Views
             });
         }
 
-        public static bool DetermineFirstRun(string baseDirectory, IDbContextFactory<CalQrDbContext> contextFactory)
+        public static bool DetermineFirstRun(string baseDirectory, IDbContextFactory<CalQrDbContext> contextFactory, string? dataRoot = null)
         {
-            string configPathFile = System.IO.Path.Combine(baseDirectory, "db_path.txt");
+            string? configPathFile = CAL_QR.Helpers.AppPaths.FindPointerFile(baseDirectory, dataRoot);
             
-            if (System.IO.File.Exists(configPathFile))
+            if (configPathFile != null)
             {
                 try
                 {
@@ -94,7 +94,7 @@ namespace CAL_QR.Views
             }
             else
             {
-                string defaultDbPath = System.IO.Path.Combine(baseDirectory, "cal-qr-simulation.db");
+                string defaultDbPath = CAL_QR.Helpers.AppPaths.DefaultDbPath(baseDirectory, dataRoot);
                 if (!System.IO.File.Exists(defaultDbPath))
                 {
                     // Neither db_path.txt nor the default database exists. This is a fresh install.

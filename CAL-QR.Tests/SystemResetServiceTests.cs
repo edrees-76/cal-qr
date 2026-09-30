@@ -264,7 +264,7 @@ namespace CAL_QR.Tests
 
                 var (qr, attachments) = await SystemResetService.ResolveCleanupFoldersAsync(factory);
                 Assert.Equal(@"X:\custom\poster", qr);
-                Assert.Equal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments"), attachments);
+                Assert.Equal(CAL_QR.Helpers.AppPaths.DefaultAttachmentsFolder(), attachments);
                 Assert.Equal(0, await SystemResetService.CountCertificatesAsync(factory));
             }
             finally

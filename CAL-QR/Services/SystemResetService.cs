@@ -116,7 +116,7 @@ namespace CAL_QR.Services
             int attachmentFoldersDeleted = 0;
 
             string qrFolder = CAL_QR.Helpers.QrPaths.DefaultFolder();
-            string attachmentsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            string attachmentsFolder = CAL_QR.Helpers.AppPaths.DefaultAttachmentsFolder();
 
             try
             {
@@ -254,7 +254,7 @@ namespace CAL_QR.Services
             IDbContextFactory<CalQrDbContext> contextFactory)
         {
             string qrFolder = CAL_QR.Helpers.QrPaths.DefaultFolder();
-            string attachmentsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
+            string attachmentsFolder = CAL_QR.Helpers.AppPaths.DefaultAttachmentsFolder();
 
             using var readContext = await contextFactory.CreateDbContextAsync();
             var qrSetting = await readContext.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "QrOutputPath");
@@ -338,7 +338,8 @@ namespace CAL_QR.Services
 
         private static List<string> BuildGuardPaths(CalQrDbContext context, IEnumerable<string>? extraProtectedPaths)
         {
-            var paths = new List<string> { AppDomain.CurrentDomain.BaseDirectory };
+            // مجلّد البرنامج ومجلّد البيانات (فيه القاعدة) محميّان من التنظيف.
+            var paths = new List<string> { AppDomain.CurrentDomain.BaseDirectory, CAL_QR.Helpers.AppPaths.DataRoot };
 
             foreach (var special in new[]
             {

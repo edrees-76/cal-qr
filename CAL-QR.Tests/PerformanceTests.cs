@@ -15,7 +15,7 @@ using CAL_QR.ViewModels;
 
 namespace CAL_QR.Tests
 {
-    public class PerformanceTests
+    public class PerformanceTests : IDisposable
     {
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>
         {
@@ -27,12 +27,20 @@ namespace CAL_QR.Tests
             public CalQrDbContext CreateDbContext() => new CalQrDbContext(_options);
         }
 
+        private readonly System.Collections.Generic.List<string> _testDirs = new();
+
+        public void Dispose()
+        {
+            foreach (var dir in _testDirs) TestDirectory.Delete(dir);
+        }
+
         [Fact]
         public async Task LoadDataAsync_PerformanceTest_WithLargeScaleData()
         {
             // 1. Arrange - Setup database file in a unique temp directory
             string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PerfTest_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(testDir);
+            _testDirs.Add(testDir);
             string dbPath = Path.Combine(testDir, "perf-test.db");
 
             // 2. Generate 500 devices and 2000 calibration records
@@ -85,8 +93,6 @@ namespace CAL_QR.Tests
             // 4. Assert - Must load within 2 seconds (2000 milliseconds)
             Assert.True(elapsedMs < 2000, $"LoadDataAsync took too long: {elapsedMs} ms (expected < 2000 ms).");
 
-            // Cleanup
-            try { Directory.Delete(testDir, true); } catch {}
         }
     }
 }

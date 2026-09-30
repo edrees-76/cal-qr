@@ -114,7 +114,11 @@ namespace CAL_QR.Services
                     attachmentsFolder = attSetting.Value;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // تعذّرت قراءة مسارات الإعدادات: تُستخدم المجلدات الافتراضية للتنظيف.
+                Console.WriteLine($"[Warning] Failed to read QR/Attachments paths from settings; using default folders: {ex.Message}");
+            }
 
             // 4.1 تنظيف محتويات مجلد QR بالكامل (مسح كل الملفات دون حذف المجلد الرئيسي نفسه)
             if (Directory.Exists(qrFolder))
@@ -172,7 +176,10 @@ namespace CAL_QR.Services
                         {
                             FileSystemRetryHelper.TryDeleteFile(rootFile);
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[Warning] Failed to delete attachments root file {rootFile}: {ex.Message}");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -195,7 +202,11 @@ namespace CAL_QR.Services
                         userId: null
                     );
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // فشل تسجيل التصفير في سجل التدقيق لا يُبطل التصفير المكتمل.
+                    Console.WriteLine($"[Warning] Failed to write factory-reset audit log entry: {ex.Message}");
+                }
             }
 
             return (

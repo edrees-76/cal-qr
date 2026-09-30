@@ -1309,7 +1309,11 @@ namespace CAL_QR.ViewModels
                         _certificateId.ToString(),
                         $"إلغاء الشهادة رقم {certNumber} — السبب: {dialog.RevocationReason} — المُلغي: {dialog.RevokedByName}");
                 }
-                catch { /* فشل سجل العمليات لا يُبطل الإلغاء المكتمل */ }
+                catch (Exception ex)
+                {
+                    // فشل سجل العمليات لا يُبطل الإلغاء المكتمل، لكن يُسجَّل الخطأ.
+                    System.Diagnostics.Debug.WriteLine($"[CertificateForm] Audit log failed after revoking certificate {_certificateId}: {ex.Message}");
+                }
 
                 MessageBox.Show(
                     $"تم إلغاء الشهادة رقم {certNumber} بنجاح.\n" +

@@ -126,7 +126,11 @@ namespace CAL_QR
                         dbPath = savedPath;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // تعذّرت قراءة db_path.txt: يُبقى المسار الافتراضي (سلوك احتياطي) لكن يُسجَّل الخطأ.
+                    System.Diagnostics.Debug.WriteLine($"[App] Failed to read db_path.txt ({configPathFile}); falling back to default database path: {ex.Message}");
+                }
             }
 
             services.AddDbContextFactory<CalQrDbContext>(options =>

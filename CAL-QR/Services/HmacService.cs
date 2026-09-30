@@ -119,7 +119,7 @@ namespace CAL_QR.Services
 
             // Determine creation time for cutover check
             DateTime recordTime = recordCreatedAt ?? 
-                                 (DateTime.TryParse(calDate, out var parsedCalDate) ? parsedCalDate : DateTime.UtcNow);
+                                 (DateTime.TryParse(calDate, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedCalDate) ? parsedCalDate : DateTime.UtcNow);
 
             bool isLegacy = recordTime < CutoverDate;
 

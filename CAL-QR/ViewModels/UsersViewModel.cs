@@ -194,8 +194,29 @@ namespace CAL_QR.ViewModels
             var dialog = _userFormDialogFactory();
             if (dialog.ShowDialog() == true)
             {
+                if (dialog.DataContext is UserFormViewModel created)
+                {
+                    await LogUserChangeAsync("إضافة مستخدم", null, created.Username,
+                        $"إضافة المستخدم {created.Username} بدور {created.Role}.");
+                }
                 await LoadUsersAsync();
                 await LoadAuditLogsAsync();
+            }
+        }
+
+        private async Task LogUserChangeAsync(string action, int? entityId, string username, string details)
+        {
+            try
+            {
+                await _auditLogRepository.LogAsync(
+                    action, "User", entityId?.ToString() ?? string.Empty, details,
+                    _currentUserService.CurrentUser?.Id,
+                    _currentUserService.CurrentUser?.Username);
+            }
+            catch (Exception ex)
+            {
+                // فشل التدقيق لا يُبطل عمليّة نجحت؛ يُسجَّل في ملفّ الأخطاء.
+                CAL_QR.Services.AppLog.Error($"Audit '{action}' for user {username}", ex);
             }
         }
 
@@ -217,8 +238,16 @@ namespace CAL_QR.ViewModels
                 vm.LoadForEdit(user);
             }
 
+            var roleBefore = user.Role;
             if (dialog.ShowDialog() == true)
             {
+                if (dialog.DataContext is UserFormViewModel edited)
+                {
+                    string roleNote = edited.Role != roleBefore ? $" (الدور: {roleBefore} → {edited.Role})" : string.Empty;
+                    string passwordNote = !string.IsNullOrEmpty(edited.Password) ? " مع تغيير كلمة المرور" : string.Empty;
+                    await LogUserChangeAsync("تعديل مستخدم", user.Id, edited.Username,
+                        $"تعديل بيانات المستخدم {edited.Username}{roleNote}{passwordNote}.");
+                }
                 await LoadUsersAsync();
                 await LoadAuditLogsAsync();
             }

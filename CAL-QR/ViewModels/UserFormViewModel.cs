@@ -184,6 +184,17 @@ namespace CAL_QR.ViewModels
             // Username validation
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(FullName)) return;
 
+            // كلمة المرور إلزاميّة عند الإنشاء، واختياريّة عند التعديل (فارغة = بلا تغيير).
+            if (!IsEditMode || !string.IsNullOrEmpty(Password))
+            {
+                var passwordError = UserPasswordRules.Validate(Password);
+                if (passwordError != null)
+                {
+                    ShowMessage(passwordError, "تنبيه");
+                    return;
+                }
+            }
+
             _isSaving = true;
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -265,6 +276,9 @@ namespace CAL_QR.ViewModels
                         PasswordHash = !string.IsNullOrEmpty(Password) ? BCrypt.Net.BCrypt.HashPassword(Password) : string.Empty
                     };
                     await _userRepository.UpdateAsync(user);
+                    // مدير أعاد ضبط كلمة المرور: يُرفع قفل الدخول المتراكم عن الحساب.
+                    if (!string.IsNullOrEmpty(Password))
+                        await _userRepository.ResetLoginFailuresAsync(user.Id);
                 }
                 else
                 {

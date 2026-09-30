@@ -168,8 +168,9 @@ namespace CAL_QR.ViewModels
                 HasPassword = !string.IsNullOrWhiteSpace(hash?.Value);
                 PasswordHint = hint?.Value ?? string.Empty;
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("HelpViewModel.cs:171", swallowEx1);
                 // تعذّرت القراءة ⇒ يُعامَل كأن لا كلمة سرّ: القسم مقفل بلا محتوى،
                 // ورسالة الإرشاد ظاهرة. لا فتح صامت عند الفشل.
                 HasPassword = false;
@@ -203,8 +204,9 @@ namespace CAL_QR.ViewModels
                 storedHash = context.AppSettings.AsNoTracking()
                     .FirstOrDefault(s => s.Key == PasswordHashKey)?.Value;
             }
-            catch
+            catch (System.Exception swallowEx2)
             {
+                CAL_QR.Services.AppLog.Error("HelpViewModel.cs:206", swallowEx2);
                 UnlockError = "تعذّر قراءة الإعدادات. حاول مرة أخرى.";
                 return;
             }
@@ -221,8 +223,9 @@ namespace CAL_QR.ViewModels
             {
                 matches = BCrypt.Net.BCrypt.Verify(entered, storedHash);
             }
-            catch
+            catch (System.Exception swallowEx3)
             {
+                CAL_QR.Services.AppLog.Error("HelpViewModel.cs:224", swallowEx3);
                 // تجزئة تالفة أو بصيغة غير معروفة ⇒ فشل صريح، لا فتح.
                 matches = false;
             }

@@ -19,8 +19,9 @@ namespace CAL_QR.Services
             {
                 return PrinterSettings.InstalledPrinters.Cast<string>();
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("PrintService.cs:22", swallowEx1);
                 return new[] { "Microsoft Print to PDF" };
             }
         }
@@ -36,8 +37,9 @@ namespace CAL_QR.Services
                 {
                     printDialog.PrintQueue = new System.Printing.LocalPrintServer().GetPrintQueue(job.PrinterName);
                 }
-                catch
+                catch (System.Exception swallowEx2)
                 {
+                    CAL_QR.Services.AppLog.Error("PrintService.cs:39", swallowEx2);
                     // Fallback
                 }
             }
@@ -64,8 +66,9 @@ namespace CAL_QR.Services
                 {
                     printDialog.PrintQueue = new System.Printing.LocalPrintServer().GetPrintQueue(firstJob.PrinterName);
                 }
-                catch
+                catch (System.Exception swallowEx3)
                 {
+                    CAL_QR.Services.AppLog.Error("PrintService.cs:67", swallowEx3);
                     // Fallback
                 }
             }

@@ -51,8 +51,9 @@ namespace CAL_QR.Services
                     _autoLockMinutes = minutes;
                 }
             }
-            catch
+            catch (System.Exception swallowEx1)
             {
+                CAL_QR.Services.AppLog.Error("IdleLockService.cs:54", swallowEx1);
                 // فشل القراءة يترك القيمة السابقة كما هي.
             }
         }

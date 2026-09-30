@@ -297,7 +297,7 @@ namespace CAL_QR.Data
                 context.ChangeTracker.Clear();
 
                 string text =
-                    $"فشلت الترقية التصحيحية لأنواع الأجهزة في {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.\n" +
+                    $"فشلت الترقية التصحيحية لأنواع الأجهزة في {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture)} UTC.\n" +
                     $"السبب: {ex.GetType().Name} — {ex.Message}\n" +
                     "المنظومة تعمل، لكن أعلام الأقسام أو قوالب بعض الأنواع قد تبقى ناقصة. " +
                     "ستُعاد المحاولة تلقائياً عند الإقلاع التالي بعد إصلاح السبب.";
@@ -335,7 +335,7 @@ namespace CAL_QR.Data
                 context.ChangeTracker.Clear();
 
                 string text =
-                    $"فشل بذر أنواع الأجهزة وقوالبها في {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.\n" +
+                    $"فشل بذر أنواع الأجهزة وقوالبها في {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture)} UTC.\n" +
                     $"السبب: {ex.GetType().Name} — {ex.Message}\n" +
                     "المنظومة تعمل، لكن القيم الافتراضية لأنواع الأجهزة غير مزروعة. " +
                     "ستُعاد المحاولة تلقائياً عند الإقلاع التالي بعد إصلاح السبب.";

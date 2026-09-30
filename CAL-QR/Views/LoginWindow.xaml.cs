@@ -9,6 +9,7 @@ using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Services;
 using CAL_QR.Repositories;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Views
 {
@@ -21,7 +22,12 @@ namespace CAL_QR.Views
         private readonly IAuditLogRepository _auditLogRepository;
         private int _failedAttempts = 0;
         private DispatcherTimer? _lockoutTimer;
-        private int _lockoutSecondsRemaining = 0;
+        private DateTime _lockoutEndsUtc;
+
+        // قفل الحساب المحفوظ: عدّاد تنازليّ حيّ يظهر بمجرّد اختيار الحساب المقفول (لا بعد محاولة دخول).
+        private DispatcherTimer? _accountLockTimer;
+        private DateTime _accountLockEndsUtc;
+        private bool _showingAccountLock;
 
         public LoginWindow(IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IUserRepository userRepository, IRecoveryAnswerService recoveryAnswerService, IAuditLogRepository auditLogRepository)
         {
@@ -131,106 +137,198 @@ namespace CAL_QR.Views
 
             bool loginSuccess = false;
             Models.User? targetUser = null;
+            TimeSpan? persistedLock = null;
 
             try
             {
-                // Primary path: login using Username and Password with BCrypt
                 if (!string.IsNullOrEmpty(username))
                 {
                     var user = await _userRepository.GetByUsernameAsync(username);
                     if (user != null)
                     {
-                        if (BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+                        // القفل المحفوظ يُفحص قبل التحقّق من كلمة المرور: حتى الصحيحة تُرفض أثناءه.
+                        persistedLock = LoginLockoutRules.RemainingLock(user.LockedUntil, DateTime.UtcNow);
+                        if (persistedLock == null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
                         {
                             if (user.IsActive)
                             {
                                 targetUser = user;
                                 loginSuccess = true;
+                                await _userRepository.ResetLoginFailuresAsync(user.Id);
                             }
                             else
                             {
                                 ShowError("هذا الحساب موقوف حالياً. يرجى مراجعة مدير النظام.");
-                                BtnLogin.IsEnabled = true;
-                                TxtUsername.IsEnabled = true;
-                                TxtPassword.IsEnabled = true;
-                                TxtPasswordReveal.IsEnabled = true;
-                                BtnRevealPassword.IsEnabled = true;
+                                SetInputsEnabled(true);
                                 return;
+                            }
+                        }
+                        else if (persistedLock == null)
+                        {
+                            var lockedUntil = await _userRepository.RegisterFailedLoginAsync(user.Id, DateTime.UtcNow);
+                            persistedLock = LoginLockoutRules.RemainingLock(lockedUntil, DateTime.UtcNow);
+                            if (persistedLock != null)
+                            {
+                                await TryAuditAsync("قفل الدخول", user,
+                                    $"قُفل الدخول للحساب {user.Username} مؤقّتاً بعد {LoginLockoutRules.MaxAttempts} محاولات خاطئة.");
                             }
                         }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Fallback / ignore to show generic error
+                AppLog.Error("Login", ex);
+                ShowError("تعذّر إتمام تسجيل الدخول بسبب خطأ داخليّ. راجع سجلّ الأخطاء أو اتّصل بمدير النظام.");
+                SetInputsEnabled(true);
+                return;
             }
 
             if (loginSuccess && targetUser != null)
             {
                 _currentUserService.SetCurrentUser(targetUser);
+                await TryAuditAsync("تسجيل دخول", targetUser, $"تسجيل دخول ناجح للحساب {targetUser.Username}.");
 
                 var mainWindow = App.ServiceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
                 this.Close();
+                return;
+            }
+
+            SetInputsEnabled(true);
+
+            if (persistedLock != null)
+            {
+                // القفل خاصّ بحساب واحد: تبقى الحقول مفعَّلة ليدخل مستخدم آخر بحسابه.
+                StartAccountLockDisplay(DateTime.UtcNow + persistedLock.Value);
+                TxtPassword.Password = string.Empty;
+                TxtPasswordReveal.Text = string.Empty;
+                TxtUsername.Focus();
+                return;
+            }
+
+            // اسم غير موجود: لا صفّ يحمل العدّاد، فيبقى عدّاد النافذة (لا حساب لحمايته).
+            _failedAttempts++;
+            if (_failedAttempts >= LoginLockoutRules.MaxAttempts)
+            {
+                _failedAttempts = 0;
+                StartLockout(LoginLockoutRules.LockDuration);
             }
             else
             {
-                _failedAttempts++;
-                BtnLogin.IsEnabled = true;
-                TxtUsername.IsEnabled = true;
-                TxtPassword.IsEnabled = true;
-                TxtPasswordReveal.IsEnabled = true;
-                BtnRevealPassword.IsEnabled = true;
-
-                if (_failedAttempts >= 3)
-                {
-                    StartLockout();
-                }
+                ShowError($"اسم المستخدم أو كلمة المرور غير صحيحة! محاولات متبقية: {LoginLockoutRules.MaxAttempts - _failedAttempts}");
+                TxtPassword.Password = string.Empty;
+                TxtPasswordReveal.Text = string.Empty;
+                if (TxtPassword.Visibility == Visibility.Visible)
+                    TxtPassword.Focus();
                 else
-                {
-                    ShowError($"اسم المستخدم أو كلمة المرور غير صحيحة! محاولات متبقية: {3 - _failedAttempts}");
-                    TxtPassword.Password = string.Empty;
-                    TxtPasswordReveal.Text = string.Empty;
-                    if (TxtPassword.Visibility == Visibility.Visible)
-                        TxtPassword.Focus();
-                    else
-                        TxtPasswordReveal.Focus();
-                }
+                    TxtPasswordReveal.Focus();
             }
         }
 
-        private void StartLockout()
+        private async System.Threading.Tasks.Task TryAuditAsync(string action, Models.User user, string details)
         {
-            _lockoutSecondsRemaining = 30;
-            BtnLogin.IsEnabled = false;
-            TxtPassword.IsEnabled = false;
-            TxtPasswordReveal.IsEnabled = false;
-            BtnRevealPassword.IsEnabled = false;
+            try
+            {
+                await _auditLogRepository.LogAsync(action, "User", user.Id.ToString(), details, user.Id, user.Username);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"Audit '{action}' for user {user.Username}", ex);
+            }
+        }
+
+        /// <summary>يفحص قفل الحساب المكتوب في خانة الاسم ويعرض العدّاد أو يُخفيه.</summary>
+        private async System.Threading.Tasks.Task RefreshAccountLockAsync()
+        {
+            try
+            {
+                string name = TxtUsername.Text?.Trim() ?? string.Empty;
+                Models.User? user = string.IsNullOrEmpty(name) ? null : await _userRepository.GetByUsernameAsync(name);
+
+                // النتيجة قديمة إن تغيّر الاسم أثناء القراءة.
+                if (!string.Equals(name, TxtUsername.Text?.Trim() ?? string.Empty, StringComparison.Ordinal)) return;
+
+                var remaining = LoginLockoutRules.RemainingLock(user?.LockedUntil, DateTime.UtcNow);
+                if (remaining != null)
+                {
+                    StartAccountLockDisplay(DateTime.UtcNow + remaining.Value);
+                }
+                else
+                {
+                    StopAccountLockDisplay();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("RefreshAccountLock", ex);
+            }
+        }
+
+        private void StartAccountLockDisplay(DateTime endsUtc)
+        {
+            _accountLockEndsUtc = endsUtc;
+            _showingAccountLock = true;
+            ShowError(LockMessage(endsUtc - DateTime.UtcNow));
+
+            _accountLockTimer?.Stop();
+            _accountLockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _accountLockTimer.Tick += (_, _) =>
+            {
+                var left = _accountLockEndsUtc - DateTime.UtcNow;
+                if (left <= TimeSpan.Zero)
+                    StopAccountLockDisplay();
+                else
+                    ShowError(LockMessage(left));
+            };
+            _accountLockTimer.Start();
+        }
+
+        private void StopAccountLockDisplay()
+        {
+            _accountLockTimer?.Stop();
+            if (_showingAccountLock)
+            {
+                _showingAccountLock = false;
+                TxtError.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void SetInputsEnabled(bool enabled)
+        {
+            BtnLogin.IsEnabled = enabled;
+            TxtUsername.IsEnabled = enabled;
+            TxtPassword.IsEnabled = enabled;
+            TxtPasswordReveal.IsEnabled = enabled;
+            BtnRevealPassword.IsEnabled = enabled;
+        }
+
+        private string LockMessage(TimeSpan remaining) =>
+            $"تم حظر الدخول مؤقتاً بسبب {LoginLockoutRules.MaxAttempts} محاولات خاطئة. يرجى الانتظار {LoginLockoutRules.FormatRemaining(remaining)}...";
+
+        private void StartLockout(TimeSpan duration)
+        {
+            _lockoutEndsUtc = DateTime.UtcNow + duration;
+            SetInputsEnabled(false);
             TxtPassword.Password = string.Empty;
             TxtPasswordReveal.Text = string.Empty;
 
-            ShowError($"تم حظر الدخول مؤقتاً بسبب 3 محاولات خاطئة. يرجى الانتظار {_lockoutSecondsRemaining} ثانية...");
+            ShowError(LockMessage(duration));
 
-            _lockoutTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
+            _lockoutTimer?.Stop();
+            _lockoutTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _lockoutTimer.Tick += LockoutTimer_Tick;
             _lockoutTimer.Start();
         }
 
         private void LockoutTimer_Tick(object? sender, EventArgs e)
         {
-            _lockoutSecondsRemaining--;
-            if (_lockoutSecondsRemaining <= 0)
+            var remaining = _lockoutEndsUtc - DateTime.UtcNow;
+            if (remaining <= TimeSpan.Zero)
             {
                 _lockoutTimer?.Stop();
                 _failedAttempts = 0;
-                BtnLogin.IsEnabled = true;
-                TxtPassword.IsEnabled = true;
-                TxtPasswordReveal.IsEnabled = true;
-                BtnRevealPassword.IsEnabled = true;
+                SetInputsEnabled(true);
                 TxtError.Visibility = Visibility.Collapsed;
                 if (TxtPassword.Visibility == Visibility.Visible)
                     TxtPassword.Focus();
@@ -239,7 +337,7 @@ namespace CAL_QR.Views
             }
             else
             {
-                ShowError($"تم حظر الدخول مؤقتاً بسبب 3 محاولات خاطئة. يرجى الانتظار {_lockoutSecondsRemaining} ثانية...");
+                ShowError(LockMessage(remaining));
             }
         }
 
@@ -452,6 +550,13 @@ namespace CAL_QR.Views
                 return;
             }
 
+            var lengthError = UserPasswordRules.Validate(newPassword);
+            if (lengthError != null)
+            {
+                MessageBox.Show(lengthError, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             if (newPassword != confirmPassword)
             {
                 MessageBox.Show("كلمتا المرور غير متطابقتين!", "خطأ في التأكيد", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -478,6 +583,7 @@ namespace CAL_QR.Views
 
                 adminUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
                 await _userRepository.UpdateAsync(adminUser);
+                await _userRepository.ResetLoginFailuresAsync(adminUser.Id);
 
                 try
                 {

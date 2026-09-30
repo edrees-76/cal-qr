@@ -54,6 +54,30 @@ namespace CAL_QR.Services
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
         }
 
+        /// <summary>PRAGMA integrity_check على ملفّ قاعدة؛ يُلقي إن لم تكن النتيجة "ok".</summary>
+        private static void EnsureDatabaseIntegrity(string dbFile, string what)
+        {
+            string? result;
+            try
+            {
+                using var connection = new SqliteConnection($"Data Source={dbFile};Pooling=False");
+                connection.Open();
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "PRAGMA integrity_check;";
+                result = cmd.ExecuteScalar() as string;
+            }
+            catch (SqliteException ex)
+            {
+                // ملفّ ليس قاعدة SQLite أصلاً (تالف كلّيّاً).
+                throw new InvalidOperationException($"فشل فحص سلامة {what}: {ex.Message}", ex);
+            }
+
+            if (result != "ok")
+            {
+                throw new InvalidOperationException($"فشل فحص سلامة {what}: {result}");
+            }
+        }
+
         private async Task<string> GetQrOutputPathAsync()
         {
             using var context = await _contextFactory.CreateDbContextAsync();
@@ -62,7 +86,7 @@ namespace CAL_QR.Services
             {
                 return setting.Value;
             }
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
+            return CAL_QR.Helpers.QrPaths.DefaultFolder();
         }
 
         private async Task<string> GetCloudBackupPathAsync()
@@ -76,6 +100,8 @@ namespace CAL_QR.Services
         {
             return await Task.Run(async () =>
             {
+                using var maintenanceGate = await MaintenanceGate.EnterAsync();
+
                 if (string.IsNullOrWhiteSpace(destinationFolder) || !Path.IsPathRooted(destinationFolder))
                 {
                     throw new ArgumentException("لم يتم تحديد مسار مطلق صالح لحفظ النسخة الاحتياطية.");
@@ -101,7 +127,7 @@ namespace CAL_QR.Services
                 string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
 
-                string backupFileName = $"CalQR_Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}{BackupEncryption.FileExtension}";
+                string backupFileName = $"CalQR_Backup_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}";
                 string backupFilePath = Path.Combine(destinationFolder, backupFileName);
                 // الأرشيف المكشوف يُبنى في المجلّد المؤقّت وحده ويُحذف معه في finally؛
                 // ما يصل إلى مجلّد النسخ هو الملفّ المشفَّر فقط.
@@ -133,6 +159,9 @@ namespace CAL_QR.Services
 
                     // Force release SQLite pooled connection handles on the temp database file
                     SqliteConnection.ClearAllPools();
+
+                    // نسخة من قاعدة تالفة لا تُحفظ على أنّها نسخة سليمة.
+                    EnsureDatabaseIntegrity(tempDbPath, "لقطة القاعدة");
 
                     // 2. Compress into ZIP
                     using (var zipStream = new FileStream(plainZipPath, FileMode.Create))
@@ -173,7 +202,7 @@ namespace CAL_QR.Services
 
                     foreach (var old in oldBackups)
                     {
-                        try { old.Delete(); } catch { }
+                        try { old.Delete(); } catch (System.Exception swallowEx1) { CAL_QR.Services.AppLog.Warn("BackupService.cs:176: " + swallowEx1.Message); }
                     }
 
                     // 4. Add Audit log entry
@@ -209,7 +238,7 @@ namespace CAL_QR.Services
 
                                 foreach (var old in oldCloudBackups)
                                 {
-                                    try { old.Delete(); } catch { }
+                                    try { old.Delete(); } catch (System.Exception swallowEx2) { CAL_QR.Services.AppLog.Warn("BackupService.cs:212: " + swallowEx2.Message); }
                                 }
 
                                 await _auditLogRepository.LogAsync("نسخ احتياطي", "نظام", "Backup", $"تم نسخ النسخة الاحتياطية أيضاً إلى المسار السحابي: {cloudBackupPath}");
@@ -278,6 +307,8 @@ namespace CAL_QR.Services
         {
             await Task.Run(async () =>
             {
+                using var maintenanceGate = await MaintenanceGate.EnterAsync();
+
                 if (string.IsNullOrWhiteSpace(backupFilePath) || !File.Exists(backupFilePath))
                 {
                     throw new FileNotFoundException("ملف النسخة الاحتياطية المحدد غير موجود أو غير صالح.");
@@ -417,6 +448,9 @@ namespace CAL_QR.Services
                         }
                     }
 
+                    // القاعدة المستخرجة تُفحص قبل أيّ مساس بالنظام الحيّ: نسخة تالفة تُرفض هنا.
+                    EnsureDatabaseIntegrity(tempDbPath, "القاعدة داخل النسخة الاحتياطيّة");
+
                     // المرحلة ٢ — كلّ ما قبل هذه النقطة تحضير لا يمسّ النظام؛ وهنا وحدها
                     // تبدأ العمليّات المدمّرة، مرتّبة بحيث يكون الأثقل تراجعًا آخرها.
                     // المجلّدات تُعاد تسميتها لا تُحذف، والقاعدة تُصوَّر قبل الكتابة فوقها،
@@ -545,8 +579,9 @@ namespace CAL_QR.Services
                             await restoredPathsContext.SaveChangesAsync();
                         }
                     }
-                    catch
+                    catch (System.Exception swallowEx3)
                     {
+                        CAL_QR.Services.AppLog.Error("BackupService.cs:548", swallowEx3);
                         // التراجع بالعكس، كلّ خطوة في try/catch خاصّ بها حتّى لا يُسقط
                         // فشلُ خطوةٍ بقيّةَ التراجع.
                         if (dbSnapshotTaken && dbRestoreStarted)
@@ -565,7 +600,7 @@ namespace CAL_QR.Services
                                 }
                                 SqliteConnection.ClearAllPools();
                             }
-                            catch { }
+                            catch (System.Exception swallowEx4) { CAL_QR.Services.AppLog.Warn("BackupService.cs:568: " + swallowEx4.Message); }
                         }
 
                         // غياب أثر ما قبل الاستعادة يعني أنّ المجلّد لم يكن موجودًا أصلًا،
@@ -581,7 +616,7 @@ namespace CAL_QR.Services
                                 }
                                 Directory.Move(qrPreRestore, qrOutputPath);
                             }
-                            catch { }
+                            catch (System.Exception swallowEx5) { CAL_QR.Services.AppLog.Warn("BackupService.cs:584: " + swallowEx5.Message); }
                         }
 
                         if (attachmentsSwapped && Directory.Exists(attachmentsPreRestore))
@@ -594,7 +629,7 @@ namespace CAL_QR.Services
                                 }
                                 Directory.Move(attachmentsPreRestore, attachmentsPath);
                             }
-                            catch { }
+                            catch (System.Exception swallowEx6) { CAL_QR.Services.AppLog.Warn("BackupService.cs:597: " + swallowEx6.Message); }
                         }
 
                         try
@@ -633,9 +668,9 @@ namespace CAL_QR.Services
 
                     // المرحلة ٣ — تنظيف آثار ما قبل الاستعادة عند النجاح وحده. فشل
                     // التنظيف لا يُفشل استعادة ناجحة.
-                    try { if (Directory.Exists(attachmentsPreRestore)) Directory.Delete(attachmentsPreRestore, true); } catch { }
-                    try { if (Directory.Exists(qrPreRestore)) Directory.Delete(qrPreRestore, true); } catch { }
-                    try { if (File.Exists(dbSnapshot)) File.Delete(dbSnapshot); } catch { }
+                    try { if (Directory.Exists(attachmentsPreRestore)) Directory.Delete(attachmentsPreRestore, true); } catch (System.Exception swallowEx7) { CAL_QR.Services.AppLog.Warn("BackupService.cs:636: " + swallowEx7.Message); }
+                    try { if (Directory.Exists(qrPreRestore)) Directory.Delete(qrPreRestore, true); } catch (System.Exception swallowEx8) { CAL_QR.Services.AppLog.Warn("BackupService.cs:637: " + swallowEx8.Message); }
+                    try { if (File.Exists(dbSnapshot)) File.Delete(dbSnapshot); } catch (System.Exception swallowEx9) { CAL_QR.Services.AppLog.Warn("BackupService.cs:638: " + swallowEx9.Message); }
                 }
                 catch (Exception ex)
                 {
@@ -683,7 +718,7 @@ namespace CAL_QR.Services
                 }
 
                 DateTime lastBackup = DateTime.MinValue;
-                if (lastSetting != null && DateTime.TryParse(lastSetting.Value, out var dt))
+                if (lastSetting != null && DateTime.TryParse(lastSetting.Value, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var dt))
                 {
                     lastBackup = dt;
                 }
@@ -714,12 +749,12 @@ namespace CAL_QR.Services
                     var lastBkp = await updateContext.AppSettings.FirstOrDefaultAsync(s => s.Key == "LastBackupDateTime");
                     if (lastBkp == null)
                     {
-                        lastBkp = new AppSetting { Key = "LastBackupDateTime", Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") };
+                        lastBkp = new AppSetting { Key = "LastBackupDateTime", Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) };
                         updateContext.AppSettings.Add(lastBkp);
                     }
                     else
                     {
-                        lastBkp.Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        lastBkp.Value = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
                     }
                     await updateContext.SaveChangesAsync();
                 }

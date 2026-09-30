@@ -29,8 +29,9 @@ namespace CAL_QR.Services
                 {
                     logoImage = new Bitmap(logoPath);
                 }
-                catch
+                catch (System.Exception swallowEx1)
                 {
+                    CAL_QR.Services.AppLog.Error("QrService.cs:32", swallowEx1);
                     // Ignore logo load error
                 }
             }

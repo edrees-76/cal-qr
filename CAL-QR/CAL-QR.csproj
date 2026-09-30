@@ -8,6 +8,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Assets\Logo\cal-qr-icon.ico</ApplicationIcon>
+    <!-- مصدر رقم الإصدار للمثبِّت (deploy\build-installer.ps1 يقرؤه من هنا). يطابق «الإصدار: 1.0.0» في واجهة «عن البرنامج». -->
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

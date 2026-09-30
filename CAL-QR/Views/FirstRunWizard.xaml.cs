@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
 
 namespace CAL_QR.Views
 {
     public partial class FirstRunWizard : Window
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly IRecoveryAnswerService _recoveryAnswerService;
         private int _currentStep = 1;
 
         // In-memory fields (no DB writes until Step 4 finish)
@@ -23,10 +25,11 @@ namespace CAL_QR.Views
         private string _securityQuestion = string.Empty;
         private string _securityAnswer = string.Empty;
 
-        public FirstRunWizard(IDbContextFactory<CalQrDbContext> contextFactory)
+        public FirstRunWizard(IDbContextFactory<CalQrDbContext> contextFactory, IRecoveryAnswerService recoveryAnswerService)
         {
             InitializeComponent();
             _contextFactory = contextFactory;
+            _recoveryAnswerService = recoveryAnswerService;
 
             // Set default path
             _databasePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cal-qr.db"));
@@ -172,7 +175,7 @@ namespace CAL_QR.Views
 
                 SetAppSetting(context, "DatabasePath", _databasePath);
                 SetAppSetting(context, "SecurityQuestion", _securityQuestion);
-                SetAppSetting(context, "SecurityAnswer", PasswordHelper.HashPassword(_securityAnswer));
+                SetAppSetting(context, "SecurityAnswer", _recoveryAnswerService.HashAnswer(_securityAnswer));
                 SetAppSetting(context, "FirstRunCompleted", "true");
 
                 // Create the admin user

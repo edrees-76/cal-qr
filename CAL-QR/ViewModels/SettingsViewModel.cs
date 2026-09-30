@@ -745,6 +745,7 @@ namespace CAL_QR.ViewModels
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(startInfo);
+                        App.MarkRestarting();
                         Application.Current.Shutdown();
                     }
                     else
@@ -1434,6 +1435,7 @@ namespace CAL_QR.ViewModels
                             UseShellExecute = true
                         };
                         System.Diagnostics.Process.Start(startInfo);
+                        App.MarkRestarting();
                         Application.Current.Shutdown();
                     }
                     else

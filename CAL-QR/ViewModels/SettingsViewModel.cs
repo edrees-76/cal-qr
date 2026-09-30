@@ -290,7 +290,7 @@ namespace CAL_QR.ViewModels
                 }
                 else
                 {
-                    QrOutputPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "poster"));
+                    QrOutputPath = CAL_QR.Helpers.QrPaths.DefaultFolder();
                 }
 
                 _originalDatabasePath = DatabasePath;
@@ -512,7 +512,7 @@ namespace CAL_QR.ViewModels
             var dialog = new Microsoft.Win32.OpenFolderDialog();
             if (dialog.ShowDialog() == true)
             {
-                QrOutputPath = Path.Combine(dialog.FolderName, "poster");
+                QrOutputPath = Path.Combine(dialog.FolderName, CAL_QR.Helpers.QrPaths.DefaultFolderName);
             }
         }
 

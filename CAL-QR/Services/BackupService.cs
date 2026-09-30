@@ -62,7 +62,7 @@ namespace CAL_QR.Services
             {
                 return setting.Value;
             }
-            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR_Output");
+            return CAL_QR.Helpers.QrPaths.DefaultFolder();
         }
 
         private async Task<string> GetCloudBackupPathAsync()

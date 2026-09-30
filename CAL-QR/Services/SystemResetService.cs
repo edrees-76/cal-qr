@@ -113,7 +113,7 @@ namespace CAL_QR.Services
             int qrFilesDeleted = 0;
             int attachmentFoldersDeleted = 0;
 
-            string qrFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR");
+            string qrFolder = CAL_QR.Helpers.QrPaths.DefaultFolder();
             string attachmentsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
 
             try
@@ -251,7 +251,7 @@ namespace CAL_QR.Services
         public static async Task<(string QrFolder, string AttachmentsFolder)> ResolveCleanupFoldersAsync(
             IDbContextFactory<CalQrDbContext> contextFactory)
         {
-            string qrFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "QR");
+            string qrFolder = CAL_QR.Helpers.QrPaths.DefaultFolder();
             string attachmentsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Attachments");
 
             using var readContext = await contextFactory.CreateDbContextAsync();

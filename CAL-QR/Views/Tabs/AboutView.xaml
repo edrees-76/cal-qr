@@ -17,7 +17,7 @@
         <!-- Right Column: System Info -->
         <StackPanel Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0,20,0">
             <!-- Logos -->
-            <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Width="120" Height="120" Margin="0,0,0,15" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+            <Image Source="/Assets/Logo/cal-qr-logo-flat.png" Width="120" Height="120" Margin="0,0,0,15" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
 
             <!-- Separator -->
             <Border Height="2" Background="{DynamicResource GoldAccent}" Margin="0,5,0,15" CornerRadius="1" />

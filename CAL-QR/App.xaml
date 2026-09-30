@@ -43,7 +43,7 @@
             </Style>
             <Style TargetType="{x:Type Window}">
                 <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
-                <Setter Property="Icon" Value="/Assets/Logo/cal-qr-3d-icon.png" />
+                <Setter Property="Icon" Value="/Assets/Logo/cal-qr-icon.ico" />
             </Style>
             <Style TargetType="{x:Type Control}">
                 <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />

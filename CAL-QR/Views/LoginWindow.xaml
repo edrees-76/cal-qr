@@ -75,7 +75,7 @@
                                        FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
-                        <Image Source="/Assets/Logo/cal-qr-3d-logo-new.png" Height="60" Width="60" Margin="3" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <Image Source="/Assets/Logo/cal-qr-mark.png" Height="60" Width="60" Margin="3" RenderOptions.BitmapScalingMode="HighQuality" />
                         <TextBlock Text="CAL-QR" FontSize="22" FontWeight="Bold" Foreground="#1A3A6B" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي" FontSize="13" Foreground="#707070" HorizontalAlignment="Center" Margin="0,2,0,0" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>

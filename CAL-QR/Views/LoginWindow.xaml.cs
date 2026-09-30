@@ -186,7 +186,11 @@ namespace CAL_QR.Views
 
             if (persistedLock != null)
             {
-                StartLockout(persistedLock.Value);
+                // القفل خاصّ بحساب واحد: تبقى الحقول مفعَّلة ليدخل مستخدم آخر بحسابه.
+                ShowError(LockMessage(persistedLock.Value));
+                TxtPassword.Password = string.Empty;
+                TxtPasswordReveal.Text = string.Empty;
+                TxtUsername.Focus();
                 return;
             }
 

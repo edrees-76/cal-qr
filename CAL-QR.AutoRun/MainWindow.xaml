@@ -1,0 +1,85 @@
+<Window x:Class="CalQr.AutoRun.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="CAL-QR"
+        Icon="pack://application:,,,/Assets/cal-qr-icon.ico"
+        Width="720" Height="660"
+        ResizeMode="CanMinimize"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource PageBrush}"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Grid Margin="32,16,32,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- شريط علوي: تبديل اللغة -->
+        <Button x:Name="LanguageButton" Grid.Row="0" Style="{StaticResource OutlineButton}"
+                HorizontalAlignment="Right" Height="34" MinWidth="96" FontSize="13"
+                AutomationProperties.AutomationId="LanguageToggle"
+                Click="LanguageButton_Click"/>
+
+        <!-- الشعار والعنوان -->
+        <StackPanel Grid.Row="1" HorizontalAlignment="Center" Margin="0,0,0,16">
+            <Image x:Name="LogoImage" Width="170" Height="170" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <TextBlock x:Name="SubtitleText" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold"
+                       HorizontalAlignment="Center" Margin="0,4,0,0"/>
+            <TextBlock x:Name="VersionText" Foreground="{StaticResource GreenBrush}" FontSize="13"
+                       FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2">
+
+            <!-- تثبيت المنظومة -->
+            <Border Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="InstallTitleText" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="InstallDescText" Foreground="{StaticResource MutedTextBrush}" FontSize="13"
+                                   TextWrapping="Wrap" Margin="0,4,12,0"/>
+                    </StackPanel>
+                    <Button x:Name="InstallButton" Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                            AutomationProperties.AutomationId="InstallButton" Click="InstallButton_Click"/>
+                </Grid>
+            </Border>
+
+            <!-- دليل الاستخدام -->
+            <Border Style="{StaticResource Card}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="GuideTitleText" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="GuideDescText" Foreground="{StaticResource MutedTextBrush}" FontSize="13"
+                                   TextWrapping="Wrap" Margin="0,4,12,0"/>
+                    </StackPanel>
+                    <Button x:Name="GuideButton" Grid.Column="1" Style="{StaticResource OutlineButton}"
+                            AutomationProperties.AutomationId="GuideButton" Click="GuideButton_Click"/>
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- شريط الحالة -->
+        <TextBlock x:Name="StatusText" Grid.Row="3" Foreground="{StaticResource GreenBrush}" FontSize="13"
+                   TextWrapping="Wrap" MinHeight="20" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <!-- شعارا المركز والمطوّر (أسفل النافذة) -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center" FlowDirection="LeftToRight">
+            <Image x:Name="TnrcImage" Height="54" Margin="0,0,28,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+            <Image x:Name="EfhImage" Height="54" Margin="28,0,0,0" RenderOptions.BitmapScalingMode="HighQuality"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    واجهة التشغيل التلقائي لمثبِّت CAL-QR. net48 عمداً: تعمل قبل تثبيت المنظومة على جهاز قد لا يملك .NET 8،
+    و.NET Framework 4.8 مضمَّن في ويندوز 10/11 فيكون الناتج ملفاً صغيراً بلا اعتمادية على بيئة تشغيل.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>CalQr.AutoRun</RootNamespace>
+    <AssemblyName>CalQrAutoRun</AssemblyName>
+    <Version>1.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\CAL-QR\Assets\Logo\cal-qr-icon.ico</ApplicationIcon>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="..\CAL-QR\Assets\Logo\cal-qr-logo.png" Link="Assets\cal-qr-logo.png" />
+    <Resource Include="..\CAL-QR\Assets\Logo\nuclear-center-logo-removebg-preview.png" Link="Assets\tnrc-logo.png" />
+    <Resource Include="..\CAL-QR\Assets\Logo\efh-logo.jpg" Link="Assets\efh-logo.jpg" />
+    <Resource Include="..\CAL-QR\Assets\Logo\cal-qr-icon.ico" Link="Assets\cal-qr-icon.ico" />
+  </ItemGroup>
+
+</Project>

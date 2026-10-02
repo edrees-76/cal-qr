@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CAL-QR.Tests", "CAL-QR.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CAL-QR.DemoData", "tools\CAL-QR.DemoData\CAL-QR.DemoData.csproj", "{5D1B7E2A-3C44-4F0B-9A6E-7B2D8C91E4F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CAL-QR.AutoRun", "CAL-QR.AutoRun\CAL-QR.AutoRun.csproj", "{2D90EDA0-6851-4957-B076-51FD5051ADA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{5D1B7E2A-3C44-4F0B-9A6E-7B2D8C91E4F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D1B7E2A-3C44-4F0B-9A6E-7B2D8C91E4F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D1B7E2A-3C44-4F0B-9A6E-7B2D8C91E4F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D90EDA0-6851-4957-B076-51FD5051ADA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D90EDA0-6851-4957-B076-51FD5051ADA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D90EDA0-6851-4957-B076-51FD5051ADA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D90EDA0-6851-4957-B076-51FD5051ADA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

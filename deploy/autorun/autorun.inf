@@ -1,0 +1,4 @@
+[AutoRun]
+open=CalQrAutoRun.exe
+icon=CalQrAutoRun.exe,0
+label=CAL-QR

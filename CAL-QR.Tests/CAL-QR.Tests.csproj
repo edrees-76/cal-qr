@@ -24,6 +24,11 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- منطق واجهة التشغيل (net48) غير المرتبط بـ WPF يُترجَم هنا أيضاً لاختباره على net8 -->
+  <ItemGroup>
+    <Compile Include="..\CAL-QR.AutoRun\Logic\*.cs" Link="AutoRunLogic\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\CAL-QR\CAL-QR.csproj" />
     <ProjectReference Include="..\tools\CAL-QR.DemoData\CAL-QR.DemoData.csproj" />

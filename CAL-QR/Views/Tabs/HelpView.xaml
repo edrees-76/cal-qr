@@ -179,8 +179,8 @@
                         </Border>
                         <TextBlock Text="• اضغط 'التالي ←' للذهاب للخطوة التالية." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
 
-                        <TextBlock Text="الخطوة 3: إنشاء كلمة المرور وسؤال الأمان" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
-                        <TextBlock Text="• اكتب كلمة المرور التي تريد استخدامها للدخول (4 خانات على الأقل).&#x0a;• أعِد كتابة كلمة المرور في خانة التأكيد.&#x0a;• اختر سؤال أمان سري واكتبه (مثال: ما هو أول هاتف امتلكته؟).&#x0a;• اكتب إجابة السؤال السري واحفظها جيداً.&#x0a;• اضغط 'التالي ←'." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="الخطوة 3: إنشاء حساب المسؤول وسؤال الأمان" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
+                        <TextBlock Text="• اكتب الاسم الكامل واسم المستخدم وكلمة المرور (8 أحرف على الأقل).&#x0a;• أعِد كتابة كلمة المرور في خانة التأكيد.&#x0a;• اختر سؤال أمان سري واكتبه (مثال: ما هو أول هاتف امتلكته؟).&#x0a;• اكتب إجابة السؤال السري واحفظها جيداً.&#x0a;• اضغط 'التالي ←'." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
 
                         <TextBlock Text="الخطوة 4: اكتمال الإعداد" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="تظهر لك علامة النجاح الخضراء (✅)، اضغط على زر 'بدء الاستخدام' ليفتح لك البرنامج نافذة تسجيل الدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
@@ -191,10 +191,10 @@
                         <TextBlock Text="تسجيل الدخول وقفل الأمان وخيارات الطوارئ" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
                         
                         <TextBlock Text="تسجيل الدخول اليومي:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
-                        <TextBlock Text="أدخل كلمة مرورك ثم اضغط زر 'تسجيل الدخول' أو زر Enter بلوحة المفاتيح." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
+                        <TextBlock Text="أدخل اسم المستخدم وكلمة المرور ثم اضغط زر 'تسجيل الدخول' أو زر Enter بلوحة المفاتيح." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
 
                         <TextBlock Text="الحظر التلقائي:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
-                        <TextBlock Text="إذا قمت بإدخال كلمة مرور خاطئة 3 مرات متتالية، سيقوم البرنامج بقفل نفسه لمدة 30 ثانية حماية للبيانات. يرجى الانتظار حتى انتهاء العد التنازلي لإعادة المحاولة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="إذا قمت بإدخال كلمة مرور خاطئة 3 مرات متتالية، سيقوم البرنامج بقفل الدخول لمدة 5 دقائق حماية للبيانات، ولا يلغي إغلاق البرنامج هذا القفل. يرجى الانتظار حتى انتهاء العد التنازلي لإعادة المحاولة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
 
                         <TextBlock Text="القفل التلقائي عند الخمول:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="إذا تركت البرنامج مفتوحاً دون استخدام لفترة من الوقت (مثلاً 10 دقائق)، فسيقوم بقفل الواجهة تلقائياً لحماية سرية البيانات وإعادتك لشاشة الدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -246,7 +246,7 @@
                         <TextBlock Text="من جدول الأجهزة، انقر على زر 'تفاصيل تاريخ الجهاز' (أيقونة العين) لتظهر لك قائمة بجميع المعايرات السابقة للجهاز." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" />
 
                         <TextBlock Text="إضافة معايرة جديدة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
-                        <TextBlock Text="انقر زر 'إضافة معايرة جديدة' وعشئ الحقول كالتالي:&#x0a;1. رقم الشهادة: اكتب رقم الشهادة الورقية (أو اترك الرقم التلقائي الفريد الذي يوفره النظام).&#x0a;2. التواريخ: حدد تاريخ إجراء المعايرة وتاريخ انتهائها بدقة.&#x0a;3. النتيجة: اختر النتيجة من القائمة (سار، غير سار، مشروط).&#x0a;4. اسم المهندس: اكتب اسم المهندس القائم بالمعايرة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="انقر زر 'إضافة معايرة جديدة' وعشئ الحقول كالتالي:&#x0a;1. رقم الشهادة: اكتب رقم الشهادة الورقية (أو اترك الرقم التلقائي الفريد الذي يوفره النظام).&#x0a;2. التواريخ: حدد تاريخ إجراء المعايرة وتاريخ انتهائها بدقة.&#x0a;3. النتيجة: اختر النتيجة من القائمة (ناجح، راسب، مشروط).&#x0a;4. اسم المهندس: اكتب اسم المهندس القائم بالمعايرة." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
 
                         <TextBlock Text="تجهيز ورفع المرفقات (شهادة المعايرة الأصلية):" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="• يُنصح بمسح الشهادة الورقية ضوئياً (Scanner) بجودة جيدة مع حفظها بصيغة PDF أو صورة JPG.&#x0a;• اسحب ملف الشهادة وأفلته في المربع المخصص، أو اضغط زر 'إضافة مرفق' لاختيار الملف من جهازك." FontSize="13" Foreground="#4A5568" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -375,7 +375,7 @@
                                     <TextBlock Text="محاولة إدخال كلمة مرور خاطئة 3 مرات متتالية." TextWrapping="Wrap" />
                                 </Border>
                                 <Border Grid.Row="2" Grid.Column="2" Padding="10" BorderBrush="{DynamicResource AppBorder}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="انتظر 30 ثانية فقط دون الضغط على أي زر حتى ينتهي مؤقت الحظر التلقائي وتعود الواجهة للعمل." TextWrapping="Wrap" />
+                                    <TextBlock Text="انتظر 5 دقائق حتى ينتهي مؤقت الحظر التلقائي وتعود الواجهة للعمل." TextWrapping="Wrap" />
                                 </Border>
 
                                 <!-- Row 3 -->

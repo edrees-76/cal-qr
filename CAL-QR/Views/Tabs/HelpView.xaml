@@ -202,7 +202,7 @@
                         <TextBlock Text="نسيت كلمة المرور؟" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. انقر على رابط 'نسيت كلمة المرور' في نافذة تسجيل الدخول.&#x0a;2. سيطلب منك البرنامج الإجابة على السؤال السري الذي حددته في الإعداد الأول.&#x0a;3. عند إدخال الإجابة الصحيحة، سيسمح لك البرنامج بتعيين كلمة مرور جديدة فوراً والدخول." FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap" />
                         <Border Style="{StaticResource NoticeCardStyle}">
-                            <TextBlock Text="⚠️ خيار الطوارئ الأخير: في حال نسيان الإجابة السرية أيضاً، يرجى التواصل مع مسؤول النظام (م. إدريس فتح الله الهري) للحصول على كلمة المرور الطارئة وإعادة الضبط." FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
+                            <TextBlock Text="⚠️ خيار الطوارئ الأخير: في حال نسيان الإجابة السرية أيضاً، يرجى التواصل مع مسؤول النظام (م. إدريس فتح الله الهري)." FontSize="12" FontWeight="SemiBold" Foreground="#B78103" TextWrapping="Wrap" />
                         </Border>
                     </StackPanel>
 
@@ -544,7 +544,7 @@
                                        Text="• يُكتب المفتاح بخطّ اليد على ورقة — لا يُطبع ولا يُرسل بالبريد.&#x0a;• نسختان في موقعين مختلفين، لا نسخة واحدة.&#x0a;• توقيع على حافة لسان الظرف، بحيث لا يُفتح دون أن يظهر أثر الفتح.&#x0a;• يُكتب التاريخ على الظرف." />
                             <Border Style="{StaticResource DangerCardStyle}">
                                 <TextBlock FontSize="14" FontWeight="Bold" Foreground="#B71C1C" TextWrapping="Wrap"
-                                           Text="⛔ يُنفَّذ يوم التثبيت في تجورا، قبل إصدار أول شهادة حقيقية." />
+                                           Text="⛔ يُنفَّذ يوم التثبيت، قبل إصدار أول شهادة حقيقية." />
                             </Border>
 
                             <TextBlock Text="٤. بعد الانتهاء" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
@@ -553,10 +553,10 @@
 
                             <TextBlock Text="٥. النسخ الاحتياطية تحمل المفتاح" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                             <TextBlock FontSize="13" Foreground="#4A5568" Margin="10,0,0,10" TextWrapping="Wrap"
-                                       Text="كل نسخة احتياطية تتضمّن قاعدة البيانات كاملة، والمفتاح داخلها بلا تشفير وبلا كلمة سرّ. من يحصل على أي نسخة احتياطية يملك المفتاح." />
+                                       Text="كل نسخة احتياطية تتضمّن قاعدة البيانات كاملة ومعها المفتاح. النسخ بصيغة .cqbak مقفلة بكلمة سرّ، فاحفظ كلمة السرّ جيدًا. أما ملفات .zip القديمة فتكشف المفتاح، فاحذفها من أي جهاز أو قرص أو مجلد سحابي بعد التأكد من وجود نسخة .cqbak سليمة." />
                             <Border Style="{StaticResource DangerCardStyle}">
                                 <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="#B71C1C" TextWrapping="Wrap"
-                                           Text="⛔ تُحفظ النسخ الاحتياطية حفظ الوثائق السرّية: لا قرص مشترك، لا مجلد سحابي عامّ، لا إرسال بالبريد.&#x0a;&#x0a;ومسار النسخ السحابي يرفع المفتاح إلى السحابة نصّاً صريحاً — لا يُضبط إلا على مجلد مشفَّر أو حساب مخصّص محكوم." />
+                                           Text="⛔ تُحفظ النسخ الاحتياطية حفظ الوثائق السرّية: لا قرص مشترك، لا مجلد سحابي عامّ، لا إرسال بالبريد.&#x0a;&#x0a;ومسار النسخ السحابي يرفع نسخة .cqbak المقفلة — لا يُضبط إلا على مجلد أو حساب مخصّص محكوم." />
                             </Border>
                         </StackPanel>
                     </StackPanel>

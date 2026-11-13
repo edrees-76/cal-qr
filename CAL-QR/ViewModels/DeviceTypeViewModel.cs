@@ -11,6 +11,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -199,6 +200,9 @@ namespace CAL_QR.ViewModels
 
         private void OnNavigateToDeviceType(int deviceTypeId)
         {
+            // يرفعه البحث الشامل بعد التحقّق؛ يُعاد التحقّق هنا عند آخر نقطة.
+            if (!TabAccessRules.CanOpenTab(_currentUserService.CurrentUser, TabAccessRules.DeviceTypes)) return;
+
             var matchedType = DeviceTypes.FirstOrDefault(t => t.Id == deviceTypeId);
             if (matchedType == null)
             {

@@ -11,22 +11,23 @@ using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Models;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
     public class MainViewModel : BaseViewModel, IDisposable
     {
-        // Tab index constants
-        public const int TabIndexDashboard = 0;
-        public const int TabIndexDevices = 1;
-        public const int TabIndexQrVerify = 2;
-        public const int TabIndexOwners = 3;
-        public const int TabIndexDeviceTypes = 4;
-        public const int TabIndexReports = 5;
-        public const int TabIndexUsers = 6;
-        public const int TabIndexSettings = 7;
-        public const int TabIndexHelp = 8;
-        public const int TabIndexAbout = 9;
+        // Tab index constants — مصدرها الوحيد TabAccessRules
+        public const int TabIndexDashboard = TabAccessRules.Dashboard;
+        public const int TabIndexDevices = TabAccessRules.Devices;
+        public const int TabIndexQrVerify = TabAccessRules.QrVerify;
+        public const int TabIndexOwners = TabAccessRules.Owners;
+        public const int TabIndexDeviceTypes = TabAccessRules.DeviceTypes;
+        public const int TabIndexReports = TabAccessRules.Reports;
+        public const int TabIndexUsers = TabAccessRules.Users;
+        public const int TabIndexSettings = TabAccessRules.Settings;
+        public const int TabIndexHelp = TabAccessRules.Help;
+        public const int TabIndexAbout = TabAccessRules.About;
 
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ISearchService _searchService;
@@ -135,35 +136,8 @@ namespace CAL_QR.ViewModels
             else if (IsTabAllowed(TabIndexAbout)) SelectedTabIndex = TabIndexAbout;
         }
 
-        private bool IsTabAllowed(int tabIndex)
-        {
-            var user = _currentUserService.CurrentUser;
-            if (user == null) return false;
-
-            switch (tabIndex)
-            {
-                case TabIndexDashboard:
-                case TabIndexAbout:
-                case TabIndexHelp:
-                    return true;
-                case TabIndexDevices:
-                    return user.HasPermission(SystemPermissions.Records);
-                case TabIndexQrVerify:
-                    return user.HasPermission(SystemPermissions.Verification);
-                case TabIndexOwners:
-                    return user.HasPermission(SystemPermissions.Owners);
-                case TabIndexDeviceTypes:
-                    return user.HasPermission(SystemPermissions.DeviceTypes);
-                case TabIndexReports:
-                    return user.HasPermission(SystemPermissions.Reports);
-                case TabIndexSettings:
-                    return user.HasPermission(SystemPermissions.Settings);
-                case TabIndexUsers:
-                    return user.HasPermission(SystemPermissions.UserManagement);
-                default:
-                    return false;
-            }
-        }
+        private bool IsTabAllowed(int tabIndex) =>
+            TabAccessRules.CanOpenTab(_currentUserService.CurrentUser, tabIndex);
 
         public int SelectedTabIndex
         {
@@ -284,7 +258,7 @@ namespace CAL_QR.ViewModels
         {
             if (parameter != null && int.TryParse(parameter.ToString(), out var index))
             {
-                SelectedTabIndex = index;
+                NavigateToTabIfAllowed(index);
             }
         }
 
@@ -342,7 +316,10 @@ namespace CAL_QR.ViewModels
                 
                 if (!token.IsCancellationRequested)
                 {
-                    SearchResults = new ObservableCollection<SearchResultItem>(results);
+                    // لا تُعرض نتيجة من تبويب لا يملكه المستخدم.
+                    var user = _currentUserService.CurrentUser;
+                    SearchResults = new ObservableCollection<SearchResultItem>(
+                        results.Where(r => TabAccessRules.CanOpenSearchResult(user, r.EntityType)));
                     IsSearchResultsOpen = SearchResults.Count > 0;
                 }
             }
@@ -367,22 +344,22 @@ namespace CAL_QR.ViewModels
             SearchText = string.Empty;
             SearchResults.Clear();
 
+            if (!TabAccessRules.CanOpenSearchResult(_currentUserService.CurrentUser, item.EntityType))
+                return;
+
+            SelectedTabIndex = TabAccessRules.TabFor(item.EntityType);
             switch (item.EntityType)
             {
                 case SearchEntityType.Device:
-                    SelectedTabIndex = TabIndexDevices;
                     SearchEvents.RaiseNavigateToDevice(item.Id);
                     break;
                 case SearchEntityType.Owner:
-                    SelectedTabIndex = TabIndexOwners;
                     SearchEvents.RaiseNavigateToOwner(item.Id);
                     break;
                 case SearchEntityType.DeviceType:
-                    SelectedTabIndex = TabIndexDeviceTypes;
                     SearchEvents.RaiseNavigateToDeviceType(item.Id);
                     break;
                 case SearchEntityType.CalibrationRecord:
-                    SelectedTabIndex = TabIndexDevices;
                     SearchEvents.RaiseNavigateToCalibrationRecord(item.Id);
                     break;
             }
@@ -528,12 +505,12 @@ namespace CAL_QR.ViewModels
 
         private void OnNavigateToDevice(int deviceId)
         {
-            SelectedTabIndex = TabIndexDevices;
+            NavigateToTabIfAllowed(TabIndexDevices);
         }
 
         private void OnNavigateToCalibrationRecord(int recordId)
         {
-            SelectedTabIndex = TabIndexDevices;
+            NavigateToTabIfAllowed(TabIndexDevices);
         }
 
         public void Dispose()

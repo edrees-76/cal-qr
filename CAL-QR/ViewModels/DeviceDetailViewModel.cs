@@ -235,27 +235,30 @@ namespace CAL_QR.ViewModels
             dialog.ShowDialog();
         }
 
+        // التفعيل والبحث بالشهادة الفعليّة للسجلّ (Certificates.CalibrationRecordId)، لا بالعمود
+        // القديم CalibrationRecord.CertificateNumber: ذاك قابل للتحرير، وقد يحمل رقماً خُصِّص لاحقاً
+        // لشهادة سجلّ آخر، فيُخرج التصدير/الطباعة شهادة جهاز آخر.
         private bool CanPrintRecord()
         {
             return SelectedRecord != null
-                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber);
+                && CertificateNumberDisplayRules.HasIssuedCertificate(SelectedRecord.DisplayCertificateNumber);
         }
 
         private bool CanExportPdf()
         {
             return SelectedRecord != null
-                && !string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber);
+                && CertificateNumberDisplayRules.HasIssuedCertificate(SelectedRecord.DisplayCertificateNumber);
         }
 
         private async Task ExportPdfAsync()
         {
-            if (SelectedRecord == null || string.IsNullOrWhiteSpace(SelectedRecord.CertificateNumber))
+            if (SelectedRecord == null)
                 return;
 
             try
             {
                 var certificate = await _certificateRepository
-                    .GetByCertificateNumberAsync(SelectedRecord.CertificateNumber);
+                    .GetByCalibrationRecordIdAsync(SelectedRecord.Id);
 
                 if (certificate == null)
                 {

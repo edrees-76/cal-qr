@@ -41,6 +41,13 @@ namespace CAL_QR.Repositories
         Task<Certificate?> GetByCertificateNumberAsync(string certificateNumber);
 
         /// <summary>
+        /// الشهادة السارية لسجلّ معايرة بعينه، عبر الرابط الموثوق CalibrationRecordId
+        /// (فهرس فريد مشروط: شهادة غير محذوفة واحدة على الأكثر لكلّ سجلّ). مسار الإخراج
+        /// (تصدير PDF وطباعة الملصق) يستعمله، لا الرقم المخزَّن في العمود القديم القابل للتحرير.
+        /// </summary>
+        Task<Certificate?> GetByCalibrationRecordIdAsync(int calibrationRecordId);
+
+        /// <summary>
         /// إصدار شهادة: تخصيص الرقم والتوقيع والحفظ في معاملة واحدة.
         /// يُعيد الرقم المخصَّص.
         /// </summary>

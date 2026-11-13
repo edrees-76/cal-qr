@@ -5,6 +5,13 @@
 
 ## سجلّ الجولات
 
+- **إصلاح NV-8 من التدقيق الأمنيّ: حفظ قالب الطباعة دون صلاحية التعديل (13 نوفمبر 2026)** — فرع `fix/paper-template-canedit` على أساس `3b03da7`:
+  - السبب: أوامر القوالب في الإعدادات مقيّدة بـ`CanEdit` (`SettingsViewModel.cs:99,108-110`)، لكنّ زرّ «قالب جديد» في معاينة الطباعة (`PrintPreviewDialog.xaml.cs` و`BatchPrintPreviewDialog.xaml.cs` في `NewTemplate_Click`) يفتح `PaperTemplateDialog` لكلّ من يطبع، و`PaperTemplateViewModel.SaveAsync` يحفظ بلا أيّ فحص — ومع «افتراضيّ» يغيّر تخطيط كلّ طباعة لاحقة. فحساب «قراءة فقط» يستطيع ذلك.
+  - القرار: الفحص داخل نافذة القالب نفسها (آخر نقطة قبل الحفظ): `Validation/PaperTemplateAuthorizationRules.CanSaveTemplate` = مدير أو يملك التعديل، نفس حدّ الإعدادات. زرّ الحفظ معطَّل لغير المحرِّر، و`SaveAsync` يرفض برسالة. لا تغيير في XAML؛ زرّ «قالب جديد» يبقى ظاهراً ويفتح النافذة للعرض.
+  - جديد: `PaperTemplateAuthorizationRulesTests.cs`، وحالة رفض في `PaperTemplateViewModelTests`. الاختبارات الأربعة القائمة لم تتغيّر إلّا بتمرير مستخدم محرِّر للمُنشئ الجديد.
+  - على جهاز إدريس بإذنه (13 نوفمبر 2026): `dotnet build` ⇒ 0 تحذيرات، 0 أخطاء؛ `dotnet test` ⇒ **596 نجح / 0 فشل / 0 تخطّى** (منها 9 حالات جديدة).
+  - **التحقّق البصريّ (إدريس، 13 نوفمبر 2026):** نجح، بحسب إفادة إدريس، على نسخة من قاعدة العمل. المطلوب كان: حساب «قراءة فقط» ⇒ «قالب جديد» من معاينة الطباعة يفتح النافذة وزرّ الحفظ معطَّل؛ المدير ⇒ الحفظ يعمل.
+
 - **إصلاح NV-4 من التدقيق الأمنيّ: تجاوز صلاحيّات التبويبات عبر البحث وأحداث التنقّل (13 نوفمبر 2026)** — فرع `fix/tab-permission-bypass` على أساس `017caea`:
   - السبب: إخفاء رأس التبويب كان الحاجز الوحيد. البحث الشامل يعرض كلّ النتائج بلا تصفية (`MainViewModel.cs` `PerformSearchAsync`)، واختيار نتيجة يضبط `SelectedTabIndex` مباشرةً ويرفع حدث التنقّل (`SelectSearchResultAsync`)، و`OnNavigateToDevice`/`OnNavigateToCalibrationRecord` و`ChangeTab` تتجاوز `IsTabAllowed`. ومستقبلات الأحداث (`DevicesViewModel.OnNavigateToDevice` ⇒ `ShowDeviceDetailsById`، و`OwnerViewModel`/`DeviceTypeViewModel`) تفتح التفاصيل دون فحص، فيصل إليها مستخدم بلا صلاحية «السجلات» من البحث أو لوحة التحكّم أو تفاصيل الجهة/النوع.
   - القرار: قاعدة واحدة `Validation/TabAccessRules.cs` (دوالّ نقيّة؛ مصدر ثوابت التبويبات): نتائج البحث تُصفّى بصلاحية تبويبها، وكلّ تنقّل يمرّ بـ`NavigateToTabIfAllowed`، ويُعاد الفحص عند المستقبِل قبل فتح التفاصيل (رسالة «صلاحية غير كافية» في الأجهزة). لا تغيير في XAML ولا الأنماط ولا رؤوس التبويبات.

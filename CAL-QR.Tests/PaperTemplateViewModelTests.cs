@@ -27,7 +27,7 @@ namespace CAL_QR.Tests
 
             var factory = new TestDbContextFactory(options);
             var repo = new PaperTemplateRepository(factory);
-            var vm = new PaperTemplateViewModel(repo);
+            var vm = new PaperTemplateViewModel(repo, Editor());
 
             vm.TemplateName = "Test Template";
             vm.PaperType = "Custom";
@@ -56,7 +56,7 @@ namespace CAL_QR.Tests
 
             var factory = new TestDbContextFactory(options);
             var repo = new PaperTemplateRepository(factory);
-            var vm = new PaperTemplateViewModel(repo);
+            var vm = new PaperTemplateViewModel(repo, Editor());
 
             vm.TemplateName = "Test Template";
             vm.PaperType = "Custom";
@@ -84,7 +84,7 @@ namespace CAL_QR.Tests
 
             var factory = new TestDbContextFactory(options);
             var repo = new PaperTemplateRepository(factory);
-            var vm = new PaperTemplateViewModel(repo);
+            var vm = new PaperTemplateViewModel(repo, Editor());
 
             vm.TemplateName = "Valid Template";
             vm.PaperType = "Custom";
@@ -137,12 +137,59 @@ namespace CAL_QR.Tests
             };
             await repo.AddAsync(oldTemplate);
 
-            var vm = new PaperTemplateViewModel(repo);
+            var vm = new PaperTemplateViewModel(repo, Editor());
             vm.LoadTemplate(oldTemplate.Id);
 
             Assert.Equal("Old Template", vm.TemplateName);
             Assert.Equal(0, vm.MarginRight);
             Assert.Equal(0, vm.MarginBottom);
+        }
+
+        [Theory]
+        [InlineData(false, UserRole.User, false)]   // مستخدم «قراءة فقط»
+        [InlineData(false, UserRole.Viewer, false)]
+        [InlineData(true, null, false)]             // لا مستخدم مسجَّل
+        public async Task TemplateViewModel_Save_IsBlocked_WithoutEditRights(bool noUser, UserRole? role, bool isEditor)
+        {
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_VM_NoEdit_" + System.Guid.NewGuid().ToString())
+                .Options;
+
+            var factory = new TestDbContextFactory(options);
+            var repo = new PaperTemplateRepository(factory);
+            var user = noUser ? null : new User { Role = role!.Value, IsEditor = isEditor, Permissions = SystemPermissions.Records };
+            string? shownMessage = null;
+            PaperTemplateViewModel.MessageBoxShowMock = (message, caption, button, image) => shownMessage = message;
+            var vm = new PaperTemplateViewModel(repo, new StubCurrentUser(user));
+
+            vm.TemplateName = "Unauthorized Template";
+            vm.PaperType = "Custom";
+            vm.PaperWidth = 210;
+            vm.PaperHeight = 297;
+            vm.Columns = 2;
+            vm.Rows = 2;
+            vm.LabelWidth = 50;
+            vm.LabelHeight = 50;
+            vm.IsDefault = true;
+
+            Assert.False(vm.CanEdit);
+            Assert.False(vm.SaveCommand.CanExecute(null));
+
+            await vm.SaveAsync();
+
+            Assert.Empty(await repo.GetAllAsync());
+            Assert.Equal(CAL_QR.Validation.PaperTemplateAuthorizationRules.SaveNotAllowedMessage, shownMessage);
+        }
+
+        private static StubCurrentUser Editor() =>
+            new StubCurrentUser(new User { Role = UserRole.User, IsEditor = true, Permissions = SystemPermissions.Records });
+
+        private sealed class StubCurrentUser : CAL_QR.Services.ICurrentUserService
+        {
+            public StubCurrentUser(User? user) { CurrentUser = user; }
+            public User? CurrentUser { get; private set; }
+            public void SetCurrentUser(User user) => CurrentUser = user;
+            public void ClearCurrentUser() => CurrentUser = null;
         }
 
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>

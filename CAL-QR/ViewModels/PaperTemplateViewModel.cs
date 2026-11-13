@@ -5,13 +5,16 @@ using System.Windows.Input;
 using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
+using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
     public class PaperTemplateViewModel : BaseViewModel
     {
         private readonly IPaperTemplateRepository _templateRepository;
-        
+        private readonly ICurrentUserService _currentUserService;
+
         public static Action<string, string, MessageBoxButton, MessageBoxImage>? MessageBoxShowMock { get; set; }
 
         private int _templateId;
@@ -33,12 +36,15 @@ namespace CAL_QR.ViewModels
 
         public event EventHandler? Saved;
 
-        public PaperTemplateViewModel(IPaperTemplateRepository templateRepository)
+        public PaperTemplateViewModel(IPaperTemplateRepository templateRepository, ICurrentUserService currentUserService)
         {
             _templateRepository = templateRepository;
+            _currentUserService = currentUserService;
 
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
         }
+
+        public bool CanEdit => PaperTemplateAuthorizationRules.CanSaveTemplate(_currentUserService.CurrentUser);
 
         #region Properties
         public string TemplateName { get => _templateName; set => SetProperty(ref _templateName, value); }
@@ -124,7 +130,8 @@ namespace CAL_QR.ViewModels
 
         private bool CanSave()
         {
-            return !string.IsNullOrWhiteSpace(TemplateName) &&
+            return CanEdit &&
+                   !string.IsNullOrWhiteSpace(TemplateName) &&
                    PaperWidth > 0 && PaperHeight > 0 &&
                    Columns > 0 && Rows > 0 &&
                    LabelWidth > 0 && LabelHeight > 0;
@@ -132,6 +139,12 @@ namespace CAL_QR.ViewModels
 
         public async Task SaveAsync()
         {
+            if (!CanEdit)
+            {
+                ShowMessageBox(PaperTemplateAuthorizationRules.SaveNotAllowedMessage, "صلاحية غير كافية", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 // Validate if labels fit within paper size

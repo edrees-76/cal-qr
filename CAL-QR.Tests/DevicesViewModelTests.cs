@@ -55,6 +55,7 @@ namespace CAL_QR.Tests
         {
             public Task<Certificate?> GetByIdAsync(int id) => Task.FromResult<Certificate?>(null);
             public Task<Certificate?> GetByCertificateNumberAsync(string certificateNumber) => Task.FromResult<Certificate?>(null);
+            public Task<Certificate?> GetByCalibrationRecordIdAsync(int calibrationRecordId) => Task.FromResult<Certificate?>(null);
             public Task<string> AddAsync(Certificate certificate) => Task.FromResult("TNRC-0000-0000");
             public Task<bool> UpdateAsync(Certificate certificate) => Task.FromResult(false);
             public Task MarkPrintedAsync(int certificateId) => Task.CompletedTask;

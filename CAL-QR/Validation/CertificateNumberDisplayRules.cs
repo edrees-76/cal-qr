@@ -38,6 +38,13 @@ namespace CAL_QR.Validation
             string.IsNullOrWhiteSpace(issuedNumber) ? None : issuedNumber.Trim();
 
         /// <summary>
+        /// هل لقيمة العرض (الناتجة عن <see cref="Display"/>) شهادة سارية؟ يُفعِّل تصدير PDF
+        /// وطباعة الملصق بحسب الشهادة الفعليّة للسجلّ، لا بحسب العمود القديم القابل للتحرير.
+        /// </summary>
+        public static bool HasIssuedCertificate(string? displayNumber) =>
+            !string.IsNullOrWhiteSpace(displayNumber) && displayNumber.Trim() != None;
+
+        /// <summary>
         /// أرقام الشهادات السارية لمجموعة سجلات، مفهرسةً بمعرّف سجل المعايرة.
         /// السجل بلا شهادة لا يظهر في القاموس إطلاقاً.
         ///

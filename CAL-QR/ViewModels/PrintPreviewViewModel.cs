@@ -230,11 +230,11 @@ namespace CAL_QR.ViewModels
         // ── يملأ حقول البيانات فقط؛ Template/PrinterName/StartColumn/StartRow يضبطها المستدعي ──
         private async Task<(QrPrintJob? Job, string? BlockReason)> BuildJobDataAsync(CalibrationRecord record)
         {
-            if (string.IsNullOrWhiteSpace(record.CertificateNumber))
-                return (null, CalibrationLabelPolicy.NoCertificateReason);
-
+            // الشهادة الفعليّة لهذا السجلّ بالرابط الموثوق CalibrationRecordId، لا بالعمود القديم
+            // CalibrationRecord.CertificateNumber القابل للتحرير: رقم فيه قد يكون خُصِّص لاحقاً
+            // لشهادة سجلّ آخر، فيُطبع ملصق جهاز بكود تحقّق جهاز آخر.
             var certificate = await _certificateRepository
-                .GetByCertificateNumberAsync(record.CertificateNumber);
+                .GetByCalibrationRecordIdAsync(record.Id);
 
             // بلا هذا الحارس كانت certificate! تتّكئ على سلوك دالّة في ملفّ آخر
             // لا يراه المترجم، فلا يستطيع التحقّق من عدم الفراغ بنفسه.

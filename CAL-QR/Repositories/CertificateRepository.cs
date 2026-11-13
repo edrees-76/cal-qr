@@ -52,6 +52,18 @@ namespace CAL_QR.Repositories
                 .FirstOrDefaultAsync(c => c.CertificateNumber == number && !c.IsDeleted);
         }
 
+        public async Task<Certificate?> GetByCalibrationRecordIdAsync(int calibrationRecordId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Certificates
+                .AsNoTracking()
+                .Include(c => c.NuclideSummaries)
+                .Include(c => c.CalibrationResults)
+                .Include(c => c.UncertaintyComponents)
+                .Include(c => c.FunctionalChecks)
+                .FirstOrDefaultAsync(c => c.CalibrationRecordId == calibrationRecordId && !c.IsDeleted);
+        }
+
         /// <summary>
         /// ترتيب الخطوات ملزم:
         ///   1. فتح المعاملة

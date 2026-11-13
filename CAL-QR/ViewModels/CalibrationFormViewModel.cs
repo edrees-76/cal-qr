@@ -39,6 +39,8 @@ namespace CAL_QR.ViewModels
         // مكتوب يدوياً؟ (سجل مُرحَّل). لا يُشتقّ من IsEditMode، لأن السجل الجديد يصير
         // IsEditMode = true بعد أول حفظ وهو ليس مُرحَّلاً.
         private bool _hasLegacyCertificateNumber;
+        // القيمة المخزَّنة وقت التحميل: الصيغة المحجوزة تُرفض فقط إن غيّرها المستخدم.
+        private string _originalCertificateNumber = string.Empty;
 
         private bool _isSyncingOwnerSelection;
         private bool _isSyncingDeviceTypeSelection;
@@ -653,6 +655,7 @@ namespace CAL_QR.ViewModels
                         // لاحقاً: رقم مكتوب في القاعدة ⇒ سجل مُرحَّل ⇒ الحقل يبقى
                         // قابلاً للتحرير وإلزامياً كما كان قبل ميزة الشهادة.
                         _hasLegacyCertificateNumber = !string.IsNullOrWhiteSpace(record.CertificateNumber);
+                        _originalCertificateNumber = record.CertificateNumber ?? string.Empty;
 
                         CalibrationDate = record.CalibrationDate;
                         ExpiryDate = record.ExpiryDate;
@@ -774,6 +777,22 @@ namespace CAL_QR.ViewModels
                     {
                         ValidationErrors = "تنبيه: رقم الشهادة مسجل مسبقاً بسجل آخر. يرجى إدخال رقم شهادة فريد.";
                         return;
+                    }
+
+                    // الحقل القابل للتحرير وحده (سجلّ مُرحَّل بلا شهادة سارية): لا صيغة رسميّة
+                    // ولا رقم شهادة موجودة. القيمة التي يضعها النظام (حقل مقفل) لا تُفحص هنا.
+                    if (!IsCertificateNumberReadOnly)
+                    {
+                        string typed = CertificateNumber.Trim();
+                        bool belongsToCertificate = await context.Certificates
+                            .AnyAsync(c => c.CertificateNumber == typed);
+                        string? legacyError = CAL_QR.Validation.LegacyCertificateNumberRules.Validate(
+                            _originalCertificateNumber, typed, belongsToCertificate);
+                        if (legacyError != null)
+                        {
+                            ValidationErrors = legacyError;
+                            return;
+                        }
                     }
                 }
             }

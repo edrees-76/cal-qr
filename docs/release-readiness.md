@@ -5,6 +5,12 @@
 
 ## سجلّ الجولات
 
+- **الخيار «ب» من NV-7 + الإصدار 1.0.1 (13 نوفمبر 2026)** — فرع `fix/legacy-number-reserved-format` على أساس `bdaece5`، بتفويض إدريس الكامل («اعمل أنت بنفسك»):
+  - الخيار «ب»: حقل الرقم القديم (`CalibrationRecord.CertificateNumber`) حين يكون قابلاً للتحرير (سجلّ مُرحَّل بلا شهادة سارية) يرفض عند الحفظ رقماً **تغيّر** عن المخزَّن إن كان بالصيغة الرسميّة `TNRC-SSDL-YYYY-N…` أو يخصّ شهادة في جدول `Certificates` (سارية أو مُبطَلة). القيمة المخزَّنة سابقاً تُقبل ما دامت لم تتغيّر (السجلّ الذي أُبطلت شهادته يحمل رقمها منسوخاً). الحقل المقفل (رقم يضعه النظام) لا يُفحص. القاعدة نقيّة في `Validation/LegacyCertificateNumberRules.cs` مع `LegacyCertificateNumberRulesTests.cs`. لا مساس بالترقيم ولا بحمولة التوقيع ولا بالمخطّط.
+  - الإصدار 1.0.1 (تصحيحات أمنيّة NV-2/4/7/8 منذ 1.0.0، بلا ميزات): `<Version>` في `CAL-QR.csproj`، نصّ «الإصدار» في `AboutView.xaml`، القيمة الافتراضيّة في `installer.iss`، و`ProjectContext.md` و`deployment-guide.md`. `CAL-QR.AutoRun` يبقى 1.0.0 (لم يتغيّر).
+  - على جهاز إدريس بتفويضه (13 نوفمبر 2026): `dotnet build` ⇒ 0 تحذيرات، 0 أخطاء؛ `dotnet test` ⇒ **630 نجح / 0 فشل / 0 تخطّى** (منها 24 حالة جديدة في `LegacyCertificateNumberRulesTests`).
+  - التحقّق البصريّ للخيار «ب» (كتابة رقم بالصيغة الرسميّة في سجلّ مُرحَّل ⇒ رسالة رفض): لم يُجرَ.
+
 - **إصلاح NV-7 من التدقيق الأمنيّ: التصدير والطباعة يجدان الشهادة بالسجلّ لا بالرقم القابل للتحرير (13 نوفمبر 2026)** — فرع `fix/print-resolve-by-id` على أساس `a269ee9`، الخيار «أ» بقرار إدريس:
   - السبب: تصدير PDF (`DeviceDetailViewModel.ExportPdfAsync`) وطباعة الملصق (`PrintPreviewViewModel.BuildJobDataAsync`) كانا يجدان الشهادة بـ`GetByCertificateNumberAsync(CalibrationRecord.CertificateNumber)`. هذا العمود القديم قابل للتحرير بعد إبطال الشهادة (`CalibrationFormViewModel.cs:408`)، وفحص تكراره لا يرى جدول الشهادات ولا العدّاد (`:771`)؛ فرقمٌ كُتب فيه ثمّ خُصِّص لاحقاً لسجلّ آخر يجعل تصدير/طباعة السجلّ الأوّل يُخرج شهادة الجهاز الآخر ويختم «أوّل طباعة» عليها. شاشات العرض كانت سليمة لأنّها تقرأ بـ`CalibrationRecordId`.
   - القرار: مسار الإخراج يقرأ بالرابط الموثوق: `ICertificateRepository.GetByCalibrationRecordIdAsync` (شهادة غير محذوفة واحدة لكلّ سجلّ بالفهرس الفريد المشروط)، وتفعيل زرَّي التصدير والطباعة بـ`CertificateNumberDisplayRules.HasIssuedCertificate(DisplayCertificateNumber)`. لا مساس بالترقيم ولا بحمولة التوقيع ولا بالمخطّط. منع كتابة رقم رسميّ في العمود القديم (الخيار «ب») مؤجَّل.

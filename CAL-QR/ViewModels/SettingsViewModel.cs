@@ -103,8 +103,8 @@ namespace CAL_QR.ViewModels
             BrowseDatabasePathCommand = new RelayCommand(BrowseDatabasePath, () => CanEdit);
             BrowseAttachmentsPathCommand = new RelayCommand(BrowseAttachmentsPath, () => CanEdit);
             BrowseQrOutputPathCommand = new RelayCommand(BrowseQrOutputPath, () => CanEdit);
-            BackupNowCommand = new RelayCommand(async () => await BackupNowAsync(), () => IsBackupRestoreVisible);
-            RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync(), () => IsBackupRestoreVisible);
+            BackupNowCommand = new RelayCommand(async () => await BackupNowAsync(), () => CanBackupNow);
+            RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync(), () => CanRestoreBackup);
             OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
             EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
@@ -124,6 +124,11 @@ namespace CAL_QR.ViewModels
         }
 
         public bool IsBackupRestoreVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Settings) ?? false;
+
+        /// <summary>تنفيذ عمليّات النسخ أضيق من إظهار بطاقتها: انظر BackupAuthorizationRules.</summary>
+        public bool CanBackupNow => BackupAuthorizationRules.CanBackupNow(_currentUserService.CurrentUser);
+        public bool CanRestoreBackup => BackupAuthorizationRules.CanRestore(_currentUserService.CurrentUser);
+        public bool CanChangeBackupPassword => BackupAuthorizationRules.CanChangeBackupPassword(_currentUserService.CurrentUser);
 
         /// <summary>
         /// قسم ضبط كلمة سرّ «مفتاح التوقيع»: المدير وحده.
@@ -760,6 +765,12 @@ namespace CAL_QR.ViewModels
 
         private async Task BackupNowAsync()
         {
+            if (!CanBackupNow)
+            {
+                MessageBox.Show(BackupAuthorizationRules.BackupNowNotAllowedMessage, "صلاحية غير كافية", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(BackupPath))
             {
                 MessageBox.Show("يرجى اختيار مسار مجلد النسخ الاحتياطي أولاً.", "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -794,6 +805,13 @@ namespace CAL_QR.ViewModels
 
         private async Task RestoreBackupAsync()
         {
+            // الاستعادة تستبدل الحسابات والأدوار ومفتاح التوقيع: للمدير وحده، كالتصفير الكامل.
+            if (!CanRestoreBackup)
+            {
+                MessageBox.Show(BackupAuthorizationRules.OnlyAdminRestoresMessage, "صلاحية غير كافية", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var openFileDialog = new OpenFileDialog
             {
                 // .zip للنسخ القديمة غير المشفَّرة التي سبقت قفل النسخ — تبقى قابلة للاستعادة.
@@ -1122,7 +1140,7 @@ namespace CAL_QR.ViewModels
         }
 
         private bool CanSaveBackupPassword() =>
-            IsBackupRestoreVisible &&
+            CanChangeBackupPassword &&
             !string.IsNullOrEmpty(BackupPassword) &&
             !string.IsNullOrEmpty(BackupPasswordConfirm);
 
@@ -1148,8 +1166,9 @@ namespace CAL_QR.ViewModels
         /// </summary>
         private async Task SaveBackupPasswordAsync()
         {
-            if (!IsBackupRestoreVisible)
+            if (!CanChangeBackupPassword)
             {
+                MessageBox.Show(BackupAuthorizationRules.OnlyAdminSetsBackupPasswordMessage, "صلاحية غير كافية", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

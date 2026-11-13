@@ -917,13 +917,26 @@ namespace CAL_QR.ViewModels
             await Task.CompletedTask;
         }
 
+        // أحداث التنقّل تصل من لوحة التحكّم وتفاصيل الجهة المالكة ونوع الجهاز والبحث،
+        // فالتحقّق هنا عند آخر نقطة قبل فتح التفاصيل.
+        private bool EnsureCanViewDevices()
+        {
+            if (TabAccessRules.CanOpenTab(_currentUserService.CurrentUser, TabAccessRules.Devices))
+                return true;
+
+            MessageBox.Show(TabAccessRules.DevicesNotAllowedMessage, "صلاحية غير كافية", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
+        }
+
         private void OnNavigateToDevice(int deviceId)
         {
+            if (!EnsureCanViewDevices()) return;
             ShowDeviceDetailsById(deviceId);
         }
 
         private void OnNavigateToCalibrationRecord(int recordId)
         {
+            if (!EnsureCanViewDevices()) return;
             try
             {
                 using var context = _contextFactory.CreateDbContext();

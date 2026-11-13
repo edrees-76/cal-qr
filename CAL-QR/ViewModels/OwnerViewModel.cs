@@ -11,6 +11,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -206,6 +207,9 @@ namespace CAL_QR.ViewModels
 
         private void OnNavigateToOwner(int ownerId)
         {
+            // يرفعه البحث الشامل بعد التحقّق؛ يُعاد التحقّق هنا عند آخر نقطة.
+            if (!TabAccessRules.CanOpenTab(_currentUserService.CurrentUser, TabAccessRules.Owners)) return;
+
             var matchedOwner = Owners.FirstOrDefault(o => o.Id == ownerId);
             if (matchedOwner == null)
             {

@@ -379,6 +379,14 @@ namespace CAL_QR.ViewModels
 
         private async Task SaveGeneralSettingsAsync()
         {
+            // قبل أيّ كتابة: مدّة صفر أو سالبة تقفل البرنامج بعد ثوانٍ من كلّ دخول.
+            string? idleLockError = IdleLockRules.Validate(AutoLockMinutes);
+            if (idleLockError != null)
+            {
+                MessageBox.Show(idleLockError, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 using var context = await _contextFactory.CreateDbContextAsync();

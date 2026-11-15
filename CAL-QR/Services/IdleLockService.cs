@@ -19,7 +19,7 @@ namespace CAL_QR.Services
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private DateTime _lastActivityTime;
         private DispatcherTimer? _timer;
-        private int _autoLockMinutes = 10;
+        private int _autoLockMinutes = CAL_QR.Validation.IdleLockRules.DefaultMinutes;
         private bool _hooksAttached;
 
         public event EventHandler? LockRequested;
@@ -46,9 +46,19 @@ namespace CAL_QR.Services
             {
                 using var context = _contextFactory.CreateDbContext();
                 var setting = context.AppSettings.AsNoTracking().FirstOrDefault(s => s.Key == "AutoLockMinutes");
-                if (setting != null && int.TryParse(setting.Value, out var minutes))
+                if (setting != null)
                 {
-                    _autoLockMinutes = minutes;
+                    // قيمة غير صالحة (صفر أو سالبة في قاعدة قائمة) لا تُطبَّق: كانت تقفل
+                    // البرنامج بعد ثوانٍ من كلّ دخول. تبقى المدّة السابقة ويُسجَّل السبب.
+                    if (CAL_QR.Validation.IdleLockRules.TryReadStored(setting.Value, out int minutes))
+                    {
+                        _autoLockMinutes = minutes;
+                    }
+                    else
+                    {
+                        CAL_QR.Services.AppLog.Warn(
+                            $"AutoLockMinutes المخزَّنة غير صالحة ('{setting.Value}')؛ تبقى المدّة {_autoLockMinutes} دقيقة.");
+                    }
                 }
             }
             catch (System.Exception swallowEx1)

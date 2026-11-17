@@ -5,12 +5,14 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:CAL_QR.Views.Tabs"
-             mc:Ignorable="d" 
+             xmlns:converters="clr-namespace:CAL_QR.Converters"
+             mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="900"
              Background="Transparent">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:UtcToLocalTimeConverter x:Key="UtcToLocalTimeConverter" />
     </UserControl.Resources>
 
     <Grid Margin="15">
@@ -292,7 +294,7 @@
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ت" Binding="{Binding SequenceNumber}" Width="45" CanUserSort="False" />
-                                <DataGridTextColumn Header="التاريخ والوقت" Binding="{Binding ActionAt, StringFormat=\{0:yyyy-MM-dd HH:mm:ss\}}" Width="1.2*" />
+                                <DataGridTextColumn Header="التاريخ والوقت" Binding="{Binding ActionAt, Converter={StaticResource UtcToLocalTimeConverter}, StringFormat=\{0:yyyy-MM-dd HH:mm:ss\}}" Width="1.2*" />
                                 <DataGridTextColumn Header="العملية المنفذة" Binding="{Binding Action}" Width="1*" />
                                 <DataGridTextColumn Header="الكيان المتأثر" Binding="{Binding EntityName}" Width="1*" />
                                 <DataGridTextColumn Header="المنفذ" Binding="{Binding Username}" Width="1*" />

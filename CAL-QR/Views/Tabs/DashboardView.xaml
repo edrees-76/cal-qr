@@ -28,8 +28,8 @@
                 BorderBrush="{DynamicResource AppBorder}" BorderThickness="1">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="#0D2040" Offset="0.0" />
-                    <GradientStop Color="#1A3A6B" Offset="0.65" />
+                    <GradientStop Color="{StaticResource NavyDarkColor}" Offset="0.0" />
+                    <GradientStop Color="{StaticResource PrimaryNavyColor}" Offset="0.65" />
                     <GradientStop Color="#1E4480" Offset="1.0" />
                 </LinearGradientBrush>
             </Border.Background>
@@ -78,8 +78,8 @@
             <Border Grid.Column="0" Margin="0,0,5,0" CornerRadius="8" Height="100" ClipToBounds="True">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                        <GradientStop Color="#0D2040" Offset="0.0" />
-                        <GradientStop Color="#1A3A6B" Offset="1.0" />
+                        <GradientStop Color="{StaticResource NavyDarkColor}" Offset="0.0" />
+                        <GradientStop Color="{StaticResource PrimaryNavyColor}" Offset="1.0" />
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid Margin="14,8">
@@ -106,7 +106,7 @@
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#1B5E20" Offset="0.0" />
-                        <GradientStop Color="#2E7D32" Offset="1.0" />
+                        <GradientStop Color="{StaticResource SuccessGreenColor}" Offset="1.0" />
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid Margin="14,8">
@@ -133,7 +133,7 @@
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#BF6000" Offset="0.0" />
-                        <GradientStop Color="#F9A825" Offset="1.0" />
+                        <GradientStop Color="{StaticResource WarningYellowColor}" Offset="1.0" />
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid Margin="14,8">
@@ -160,7 +160,7 @@
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                         <GradientStop Color="#7F0000" Offset="0.0" />
-                        <GradientStop Color="#C62828" Offset="1.0" />
+                        <GradientStop Color="{StaticResource ErrorRedColor}" Offset="1.0" />
                     </LinearGradientBrush>
                 </Border.Background>
                 <Grid Margin="14,8">
@@ -205,8 +205,8 @@
                     <Rectangle Grid.Row="0">
                         <Rectangle.Fill>
                             <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                <GradientStop Color="#1A3A6B" Offset="0.0" />
-                                <GradientStop Color="#C9A227" Offset="1.0" />
+                                <GradientStop Color="{StaticResource PrimaryNavyColor}" Offset="0.0" />
+                                <GradientStop Color="{StaticResource GoldAccentColor}" Offset="1.0" />
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
@@ -247,7 +247,7 @@
                                                            FontSize="10.5" FontFamily="{StaticResource CairoFont}"
                                                            VerticalAlignment="Top" />
                                                 <TextBlock Grid.Column="2" Text="{Binding OwnerName}"
-                                                           FontSize="10.5" Foreground="#424242"
+                                                           FontSize="10.5" Foreground="{DynamicResource TextBody}"
                                                            FontFamily="{StaticResource CairoFont}"
                                                            TextWrapping="Wrap" HorizontalAlignment="Stretch"
                                                            VerticalAlignment="Top" />
@@ -263,8 +263,8 @@
                                                 <Border Grid.Column="0" CornerRadius="5">
                                                     <Border.Background>
                                                         <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
-                                                            <GradientStop Color="#1A3A6B" Offset="0.0" />
-                                                            <GradientStop Color="#C9A227" Offset="1.0" />
+                                                            <GradientStop Color="{StaticResource PrimaryNavyColor}" Offset="0.0" />
+                                                            <GradientStop Color="{StaticResource GoldAccentColor}" Offset="1.0" />
                                                         </LinearGradientBrush>
                                                     </Border.Background>
                                                 </Border>
@@ -356,8 +356,8 @@
                                                 <StackPanel Orientation="Vertical" Margin="0,3">
                                                     <TextBlock Text="{Binding DeviceModel}" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" ToolTip="{Binding DeviceModel}" />
                                                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                        <TextBlock Text="الرقم: " Foreground="#888888" FontSize="10" FontFamily="{StaticResource CairoFont}" />
-                                                        <TextBlock Text="{Binding SerialNumber}" Foreground="#555555" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
+                                                        <TextBlock Text="الرقم: " Foreground="{DynamicResource TextMuted}" FontSize="10" FontFamily="{StaticResource CairoFont}" />
+                                                        <TextBlock Text="{Binding SerialNumber}" Foreground="{DynamicResource TextBody}" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -389,7 +389,7 @@
                                                                              Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center" />
                                                     <TextBlock Text="{Binding DaysRemaining}" FontWeight="Bold"
                                                                Foreground="{DynamicResource WarningYellow}" VerticalAlignment="Center" />
-                                                    <TextBlock Text=" يوم" Foreground="{DynamicResource IconNeutral}" FontSize="11"
+                                                    <TextBlock Text=" يوم" Foreground="{DynamicResource TextMuted}" FontSize="11"
                                                                Margin="3,0,0,0" VerticalAlignment="Center"
                                                                FontFamily="{StaticResource CairoFont}" />
                                                 </StackPanel>
@@ -466,8 +466,8 @@
                                                 <StackPanel Orientation="Vertical" Margin="0,3">
                                                     <TextBlock Text="{Binding DeviceModel}" FontWeight="Bold" FontSize="11" TextWrapping="Wrap" ToolTip="{Binding DeviceModel}" />
                                                     <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                                                        <TextBlock Text="الرقم: " Foreground="#888888" FontSize="10" FontFamily="{StaticResource CairoFont}" />
-                                                        <TextBlock Text="{Binding SerialNumber}" Foreground="#555555" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
+                                                        <TextBlock Text="الرقم: " Foreground="{DynamicResource TextMuted}" FontSize="10" FontFamily="{StaticResource CairoFont}" />
+                                                        <TextBlock Text="{Binding SerialNumber}" Foreground="{DynamicResource TextBody}" FontSize="10" FontWeight="SemiBold" ToolTip="{Binding SerialNumber}" />
                                                     </StackPanel>
                                                 </StackPanel>
                                             </DataTemplate>

@@ -108,7 +108,7 @@
                 <TextBlock Text="الإعدادات" FontSize="20" FontWeight="Bold"
                            Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="اختر قسماً لتعديل إعدادات النظام" FontSize="12"
-                           Foreground="#6B7280" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                           Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
             </StackPanel>
         </Border>
 
@@ -196,7 +196,7 @@
                                     Visibility="{Binding IsHelpSectionPasswordVisible, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="🔑 كلمة سرّ «مفتاح التوقيع»" Style="{StaticResource SectionTitle}" />
                             <TextBlock Text="تحمي قسم «مفتاح التوقيع» في تبويب المساعدة."
-                                       FontSize="12" Foreground="#6B7280" TextWrapping="Wrap"
+                                       FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
                                        FontFamily="{StaticResource CairoFont}" Margin="0,0,0,10" />
                             <TextBlock Text="{Binding HelpSectionPasswordStatusText}"
                                        FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,12" />
@@ -221,7 +221,7 @@
                                         Height="40" FontFamily="{StaticResource CairoFont}" Margin="0,0,10,0" />
                                 <Button Grid.Column="1" Command="{Binding ClearHelpSectionPasswordCommand}" Content="إزالة"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
-                                        Foreground="#D32F2F" BorderBrush="#D32F2F" Height="40" Width="100"
+                                        Foreground="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}" Height="40" Width="100"
                                         FontFamily="{StaticResource CairoFont}" />
                             </Grid>
                         </StackPanel>
@@ -426,7 +426,7 @@
                                        FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}"
                                        Margin="0,0,0,8" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="تُقفل بها كلّ نسخة. اكتبها على ورقة واحفظها في ظرف مختوم."
-                                       FontSize="12" Foreground="#6B7280" TextWrapping="Wrap"
+                                       FontSize="12" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
                                        FontFamily="{StaticResource CairoFont}" Margin="0,0,0,15" />
 
                             <TextBlock Text="كلمة السرّ (10 محارف على الأقل)" Style="{StaticResource FieldLabel}" />
@@ -508,7 +508,7 @@
                                    Margin="0,0,0,8" />
 
                         <TextBlock Text="أدخل كلمة مرور حسابك للوصول إلى بطاقة إعادة الضبط"
-                                   FontSize="13" Foreground="#6B7280" TextWrapping="Wrap"
+                                   FontSize="13" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
                                    FontFamily="{StaticResource CairoFont}" TextAlignment="Center"
                                    Margin="0,0,0,24" />
 
@@ -530,7 +530,7 @@
                             <Button Grid.Column="2" x:Name="BtnCancelResetGate" Content="إلغاء"
                                     Click="BtnCancelResetGate_Click"
                                     Style="{StaticResource MaterialDesignOutlinedButton}"
-                                    BorderBrush="#9CA3AF" Foreground="#6B7280"
+                                    BorderBrush="#9CA3AF" Foreground="{DynamicResource TextMuted}"
                                     Height="40" FontFamily="{StaticResource CairoFont}" />
                         </Grid>
 

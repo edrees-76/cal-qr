@@ -18,7 +18,7 @@
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Padding" Value="15,12" />
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#333333" />
+            <Setter Property="Foreground" Value="{DynamicResource TextStrong}" />
             <Setter Property="BorderThickness" Value="0,0,4,0" />
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="Template">
@@ -65,7 +65,7 @@
         -->
         <Style x:Key="DangerCardStyle" TargetType="Border">
             <Setter Property="Background" Value="#FDECEA" />
-            <Setter Property="BorderBrush" Value="#D32F2F" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ErrorRed}" />
             <Setter Property="BorderThickness" Value="2" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Padding" Value="18,16" />
@@ -167,7 +167,7 @@
                     <!-- Panel 1: First Run Setup -->
                     <StackPanel x:Name="Panel1" Visibility="Visible">
                         <TextBlock Text="تشغيل البرنامج لأول مرة (معالج الإعداد)" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="عند فتح البرنامج لأول مرة على جهازك، ستظهر لك تلقائياً شاشة إعداد النظام المكونة من 4 خطوات:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="عند فتح البرنامج لأول مرة على جهازك، ستظهر لك تلقائياً شاشة إعداد النظام المكونة من 4 خطوات:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" TextWrapping="Wrap" />
 
                         <TextBlock Text="الخطوة 1: مرحباً بك" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="اضغط على زر 'البدء ←' مباشرة." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" />
@@ -175,7 +175,7 @@
                         <TextBlock Text="الخطوة 2: اختيار مسار قاعدة البيانات (مكان حفظ البيانات)" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="• يقوم النظام بتحديد مسار افتراضي لحفظ البيانات داخل مجلد البرنامج." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,5" />
                         <Border Style="{StaticResource NoticeCardStyle}">
-                            <TextBlock Text="💡 توصية هامة: يُفضل بشدة تغيير هذا المسار بالضغط على زر 'تصفح...' واختيار مجلد داخل القرص D: أو E: (بدلاً من القرص C:). هذا يضمن سلامة بياناتك وعدم ضياعها في حال تعرض نظام التشغيل Windows للتلف أو عند عمل فورمات للجهاز." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldDeep}" TextWrapping="Wrap" />
+                            <TextBlock Text="💡 توصية هامة: يُفضل بشدة تغيير هذا المسار بالضغط على زر 'تصفح...' واختيار مجلد داخل القرص D: أو E: (بدلاً من القرص C:). هذا يضمن سلامة بياناتك وعدم ضياعها في حال تعرض نظام التشغيل Windows للتلف أو عند عمل فورمات للجهاز." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
                         </Border>
                         <TextBlock Text="• اضغط 'التالي ←' للذهاب للخطوة التالية." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" />
 
@@ -202,14 +202,14 @@
                         <TextBlock Text="نسيت كلمة المرور؟" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. انقر على رابط 'نسيت كلمة المرور' في نافذة تسجيل الدخول.&#x0a;2. سيطلب منك البرنامج الإجابة على السؤال السري الذي حددته في الإعداد الأول.&#x0a;3. عند إدخال الإجابة الصحيحة، سيسمح لك البرنامج بتعيين كلمة مرور جديدة فوراً والدخول." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap" />
                         <Border Style="{StaticResource NoticeCardStyle}">
-                            <TextBlock Text="⚠️ خيار الطوارئ الأخير: في حال نسيان الإجابة السرية أيضاً، يرجى التواصل مع مسؤول النظام (م. إدريس فتح الله الهري)." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldDeep}" TextWrapping="Wrap" />
+                            <TextBlock Text="⚠️ خيار الطوارئ الأخير: في حال نسيان الإجابة السرية أيضاً، يرجى التواصل مع مسؤول النظام (م. إدريس فتح الله الهري)." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
                         </Border>
                     </StackPanel>
 
                     <!-- Panel 3: Dashboard -->
                     <StackPanel x:Name="Panel3" Visibility="Collapsed">
                         <TextBlock Text="الشاشة الرئيسية للمتابعة السريعة (لوحة التحكم)" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="هذه الشاشة مخصصة للمتابعة السريعة والفورية لحالة الأجهزة ولا تتطلب منك القيام بأي إجراء:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="هذه الشاشة مخصصة للمتابعة السريعة والفورية لحالة الأجهزة ولا تتطلب منك القيام بأي إجراء:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="• الأرقام الأربعة الكبيرة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="تعرض لك لمحة سريعة عن (إجمالي الأجهزة، الأجهزة ذات المعايرة السارية، الأجهزة التي ستنتهي صلاحيتها قريباً خلال 30 يوماً، والأجهزة منتهية الصلاحية)." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -258,7 +258,7 @@
                     <!-- Panel 6: QR Templates & Sizes -->
                     <StackPanel x:Name="Panel6" Visibility="Collapsed">
                         <TextBlock Text="تصميم وضبط مقاسات ملصقات كود الـ QR" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="يوفر النظام أداة مرنة للمشغّل لضبط مقاسات ملصق كود الـ QR المطبوع لتتناسب مع أحجام الملصقات المختلفة المتوفرة لديك:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="يوفر النظام أداة مرنة للمشغّل لضبط مقاسات ملصق كود الـ QR المطبوع لتتناسب مع أحجام الملصقات المختلفة المتوفرة لديك:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="تعديل وضبط مقاسات الملصق:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. اذهب إلى نافذة طباعة الملصقات أو إعدادات القوالب.&#x0a;2. يمكنك تعيين الطول والعرض الفعلي للملصق بالمليمتر (mm).&#x0a;3. يمكنك ضبط الهوامش (العلوية والجانبية) لضمان توسيط كود الـ QR والبيانات المرافقة له على الورقة المطبوعة.&#x0a;4. يمكنك إدراج نصوص مخصصة تظهر بجانب الكود (مثل اسم الموديل أو تاريخ انتهاء المعايرة)." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -270,7 +270,7 @@
                     <!-- Panel 7: Owners & Types -->
                     <StackPanel x:Name="Panel7" Visibility="Collapsed">
                         <TextBlock Text="إدخال الجهات المالكة وأنواع الأجهزة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="لتسجيل وتسهيل عملية إدخال الأجهزة الجديدة لاحقاً دون أخطاء إملائية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="لتسجيل وتسهيل عملية إدخال الأجهزة الجديدة لاحقاً دون أخطاء إملائية:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="إضافة جهة مالكة جديدة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="افتح قسم 'الجهات المالكة'، اضغط زر إضافة واكتب اسم المؤسسة أو المستشفى أو القسم (مثل: مستشفى بنغازي الطبي) ثم احفظها. ستظهر لك هذه الجهة تلقائياً في قائمة الخيارات عند تسجيل أي جهاز جديد." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -282,7 +282,7 @@
                     <!-- Panel 8: Export & Reports -->
                     <StackPanel x:Name="Panel8" Visibility="Collapsed">
                         <TextBlock Text="استخراج التقارير وتصديرها (Excel &amp; PDF)" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="يمكنك استخراج البيانات وتصديرها بالصيغة المناسبة حسب حاجتك الإدارية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="يمكنك استخراج البيانات وتصديرها بالصيغة المناسبة حسب حاجتك الإدارية:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="خطوات التصدير:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="حدد الفلاتر المطلوبة (الجهة المالكة، نوع الجهاز، نطاق تاريخ انتهاء المعايرة) من الشاشة." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" />
@@ -297,12 +297,12 @@
                     <!-- Panel 9: Backup & Restore -->
                     <StackPanel x:Name="Panel9" Visibility="Collapsed">
                         <TextBlock Text="حفظ النسخ الاحتياطية واستعادتها" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="لحماية المنظومة من الضياع التام نتيجة أعطال الأجهزة أو الفيروسات:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="لحماية المنظومة من الضياع التام نتيجة أعطال الأجهزة أو الفيروسات:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="إنشاء نسخة احتياطية يدوية:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. اذهب إلى تبويب 'الإعدادات'.&#x0a;2. انقر على زر 'نسخ احتياطي الآن'.&#x0a;3. سيقوم البرنامج بجمع قاعدة البيانات والشهادات المرفقة وضغطها في ملف ZIP واحد وحفظه في مسار النسخ الاحتياطي." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,5" TextWrapping="Wrap" />
                         <Border Style="{StaticResource NoticeCardStyle}">
-                            <TextBlock Text="💡 نصيحة ذهبية: قم بنقل ملف الـ ZIP الناتج بشكل دوري إلى فلاش ميموري (USB) أو هارد ديسك خارجي واحتفظ به في مكان آمن بعيداً عن جهاز الكمبيوتر الرئيسي." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldDeep}" TextWrapping="Wrap" />
+                            <TextBlock Text="💡 نصيحة ذهبية: قم بنقل ملف الـ ZIP الناتج بشكل دوري إلى فلاش ميموري (USB) أو هارد ديسك خارجي واحتفظ به في مكان آمن بعيداً عن جهاز الكمبيوتر الرئيسي." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
                         </Border>
 
                         <TextBlock Text="النسخ الاحتياطي التلقائي:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
@@ -315,7 +315,7 @@
                     <!-- Panel 10: Audit Log -->
                     <StackPanel x:Name="Panel10" Visibility="Collapsed">
                         <TextBlock Text="تصفح سجل العمليات للمتابعة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="يقوم النظام بمراقبة وتسجيل الحركات التي تتم بداخله تلقائياً:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="يقوم النظام بمراقبة وتسجيل الحركات التي تتم بداخله تلقائياً:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="طريقة العرض:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="يمكنك فتح تبويب 'سجل العمليات (Audit Log)' لمشاهدة جدول مرتب زمنياً يوضح كل إجراء تم في المنظومة (مثل تفاصيل إضافة أو تعديل أو حذف الأجهزة وسجلات المعايرة والنسخ الاحتياطي وتصدير التقارير)." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -417,7 +417,7 @@
                     <!-- Panel 12: Daily Tasks -->
                     <StackPanel x:Name="Panel12" Visibility="Collapsed">
                         <TextBlock Text="دورة العمل اليومية والمختصرة للمشغّل" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="لتسهيل عملك اليومي، يمكنك اتباع هذا المخطط السريع كدليل مهام يومي:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="لتسهيل عملك اليومي، يمكنك اتباع هذا المخطط السريع كدليل مهام يومي:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="كل صباح (عند بدء العمل):" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. افتح البرنامج وسجّل الدخول.&#x0a;2. تفقد لوحة التحكم (Dashboard) مباشرة لإلقاء نظرة على عدد الأجهزة قريبة الانتهاء (إن وجدت).&#x0a;3. أبلغ القسم المعني بالأجهزة التي اقترب موعد انتهاء معايرتها لاتخاذ اللازم." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -429,7 +429,7 @@
                     <!-- Panel 13: QR Care -->
                     <StackPanel x:Name="Panel13" Visibility="Collapsed">
                         <TextBlock Text="إرشادات العناية بملصق كود الـ QR المطبوع" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="الملصق المطبوع هو وسيلتك السريعة لقراءة حالة الجهاز بالهاتف المحمول. لضمان بقائه صالحاً ومقروءاً لأطول فترة ممكنة، اتبع الآتي:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="الملصق المطبوع هو وسيلتك السريعة لقراءة حالة الجهاز بالهاتف المحمول. لضمان بقائه صالحاً ومقروءاً لأطول فترة ممكنة، اتبع الآتي:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="قبل اللصق:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="تأكد تماماً من تنظيف سطح الجهاز الإشعاعي وإزالة الأتربة أو الزيوت وتجفيفه تماماً قبل لصق الملصق لضمان قوة الالتصاق." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -444,7 +444,7 @@
                     <!-- Panel 14: Mobile Scan -->
                     <StackPanel x:Name="Panel14" Visibility="Collapsed">
                         <TextBlock Text="كيفية مسح كود الـ QR بالهاتف للتحقق السريع" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                        <TextBlock Text="يمكن لأي شخص (مفتش، فني، أو مهندس) التحقق من حالة معايرة الجهاز في الميدان دون الحاجة لفتح نظام الكمبيوتر، وذلك باتباع الخطوات التالية:" FontSize="13" Foreground="#333333" Margin="0,0,0,15" />
+                        <TextBlock Text="يمكن لأي شخص (مفتش، فني، أو مهندس) التحقق من حالة معايرة الجهاز في الميدان دون الحاجة لفتح نظام الكمبيوتر، وذلك باتباع الخطوات التالية:" FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" />
 
                         <TextBlock Text="خطوات المسح والتحقق:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="1. افتح تطبيق كاميرا الهاتف الذكي (أو أي تطبيق مخصص لمسح أكواد QR).&#x0a;2. وجّه الكاميرا نحو كود الـ QR المطبوع على الملصق الخاص بالجهاز.&#x0a;3. انقر على الرابط أو النص الذي سيظهر لك على الشاشة.&#x0a;4. ستظهر لك البيانات الأساسية للجهاز مباشرة للتأكد من مطابقتها للجهاز الفعلي:&#x0a;   * رقم الشهادة&#x0a;   * الموديل والرقم التسلسلي&#x0a;   * الجهة المالكة&#x0a;   * تاريخ انتهاء المعايرة&#x0a;   * التوقيع الإلكتروني (Signature): وهو رمز أمان يؤكد لك أن هذا الملصق تم توليده وتوقيعه من قبل نظام CAL-QR الرسمي ولم يتم التلاعب ببياناته." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
@@ -455,14 +455,14 @@
                         ❌ لا Visibility مربوطة بصلاحية ولا بقفل. هذا مقصود ومُلزِم.
                     -->
                     <StackPanel x:Name="PanelRecovery" Visibility="Collapsed">
-                        <TextBlock Text="الاستعادة والطوارئ" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ErrorStrong}" Margin="0,0,0,10" />
-                        <TextBlock Text="اقرأ هذا القسم قبل نقل النظام إلى أي جهاز آخر، وقبل إعادة تثبيت النظام، وقبل أي فورمات. هذا القسم متاح للجميع بلا كلمة مرور." FontSize="13" Foreground="#333333" Margin="0,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="الاستعادة والطوارئ" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}" Margin="0,0,0,10" />
+                        <TextBlock Text="اقرأ هذا القسم قبل نقل النظام إلى أي جهاز آخر، وقبل إعادة تثبيت النظام، وقبل أي فورمات. هذا القسم متاح للجميع بلا كلمة مرور." FontSize="13" Foreground="{DynamicResource TextStrong}" Margin="0,0,0,15" TextWrapping="Wrap" />
 
                         <!-- ═══ التحذير الأحمر — أخطر ما في التبويب ═══ -->
                         <Border Style="{StaticResource DangerCardStyle}">
                             <StackPanel>
-                                <TextBlock Text="⛔ تحذير: عند نقل النظام إلى جهاز آخر" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource ErrorStrong}" Margin="0,0,0,8" TextWrapping="Wrap" />
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource ErrorStrong}" TextWrapping="Wrap"
+                                <TextBlock Text="⛔ تحذير: عند نقل النظام إلى جهاز آخر" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}" Margin="0,0,0,8" TextWrapping="Wrap" />
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource ErrorRed}" TextWrapping="Wrap"
                                            Text="استعِد نسخة احتياطية، لا تثبّت نظيفاً. التثبيت النظيف يولّد مفتاح توقيع جديداً، فتفشل كل الشهادات السابقة في التحقّق — بلا رسالة خطأ. المفتاح داخل قاعدة البيانات، والبرنامج بلا قاعدته لا يعرف شيئاً." />
                             </StackPanel>
                         </Border>
@@ -476,7 +476,7 @@
                                    Text="1. في 'الإعدادات' تأكّد أن حالة 'كلمة سرّ النسخ الاحتياطي' مضبوطة ✔ — بلا كلمة سرّ لا تُنشأ أيّ نسخة.&#x0a;2. تأكّد أن 'مسار النسخ الاحتياطي' مضبوط على مجلد موجود وقابل للكتابة — مسار فارغ يعني أن لا نسخة تُنشأ إطلاقاً.&#x0a;3. تأكّد أن 'جدولة النسخ' ليست 'None' إن أردت نسخاً تلقائياً.&#x0a;4. افتح مجلد النسخ الاحتياطي وتحقّق من وجود ملفّ .cqbak حديث — التاريخ والوقت في اسم الملف. فشل النسخ المجدول يُسجَّل في سجلّ العمليات.&#x0a;5. اضغط 'نسخ احتياطي الآن' وتأكّد من ظهور ملف جديد بتاريخ اللحظة." />
 
                         <Border Style="{StaticResource NoticeCardStyle}">
-                            <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldDeep}" TextWrapping="Wrap"
+                            <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap"
                                        Text="💡 نسخة لم تُختبر ليست نسخة. جرّب الاستعادة فعلياً مرة واحدة على جهاز آخر للتأكّد من سلامة الملف — قبل أن تحتاجها فعلاً." />
                         </Border>
                     </StackPanel>
@@ -489,7 +489,7 @@
                         <Border Style="{StaticResource NoticeCardStyle}"
                                 Visibility="{Binding ShowNotConfiguredNotice, Converter={StaticResource BoolToVis}}">
                             <TextBlock Text="🔒 لم تُضبط كلمة سرّ — اضبطها من الإعدادات."
-                                       FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource GoldDeep}" TextWrapping="Wrap" />
+                                       FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
                         </Border>
 
                         <!-- الطبقة ٢-ب: حقل الفتح -->
@@ -515,7 +515,7 @@
                             <PasswordBox x:Name="TxtSigningKeyPassword" Height="40"
                                          PasswordChanged="TxtSigningKeyPassword_PasswordChanged" Margin="0,0,0,10" />
 
-                            <TextBlock Text="{Binding UnlockError}" FontSize="12" Foreground="#D32F2F" Margin="0,0,0,10" TextWrapping="Wrap"
+                            <TextBlock Text="{Binding UnlockError}" FontSize="12" Foreground="{DynamicResource ErrorRed}" Margin="0,0,0,10" TextWrapping="Wrap"
                                        Visibility="{Binding HasUnlockError, Converter={StaticResource BoolToVis}}" />
 
                             <!--
@@ -543,7 +543,7 @@
                             <TextBlock FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap"
                                        Text="• يُكتب المفتاح بخطّ اليد على ورقة — لا يُطبع ولا يُرسل بالبريد.&#x0a;• نسختان في موقعين مختلفين، لا نسخة واحدة.&#x0a;• توقيع على حافة لسان الظرف، بحيث لا يُفتح دون أن يظهر أثر الفتح.&#x0a;• يُكتب التاريخ على الظرف." />
                             <Border Style="{StaticResource DangerCardStyle}">
-                                <TextBlock FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ErrorStrong}" TextWrapping="Wrap"
+                                <TextBlock FontSize="14" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}" TextWrapping="Wrap"
                                            Text="⛔ يُنفَّذ يوم التثبيت، قبل إصدار أول شهادة حقيقية." />
                             </Border>
 
@@ -555,7 +555,7 @@
                             <TextBlock FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap"
                                        Text="كل نسخة احتياطية تتضمّن قاعدة البيانات كاملة ومعها المفتاح. النسخ بصيغة .cqbak مقفلة بكلمة سرّ، فاحفظ كلمة السرّ جيدًا. أما ملفات .zip القديمة فتكشف المفتاح، فاحذفها من أي جهاز أو قرص أو مجلد سحابي بعد التأكد من وجود نسخة .cqbak سليمة." />
                             <Border Style="{StaticResource DangerCardStyle}">
-                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource ErrorStrong}" TextWrapping="Wrap"
+                                <TextBlock FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource ErrorRed}" TextWrapping="Wrap"
                                            Text="⛔ تُحفظ النسخ الاحتياطية حفظ الوثائق السرّية: لا قرص مشترك، لا مجلد سحابي عامّ، لا إرسال بالبريد.&#x0a;&#x0a;ومسار النسخ السحابي يرفع نسخة .cqbak المقفلة — لا يُضبط إلا على مجلد أو حساب مخصّص محكوم." />
                             </Border>
                         </StackPanel>

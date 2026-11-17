@@ -47,10 +47,10 @@
 
                         <Border Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="5" Padding="10">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="معاينة الملصق الفردي" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource IconNeutral}" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="معاينة الملصق الفردي" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
                                 <Image Source="{Binding QrImagePreview}" MaxWidth="260" MaxHeight="190" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,0,0,10" />
                                 <TextBlock Text="{Binding CalibrationRecord.CertificateNumber}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" />
-                                <TextBlock Text="{Binding CalibrationRecord.Device.SerialNumber}" FontSize="11" Foreground="{DynamicResource IconNeutral}" HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding CalibrationRecord.Device.SerialNumber}" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" />
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -64,7 +64,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -78,7 +78,7 @@
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,10">
                     <TextBlock Text="معاينة موضع الملصق على الورقة" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
 
                 <Viewbox Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">

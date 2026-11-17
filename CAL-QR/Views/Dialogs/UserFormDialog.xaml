@@ -37,7 +37,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="إدارة حسابات المستخدمين" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="إنشاء حساب مستخدم جديد وتخصيص صلاحيات العمل الخاصة به" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إنشاء حساب مستخدم جديد وتخصيص صلاحيات العمل الخاصة به" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
                     <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
@@ -67,7 +67,7 @@
                                  Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
                                  materialDesign:HintAssist.Hint="أدخل كلمة مرور قوية..." 
                                  Height="40" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="* اترك حقل كلمة المرور فارغاً عند التعديل إذا كنت لا ترغب في تغييرها" FontSize="10" Foreground="#E65100" Margin="0,-12,0,15" Visibility="{Binding IsEditMode, Converter={StaticResource BoolToVis}}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="* اترك حقل كلمة المرور فارغاً عند التعديل إذا كنت لا ترغب في تغييرها" FontSize="10" Foreground="{DynamicResource WarningText}" Margin="0,-12,0,15" Visibility="{Binding IsEditMode, Converter={StaticResource BoolToVis}}" FontFamily="{StaticResource CairoFont}" />
 
                     <!-- User Role -->
                     <TextBlock Text="دور الحساب / الصلاحية الرئيسية *" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" />
@@ -163,7 +163,7 @@
             <Grid Grid.Row="2" Margin="0,15,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Click="SaveButton_Click" Content="حفظ الحساب" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="120" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

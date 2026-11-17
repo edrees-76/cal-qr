@@ -133,7 +133,7 @@
             <Setter Property="FontFamily" Value="{StaticResource CairoFont}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#E0E0E0" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource AppBorder}" />
             <Setter Property="BorderBrush" Value="#CFD8DC" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="AlternationCount" Value="2" />
@@ -183,7 +183,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
@@ -224,7 +224,7 @@
                     <!-- ═══ ١. بيانات الجهة والجهاز ═══ -->
                     <StackPanel Margin="0,10,0,0">
                         <TextBlock Text="1. Client &amp; Instrument Identification" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="بيانات الجهة والجهاز" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        <TextBlock Text="بيانات الجهة والجهاز" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -284,7 +284,7 @@
                     <!-- ═══ ٢. الظروف البيئية ═══ -->
                     <StackPanel Margin="0,10,0,0">
                         <TextBlock Text="2. Environmental Conditions" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="الظروف البيئية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        <TextBlock Text="الظروف البيئية" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -316,8 +316,8 @@
                     <!-- ═══ تقرير الحالة (النوع السادس) — يظهر فقط في وضع تقرير الحالة ═══ -->
                     <StackPanel Visibility="{Binding IsStatusReport, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
                         <StackPanel Margin="0,10,0,0">
-                            <TextBlock Text="Calibration Status Report" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ErrorStrong}" FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="تقرير حالة المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                            <TextBlock Text="Calibration Status Report" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="تقرير حالة المعايرة" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
 
@@ -349,7 +349,7 @@
                     <StackPanel Visibility="{Binding IsCalibrationCertificate, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Visible}">
                         <StackPanel Margin="0,10,0,0">
                             <TextBlock Text="3. Calibration Results" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="نتائج المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                            <TextBlock Text="نتائج المعايرة" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
 
@@ -484,7 +484,7 @@
                     <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
                         <StackPanel Orientation="Vertical">
                             <TextBlock Text="4. Methodology &amp; Technical Information" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                            <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                            <TextBlock Text="المنهجية والمعلومات التقنية" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <CheckBox IsChecked="{Binding MethodologyEnabled}"
                                   IsEnabled="{Binding HasNoTemplateWarning}"
@@ -492,7 +492,7 @@
                                   VerticalAlignment="Center"
                                   FontFamily="{StaticResource CairoFont}"
                                   FontSize="11"
-                                  Foreground="{DynamicResource IconNeutral}"
+                                  Foreground="{DynamicResource TextMuted}"
                                   Margin="20,0,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -575,7 +575,7 @@
                         <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
                             <StackPanel Orientation="Vertical">
                                 <TextBlock Text="5. Uncertainty Budget" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                                <TextBlock Text="ميزانية عدم اليقين" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                                <TextBlock Text="ميزانية عدم اليقين" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                             </StackPanel>
                             <CheckBox IsChecked="{Binding UncertaintyEnabled}"
                                       IsEnabled="{Binding HasNoTemplateWarning}"
@@ -583,7 +583,7 @@
                                       VerticalAlignment="Center"
                                       FontFamily="{StaticResource CairoFont}"
                                       FontSize="11"
-                                      Foreground="{DynamicResource IconNeutral}"
+                                      Foreground="{DynamicResource TextMuted}"
                                       Margin="20,0,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
@@ -664,7 +664,7 @@
                     <!-- ═══ ٦. الفحوص الوظيفية ═══ -->
                     <StackPanel Margin="0,10,0,0">
                         <TextBlock Text="6. Functional Checks &amp; Notes" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="الفحوص الوظيفية والملاحظات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        <TextBlock Text="الفحوص الوظيفية والملاحظات" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -751,7 +751,7 @@
                     <!-- ═══ ٧. الاعتماد ═══ -->
                     <StackPanel Margin="0,10,0,0">
                         <TextBlock Text="7. Authorization &amp; Signatures" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="الاعتماد والتوقيعات" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
+                        <TextBlock Text="الاعتماد والتوقيعات" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
 
@@ -825,7 +825,7 @@
                                             Visibility="{Binding CanAutoFix,
                                                 Converter={StaticResource BooleanToVisibilityConverter}}"
                                             Style="{StaticResource MaterialDesignFlatButton}"
-                                            Foreground="#E65100"
+                                            Foreground="{DynamicResource WarningText}"
                                             FontFamily="{StaticResource CairoFont}"
                                             FontSize="12"
                                             Margin="8,0,0,0"
@@ -864,7 +864,7 @@
                         <Button Command="{Binding RevokeCommand}"
                                 Content="🚫 إلغاء الشهادة"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
-                                Foreground="#DC3545" BorderBrush="#DC3545"
+                                Foreground="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}"
                                 Height="40" Margin="0,0,10,0"
                                 FontFamily="{StaticResource CairoFont}"
                                 ToolTip="إلغاء الشهادة الصادرة نهائياً وتمييزها كملغاة عند التحقق">
@@ -880,14 +880,14 @@
                                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsStatusReport}" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource ErrorStrong}" />
-                                            <Setter Property="BorderBrush" Value="{DynamicResource ErrorStrong}" />
+                                            <Setter Property="Background" Value="{DynamicResource ErrorRed}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource ErrorRed}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}"
+                        <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}"
                                 BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click"
                                 FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>

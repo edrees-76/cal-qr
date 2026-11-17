@@ -170,7 +170,7 @@
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,15,5,5">
                     <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -250,7 +250,7 @@
                                                FontSize="12">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#E65100" />
+                                                <Setter Property="Foreground" Value="{DynamicResource WarningText}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                         <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
@@ -350,7 +350,7 @@
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
                                                         <Setter Property="Kind" Value="ClipboardCheck" />
-                                                        <Setter Property="Foreground" Value="#757575" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                                 <Setter Property="Kind" Value="ClipboardCheckMultiple" />
@@ -440,7 +440,7 @@
                                                    Margin="0,0,0,5">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
-                                                    <Setter Property="Foreground" Value="#E65100" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource WarningText}" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                             <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
@@ -452,19 +452,19 @@
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <materialDesign:PackIcon Kind="OfficeBuilding" Foreground="{DynamicResource GoldAccent}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding OwnerName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="{Binding OwnerName}" FontSize="12" Foreground="{DynamicResource TextBody}" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
                                             <materialDesign:PackIcon Kind="Radioactive" Foreground="{DynamicResource ErrorRed}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding DeviceTypeName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="{Binding DeviceTypeName}" FontSize="12" Foreground="{DynamicResource TextBody}" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                                             <materialDesign:PackIcon Kind="Laptop" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,5,0" VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding Model}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
-                                            <TextBlock Text=" - " Foreground="#757575" />
-                                            <TextBlock Text="{Binding SerialNumber}" FontSize="12" Foreground="#757575" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="{Binding Model}" FontSize="12" Foreground="{DynamicResource TextBody}" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text=" - " Foreground="{DynamicResource TextMuted}" />
+                                            <TextBlock Text="{Binding SerialNumber}" FontSize="12" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
                                         <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,10" />
@@ -475,11 +475,11 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <StackPanel Grid.Column="0">
-                                                <TextBlock Text="المعايرة" FontSize="10" Foreground="#757575" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="المعايرة" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                                                 <TextBlock Text="{Binding CalibrationDateString}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1">
-                                                <TextBlock Text="الانتهاء" FontSize="10" Foreground="#757575" FontFamily="{StaticResource CairoFont}" />
+                                                <TextBlock Text="الانتهاء" FontSize="10" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                                                 <TextBlock Text="{Binding ExpiryDateString}" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                                             </StackPanel>
                                         </Grid>
@@ -527,7 +527,7 @@
                                                         <materialDesign:PackIcon.Style>
                                                             <Style TargetType="materialDesign:PackIcon">
                                                                 <Setter Property="Kind" Value="ClipboardCheck" />
-                                                                <Setter Property="Foreground" Value="#757575" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                                         <Setter Property="Kind" Value="ClipboardCheckMultiple" />

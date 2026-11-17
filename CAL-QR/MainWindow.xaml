@@ -123,6 +123,12 @@
 
                 <!-- Actions & User -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- التاريخ والوقت المحلّيّان -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="ClockOutline" Foreground="#C9A227" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <TextBlock Text="{Binding CurrentDateTimeText}" Foreground="White" FontSize="12" Opacity="0.9"
+                                   VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                    </StackPanel>
                     <!-- قاعدة البيانات النشطة: حماية دائمة من التشغيل على قاعدة خاطئة -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center" Background="Transparent"
                                 ToolTip="{Binding ActiveDatabaseFullPath}">

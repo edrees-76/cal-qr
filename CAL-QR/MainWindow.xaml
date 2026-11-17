@@ -52,8 +52,9 @@
 
                 <!-- Search Bar -->
                 <!-- Search Bar -->
-                <Grid Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="350">
-                    <materialDesign:ColorZone x:Name="SearchColorZone" Mode="Light" CornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp1" Height="38" Width="350">
+                <!-- MaxWidth لا Width: يبقى 350 في النافذة الواسعة ويصغر حين يضيق العمود الأوسط فلا يغطّي نصّ الرأس (WPF يوسّط العنصر الممدود المقيَّد بـ MaxWidth). -->
+                <Grid Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Center" MaxWidth="350">
+                    <materialDesign:ColorZone x:Name="SearchColorZone" Mode="Light" CornerRadius="8" materialDesign:ElevationAssist.Elevation="Dp1" Height="38">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />

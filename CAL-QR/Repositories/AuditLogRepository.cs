@@ -52,23 +52,32 @@ namespace CAL_QR.Repositories
             await AddAsync(log);
         }
 
-        public async Task<List<AuditLog>> GetFilteredAsync(DateTime? startDate, DateTime? endDate, int? userId)
+        public Task<List<AuditLog>> GetFilteredAsync(DateTime? startDate, DateTime? endDate, int? userId) =>
+            GetFilteredAsync(startDate, endDate, userId, TimeZoneInfo.Local);
+
+        /// <summary>
+        /// startDate وendDate يومان بتوقيت المستخدم المحلّيّ، وActionAt مخزَّن بتوقيت UTC؛ فيُحوَّل
+        /// المدى إلى UTC قبل المقارنة (AuditLogDateRangeRules). المنطقة وسيط ليُختبر بمنطقة ثابتة.
+        /// </summary>
+        internal async Task<List<AuditLog>> GetFilteredAsync(DateTime? startDate, DateTime? endDate, int? userId, TimeZoneInfo zone)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
             var query = context.AuditLogs
                 .AsNoTracking()
                 .AsQueryable();
 
-            if (startDate.HasValue)
+            var (startUtc, endUtcExclusive) = CAL_QR.Validation.AuditLogDateRangeRules.ToUtcRange(startDate, endDate, zone);
+
+            if (startUtc.HasValue)
             {
-                var start = startDate.Value.Date;
+                var start = startUtc.Value;
                 query = query.Where(l => l.ActionAt >= start);
             }
 
-            if (endDate.HasValue)
+            if (endUtcExclusive.HasValue)
             {
-                var end = endDate.Value.Date.AddDays(1).AddTicks(-1);
-                query = query.Where(l => l.ActionAt <= end);
+                var end = endUtcExclusive.Value;
+                query = query.Where(l => l.ActionAt < end);
             }
 
             if (userId.HasValue)

@@ -167,7 +167,7 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn Header="آخر تسجيل دخول" Binding="{Binding LastLoginAt, StringFormat=\{0:yyyy-MM-dd HH:mm:ss\}}" Width="1.8*" />
+                                <DataGridTextColumn Header="آخر تسجيل دخول" Binding="{Binding LastLoginAt, Converter={StaticResource UtcToLocalTimeConverter}, StringFormat=\{0:yyyy-MM-dd HH:mm:ss\}}" Width="1.8*" />
 
                                 <!-- Actions -->
                                 <DataGridTemplateColumn Header="إجراءات" Width="1.8*">

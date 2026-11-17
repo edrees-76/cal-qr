@@ -77,9 +77,9 @@ namespace CAL_QR.Repositories
             existing.Permissions = user.Permissions;
             existing.IsEditor = user.IsEditor;
             existing.IsActive = user.IsActive;
-            // FailedLoginAttempts / LockedUntil are owned by RegisterFailedLoginAsync / ResetLoginFailuresAsync;
-            // copying them from a possibly stale in-memory user would silently clear a lock.
-            existing.LastLoginAt = user.LastLoginAt;
+            // FailedLoginAttempts / LockedUntil are owned by RegisterFailedLoginAsync / ResetLoginFailuresAsync,
+            // and LastLoginAt by RecordSuccessfulLoginAsync: copying them from a possibly stale in-memory user
+            // would silently clear a lock or roll back the last login time.
 
             // Only update password hash if a new one is set
             if (!string.IsNullOrEmpty(user.PasswordHash))
@@ -119,6 +119,17 @@ namespace CAL_QR.Repositories
             if (user == null || (user.FailedLoginAttempts == 0 && user.LockedUntil == null)) return;
             user.FailedLoginAttempts = 0;
             user.LockedUntil = null;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task RecordSuccessfulLoginAsync(int userId, DateTime nowUtc)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return;
+            user.FailedLoginAttempts = 0;
+            user.LockedUntil = null;
+            user.LastLoginAt = nowUtc;
             await context.SaveChangesAsync();
         }
 

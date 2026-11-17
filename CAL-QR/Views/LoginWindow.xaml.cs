@@ -154,7 +154,7 @@ namespace CAL_QR.Views
                             {
                                 targetUser = user;
                                 loginSuccess = true;
-                                await _userRepository.ResetLoginFailuresAsync(user.Id);
+                                await _userRepository.RecordSuccessfulLoginAsync(user.Id, DateTime.UtcNow);
                             }
                             else
                             {

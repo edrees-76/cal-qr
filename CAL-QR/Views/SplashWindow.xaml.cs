@@ -89,7 +89,7 @@ namespace CAL_QR.Views
                 catch (Exception ex)
                 {
                     // تعذّرت قراءة db_path.txt: يستمرّ التحقّق عبر إعداد قاعدة البيانات، مع تسجيل الخطأ.
-                    System.Diagnostics.Debug.WriteLine($"[Splash] Failed to read db_path.txt ({configPathFile}): {ex.Message}");
+                    CAL_QR.Services.AppLog.Error($"SplashWindow: reading db_path.txt ({configPathFile}) failed", ex);
                 }
             }
             else

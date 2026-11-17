@@ -136,7 +136,7 @@ namespace CAL_QR.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading filtered devices: {ex.Message}");
+                CAL_QR.Services.AppLog.Error("ReportsViewModel: loading filtered devices failed", ex);
                 MessageBox.Show("حدث خطأ أثناء تحميل أجهزة الجهة المالكة المحددة.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 FilteredDevices.Clear();
                 SelectedDevice = null;
@@ -307,7 +307,7 @@ namespace CAL_QR.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading filters: {ex.Message}");
+                CAL_QR.Services.AppLog.Error("ReportsViewModel: loading filters failed", ex);
             }
         }
 

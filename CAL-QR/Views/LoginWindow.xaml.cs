@@ -60,7 +60,7 @@ namespace CAL_QR.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading users for login dropdown: {ex.Message}");
+                CAL_QR.Services.AppLog.Error("LoginWindow: loading users for login dropdown failed", ex);
             }
 
             TxtUsername.Focus();
@@ -597,7 +597,7 @@ namespace CAL_QR.Views
                 }
                 catch (Exception auditEx)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Audit log failed after password recovery: {auditEx.Message}");
+                    CAL_QR.Services.AppLog.Error("LoginWindow: audit log failed after password recovery", auditEx);
                 }
 
                 MessageBox.Show($"تم تغيير كلمة مرور حساب {adminUser.Username} بنجاح. يمكنك الآن تسجيل الدخول بها.", "تم بنجاح", MessageBoxButton.OK, MessageBoxImage.Information);

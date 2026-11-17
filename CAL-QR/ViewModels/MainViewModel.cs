@@ -329,7 +329,7 @@ namespace CAL_QR.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[MainViewModel] Search error: {ex}");
+                CAL_QR.Services.AppLog.Error("MainViewModel: search failed", ex);
                 SearchResults.Clear();
                 IsSearchResultsOpen = false;
             }
@@ -453,8 +453,8 @@ namespace CAL_QR.ViewModels
             }
             catch (Exception ex)
             {
-                // لا مسجّل (ILogger) في المشروع: يُسجَّل السبب في مخرجات التشخيص ويبقى التدفّق كما هو.
-                System.Diagnostics.Debug.WriteLine($"[MainViewModel] CheckAlertsAsync failed: {ex.Message}");
+                // يُسجَّل السبب في السجلّ الدائم ويبقى التدفّق كما هو.
+                CAL_QR.Services.AppLog.Error("MainViewModel: CheckAlertsAsync failed", ex);
             }
         }
 

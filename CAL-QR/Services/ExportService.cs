@@ -47,7 +47,7 @@ namespace CAL_QR.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ExportService] Error loading logo resource: {ex.Message}");
+                AppLog.Error("ExportService: loading logo resource failed", ex);
             }
         }
 

@@ -125,7 +125,7 @@ namespace CAL_QR.Services
             catch (Exception ex)
             {
                 // تعذّرت قراءة مسارات الإعدادات: تُستخدم المجلدات الافتراضية للتنظيف.
-                Console.WriteLine($"[Warning] Failed to read QR/Attachments paths from settings; using default folders: {ex.Message}");
+                AppLog.Error("SystemResetService: reading QR/Attachments paths from settings failed; using default folders", ex);
             }
 
             // حارس الأمان: لا يُنظَّف مجلّد يحتوي مسارات البرنامج أو القاعدة أو النسخ الاحتياطيّة
@@ -154,13 +154,13 @@ namespace CAL_QR.Services
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"[Warning] Failed to delete QR file {filePath}: {ex.Message}");
+                            AppLog.Error($"SystemResetService: deleting QR file {filePath} failed", ex);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Warning] Error listing files in QR directory {qrFolder}: {ex.Message}");
+                    AppLog.Error($"SystemResetService: listing files in QR directory {qrFolder} failed", ex);
                 }
             }
 
@@ -181,7 +181,7 @@ namespace CAL_QR.Services
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"[Warning] Failed to delete attachments subfolder {subDir}: {ex.Message}");
+                            AppLog.Error($"SystemResetService: deleting attachments subfolder {subDir} failed", ex);
                         }
                     }
 
@@ -195,13 +195,13 @@ namespace CAL_QR.Services
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"[Warning] Failed to delete attachments root file {rootFile}: {ex.Message}");
+                            AppLog.Error($"SystemResetService: deleting attachments root file {rootFile} failed", ex);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Warning] Error listing attachments directory {attachmentsFolder}: {ex.Message}");
+                    AppLog.Error($"SystemResetService: listing attachments directory {attachmentsFolder} failed", ex);
                 }
             }
 
@@ -225,7 +225,7 @@ namespace CAL_QR.Services
                 catch (Exception ex)
                 {
                     // فشل تسجيل التصفير في سجل التدقيق لا يُبطل التصفير المكتمل.
-                    Console.WriteLine($"[Warning] Failed to write factory-reset audit log entry: {ex.Message}");
+                    AppLog.Error("SystemResetService: writing factory-reset audit log entry failed", ex);
                 }
             }
 

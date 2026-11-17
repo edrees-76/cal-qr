@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using QuestPDF.Fluent;
@@ -56,7 +55,7 @@ namespace CAL_QR.Services
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[CertificatePdfService] Error generating QR code: {ex.Message}");
+                    AppLog.Error($"CertificatePdfService: QR code generation failed for certificate {certificate.CertificateNumber}", ex);
                 }
             }
 
@@ -80,7 +79,7 @@ namespace CAL_QR.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[CertificatePdfService] Error loading logo: {ex.Message}");
+                AppLog.Error($"CertificatePdfService: loading logo {fileName} failed", ex);
             }
 
             return null;

@@ -1380,7 +1380,7 @@ namespace CAL_QR.ViewModels
                 catch (Exception ex)
                 {
                     // فشل سجل العمليات لا يُبطل الإلغاء المكتمل، لكن يُسجَّل الخطأ.
-                    System.Diagnostics.Debug.WriteLine($"[CertificateForm] Audit log failed after revoking certificate {_certificateId}: {ex.Message}");
+                    CAL_QR.Services.AppLog.Error($"CertificateFormViewModel: audit log failed after revoking certificate {_certificateId}", ex);
                 }
 
                 MessageBox.Show(

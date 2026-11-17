@@ -17,5 +17,7 @@ namespace CAL_QR.Repositories
         /// <summary>Counts a failed login for the user; returns the new lock end (UTC) when this failure locked the account.</summary>
         Task<DateTime?> RegisterFailedLoginAsync(int userId, DateTime nowUtc);
         Task ResetLoginFailuresAsync(int userId);
+        /// <summary>Successful login: clears failed attempts and lock, and sets LastLoginAt to <paramref name="nowUtc"/>.</summary>
+        Task RecordSuccessfulLoginAsync(int userId, DateTime nowUtc);
     }
 }

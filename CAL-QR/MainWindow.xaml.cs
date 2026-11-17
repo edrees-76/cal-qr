@@ -17,16 +17,18 @@ namespace CAL_QR
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ICurrentUserService _currentUserService;
         private readonly IdleLockService _idleLockService;
+        private readonly CAL_QR.Repositories.IAuditLogRepository _auditLogRepository;
 
         private bool _isLoggingOut = false;
 
-        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IdleLockService idleLockService)
+        public MainWindow(MainViewModel viewModel, IDbContextFactory<CalQrDbContext> contextFactory, ICurrentUserService currentUserService, IdleLockService idleLockService, CAL_QR.Repositories.IAuditLogRepository auditLogRepository)
         {
             InitializeComponent();
             _viewModel = viewModel;
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
             _idleLockService = idleLockService;
+            _auditLogRepository = auditLogRepository;
             DataContext = _viewModel;
 
             Loaded += MainWindow_Loaded;
@@ -61,10 +63,36 @@ namespace CAL_QR
             else
             {
                 CloseSecondaryWindows();
+                AuditSessionEnd(CAL_QR.Validation.SessionEndReason.WindowClosed);
                 _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();
                 loginWindow.Show();
+            }
+        }
+
+        /// <summary>
+        /// يسجّل انتهاء الجلسة في سجلّ العمليّات قبل مسح المستخدم الحاليّ. المستخدم يُمرَّر صراحةً
+        /// لأنّ الكتابة غير متزامنة وقد تنتهي بعد ClearCurrentUser. فشل الكتابة لا يمنع الخروج،
+        /// لكنّه يُسجَّل في السجلّ الدائم.
+        /// </summary>
+        private void AuditSessionEnd(CAL_QR.Validation.SessionEndReason reason)
+        {
+            var user = _currentUserService.CurrentUser;
+            if (user == null) return;
+            _ = WriteSessionEndAsync(user.Id, user.Username, reason);
+        }
+
+        private async System.Threading.Tasks.Task WriteSessionEndAsync(int userId, string username, CAL_QR.Validation.SessionEndReason reason)
+        {
+            try
+            {
+                await _auditLogRepository.LogAsync(CAL_QR.Validation.SessionEndAuditRules.Action, "User", userId.ToString(),
+                    CAL_QR.Validation.SessionEndAuditRules.Details(username, reason), userId, username);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"Audit '{CAL_QR.Validation.SessionEndAuditRules.Action}' for user {username}", ex);
             }
         }
 
@@ -109,6 +137,7 @@ namespace CAL_QR
         private void ViewModel_LockRequested(object? sender, EventArgs e)
         {
             CloseSecondaryWindows();
+            AuditSessionEnd(CAL_QR.Validation.SessionEndReason.IdleLock);
             _currentUserService.ClearCurrentUser();
             var screensaverWindow = App.ServiceProvider.GetRequiredService<Views.ScreensaverWindow>();
             screensaverWindow.Dismissed += (s, args) =>
@@ -199,6 +228,7 @@ namespace CAL_QR
             if (result == MessageBoxResult.Yes)
             {
                 CloseSecondaryWindows();
+                AuditSessionEnd(CAL_QR.Validation.SessionEndReason.LogoutButton);
                 _currentUserService.ClearCurrentUser();
                 _isLoggingOut = true;
                 var loginWindow = App.ServiceProvider.GetRequiredService<LoginWindow>();

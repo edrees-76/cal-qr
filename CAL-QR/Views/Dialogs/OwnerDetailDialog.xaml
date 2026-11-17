@@ -27,10 +27,10 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="تفاصيل الجهة المالكة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="استعراض بيانات الجهة وقائمة كافة الأجهزة المرتبطة بها" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="استعراض بيانات الجهة وقائمة كافة الأجهزة المرتبطة بها" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                 </Button>
             </Grid>
 
@@ -52,22 +52,22 @@
                         </Grid.ColumnDefinitions>
                         
                         <StackPanel Grid.Column="0" Margin="5">
-                            <TextBlock Text="اسم الجهة" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="اسم الجهة" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Owner.Name}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                         
                         <StackPanel Grid.Column="1" Margin="5">
-                            <TextBlock Text="العنوان" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="العنوان" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Owner.Address, FallbackValue='-'}" FontSize="13" Foreground="#333333" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="5">
-                            <TextBlock Text="رقم الاتصال" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="رقم الاتصال" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Owner.ContactPhone, FallbackValue='-'}" FontSize="13" Foreground="#333333" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="3" Margin="5">
-                            <TextBlock Text="المسؤول / المندوب" FontSize="11" Foreground="#718096" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="المسؤول / المندوب" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,3" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="{Binding Owner.ContactPerson, FallbackValue='-'}" FontSize="13" Foreground="#333333" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                         </StackPanel>
                     </Grid>

@@ -28,7 +28,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#1A3A6B" Padding="15,10">
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryNavy}" Padding="15,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -45,8 +45,8 @@
                     <StackPanel VerticalAlignment="Center" Margin="5,0,0,0">
                         <TextBlock Text="مركز البحوث النووية" Foreground="White" FontSize="13" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="إدارة الوقاية من الإشعاع" Foreground="White" FontSize="11.5" FontWeight="SemiBold" Opacity="0.9" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة" Foreground="#C9A227" FontSize="10.5" FontWeight="Medium" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="وحدة المعايرة" Foreground="#C9A227" FontSize="9.5" FontWeight="Normal" Opacity="0.85" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة" Foreground="{DynamicResource GoldAccent}" FontSize="10.5" FontWeight="Medium" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="وحدة المعايرة" Foreground="{DynamicResource GoldAccent}" FontSize="9.5" FontWeight="Normal" Opacity="0.85" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -61,7 +61,7 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Button Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" Grid.Column="0" Margin="5,0">
-                                <materialDesign:PackIcon Kind="Magnify" Foreground="#707070" />
+                                <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource IconNeutral}" />
                             </Button>
                             <TextBox x:Name="SearchTextBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" BorderThickness="0" VerticalAlignment="Center" materialDesign:HintAssist.Hint="بحث سريع شامل... (Ctrl+F)" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" Height="30" VerticalContentAlignment="Center" />
                         </Grid>
@@ -100,11 +100,11 @@
                                         <DataTemplate.Triggers>
                                             <DataTrigger Binding="{Binding EntityType}" Value="Device">
                                                 <Setter TargetName="TypeIcon" Property="Kind" Value="ClipboardListOutline" />
-                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="#1A3A6B" />
+                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding EntityType}" Value="Owner">
                                                 <Setter TargetName="TypeIcon" Property="Kind" Value="OfficeBuilding" />
-                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="#C9A227" />
+                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="{DynamicResource GoldAccent}" />
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding EntityType}" Value="DeviceType">
                                                 <Setter TargetName="TypeIcon" Property="Kind" Value="Wrench" />
@@ -112,7 +112,7 @@
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding EntityType}" Value="CalibrationRecord">
                                                 <Setter TargetName="TypeIcon" Property="Kind" Value="Certificate" />
-                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="#2E7D32" />
+                                                <Setter TargetName="TypeIcon" Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>
@@ -126,24 +126,24 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- التاريخ والوقت المحلّيّان -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="ClockOutline" Foreground="#C9A227" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <materialDesign:PackIcon Kind="ClockOutline" Foreground="{DynamicResource GoldAccent}" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,5,0" />
                         <TextBlock Text="{Binding CurrentDateTimeText}" Foreground="White" FontSize="12" Opacity="0.9"
                                    VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                     <!-- قاعدة البيانات النشطة: حماية دائمة من التشغيل على قاعدة خاطئة -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center" Background="Transparent"
                                 ToolTip="{Binding ActiveDatabaseFullPath}">
-                        <materialDesign:PackIcon Kind="Database" Foreground="#C9A227" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <materialDesign:PackIcon Kind="Database" Foreground="{DynamicResource GoldAccent}" Width="20" Height="20" VerticalAlignment="Center" Margin="0,0,5,0" />
                         <TextBlock Text="{Binding ActiveDatabaseLabel}" Foreground="White" FontSize="12" Opacity="0.9"
                                    VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}"
                                    FlowDirection="LeftToRight" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,15,0" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="AccountCircle" Foreground="#C9A227" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,5,0" />
+                        <materialDesign:PackIcon Kind="AccountCircle" Foreground="{DynamicResource GoldAccent}" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,5,0" />
                         <TextBlock Text="{Binding UserName}" Foreground="White" FontSize="13" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
-                    <Button Style="{StaticResource MaterialDesignFlatButton}" Foreground="#C62828" Content="خروج" Height="32" Padding="8,0" FontFamily="{StaticResource CairoFont}" Click="LogoutButton_Click" />
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Foreground="{DynamicResource ErrorRed}" Content="خروج" Height="32" Padding="8,0" FontFamily="{StaticResource CairoFont}" Click="LogoutButton_Click" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -175,8 +175,8 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Border" Property="BorderBrush" Value="#1A3A6B" />
-                                                <Setter Property="Foreground" Value="#1A3A6B" />
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
+                                                <Setter Property="Foreground" Value="{DynamicResource PrimaryNavy}" />
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="False">
                                                 <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}" />
@@ -195,7 +195,7 @@
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="Home" Margin="0,0,5,0" VerticalAlignment="Center" />
                             <TextBlock Text="الرئيسية" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" VerticalAlignment="Center" />
-                            <Border Background="#C62828" CornerRadius="8" MinWidth="16" Height="16" Margin="5,0,0,0" Padding="4,0" VerticalAlignment="Center"
+                            <Border Background="{DynamicResource ErrorRed}" CornerRadius="8" MinWidth="16" Height="16" Margin="5,0,0,0" Padding="4,0" VerticalAlignment="Center"
                                     Visibility="{Binding HasAlerts, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBlock Text="{Binding TotalAlerts}" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
@@ -317,7 +317,7 @@
         </TabControl>
 
         <!-- Floating action button when tabs are hidden -->
-        <Button Grid.Row="2" Command="{Binding ToggleTabHeaderCommand}" Background="#C9A227" BorderBrush="#C9A227" Width="36" Height="36" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15" ToolTip="إظهار التبويبات">
+        <Button Grid.Row="2" Command="{Binding ToggleTabHeaderCommand}" Background="{DynamicResource GoldAccent}" BorderBrush="{DynamicResource GoldAccent}" Width="36" Height="36" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="15" ToolTip="إظهار التبويبات">
             <Button.Style>
                 <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFloatingActionMiniLightButton}">
                     <Setter Property="Visibility" Value="Collapsed" />

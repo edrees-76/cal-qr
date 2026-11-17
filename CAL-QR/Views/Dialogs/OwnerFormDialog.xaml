@@ -26,10 +26,10 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="إدارة الجهات المالكة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="إضافة جهة مالكة جديدة أو تعديل بياناتها" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="إضافة جهة مالكة جديدة أو تعديل بياناتها" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                 </Button>
             </Grid>
 
@@ -70,7 +70,7 @@
             <Grid Grid.Row="2" Margin="0,15,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Width="100" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding CancelCommand}" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

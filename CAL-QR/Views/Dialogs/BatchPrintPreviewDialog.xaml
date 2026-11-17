@@ -90,7 +90,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -106,7 +106,7 @@
 
                 <StackPanel Grid.Row="0" Margin="0,0,0,5">
                     <TextBlock Text="معاينة موضع الملصق على الورقة" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="انقر على أي خلية بالشبكة لتحديد نقطة بداية الطباعة (الخلايا الرمادية لن تتم الطباعة عليها)" FontSize="10.5" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
 
                 <!-- Dynamic explanation text -->

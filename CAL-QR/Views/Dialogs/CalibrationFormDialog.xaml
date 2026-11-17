@@ -42,7 +42,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="{Binding FormSubtitle}" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding FormSubtitle}" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
@@ -60,7 +60,7 @@
                         </materialDesign:PackIcon>
                     </Button>
                     <Button Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" ToolTip="إغلاق">
-                        <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                        <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                     </Button>
                 </StackPanel>
             </Grid>
@@ -114,8 +114,8 @@
                     </Grid>
 
                     <!-- Duplicate Warning -->
-                    <Border Grid.Row="2" Background="#FFEBEE" BorderBrush="#EF9A9A" BorderThickness="1" CornerRadius="4" Padding="10" Margin="5,0,5,15" Visibility="{Binding HasSerialNumberWarning, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
-                        <TextBlock Text="{Binding SerialNumberWarning}" Foreground="#C62828" FontSize="11" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
+                    <Border Grid.Row="2" Background="{DynamicResource ErrorSurface}" BorderBrush="#EF9A9A" BorderThickness="1" CornerRadius="4" Padding="10" Margin="5,0,5,15" Visibility="{Binding HasSerialNumberWarning, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding SerialNumberWarning}" Foreground="{DynamicResource ErrorRed}" FontSize="11" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" />
                     </Border>
 
                     <!-- 2. Calibration Info Header -->
@@ -226,7 +226,7 @@
                                                 <materialDesign:PackIcon Kind="FileDocument" Foreground="{DynamicResource PrimaryNavy}" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0" />
                                                 <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                                                 <Button Grid.Column="2" Command="{Binding DataContext.RemoveAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0">
-                                                    <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                                    <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                                 </Button>
                                             </Grid>
                                         </DataTemplate>
@@ -247,8 +247,8 @@
                 
                 <!-- Errors message -->
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
-                    <TextBlock Text="{Binding IssueHintText}" Foreground="#707070" FontSize="11"
+                    <TextBlock Text="{Binding ValidationErrors}" Foreground="{DynamicResource ErrorRed}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
+                    <TextBlock Text="{Binding IssueHintText}" Foreground="{DynamicResource IconNeutral}" FontSize="11"
                                VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,10,0"
                                FontFamily="{StaticResource CairoFont}"
                                Visibility="{Binding ShowIssueHint, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
@@ -268,7 +268,7 @@
                     </Button>
                     <!-- مسار النوع السادس: تقرير حالة معايرة، لسجلّ تعذّرت معايرته -->
                     <Button Command="{Binding IssueStatusReportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Height="40" Margin="0,0,10,0" Foreground="#B71C1C" BorderBrush="#B71C1C"
+                            Height="40" Margin="0,0,10,0" Foreground="{DynamicResource ErrorStrong}" BorderBrush="{DynamicResource ErrorStrong}"
                             FontFamily="{StaticResource CairoFont}"
                             ToolTip="إصدار تقرير حالة لسجل تعذّرت معايرته (بدل شهادة معايرة)"
                             Visibility="{Binding CanIssueStatusReport, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -290,7 +290,7 @@
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
+                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

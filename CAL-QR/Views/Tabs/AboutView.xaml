@@ -24,7 +24,7 @@
 
             <!-- App Name & Version -->
             <TextBlock Text="CAL-QR" FontSize="28" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-            <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي بتقنية QR" FontSize="13.5" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" TextAlignment="Center" />
+            <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي بتقنية QR" FontSize="13.5" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" TextAlignment="Center" />
             
             <Border Background="{DynamicResource PrimaryNavy}" CornerRadius="12" Padding="12,4" HorizontalAlignment="Center" Margin="0,5,0,15">
                 <TextBlock Text="الإصدار: 1.0.2" FontSize="13" Foreground="White" FontFamily="{StaticResource CairoFont}" />
@@ -34,7 +34,7 @@
             <Border Height="2" Background="{DynamicResource GoldAccent}" Margin="0,5,0,15" CornerRadius="1" />
 
             <!-- Copyright -->
-            <TextBlock Text="جميع الحقوق محفوظة © 2026" FontSize="12" Foreground="#718096" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="جميع الحقوق محفوظة © 2026" FontSize="12" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
         </StackPanel>
 
         <!-- Middle Vertical Separator -->
@@ -52,16 +52,16 @@
                 <TextBlock Text="(TNRC)" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" Margin="0,1,0,0" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
 
-            <TextBlock Text="إدارة الوقاية من الإشعاع" FontSize="12.5" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,3,0,3" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="إدارة الوقاية من الإشعاع" FontSize="12.5" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,3,0,3" FontFamily="{StaticResource CairoFont}" />
             
-            <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة" FontSize="12.5" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,3,0,3" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="قسم قياس وتقدير الجرعات الشخصية والمعايرة" FontSize="12.5" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,3,0,3" FontFamily="{StaticResource CairoFont}" />
             <!-- English SSDL Name -->
             <StackPanel FlowDirection="LeftToRight" HorizontalAlignment="Center" Margin="0,2,0,5">
                 <TextBlock Text="SECONDARY STANDARD DOSIMETRY LABORATORY" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="(SSDL)" FontSize="9.5" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="NoWrap" Margin="0,1,0,0" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
 
-            <TextBlock Text="وحدة المعايرة" FontSize="12.5" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
+            <TextBlock Text="وحدة المعايرة" FontSize="12.5" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
 
             <!-- Separator -->
             <Border Height="2" Background="{DynamicResource GoldAccent}" Margin="0,15,0,10" CornerRadius="1" />

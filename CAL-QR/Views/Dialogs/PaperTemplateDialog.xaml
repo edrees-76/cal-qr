@@ -174,7 +174,7 @@
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
             <Button Command="{Binding SaveCommand}" Content="حفظ القالب" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Width="120" Height="38" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-            <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Width="100" Height="38" FontFamily="{StaticResource CairoFont}" />
+            <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Width="100" Height="38" FontFamily="{StaticResource CairoFont}" />
         </StackPanel>
     </Grid>
 </Window>

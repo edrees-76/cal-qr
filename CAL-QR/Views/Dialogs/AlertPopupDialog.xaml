@@ -22,7 +22,7 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Background="#C62828" CornerRadius="10,10,0,0" Padding="15,12">
+            <Border Grid.Row="0" Background="{DynamicResource ErrorRed}" CornerRadius="10,10,0,0" Padding="15,12">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -36,11 +36,11 @@
             <!-- Content -->
             <Border Grid.Row="1" Padding="20">
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="لقد تم رصد أجهزة تتطلب انتباهاً عاجلاً!" FontSize="14" FontWeight="Bold" Foreground="#2D3748" HorizontalAlignment="Center" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="لقد تم رصد أجهزة تتطلب انتباهاً عاجلاً!" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextStrong}" HorizontalAlignment="Center" Margin="0,0,0,15" FontFamily="{StaticResource CairoFont}" />
                     
-                    <TextBlock Text="{Binding AlertSummaryText}" FontSize="13" Foreground="#4A5568" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding AlertSummaryText}" FontSize="13" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />
 
-                    <TextBlock Text="يرجى مراجعة لوحة البيانات للتعرف على قائمة الأجهزة المنتهية أو قريبة الانتهاء لتفادي استخدامها في عمليات القياس." FontSize="11" Foreground="#718096" TextWrapping="Wrap" TextAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="يرجى مراجعة لوحة البيانات للتعرف على قائمة الأجهزة المنتهية أو قريبة الانتهاء لتفادي استخدامها في عمليات القياس." FontSize="11" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap" TextAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Border>
 
@@ -53,7 +53,7 @@
                     </Grid.ColumnDefinitions>
                     
                     <Button Grid.Column="0" Content="عرض التفاصيل 📊" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,5,0" Click="ShowDetailsButton_Click" FontFamily="{StaticResource CairoFont}" />
-                    <Button Grid.Column="1" Content="إغلاق" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#4A5568" BorderBrush="#CBD5E1" Height="36" Margin="5,0,0,0" Click="CloseButton_Click" FontFamily="{StaticResource CairoFont}" />
+                    <Button Grid.Column="1" Content="إغلاق" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextBody}" BorderBrush="#CBD5E1" Height="36" Margin="5,0,0,0" Click="CloseButton_Click" FontFamily="{StaticResource CairoFont}" />
                 </Grid>
             </Border>
         </Grid>

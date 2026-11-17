@@ -34,7 +34,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Button Command="{Binding AddDeviceCommand}" Content="سجل جديد" Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}"
+                    <Button Command="{Binding AddDeviceCommand}" Content="سجل جديد" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}"
                             Visibility="{Binding CanEdit, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Button.ContentTemplate>
                             <DataTemplate>
@@ -170,7 +170,7 @@
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="5,15,5,5">
                     <Button Command="{Binding SearchCommand}" Content="تطبيق الفلترة" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ClearFiltersCommand}" Content="مسح الفلاتر" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -253,7 +253,7 @@
                                                 <Setter Property="Foreground" Value="#E65100" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
-                                                        <Setter Property="Foreground" Value="#2E7D32" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding CertificateId}" Value="0">
                                                         <Setter Property="Foreground" Value="Transparent" />
@@ -354,7 +354,7 @@
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                                 <Setter Property="Kind" Value="ClipboardCheckMultiple" />
-                                                                <Setter Property="Foreground" Value="#2E7D32" />
+                                                                <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -365,7 +365,7 @@
                                             <materialDesign:PackIcon Kind="Printer" Width="18" Height="18">
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
-                                                        <Setter Property="Foreground" Value="#2E7D32" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                     </Style>
                                                 </materialDesign:PackIcon.Style>
                                             </materialDesign:PackIcon>
@@ -443,7 +443,7 @@
                                                     <Setter Property="Foreground" Value="#E65100" />
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
-                                                            <Setter Property="Foreground" Value="#2E7D32" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -456,7 +456,7 @@
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                            <materialDesign:PackIcon Kind="Radioactive" Foreground="#C62828" Margin="0,0,5,0" VerticalAlignment="Center" />
+                                            <materialDesign:PackIcon Kind="Radioactive" Foreground="{DynamicResource ErrorRed}" Margin="0,0,5,0" VerticalAlignment="Center" />
                                             <TextBlock Text="{Binding DeviceTypeName}" FontSize="12" Foreground="#424242" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
@@ -531,7 +531,7 @@
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IsSignedCopyAttached}" Value="True">
                                                                         <Setter Property="Kind" Value="ClipboardCheckMultiple" />
-                                                                        <Setter Property="Foreground" Value="#2E7D32" />
+                                                                        <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -539,7 +539,7 @@
                                                     </materialDesign:PackIcon>
                                                 </Button>
                                                 <Button Command="{Binding DataContext.PrintDeviceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="طباعة الملصق">
-                                                    <materialDesign:PackIcon Kind="Printer" Foreground="#2E7D32" Width="16" Height="16" />
+                                                    <materialDesign:PackIcon Kind="Printer" Foreground="{DynamicResource SuccessGreen}" Width="16" Height="16" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>

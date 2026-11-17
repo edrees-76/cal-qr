@@ -34,16 +34,16 @@
             <StackPanel x:Name="Step1Panel" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Image Source="/Assets/Logo/cal-qr-logo-flat.png" Width="140" Height="140" Margin="0,0,0,20" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                 <TextBlock Text="مرحباً بك في CAL-QR" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" HorizontalAlignment="Center" />
-                <TextBlock Text="نظام معايرة وفقا لمتطلبات  المواصفة الدولية ISO/IEC 17025:2017" FontSize="13" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,8,0,25" TextAlignment="Center" />
-                <TextBlock Text="سنقوم بإعداد النظام في بضع خطوات بسيطة." FontSize="12" Foreground="#718096" HorizontalAlignment="Center" TextAlignment="Center" />
+                <TextBlock Text="نظام معايرة وفقا لمتطلبات  المواصفة الدولية ISO/IEC 17025:2017" FontSize="13" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,8,0,25" TextAlignment="Center" />
+                <TextBlock Text="سنقوم بإعداد النظام في بضع خطوات بسيطة." FontSize="12" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" TextAlignment="Center" />
             </StackPanel>
 
             <!-- Step 2: Database Path -->
             <StackPanel x:Name="Step2Panel" Visibility="Collapsed" VerticalAlignment="Center">
                 <TextBlock Text="📂 مسار حفظ قاعدة البيانات" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                <TextBlock Text="اختر المجلد الذي سيتم حفظ قاعدة بيانات النظام فيه. المسار الافتراضي هو مجلد التطبيق الحالي." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
+                <TextBlock Text="اختر المجلد الذي سيتم حفظ قاعدة بيانات النظام فيه. المسار الافتراضي هو مجلد التطبيق الحالي." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,15" TextWrapping="Wrap" />
                 
-                <TextBlock Text="مسار قاعدة البيانات" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                <TextBlock Text="مسار قاعدة البيانات" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -71,9 +71,9 @@
             <ScrollViewer x:Name="Step3Panel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" VerticalAlignment="Stretch">
                 <StackPanel Margin="0,0,0,10">
                     <TextBlock Text="🔐 إنشاء كلمة المرور والأمان" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,0,0,10" />
-                    <TextBlock Text="أنشئ حساب المسؤول وكلمة مرور النظام وسؤالاً سرياً للاسترداد." FontSize="12" Foreground="#718096" Margin="0,0,0,15" TextWrapping="Wrap" />
+                    <TextBlock Text="أنشئ حساب المسؤول وكلمة مرور النظام وسؤالاً سرياً للاسترداد." FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,15" TextWrapping="Wrap" />
 
-                    <TextBlock Text="الاسم الكامل للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="الاسم الكامل للمسؤول *" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtAdminFullName" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Foreground="{DynamicResource PrimaryNavy}"
@@ -85,7 +85,7 @@
                              materialDesign:HintAssist.Hint="مثال: م. إدريس فتح الله"
                              VerticalContentAlignment="Center" />
 
-                    <TextBlock Text="اسم المستخدم للمسؤول *" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="اسم المستخدم للمسؤول *" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtAdminUsername" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Foreground="{DynamicResource PrimaryNavy}"
@@ -97,7 +97,7 @@
                              materialDesign:HintAssist.Hint="مثال: admin"
                              VerticalContentAlignment="Center" />
 
-                    <TextBlock Text="كلمة المرور * (8 أحرف على الأقل)" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="كلمة المرور * (8 أحرف على الأقل)" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <Grid Margin="0,0,0,10">
                         <PasswordBox x:Name="TxtWizardPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
@@ -127,7 +127,7 @@
                         </Button>
                     </Grid>
 
-                    <TextBlock Text="تأكيد كلمة المرور" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="تأكيد كلمة المرور" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <Grid Margin="0,0,0,15">
                         <PasswordBox x:Name="TxtWizardConfirmPassword"
                                      Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
@@ -157,7 +157,7 @@
                         </Button>
                     </Grid>
 
-                    <TextBlock Text="السؤال السري لاسترداد كلمة المرور" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="السؤال السري لاسترداد كلمة المرور" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtSecurityQuestion" Margin="0,0,0,10"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Foreground="{DynamicResource PrimaryNavy}"
@@ -170,7 +170,7 @@
                              materialDesign:HintAssist.Hint="السؤال السري لاسترداد كلمة المرور"
                              VerticalContentAlignment="Center" />
 
-                    <TextBlock Text="إجابة السؤال السري" FontSize="11" Foreground="#718096" Margin="0,0,0,5" />
+                    <TextBlock Text="إجابة السؤال السري" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" />
                     <TextBox x:Name="TxtSecurityAnswer"
                              Style="{StaticResource MaterialDesignOutlinedTextBox}"
                              Foreground="{DynamicResource PrimaryNavy}"
@@ -182,16 +182,16 @@
                              materialDesign:HintAssist.Hint="الإجابة..."
                              VerticalContentAlignment="Center" />
 
-                    <TextBlock x:Name="TxtStepError" Text="" FontSize="11" Foreground="#C62828" Margin="0,10,0,0" Visibility="Collapsed" />
+                    <TextBlock x:Name="TxtStepError" Text="" FontSize="11" Foreground="{DynamicResource ErrorRed}" Margin="0,10,0,0" Visibility="Collapsed" />
                 </StackPanel>
             </ScrollViewer>
 
             <!-- Step 4: Complete -->
             <StackPanel x:Name="Step4Panel" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="✅" FontSize="56" HorizontalAlignment="Center" Margin="0,0,0,10" />
-                <TextBlock Text="تم الإعداد بنجاح!" FontSize="22" FontWeight="Bold" Foreground="#2E7D32" HorizontalAlignment="Center" />
-                <TextBlock Text="النظام جاهز للاستخدام الآن." FontSize="14" Foreground="#4A5568" HorizontalAlignment="Center" Margin="0,8,0,5" />
-                <TextBlock Text="اضغط على 'بدء الاستخدام' لحفظ الإعدادات والدخول إلى شاشة تسجيل الدخول." FontSize="12" Foreground="#718096" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="تم الإعداد بنجاح!" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource SuccessGreen}" HorizontalAlignment="Center" />
+                <TextBlock Text="النظام جاهز للاستخدام الآن." FontSize="14" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,8,0,5" />
+                <TextBlock Text="اضغط على 'بدء الاستخدام' لحفظ الإعدادات والدخول إلى شاشة تسجيل الدخول." FontSize="12" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
             </StackPanel>
         </Grid>
 
@@ -205,16 +205,16 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Step Indicator -->
-                <TextBlock x:Name="TxtStepIndicator" Grid.Column="0" Text="الخطوة 1 من 4" FontSize="12" Foreground="#718096" VerticalAlignment="Center" />
+                <TextBlock x:Name="TxtStepIndicator" Grid.Column="0" Text="الخطوة 1 من 4" FontSize="12" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" />
 
                 <!-- Navigation Buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <Button x:Name="BtnPrevious" Content="→ السابق" Click="BtnPrevious_Click" Height="38" Margin="0,0,10,0"
-                            Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#718096" Foreground="#718096" Visibility="Collapsed" />
+                            Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="{DynamicResource TextMuted}" Foreground="{DynamicResource TextMuted}" Visibility="Collapsed" />
                     <Button x:Name="BtnNext" Content="التالي ←" Click="BtnNext_Click" Height="38"
                             Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" />
                     <Button x:Name="BtnFinish" Content="🚀 بدء الاستخدام" Click="BtnFinish_Click" Height="38"
-                            Style="{StaticResource MaterialDesignRaisedButton}" Background="#2E7D32" BorderBrush="#2E7D32" Visibility="Collapsed" />
+                            Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" Visibility="Collapsed" />
                 </StackPanel>
             </Grid>
         </Border>

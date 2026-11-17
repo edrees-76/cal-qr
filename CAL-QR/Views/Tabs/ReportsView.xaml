@@ -24,7 +24,7 @@
         <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
             <StackPanel>
                 <TextBlock Text="التقارير والتصدير" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                <TextBlock Text="توليد وتصدير تقارير سجلات المعايرة المفلترة بصيغتي Excel و PDF" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="توليد وتصدير تقارير سجلات المعايرة المفلترة بصيغتي Excel و PDF" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
         </Border>
 
@@ -60,7 +60,7 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                            <TextBlock Text="الجهة المالكة للجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="الجهة المالكة للجهاز" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <ComboBox ItemsSource="{Binding Owners}" SelectedItem="{Binding SelectedOwner}" DisplayMemberPath="Name"
                                                       IsEditable="True" IsReadOnly="False" TextSearch.TextPath="Name"
                                                       materialDesign:HintAssist.Hint="ابحث عن الجهة المالكة..." 
@@ -68,7 +68,7 @@
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <TextBlock Text="الجهاز" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="الجهاز" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <ComboBox ItemsSource="{Binding FilteredDevices}" SelectedItem="{Binding SelectedDevice}" DisplayMemberPath="Model"
                                                       IsEnabled="{Binding SelectedOwner, Converter={StaticResource NullToBoolConverter}}"
                                                       Height="40" FontFamily="{StaticResource CairoFont}">
@@ -94,7 +94,7 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                            <TextBlock Text="حالة صلاحية المعايرة" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="حالة صلاحية المعايرة" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding SelectedStatus}"
                                                       Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
@@ -108,13 +108,13 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                            <TextBlock Text="تاريخ المعايرة من" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="تاريخ المعايرة من" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <DatePicker SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                                         Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <DatePicker SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                                         Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
@@ -130,7 +130,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                        <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                                        <TextBlock Text="عدد السجلات المطابقة حالياً للفلتر:" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                                         <TextBlock Text="{Binding MatchingCount}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                                     </StackPanel>
                                     <materialDesign:PackIcon Grid.Column="1" Kind="DatabaseSearch" Foreground="{DynamicResource GoldAccent}" Width="26" Height="26" VerticalAlignment="Center" />
@@ -175,7 +175,7 @@
                                              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 
                                 <Button Command="{Binding ExportCommand}" Content="تصدير وحفظ التقرير 💾" Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+                                        Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" Height="40" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -210,13 +210,13 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <StackPanel Grid.Column="0" Margin="0,0,5,0">
-                                            <TextBlock Text="تاريخ البداية من" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="تاريخ البداية من" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <DatePicker SelectedDate="{Binding PerfStartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                                         Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Margin="5,0,0,0">
-                                            <TextBlock Text="إلى تاريخ النهاية" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                            <TextBlock Text="إلى تاريخ النهاية" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                             <DatePicker SelectedDate="{Binding PerfEndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                                         Style="{StaticResource MaterialDesignFilledDatePicker}" Height="45" FontFamily="{StaticResource CairoFont}" />
                                         </StackPanel>
@@ -261,7 +261,7 @@
                                              Visibility="{Binding IsPerfLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 
                                 <Button Command="{Binding ExportPerformanceCommand}" Content="توليد وتصدير تقرير الأداء 📊" Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Background="#2E7D32" BorderBrush="#2E7D32" Height="40" FontFamily="{StaticResource CairoFont}" />
+                                        Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" Height="40" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
                         </Grid>
                     </Border>

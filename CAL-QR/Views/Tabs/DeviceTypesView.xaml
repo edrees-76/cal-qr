@@ -49,8 +49,8 @@
 
                     <!-- Search Box -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <materialDesign:PackIcon Kind="Magnify" Foreground="#707070" Width="20" Height="20" VerticalAlignment="Center" />
-                        <TextBlock Text="بحث:" FontSize="13" FontWeight="Bold" Foreground="#707070" Margin="5,0,10,0" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                        <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource IconNeutral}" Width="20" Height="20" VerticalAlignment="Center" />
+                        <TextBlock Text="بحث:" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource IconNeutral}" Margin="5,0,10,0" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  materialDesign:HintAssist.Hint="البحث عن نوع جهاز..." 
@@ -121,7 +121,7 @@
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" ToolTip="حذف"
                                                 Visibility="{Binding DataContext.CanEdit, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="18" Height="18" />
+                                            <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="18" Height="18" />
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>

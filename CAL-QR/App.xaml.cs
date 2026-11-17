@@ -93,10 +93,22 @@ namespace CAL_QR
                 ServiceProvider.GetRequiredService<IdleLockService>().AttachGlobalActivityHooks();
 
                 // Run database migrations and seed settings
+                MigrationResult migrationResult;
                 using (var scope = ServiceProvider.CreateScope())
                 {
                     var context = scope.ServiceProvider.GetRequiredService<CalQrDbContext>();
-                    DatabaseMigrator.RunMigrations(context);
+                    migrationResult = DatabaseMigrator.RunMigrations(context);
+                }
+
+                // حساب المدير الاحتياطيّ أُنشئ الآن: كلمته المؤقّتة تُعرض هنا مرّة واحدة،
+                // فهي لا تُحفظ في أيّ ملفّ (كانت تُكتب في Debug/Console فلا تظهر في Release).
+                if (migrationResult.SeededAdminTemporaryPassword != null)
+                {
+                    MessageBox.Show(
+                        CAL_QR.Helpers.SeededAdminNotice.BuildMessage(
+                            DatabaseMigrator.DefaultAdminUsername, migrationResult.SeededAdminTemporaryPassword),
+                        CAL_QR.Helpers.SeededAdminNotice.Title, MessageBoxButton.OK, MessageBoxImage.Warning,
+                        MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
                 }
 
                 // Initialize HMAC key rotation service

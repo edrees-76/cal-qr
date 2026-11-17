@@ -30,7 +30,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="إدارة حسابات المستخدمين والصلاحيات" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="التحكم في مستخدمي النظام وتوزيع الصلاحيات ومراقبة سجل نشاطاتهم" FontSize="11" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="التحكم في مستخدمي النظام وتوزيع الصلاحيات ومراقبة سجل نشاطاتهم" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 
                 <materialDesign:PackIcon Grid.Column="1" Kind="ShieldAccount" Width="36" Height="36" Foreground="{DynamicResource PrimaryNavy}" VerticalAlignment="Center" />
@@ -63,7 +63,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <materialDesign:PackIcon Kind="Magnify" Foreground="#707070" Width="20" Height="20" Margin="10,0" VerticalAlignment="Center" />
+                                        <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource IconNeutral}" Width="20" Height="20" Margin="10,0" VerticalAlignment="Center" />
                                         <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                                  Grid.Column="1" 
                                                  materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" 
@@ -138,10 +138,10 @@
                                                     <Style TargetType="Border">
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                <Setter Property="Background" Value="#E8F5E9" />
+                                                                <Setter Property="Background" Value="{DynamicResource SuccessSurface}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                                <Setter Property="Background" Value="#FFEBEE" />
+                                                                <Setter Property="Background" Value="{DynamicResource ErrorSurface}" />
                                                             </DataTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -152,11 +152,11 @@
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                                                                     <Setter Property="Text" Value="نشط" />
-                                                                    <Setter Property="Foreground" Value="#2E7D32" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="False">
                                                                     <Setter Property="Text" Value="موقوف" />
-                                                                    <Setter Property="Foreground" Value="#C62828" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource ErrorRed}" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -191,14 +191,14 @@
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="True">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <materialDesign:PackIcon Kind="AccountCancel" Foreground="#C62828" Width="16" Height="16" />
+                                                                            <materialDesign:PackIcon Kind="AccountCancel" Foreground="{DynamicResource ErrorRed}" Width="16" Height="16" />
                                                                         </Setter.Value>
                                                                     </Setter>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding IsActive}" Value="False">
                                                                     <Setter Property="Content">
                                                                         <Setter.Value>
-                                                                            <materialDesign:PackIcon Kind="AccountCheck" Foreground="#2E7D32" Width="16" Height="16" />
+                                                                            <materialDesign:PackIcon Kind="AccountCheck" Foreground="{DynamicResource SuccessGreen}" Width="16" Height="16" />
                                                                         </Setter.Value>
                                                                     </Setter>
                                                                 </DataTrigger>
@@ -237,7 +237,7 @@
 
                             <!-- User Picker -->
                             <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                <TextBlock Text="مستلم العملية" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="مستلم العملية" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                 <ComboBox ItemsSource="{Binding FilterUsers}" SelectedItem="{Binding SelectedFilterUser}"
                                           DisplayMemberPath="FullName" SelectedValuePath="Id"
                                           Style="{StaticResource MaterialDesignFilledComboBox}" Height="40" FontFamily="{StaticResource CairoFont}" />
@@ -245,14 +245,14 @@
 
                             <!-- Start Date -->
                             <StackPanel Grid.Column="1" Margin="10,0,10,0">
-                                <TextBlock Text="من تاريخ" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="من تاريخ" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                 <DatePicker SelectedDate="{Binding StartDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                             Style="{StaticResource MaterialDesignFilledDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
 
                             <!-- End Date -->
                             <StackPanel Grid.Column="2" Margin="10,0,10,0">
-                                <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="#718096" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
+                                <TextBlock Text="إلى تاريخ" FontSize="11" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
                                 <DatePicker SelectedDate="{Binding EndDate}" materialDesign:HintAssist.Hint="اختر التاريخ..."
                                             Style="{StaticResource MaterialDesignFilledDatePicker}" Height="40" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
@@ -260,7 +260,7 @@
                             <!-- Reload Actions -->
                             <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
                                 <Button Command="{Binding ClearCommand}" Content="إعادة تعيين 🔄" Height="40"
-                                        Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#718096" Foreground="#718096" FontFamily="{StaticResource CairoFont}" />
+                                        Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="{DynamicResource TextMuted}" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                             </StackPanel>
                         </Grid>
                     </Border>

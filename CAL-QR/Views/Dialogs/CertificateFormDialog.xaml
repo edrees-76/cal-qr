@@ -183,7 +183,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding CertificateTemplateType, StringFormat=نموذج: {0}}" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
@@ -201,7 +201,7 @@
                         </materialDesign:PackIcon>
                     </Button>
                     <Button Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" ToolTip="إغلاق">
-                        <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                        <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                     </Button>
                 </StackPanel>
             </Grid>
@@ -211,7 +211,7 @@
                 <StackPanel Margin="5">
 
                     <!-- شريط تحذير النوع بلا قالب: ظاهر غير حاجب، لا يمنع الحفظ -->
-                    <Border Background="#FFF8E1" BorderBrush="#FFE082" BorderThickness="1" CornerRadius="4"
+                    <Border Background="{DynamicResource WarningSurface}" BorderBrush="#FFE082" BorderThickness="1" CornerRadius="4"
                             Padding="10" Margin="0,0,0,12"
                             Visibility="{Binding HasNoTemplateWarning, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
                         <StackPanel Orientation="Horizontal">
@@ -316,7 +316,7 @@
                     <!-- ═══ تقرير الحالة (النوع السادس) — يظهر فقط في وضع تقرير الحالة ═══ -->
                     <StackPanel Visibility="{Binding IsStatusReport, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}">
                         <StackPanel Margin="0,10,0,0">
-                            <TextBlock Text="Calibration Status Report" FontSize="13" FontWeight="Bold" Foreground="#B71C1C" FontFamily="{StaticResource CairoFont}" />
+                            <TextBlock Text="Calibration Status Report" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource ErrorStrong}" FontFamily="{StaticResource CairoFont}" />
                             <TextBlock Text="تقرير حالة المعايرة" FontSize="11" Foreground="#9E9E9E" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
@@ -404,7 +404,7 @@
                                             <Button Command="{Binding DataContext.RemoveCalibrationResultCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
-                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                             </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -456,7 +456,7 @@
                                             <Button Command="{Binding DataContext.RemoveNuclideSummaryCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
-                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                             </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -492,7 +492,7 @@
                                   VerticalAlignment="Center"
                                   FontFamily="{StaticResource CairoFont}"
                                   FontSize="11"
-                                  Foreground="#707070"
+                                  Foreground="{DynamicResource IconNeutral}"
                                   Margin="20,0,0,0" />
                     </StackPanel>
                     <Separator Margin="0,4,0,8" />
@@ -583,7 +583,7 @@
                                       VerticalAlignment="Center"
                                       FontFamily="{StaticResource CairoFont}"
                                       FontSize="11"
-                                      Foreground="#707070"
+                                      Foreground="{DynamicResource IconNeutral}"
                                       Margin="20,0,0,0" />
                         </StackPanel>
                         <Separator Margin="0,4,0,8" />
@@ -636,7 +636,7 @@
                                                 <Button Command="{Binding DataContext.RemoveUncertaintyComponentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
-                                                    <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                                    <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                                 </Button>
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
@@ -717,7 +717,7 @@
                                         <Button Command="{Binding DataContext.RemoveFunctionalCheckCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Style="{StaticResource MaterialDesignToolIconButton}" Width="26" Height="26" Padding="0" ToolTip="حذف الصفّ">
-                                            <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="14" Height="14" />
+                                            <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                         </Button>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
@@ -813,7 +813,7 @@
                     </ItemsControl.Style>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="#FFF8E1" BorderBrush="#F9A825"
+                            <Border Background="{DynamicResource WarningSurface}" BorderBrush="{DynamicResource WarningYellow}"
                                     BorderThickness="1" CornerRadius="4"
                                     Padding="10,8" Margin="0,2">
                                 <DockPanel>
@@ -832,7 +832,7 @@
                                             Padding="8,2" />
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="AlertOutline"
-                                            Foreground="#F9A825" Width="18" Height="18"
+                                            Foreground="{DynamicResource WarningYellow}" Width="18" Height="18"
                                             Margin="0,0,6,0" VerticalAlignment="Center" />
                                         <TextBlock Text="{Binding Message}"
                                                    FontFamily="{StaticResource CairoFont}"
@@ -853,7 +853,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="#C62828" FontSize="12"
+                    <TextBlock Grid.Column="0" Text="{Binding ValidationErrors}" Foreground="{DynamicResource ErrorRed}" FontSize="12"
                                VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}"
                                Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
 
@@ -880,14 +880,14 @@
                                     <Setter Property="BorderBrush" Value="{DynamicResource PrimaryNavy}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsStatusReport}" Value="True">
-                                            <Setter Property="Background" Value="#B71C1C" />
-                                            <Setter Property="BorderBrush" Value="#B71C1C" />
+                                            <Setter Property="Background" Value="{DynamicResource ErrorStrong}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource ErrorStrong}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#707070"
+                        <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}"
                                 BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click"
                                 FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>

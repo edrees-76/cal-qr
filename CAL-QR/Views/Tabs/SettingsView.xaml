@@ -334,7 +334,7 @@
 
                         <Button Command="{Binding SavePrintTemplateCommand}" Content="حفظ القالب الافتراضيّ"
                                 Style="{StaticResource MaterialDesignRaisedButton}"
-                                Background="#2E7D32" BorderBrush="#2E7D32"
+                                Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}"
                                 Height="40" HorizontalAlignment="Right" Width="200" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Border>
@@ -402,7 +402,7 @@
 
                             <Button Command="{Binding SaveGeneralSettingsCommand}" Content="حفظ إعدادات الجدولة"
                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Background="#2E7D32" BorderBrush="#2E7D32" Height="40"
+                                    Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" Height="40"
                                     FontFamily="{StaticResource CairoFont}" Margin="0,0,0,15" />
 
                             <Grid>
@@ -412,10 +412,10 @@
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0" Command="{Binding BackupNowCommand}" Content="نسخ الآن 📂" Margin="0,0,5,0" Height="40"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Background="#2E7D32" BorderBrush="#2E7D32" FontFamily="{StaticResource CairoFont}" />
+                                        Background="{DynamicResource SuccessGreen}" BorderBrush="{DynamicResource SuccessGreen}" FontFamily="{StaticResource CairoFont}" />
                                 <Button Grid.Column="1" Command="{Binding RestoreBackupCommand}" Content="استعادة نسخة 🕒" Margin="5,0,0,0" Height="40"
                                         Style="{StaticResource MaterialDesignRaisedButton}"
-                                        Background="#C62828" BorderBrush="#C62828" FontFamily="{StaticResource CairoFont}" />
+                                        Background="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}" FontFamily="{StaticResource CairoFont}" />
                             </Grid>
                         </StackPanel>
 
@@ -499,11 +499,11 @@
                     <StackPanel MaxWidth="380" HorizontalAlignment="Center" VerticalAlignment="Center">
 
                         <materialDesign:PackIcon Kind="ShieldLockOutline" Width="52" Height="52"
-                                                 HorizontalAlignment="Center" Foreground="#C62828"
+                                                 HorizontalAlignment="Center" Foreground="{DynamicResource ErrorRed}"
                                                  Margin="0,0,0,14" />
 
                         <TextBlock Text="تأكيد الهوية"
-                                   FontSize="20" FontWeight="Bold" Foreground="#C62828"
+                                   FontSize="20" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}"
                                    FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
                                    Margin="0,0,0,8" />
 
@@ -525,7 +525,7 @@
                             </Grid.ColumnDefinitions>
                             <Button Grid.Column="0" Command="{Binding UnlockResetCommand}" Content="دخول"
                                     Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Background="#C62828" BorderBrush="#C62828"
+                                    Background="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}"
                                     Height="40" FontFamily="{StaticResource CairoFont}" />
                             <Button Grid.Column="2" x:Name="BtnCancelResetGate" Content="إلغاء"
                                     Click="BtnCancelResetGate_Click"
@@ -553,7 +553,7 @@
                     <StackPanel MaxWidth="540" HorizontalAlignment="Center">
 
                         <TextBlock Text="⚠️ إعادة ضبط البرنامج"
-                                   FontSize="18" FontWeight="Bold" Foreground="#C62828"
+                                   FontSize="18" FontWeight="Bold" Foreground="{DynamicResource ErrorRed}"
                                    FontFamily="{StaticResource CairoFont}" HorizontalAlignment="Center"
                                    Margin="0,0,0,12" />
 
@@ -577,15 +577,15 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="1) اكتب: RESET-ALL-DATA" FontSize="12" FontWeight="Bold"
-                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                           Foreground="{DynamicResource ErrorRed}" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
                                 <TextBox Text="{Binding FactoryResetConfirmationText, UpdateSourceTrigger=PropertyChanged}"
                                          Height="40" HorizontalContentAlignment="Center"
                                          FontFamily="Consolas, Courier New, monospace"
-                                         FontWeight="Bold" Foreground="#C62828" VerticalContentAlignment="Center" />
+                                         FontWeight="Bold" Foreground="{DynamicResource ErrorRed}" VerticalContentAlignment="Center" />
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="2) أدخل كلمة المرور الحالية" FontSize="12" FontWeight="Bold"
-                                           Foreground="#C62828" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
+                                           Foreground="{DynamicResource ErrorRed}" FontFamily="{StaticResource CairoFont}" Margin="0,0,0,6" />
                                 <PasswordBox x:Name="TxtFactoryResetPassword" Height="40"
                                              PasswordChanged="TxtFactoryResetPassword_PasswordChanged" />
                             </StackPanel>
@@ -594,7 +594,7 @@
                         <Button Command="{Binding FactoryResetCommand}" Content="💥 تصفير كامل النظام"
                                 HorizontalAlignment="Stretch" Margin="0,16,0,0"
                                 Style="{StaticResource MaterialDesignRaisedButton}"
-                                Background="#C62828" BorderBrush="#C62828"
+                                Background="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}"
                                 Height="44" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Border>

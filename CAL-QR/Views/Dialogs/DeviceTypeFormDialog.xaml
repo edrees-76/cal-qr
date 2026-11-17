@@ -41,17 +41,17 @@
                     <TextBlock Text="تحرير قالب نوع الجهاز" FontSize="18" FontWeight="Bold"
                                Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="تعديل الحقول النصية والعلمين وقوالب الفحوصات ومكوّنات عدم اليقين"
-                               FontSize="11" Foreground="#707070" FontFamily="{StaticResource CairoFont}" />
+                               FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}"
                         Width="30" Height="30" Padding="0" Click="CloseButton_Click">
-                    <materialDesign:PackIcon Kind="Close" Foreground="#C62828" Width="20" Height="20" />
+                    <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                 </Button>
             </Grid>
 
             <!-- ─── تنبيه نوع الكتالوج ─── -->
             <Border Grid.Row="1"
-                    Background="#FFF8E1" BorderBrush="#F9A825" BorderThickness="1"
+                    Background="{DynamicResource WarningSurface}" BorderBrush="{DynamicResource WarningYellow}" BorderThickness="1"
                     CornerRadius="6" Padding="10,6" Margin="0,0,0,8"
                     Visibility="{Binding IsCatalogType, Converter={StaticResource BoolToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal">
@@ -275,7 +275,7 @@
                                                     CommandParameter="{Binding}"
                                                     Padding="0" Width="28" Height="28"
                                                     ToolTip="حذف هذا الصف">
-                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="16" Height="16" />
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="16" Height="16" />
                                             </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -336,7 +336,7 @@
                                                     CommandParameter="{Binding}"
                                                     Padding="0" Width="28" Height="28"
                                                     ToolTip="حذف هذا الصف">
-                                                <materialDesign:PackIcon Kind="Delete" Foreground="#C62828" Width="16" Height="16" />
+                                                <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="16" Height="16" />
                                             </Button>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -369,7 +369,7 @@
                             FontFamily="{StaticResource CairoFont}" />
                     <Button Command="{Binding CancelCommand}" Content="إلغاء"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Foreground="#707070" BorderBrush="{DynamicResource AppBorder}"
+                            Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}"
                             Height="40" Width="80"
                             FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>

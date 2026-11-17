@@ -28,7 +28,7 @@
             </StackPanel>
 
             <!-- Loading Progress -->
-            <ProgressBar Grid.Row="2" x:Name="ProgressBar" Height="6" Background="#0D2040" Foreground="{DynamicResource GoldAccent}" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Margin="40,20,40,10" BorderThickness="0" />
+            <ProgressBar Grid.Row="2" x:Name="ProgressBar" Height="6" Background="{DynamicResource NavyDark}" Foreground="{DynamicResource GoldAccent}" IsIndeterminate="False" Minimum="0" Maximum="100" Value="10" Margin="40,20,40,10" BorderThickness="0" />
 
             <!-- Status Text -->
             <TextBlock Grid.Row="3" x:Name="TxtStatus" Text="جاري تشغيل النظام..." Foreground="#A0B0D0" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,10" FontFamily="{StaticResource CairoFont}" />

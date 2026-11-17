@@ -63,7 +63,7 @@
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource IconNeutral}" Width="20" Height="20" Margin="10,0" VerticalAlignment="Center" />
+                                        <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource TextMuted}" Width="20" Height="20" Margin="10,0" VerticalAlignment="Center" />
                                         <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                                  Grid.Column="1" 
                                                  materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" 

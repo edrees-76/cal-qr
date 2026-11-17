@@ -13,27 +13,31 @@
             <!-- App-wide Font Family -->
             <FontFamily x:Key="CairoFont">/CAL-QR;component/Assets/Fonts/#Cairo</FontFamily>
 
-            <!-- Custom Brushes -->
-            <SolidColorBrush x:Key="PrimaryNavy" Color="#1A3A6B" />
-            <SolidColorBrush x:Key="GoldAccent" Color="#C9A227" />
-            <SolidColorBrush x:Key="SuccessGreen" Color="#2E7D32" />
-            <SolidColorBrush x:Key="WarningYellow" Color="#F9A825" />
-            <SolidColorBrush x:Key="ErrorRed" Color="#C62828" />
+            <!-- Brand colors (Color لا Brush) — مصدر واحد للفرش أدناه ولنقاط التدرّج (GradientStop) في الواجهات -->
+            <Color x:Key="PrimaryNavyColor">#1A3A6B</Color>
+            <Color x:Key="NavyDarkColor">#0D2040</Color>
+            <Color x:Key="GoldAccentColor">#C9A227</Color>
+            <Color x:Key="SuccessGreenColor">#2E7D32</Color>
+            <Color x:Key="WarningYellowColor">#F9A825</Color>
+            <Color x:Key="ErrorRedColor">#C62828</Color>
 
-            <!-- Design-system tokens (نظام التصميم CAL-QR). القيم مطابقة حرفيّاً لما كان مكتوباً يدويّاً في الواجهات،
-                 فاستبدالها بهذه الأسماء لا يغيّر المظهر. -->
+            <!-- Custom Brushes -->
+            <SolidColorBrush x:Key="PrimaryNavy" Color="{StaticResource PrimaryNavyColor}" />
+            <SolidColorBrush x:Key="GoldAccent" Color="{StaticResource GoldAccentColor}" />
+            <SolidColorBrush x:Key="SuccessGreen" Color="{StaticResource SuccessGreenColor}" />
+            <SolidColorBrush x:Key="WarningYellow" Color="{StaticResource WarningYellowColor}" />
+            <SolidColorBrush x:Key="ErrorRed" Color="{StaticResource ErrorRedColor}" />
+
+            <!-- Design-system tokens (نظام التصميم CAL-QR). كلّ لون في الواجهات يُشار إليه باسمه هنا. -->
             <SolidColorBrush x:Key="NavyLight" Color="#2E5088" />
-            <SolidColorBrush x:Key="NavyDark" Color="#0D2040" />
-            <SolidColorBrush x:Key="NavyNight" Color="#102040" /><!-- مرشّح للدمج في NavyDark -->
-            <SolidColorBrush x:Key="GoldDeep" Color="#B78103" /><!-- مرشّح للدمج في GoldAccent -->
-            <SolidColorBrush x:Key="ErrorStrong" Color="#B71C1C" /><!-- مرشّح للدمج في ErrorRed -->
+            <SolidColorBrush x:Key="NavyDark" Color="{StaticResource NavyDarkColor}" />
             <SolidColorBrush x:Key="SuccessSurface" Color="#E8F5E9" />
             <SolidColorBrush x:Key="WarningSurface" Color="#FFF8E1" />
             <SolidColorBrush x:Key="ErrorSurface" Color="#FFEBEE" />
+            <SolidColorBrush x:Key="WarningText" Color="#E65100" /><!-- نصّ تحذير على خلفيّة فاتحة: الأصفر لا يُقرأ عليها -->
             <SolidColorBrush x:Key="TextStrong" Color="#2D3748" />
             <SolidColorBrush x:Key="TextBody" Color="#4A5568" />
             <SolidColorBrush x:Key="TextMuted" Color="#718096" />
-            <SolidColorBrush x:Key="IconNeutral" Color="#707070" /><!-- مرشّح للدمج في TextMuted -->
 
             <!-- Surface brushes -->
             <SolidColorBrush x:Key="AppBackground"        Color="#F2F4F8" />
@@ -46,9 +50,9 @@
 
             <!-- Material Design overrides using our colors -->
             <SolidColorBrush x:Key="PrimaryHueLightBrush" Color="#2E5088" />
-            <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#1A3A6B" />
-            <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="#0D2040" />
-            <SolidColorBrush x:Key="SecondaryAccentBrush" Color="#C9A227" />
+            <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="{StaticResource PrimaryNavyColor}" />
+            <SolidColorBrush x:Key="PrimaryHueDarkBrush" Color="{StaticResource NavyDarkColor}" />
+            <SolidColorBrush x:Key="SecondaryAccentBrush" Color="{StaticResource GoldAccentColor}" />
 
             <!-- Compatibility alias: MaterialDesignToolIconButton was removed in v5.0.0 -->
             <Style x:Key="MaterialDesignToolIconButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignToolButton}" />

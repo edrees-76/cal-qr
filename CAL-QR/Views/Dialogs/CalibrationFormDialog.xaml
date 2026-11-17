@@ -42,7 +42,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding FormTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="{Binding FormSubtitle}" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="{Binding FormSubtitle}" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">
@@ -203,7 +203,7 @@
                             </Grid>
 
                             <TextBlock Text="النسخة الموقّعة من الشهادة تُرفَق من زرّ «النسخة الموقّعة» في قائمة السجلّات."
-                                       FontSize="10" Foreground="#9E9E9E" TextWrapping="Wrap"
+                                       FontSize="10" Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
                                        Margin="0,0,0,5" FontFamily="{StaticResource CairoFont}" />
 
                             <!-- Attachment List Box -->
@@ -248,7 +248,7 @@
                 <!-- Errors message -->
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="{Binding ValidationErrors}" Foreground="{DynamicResource ErrorRed}" FontSize="12" VerticalAlignment="Center" TextWrapping="Wrap" FontFamily="{StaticResource CairoFont}" Visibility="{Binding HasValidationErrors, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
-                    <TextBlock Text="{Binding IssueHintText}" Foreground="{DynamicResource IconNeutral}" FontSize="11"
+                    <TextBlock Text="{Binding IssueHintText}" Foreground="{DynamicResource TextMuted}" FontSize="11"
                                VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,10,0"
                                FontFamily="{StaticResource CairoFont}"
                                Visibility="{Binding ShowIssueHint, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Collapsed}" />
@@ -268,7 +268,7 @@
                     </Button>
                     <!-- مسار النوع السادس: تقرير حالة معايرة، لسجلّ تعذّرت معايرته -->
                     <Button Command="{Binding IssueStatusReportCommand}" Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Height="40" Margin="0,0,10,0" Foreground="{DynamicResource ErrorStrong}" BorderBrush="{DynamicResource ErrorStrong}"
+                            Height="40" Margin="0,0,10,0" Foreground="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}"
                             FontFamily="{StaticResource CairoFont}"
                             ToolTip="إصدار تقرير حالة لسجل تعذّرت معايرته (بدل شهادة معايرة)"
                             Visibility="{Binding CanIssueStatusReport, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -290,7 +290,7 @@
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
+                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

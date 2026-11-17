@@ -42,7 +42,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="تفاصيل الجهاز وسجل المعايرات" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Text="سجل تاريخ المعايرات السابقة، التواقيع الرقمية والمرفقات" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Text="سجل تاريخ المعايرات السابقة، التواقيع الرقمية والمرفقات" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="BtnMaximize" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="MaximizeButton_Click" ToolTip="تكبير/استعادة" Margin="0,0,5,0">

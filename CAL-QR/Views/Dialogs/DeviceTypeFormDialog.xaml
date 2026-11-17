@@ -41,7 +41,7 @@
                     <TextBlock Text="تحرير قالب نوع الجهاز" FontSize="18" FontWeight="Bold"
                                Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="تعديل الحقول النصية والعلمين وقوالب الفحوصات ومكوّنات عدم اليقين"
-                               FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                               FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
                 <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}"
                         Width="30" Height="30" Padding="0" Click="CloseButton_Click">
@@ -369,7 +369,7 @@
                             FontFamily="{StaticResource CairoFont}" />
                     <Button Command="{Binding CancelCommand}" Content="إلغاء"
                             Style="{StaticResource MaterialDesignOutlinedButton}"
-                            Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}"
+                            Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}"
                             Height="40" Width="80"
                             FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>

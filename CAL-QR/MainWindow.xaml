@@ -61,14 +61,14 @@
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Button Style="{StaticResource MaterialDesignToolIconButton}" Width="30" Height="30" Padding="0" Grid.Column="0" Margin="5,0">
-                                <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource IconNeutral}" />
+                                <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource TextMuted}" />
                             </Button>
                             <TextBox x:Name="SearchTextBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" BorderThickness="0" VerticalAlignment="Center" materialDesign:HintAssist.Hint="بحث سريع شامل... (Ctrl+F)" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" Height="30" VerticalContentAlignment="Center" />
                         </Grid>
                     </materialDesign:ColorZone>
 
                     <Popup IsOpen="{Binding IsSearchResultsOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=SearchColorZone}" Placement="Bottom" AllowsTransparency="True" StaysOpen="False" PopupAnimation="Slide">
-                        <Border Width="350" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,4,0,0">
+                        <Border Width="350" Background="White" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Margin="0,4,0,0">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="10" Color="Black" Opacity="0.15" ShadowDepth="3" Direction="270" />
                             </Border.Effect>
@@ -92,8 +92,8 @@
                                                 <materialDesign:PackIcon x:Name="TypeIcon" Kind="Help" Width="20" Height="20" Margin="0,0,10,0" VerticalAlignment="Center" />
                                                 
                                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="5,0,0,0">
-                                                    <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" FontSize="13" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextAlignment="Right" />
-                                                    <TextBlock Text="{Binding DisplaySubtitle}" FontSize="11" Foreground="#757575" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" TextAlignment="Right" />
+                                                    <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextAlignment="Right" />
+                                                    <TextBlock Text="{Binding DisplaySubtitle}" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" Margin="0,2,0,0" TextAlignment="Right" />
                                                 </StackPanel>
                                             </Grid>
                                         </Border>

@@ -26,7 +26,7 @@
         <Border Grid.Row="0" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="15" Margin="0,0,0,10">
             <StackPanel>
                 <TextBlock Text="التحقق الرقمي من صحة شهادة المعايرة" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
-                <TextBlock Text="تحليل محتويات كود QR ومطابقة التوقيع الإلكتروني المشفر لمنع التزوير" FontSize="11" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="تحليل محتويات كود QR ومطابقة التوقيع الإلكتروني المشفر لمنع التزوير" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>
         </Border>
 
@@ -75,7 +75,7 @@
 
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
                     <Button Command="{Binding VerifyPastedTextCommand}" Content="تحليل وتحقق" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Command="{Binding ClearCommand}" Content="مسح" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource IconNeutral}" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
+                    <Button Command="{Binding ClearCommand}" Content="مسح" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="36" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -125,14 +125,14 @@
                         <materialDesign:PackIcon Kind="AlertCircle" Foreground="{DynamicResource GoldAccent}" Width="30" Height="30" Visibility="{Binding IsAmended, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <materialDesign:PackIcon Kind="Cancel" Foreground="#E64A19" Width="30" Height="30" Visibility="{Binding IsRevoked, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         <materialDesign:PackIcon Kind="AlertDecagram" Foreground="{DynamicResource ErrorRed}" Width="30" Height="30" Visibility="{Binding IsNotFound, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <materialDesign:PackIcon Kind="InformationOutline" Foreground="{DynamicResource IconNeutral}" Width="30" Height="30" Visibility="{Binding IsUnverifiable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <materialDesign:PackIcon Kind="InformationOutline" Foreground="{DynamicResource TextMuted}" Width="30" Height="30" Visibility="{Binding IsUnverifiable, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     </Grid>
 
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Message}" FontSize="15" FontWeight="Bold" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="{DynamicResource IconNeutral}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextMuted}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsAuthentic}" Value="True">
                                             <Setter Property="Foreground" Value="{DynamicResource SuccessGreen}" />
@@ -165,31 +165,31 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="الجهة المالكة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Owner}" FontWeight="Bold" Margin="10,4" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="الجهة المالكة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Owner}" FontWeight="Bold" Margin="10,4" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
 
-                    <TextBlock Grid.Row="0" Grid.Column="3" Text="رقم الشهادة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Grid.Row="0" Grid.Column="4" Text="{Binding CertNo}" FontWeight="Bold" Margin="10,4" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="رقم الشهادة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Grid.Column="4" Text="{Binding CertNo}" FontWeight="Bold" Margin="10,4" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="الموديل / الرقم التسلسلي:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="الموديل / الرقم التسلسلي:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                     <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,4">
-                        <TextBlock Text="{Binding Model}" FontWeight="Bold" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
-                        <TextBlock Text=" - " Foreground="{DynamicResource IconNeutral}" />
-                        <TextBlock Text="{Binding Serial}" FontWeight="Bold" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding Model}" FontWeight="Bold" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                        <TextBlock Text=" - " Foreground="{DynamicResource TextMuted}" />
+                        <TextBlock Text="{Binding Serial}" FontWeight="Bold" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
                     </StackPanel>
 
-                    <TextBlock Grid.Row="1" Grid.Column="3" Text="النتيجة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Grid.Row="1" Grid.Column="4" Text="{Binding Result}" FontWeight="Bold" Margin="10,4" Foreground="#212121" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="1" Grid.Column="3" Text="النتيجة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="1" Grid.Column="4" Text="{Binding Result}" FontWeight="Bold" Margin="10,4" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="تاريخ المعايرة / الانتهاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="تاريخ المعايرة / الانتهاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                     <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="10,4">
-                        <TextBlock Text="{Binding CalDate}" FontWeight="Bold" Foreground="#212121" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="  إلى  " Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                        <TextBlock Text="{Binding ExpDate}" FontWeight="Bold" Foreground="#212121" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="{Binding CalDate}" FontWeight="Bold" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="  إلى  " Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="{Binding ExpDate}" FontWeight="Bold" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
 
                     <StackPanel Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,4" Visibility="{Binding IsAmended, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="تاريخ التعديل: " FontWeight="SemiBold" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تاريخ التعديل: " FontWeight="SemiBold" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="{Binding AmendedAt}" FontWeight="Bold" Foreground="{DynamicResource GoldAccent}" FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Grid>
@@ -208,14 +208,14 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="تاريخ الإلغاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="تاريخ الإلغاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RevokedAt}" FontWeight="Bold" Margin="10,4" Foreground="#E64A19" FontFamily="{StaticResource CairoFont}" />
 
-                    <TextBlock Grid.Row="0" Grid.Column="3" Text="أُلغيت بواسطة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Grid.Row="0" Grid.Column="4" Text="{Binding RevokedBy}" FontWeight="Bold" Margin="10,4" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="0" Grid.Column="3" Text="أُلغيت بواسطة:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="0" Grid.Column="4" Text="{Binding RevokedBy}" FontWeight="Bold" Margin="10,4" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="سبب الإلغاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource IconNeutral}" FontFamily="{StaticResource CairoFont}" />
-                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding RevocationReason}" FontWeight="Bold" Margin="10,4" Foreground="#212121" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="سبب الإلغاء:" FontWeight="SemiBold" Margin="0,4" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4" Text="{Binding RevocationReason}" FontWeight="Bold" Margin="10,4" Foreground="{DynamicResource TextStrong}" FontFamily="{StaticResource CairoFont}" TextWrapping="Wrap" />
                 </Grid>
             </Grid>
         </Border>

@@ -3,12 +3,31 @@ using System.Data;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using CAL_QR.Models;
+using CAL_QR.Services;
 
 namespace CAL_QR.Data
 {
+    /// <summary>
+    /// حصيلة الترحيل التي يحتاجها الإقلاع. SeededAdminTemporaryPassword غير فارغة فقط حين
+    /// أُنشئ حساب المدير الاحتياطيّ في هذا التشغيل: كلمته لا تُخزَّن ولا تُسجَّل في أيّ ملفّ،
+    /// فيعرضها الإقلاع مرّة واحدة على الشاشة.
+    /// </summary>
+    public sealed class MigrationResult
+    {
+        public MigrationResult(string? seededAdminTemporaryPassword)
+        {
+            SeededAdminTemporaryPassword = seededAdminTemporaryPassword;
+        }
+
+        public string? SeededAdminTemporaryPassword { get; }
+    }
+
     public static class DatabaseMigrator
     {
-        public static void RunMigrations(CalQrDbContext context)
+        /// <summary>اسم حساب المدير الاحتياطيّ الذي يُنشأ حين يكتمل الإعداد الأوّل وجدول المستخدمين فارغ.</summary>
+        public const string DefaultAdminUsername = "admin";
+
+        public static MigrationResult RunMigrations(CalQrDbContext context)
         {
             // First, make sure the database is created
             context.Database.EnsureCreated();
@@ -425,7 +444,7 @@ namespace CAL_QR.Data
             SeedDefaultSettings(context);
 
             // Seed default admin user if no users exist (under upgrade condition)
-            SeedDefaultAdminUser(context);
+            string? seededAdminPassword = SeedDefaultAdminUser(context);
 
             // بذر الأنواع الخمسة وقوالبها من DeviceTypeCatalog — مرة واحدة،
             // محروسة بعلم في AppSettings، ولا تدهس تعديلات المستخدم.
@@ -532,6 +551,8 @@ namespace CAL_QR.Data
                     System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Syncing database path failed: {ex.Message}");
                 }
             }
+
+            return new MigrationResult(seededAdminPassword);
         }
 
         public static void ExecuteSqlIfColumnMissing(CalQrDbContext context, string tableName, string columnName, string alterTableSql)
@@ -698,7 +719,15 @@ namespace CAL_QR.Data
             }
         }
 
-        private static void SeedDefaultAdminUser(CalQrDbContext context)
+        /// <summary>
+        /// ينشئ حساب المدير الاحتياطيّ حين يكتمل الإعداد الأوّل وجدول المستخدمين فارغ، ويُرجع
+        /// كلمته المؤقّتة ليعرضها الإقلاع على الشاشة؛ وإلا يُرجع null.
+        ///
+        /// لماذا تُرجَع ولا تُطبع: كانت تُكتب في Debug وConsole فقط، وكلاهما لا يظهر في نسخة
+        /// Release (تطبيق WPF بلا طرفيّة)، فيُنشأ حساب لا يعرف أحد كلمته ويُقفل البرنامج.
+        /// لا تُكتب الكلمة في السجلّ ولا في القاعدة نصّاً؛ السجلّ يحمل واقعة الإنشاء فقط.
+        /// </summary>
+        internal static string? SeedDefaultAdminUser(CalQrDbContext context)
         {
             try
             {
@@ -713,7 +742,7 @@ namespace CAL_QR.Data
 
                     var adminUser = new User
                     {
-                        Username = "admin",
+                        Username = DefaultAdminUsername,
                         PasswordHash = passwordHash,
                         FullName = "مدير النظام الافتراضي",
                         Role = UserRole.Admin,
@@ -733,21 +762,19 @@ namespace CAL_QR.Data
                     context.Users.Add(adminUser);
                     context.SaveChanges();
 
-                    string warningMsg = $@"
-========================================================================
-⚠️ [تحذير أمني] تم إنشاء حساب المسؤول الافتراضي بنجاح!
-اسم المستخدم: admin
-كلمة المرور المؤقتة: {tempPassword}
-يرجى تسجيل الدخول وتغيير كلمة المرور فوراً لأسباب أمنية.
-========================================================================
-";
-                    System.Diagnostics.Debug.WriteLine(warningMsg);
-                    Console.WriteLine(warningMsg);
+                    AppLog.Warn(
+                        $"[DatabaseMigrator] Created fallback admin account '{DefaultAdminUsername}' " +
+                        "because setup was completed but no users existed. Temporary password shown on screen only.");
+                    return tempPassword;
                 }
+
+                return null;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Seeding admin user failed: {ex.Message}");
+                // لا يُصعَّد: فشل البذر لا يجوز أن يمنع الإقلاع، لكنّه يُسجَّل في سجلّ دائم لا في Debug وحده.
+                AppLog.Error("DatabaseMigrator.SeedDefaultAdminUser", ex);
+                return null;
             }
         }
     }

@@ -192,7 +192,7 @@ namespace CAL_QR.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Audit] {ex.Message}");
+                CAL_QR.Services.AppLog.Error($"SignedCopyViewModel: audit log failed for certificate {_certificateId}", ex);
             }
         }
 

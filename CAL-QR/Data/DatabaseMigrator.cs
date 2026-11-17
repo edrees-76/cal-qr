@@ -458,11 +458,9 @@ namespace CAL_QR.Data
             var seedResult = DeviceTypeSeeder.SeedIfNeeded(context);
             if (seedResult.HasDiagnostics)
             {
-                // ⚠ Debug.WriteLine يختفي في Release: هذا سطر مساعدة للمطوّر لا
-                // مسار إبلاغ. المعوَّل عليه هو التسجيل الدائم في AppSettings،
-                // وعرضه للمدير هو البند الحاجز رقم ٧.
-                System.Diagnostics.Debug.WriteLine(
-                    "[DeviceTypeSeeder] حصيلة تستحق العرض:\n" + seedResult.ToDiagnosticsText());
+                // سجلّ ملفّيّ دائم للمطوّر والدعم. المعوَّل عليه للمدير هو التسجيل في
+                // AppSettings، وعرضه للمدير هو البند الحاجز رقم ٧.
+                AppLog.Warn("[DeviceTypeSeeder] حصيلة تستحق العرض:\n" + seedResult.ToDiagnosticsText());
             }
 
             // ترقية تصحيحية لمرة واحدة — المرحلة ٣-أ.
@@ -475,8 +473,7 @@ namespace CAL_QR.Data
             var repairResult = DeviceTypeSeeder.RepairCatalogTypesIfNeeded(context);
             if (repairResult.HasDiagnostics)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "[DeviceTypeSeeder] حصيلة الترقية التصحيحية:\n" + repairResult.ToDiagnosticsText());
+                AppLog.Warn("[DeviceTypeSeeder] حصيلة الترقية التصحيحية:\n" + repairResult.ToDiagnosticsText());
             }
 
             // مزامنة إضافات الكتالوج — حارس بالمحتوى بلا عَلَم.
@@ -488,8 +485,7 @@ namespace CAL_QR.Data
             var syncResult = DeviceTypeSeeder.SyncMissingCatalogTypesIfNeeded(context);
             if (syncResult.HasDiagnostics)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    "[DeviceTypeSeeder] حصيلة مزامنة إضافات الكتالوج:\n" + syncResult.ToDiagnosticsText());
+                AppLog.Warn("[DeviceTypeSeeder] حصيلة مزامنة إضافات الكتالوج:\n" + syncResult.ToDiagnosticsText());
             }
 
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
@@ -522,7 +518,7 @@ namespace CAL_QR.Data
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Permissions split migration failed: {ex.Message}");
+                AppLog.Error("DatabaseMigrator: permissions split migration failed", ex);
             }
 
             if (context.Database.IsRelational())
@@ -548,7 +544,7 @@ namespace CAL_QR.Data
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[DatabaseMigrator Error] Syncing database path failed: {ex.Message}");
+                    AppLog.Error("DatabaseMigrator: syncing DatabasePath setting failed", ex);
                 }
             }
 

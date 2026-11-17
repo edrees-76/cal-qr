@@ -68,7 +68,7 @@ namespace CAL_QR.Services
                 return true;
             }
 
-            Console.WriteLine($"[Warning] Failed to delete {kind} {path}: {lastError}");
+            AppLog.Warn($"FileSystemRetryHelper: failed to delete {kind} {path}: {lastError}");
             return false;
         }
     }

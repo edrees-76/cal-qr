@@ -280,8 +280,7 @@ namespace CAL_QR.Data
             catch (Exception ex)
             {
                 result.Failure = ex;
-                System.Diagnostics.Debug.WriteLine(
-                    $"[DeviceTypeSeeder] فشلت مزامنة إضافات الكتالوج: {ex.GetType().Name} — {ex.Message}");
+                CAL_QR.Services.AppLog.Error("DeviceTypeSeeder: فشلت مزامنة إضافات الكتالوج", ex);
                 return result;
             }
         }
@@ -317,8 +316,9 @@ namespace CAL_QR.Data
             }
             catch (Exception recordingException)
             {
-                System.Diagnostics.Debug.WriteLine(
-                    $"[DeviceTypeSeeder] تعذّر تسجيل فشل الترقية التصحيحية: {recordingException.Message}");
+                CAL_QR.Services.AppLog.Error(
+                    $"DeviceTypeSeeder: تعذّر تسجيل فشل الترقية التصحيحية (السبب الأصليّ: {ex.GetType().Name} — {ex.Message})",
+                    recordingException);
             }
         }
 
@@ -358,8 +358,9 @@ namespace CAL_QR.Data
                 // بلوغ هذا الموضع يعني أن قاعدة البيانات نفسها غير قابلة للكتابة،
                 // وعندها فشل البذر أهون مشاكل التطبيق وسيظهر الخلل الأصلي في أول
                 // عملية حفظ. حجب الإقلاع هنا لا يفيد أحداً ويُخفي السبب الحقيقي.
-                System.Diagnostics.Debug.WriteLine(
-                    $"[DeviceTypeSeeder] تعذّر تسجيل فشل البذر: {recordingException.Message}");
+                CAL_QR.Services.AppLog.Error(
+                    $"DeviceTypeSeeder: تعذّر تسجيل فشل البذر (السبب الأصليّ: {ex.GetType().Name} — {ex.Message})",
+                    recordingException);
             }
         }
 

@@ -220,7 +220,7 @@ namespace CAL_QR.ViewModels
             catch (Exception ex)
             {
                 // Handle load failures gracefully
-                System.Diagnostics.Debug.WriteLine($"Dashboard load error: {ex.Message}");
+                CAL_QR.Services.AppLog.Error("DashboardViewModel: dashboard load failed", ex);
             }
         }
 

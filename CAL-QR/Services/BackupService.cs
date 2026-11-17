@@ -261,7 +261,7 @@ namespace CAL_QR.Services
                     }
                     catch (Exception logEx)
                     {
-                        System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل العمليّة في سجلّ التدقيق: {logEx.Message}");
+                        AppLog.Error($"BackupService: تعذّر تسجيل فشل العمليّة في سجلّ التدقيق (السبب الأصليّ: {ex.Message})", logEx);
                     }
                     throw;
                 }
@@ -657,7 +657,7 @@ namespace CAL_QR.Services
                         }
                         catch (Exception logEx)
                         {
-                            System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل الاستعادة في سجلّ التدقيق: {logEx.Message}");
+                            AppLog.Error("BackupService: تعذّر تسجيل فشل الاستعادة في سجلّ التدقيق", logEx);
                         }
 
                         throw;
@@ -680,7 +680,7 @@ namespace CAL_QR.Services
                     }
                     catch (Exception logEx)
                     {
-                        System.Diagnostics.Debug.WriteLine($"تعذّر تسجيل فشل العمليّة في سجلّ التدقيق: {logEx.Message}");
+                        AppLog.Error($"BackupService: تعذّر تسجيل فشل العمليّة في سجلّ التدقيق (السبب الأصليّ: {ex.Message})", logEx);
                     }
                     throw;
                 }

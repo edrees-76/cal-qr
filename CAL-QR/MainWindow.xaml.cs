@@ -153,6 +153,44 @@ namespace CAL_QR
                 popup.DataContext = _viewModel;
                 popup.ShowDialog();
             }
+
+            await ShowDeviceTypeSeedNoticeAsync();
+        }
+
+        /// <summary>
+        /// يعرض للمدير حصيلة بذر أنواع الأجهزة المخزَّنة في AppSettings (التبعية الحاجزة رقم 7).
+        /// فشل العرض لا يمنع فتح النافذة، لكنّه يُسجَّل في السجلّ الدائم.
+        /// </summary>
+        private async System.Threading.Tasks.Task ShowDeviceTypeSeedNoticeAsync()
+        {
+            if (!CAL_QR.Validation.DeviceTypeSeedNoticeRules.CanSeeNotice(_currentUserService.CurrentUser))
+                return;
+
+            try
+            {
+                var noticeService = App.ServiceProvider.GetRequiredService<IDeviceTypeSeedNoticeService>();
+                var snapshot = await noticeService.LoadAsync();
+
+                string? message = CAL_QR.Validation.DeviceTypeSeedNoticeRules.BuildMessage(
+                    snapshot.Conflicts, snapshot.SeedFailure, snapshot.RepairFailure);
+                if (message == null)
+                    return;
+
+                bool canAcknowledge = CAL_QR.Validation.DeviceTypeSeedNoticeRules.HasAcknowledgeableConflicts(snapshot.Conflicts);
+                var answer = MessageBox.Show(this, message, CAL_QR.Validation.DeviceTypeSeedNoticeRules.Title,
+                    canAcknowledge ? MessageBoxButton.YesNo : MessageBoxButton.OK, MessageBoxImage.Warning,
+                    canAcknowledge ? MessageBoxResult.No : MessageBoxResult.OK,
+                    MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
+
+                if (canAcknowledge && answer == MessageBoxResult.Yes)
+                {
+                    await noticeService.AcknowledgeConflictsAsync(snapshot.Conflicts!);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("MainWindow: showing device-type seed notice failed", ex);
+            }
         }
 
         private void LogoutButton_Click(object sender, RoutedEventArgs e)

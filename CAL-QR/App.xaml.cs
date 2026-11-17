@@ -243,6 +243,7 @@ namespace CAL_QR
             services.AddSingleton<IRecoveryAnswerService, RecoveryAnswerService>();
             services.AddSingleton<ICertificateSignatureService, CertificateSignatureService>();
             services.AddSingleton<IdleLockService>();
+            services.AddSingleton<IDeviceTypeSeedNoticeService, DeviceTypeSeedNoticeService>();
             // بانِي المسوّدة صرف بلا حالة ولا DbContext ⇒ Singleton آمن.
             services.AddSingleton<ICertificateDraftBuilder, CertificateDraftBuilder>();
 

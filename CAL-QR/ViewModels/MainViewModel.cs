@@ -48,6 +48,10 @@ namespace CAL_QR.ViewModels
         private DispatcherTimer? _searchDebounceTimer;
         private CancellationTokenSource? _searchCancellationTokenSource;
 
+        // ساعة الشريط العلويّ
+        private DispatcherTimer? _clockTimer;
+        private string _currentDateTimeText = HeaderClockRules.Format(DateTime.Now);
+
         public event EventHandler? SearchFocusRequested;
 
         /// <summary>
@@ -109,10 +113,28 @@ namespace CAL_QR.ViewModels
             };
             _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
 
+            // ساعة الشريط العلويّ: تُحدَّث كلّ ثانية ليتغيّر الرقم مع بداية الدقيقة.
+            _clockTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _clockTimer.Tick += ClockTimer_Tick;
+            _clockTimer.Start();
+
             _userName = _currentUserService.CurrentUser?.FullName ?? "مهندس المعايرة";
 
             SelectFirstAllowedTab();
         }
+
+        /// <summary>التاريخ والوقت المحلّيّان في الشريط العلويّ (HeaderClockRules).</summary>
+        public string CurrentDateTimeText
+        {
+            get => _currentDateTimeText;
+            private set => SetProperty(ref _currentDateTimeText, value);
+        }
+
+        private void ClockTimer_Tick(object? sender, EventArgs e) =>
+            CurrentDateTimeText = HeaderClockRules.Format(DateTime.Now);
 
         public bool IsRecordsVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Records) ?? false;
         public bool IsVerificationVisible => _currentUserService.CurrentUser?.HasPermission(SystemPermissions.Verification) ?? false;
@@ -523,6 +545,13 @@ namespace CAL_QR.ViewModels
             {
                 _searchDebounceTimer.Stop();
                 _searchDebounceTimer = null;
+            }
+
+            if (_clockTimer != null)
+            {
+                _clockTimer.Stop();
+                _clockTimer.Tick -= ClockTimer_Tick;
+                _clockTimer = null;
             }
 
             _searchCancellationTokenSource?.Cancel();

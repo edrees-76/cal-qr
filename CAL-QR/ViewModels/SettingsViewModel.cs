@@ -329,12 +329,19 @@ namespace CAL_QR.ViewModels
             return CanEdit &&
                    !string.IsNullOrWhiteSpace(CurrentPassword) &&
                    !string.IsNullOrWhiteSpace(NewPassword) &&
-                   NewPassword == ConfirmPassword &&
-                   NewPassword.Length >= 4;
+                   NewPassword == ConfirmPassword;
         }
 
         private async Task ChangePasswordAsync()
         {
+            // نفس قاعدة إنشاء الحساب (8 أحرف). الزرّ لا يُعطَّل بالطول حتّى تظهر الرسالة بسببها.
+            string? passwordError = UserPasswordRules.Validate(NewPassword);
+            if (passwordError != null)
+            {
+                MessageBox.Show(passwordError, "تنبيه", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 var currentUserId = _currentUserService.CurrentUser?.Id;
@@ -558,6 +565,16 @@ namespace CAL_QR.ViewModels
                     if (string.IsNullOrWhiteSpace(DatabasePath))
                     {
                         MessageBox.Show("مسار قاعدة البيانات الجديد غير صالح.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+
+                    // قبل أيّ كتابة: النسخ أدناه يستبدل محتوى الوجهة كاملاً، فوجهة موجودة تُمحى.
+                    string activeDbPath = new SqliteConnectionStringBuilder(
+                        context.Database.GetDbConnection().ConnectionString).DataSource;
+                    string? moveError = DatabaseMoveRules.Validate(activeDbPath, DatabasePath, File.Exists(DatabasePath));
+                    if (moveError != null)
+                    {
+                        MessageBox.Show(moveError, "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
 

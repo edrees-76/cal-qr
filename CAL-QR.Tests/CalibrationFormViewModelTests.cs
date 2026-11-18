@@ -180,11 +180,13 @@ namespace CAL_QR.Tests
             Assert.False(condVm.CanIssueStatusReport);
         }
 
-        // جوهر الإصلاح ليس الشرط بل الإشعار: SetProperty وحدها كانت تترك الزرّين
-        // جامدين حتى إعادة فتح النافذة — وهو ما شوهد ميدانيًّا. اختبار يقرأ
-        // الخصائص وحدها كان سيبقى أخضر بعد حذف الإشعارات.
+        // جوهر الإصلاح الأوّل كان الإشعار: SetProperty وحدها كانت تترك الزرّين
+        // جامدين حتى إعادة فتح النافذة. والإصلاح الثاني (مراجعة 18 نوفمبر 2026):
+        // نموذج الشهادة يقرأ السجلّ المحفوظ، فنتيجة غُيّرت ولم تُحفظ كانت تُتيح
+        // إصدار تقرير حالة لسجلّ محفوظ «ناجح» (أو شهادة لسجلّ «راسب»). الآن
+        // يتوقّف الزرّان ويظهر تلميح «احفظ أوّلاً»، والإشعارات ما زالت تُطلق.
         [Fact]
-        public async Task ChangingResult_FlipsButtonsAndRaisesNotifications()
+        public async Task ChangingResult_WithoutSaving_DisablesBothButtonsAndRaisesNotifications()
         {
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
@@ -201,12 +203,19 @@ namespace CAL_QR.Tests
             vm.SelectedResult = "Failed";
 
             Assert.False(vm.CanIssueCertificate);
-            Assert.True(vm.CanIssueStatusReport);
+            Assert.False(vm.CanIssueStatusReport);
+            Assert.True(vm.ShowIssueHint);
+            Assert.Contains("احفظ", vm.IssueHintText);
 
             Assert.Contains(nameof(CalibrationFormViewModel.CanIssueCertificate), raised);
             Assert.Contains(nameof(CalibrationFormViewModel.CanIssueStatusReport), raised);
             Assert.Contains(nameof(CalibrationFormViewModel.IssueHintText), raised);
             Assert.Contains(nameof(CalibrationFormViewModel.ShowIssueHint), raised);
+
+            // العودة إلى النتيجة المحفوظة تُعيد الزرّ الصحيح.
+            vm.SelectedResult = "Passed";
+            Assert.True(vm.CanIssueCertificate);
+            Assert.False(vm.CanIssueStatusReport);
         }
     }
 }

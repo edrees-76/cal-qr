@@ -856,13 +856,13 @@ namespace CAL_QR.ViewModels
                 {
                     try
                     {
-                        var counterReport = await _backupService.RestoreAsync(
+                        var restoreResult = await _backupService.RestoreAsync(
                             openFileDialog.FileName,
                             string.IsNullOrEmpty(RestorePassword) ? null : RestorePassword);
 
-                        if (counterReport != null)
+                        if (restoreResult.CounterReport != null)
                         {
-                            await ConfirmCertificateCounterAfterRestoreAsync(counterReport);
+                            await ConfirmCertificateCounterAfterRestoreAsync(restoreResult.CounterReport);
                         }
 
                         // مفتاح التوقيع المخبّأ في HmacService والمخطّط يُقرآن عند الإقلاع فقط، فلا يصحّ
@@ -870,7 +870,11 @@ namespace CAL_QR.ViewModels
                         // غير موجود في القاعدة المستعادة. إعادة التشغيل تحمّل المفتاح وتشغّل الترحيلات،
                         // ولا تُطلق أحداث تحديث قبلها لأنّ مخطّط نسخة أقدم قد يفتقد أعمدة.
                         MessageBox.Show(
-                            "تمت استعادة البيانات بنجاح.\n\nسيُعاد تشغيل البرنامج الآن لتحميل مفتاح التوقيع والمخطّط من النسخة المستعادة.",
+                            "تمت استعادة البيانات بنجاح.\n\n" +
+                            "حُفظت قبلها نسخة أمان من الوضع السابق (بكلمة سرّ النسخ على هذا الجهاز، أو بكلمة النسخة المستعادة إن لم تكن مضبوطة):\n" +
+                            restoreResult.SafetyBackupPath + "\n" +
+                            "استعادتها تتراجع عن هذه الاستعادة وتُعيد ما صدر بعد تاريخ النسخة.\n\n" +
+                            "سيُعاد تشغيل البرنامج الآن لتحميل مفتاح التوقيع والمخطّط من النسخة المستعادة.",
                             "تمت الاستعادة",
                             MessageBoxButton.OK,
                             MessageBoxImage.Information);

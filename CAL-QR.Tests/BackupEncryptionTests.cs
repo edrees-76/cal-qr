@@ -385,9 +385,98 @@ namespace CAL_QR.Tests
             BackupEncryption.DecryptFile(backup, legacyZip, TestBackupPasswordStore.DefaultPassword);
             AddMarker("MarkerAddedAfterBackup");
 
-            await NewService(new TestBackupPasswordStore(password: null)).RestoreAsync(legacyZip);
+            // كلمة الجهاز مضبوطة: تُقفل بها نسخة الأمان قبل الاستعادة (الأرشيف القديم بلا كلمة).
+            await NewService(new TestBackupPasswordStore()).RestoreAsync(legacyZip);
 
             Assert.False(HasSetting("MarkerAddedAfterBackup"));
+        }
+
+        [Fact]
+        public async Task Restore_LegacyZip_WithNoPasswordAnywhere_IsRefusedAndTouchesNothing()
+        {
+            var service = NewService(new TestBackupPasswordStore());
+            await service.BackupNowAsync(_backupFolder);
+            string backup = Assert.Single(Directory.GetFiles(_backupFolder));
+            string legacyZip = Path.Combine(_dir, "CalQR_Backup_legacy.zip");
+            BackupEncryption.DecryptFile(backup, legacyZip, TestBackupPasswordStore.DefaultPassword);
+            AddMarker("MarkerAddedAfterBackup");
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => NewService(new TestBackupPasswordStore(password: null)).RestoreAsync(legacyZip));
+
+            Assert.Equal(BackupService.NoSafetyPasswordMessage, ex.Message);
+            Assert.True(HasSetting("MarkerAddedAfterBackup"));
+            Assert.Empty(Directory.GetFiles(_dir, BackupService.PreRestoreFilePrefix + "*", SearchOption.AllDirectories));
+        }
+
+        [Fact]
+        public async Task Restore_WritesSafetyBackup_ThatUndoesTheRestore()
+        {
+            var service = NewService(new TestBackupPasswordStore());
+            await service.BackupNowAsync(_backupFolder);
+            string backup = Assert.Single(Directory.GetFiles(_backupFolder));
+
+            // ما حدث بعد النسخة (شهادات الثلاثاء في المثال).
+            AddMarker("MarkerAddedAfterBackup");
+
+            var result = await service.RestoreAsync(backup);
+
+            Assert.False(HasSetting("MarkerAddedAfterBackup"));
+            Assert.True(File.Exists(result.SafetyBackupPath));
+            Assert.Equal(_backupFolder, Path.GetDirectoryName(result.SafetyBackupPath));
+            Assert.StartsWith(BackupService.PreRestoreFilePrefix, Path.GetFileName(result.SafetyBackupPath));
+            Assert.True(BackupEncryption.IsEncryptedBackup(result.SafetyBackupPath));
+
+            // التراجع: استعادة نسخة الأمان تُعيد ما صدر بعد تاريخ النسخة.
+            await service.RestoreAsync(result.SafetyBackupPath);
+            Assert.True(HasSetting("MarkerAddedAfterBackup"));
+        }
+
+        [Fact]
+        public async Task Restore_OnNewMachine_LocksSafetyBackupWithTypedPassword()
+        {
+            await NewService(new TestBackupPasswordStore()).BackupNowAsync(_backupFolder);
+            string backup = Assert.Single(Directory.GetFiles(_backupFolder));
+
+            var result = await NewService(new TestBackupPasswordStore(password: null))
+                .RestoreAsync(backup, TestBackupPasswordStore.DefaultPassword);
+
+            string check = Path.Combine(_dir, "safety-check.zip");
+            BackupEncryption.DecryptFile(result.SafetyBackupPath, check, TestBackupPasswordStore.DefaultPassword);
+            using var archive = ZipFile.OpenRead(check);
+            Assert.NotNull(archive.GetEntry("cal-qr.db"));
+        }
+
+        [Fact]
+        public async Task Restore_WhenSafetyBackupCannotBeWritten_IsRefusedAndTouchesNothing()
+        {
+            var service = NewService(new TestBackupPasswordStore());
+            await service.BackupNowAsync(_backupFolder);
+            string backup = Assert.Single(Directory.GetFiles(_backupFolder));
+            AddMarker("MarkerAddedAfterBackup");
+
+            // مجلّد النسخ المضبوط مسار يقع تحت ملفّ لا مجلّد ⇒ تتعذّر كتابة نسخة الأمان.
+            string blocker = Path.Combine(_dir, "not-a-folder");
+            File.WriteAllText(blocker, "x");
+            using (var context = new CalQrDbContext(_options))
+            {
+                context.AppSettings.Add(new AppSetting { Key = "BackupPath", Value = Path.Combine(blocker, "Backups") });
+                context.SaveChanges();
+            }
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.RestoreAsync(backup));
+
+            Assert.Contains("نسخة أمان", ex.Message);
+            Assert.True(HasSetting("MarkerAddedAfterBackup"));
+        }
+
+        [Theory]
+        [InlineData(@"C:\Lab\Backups", @"D:\USB\CalQR_Backup_x.cqbak", @"C:\Lab\Backups")]
+        [InlineData("", @"D:\USB\CalQR_Backup_x.cqbak", @"D:\USB")]
+        [InlineData("relative\\path", @"D:\USB\CalQR_Backup_x.cqbak", @"D:\USB")]
+        public void ResolveSafetyBackupFolder_PrefersAbsoluteBackupPath(string setting, string backupFile, string expected)
+        {
+            Assert.Equal(expected, BackupService.ResolveSafetyBackupFolder(setting, backupFile));
         }
 
         private class TestDbContextFactory : IDbContextFactory<CalQrDbContext>

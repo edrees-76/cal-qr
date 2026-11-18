@@ -161,8 +161,10 @@
             </Border>
 
             <!-- Scrollable Content Panels -->
-            <ScrollViewer Grid.Row="1" x:Name="HelpScrollViewer" VerticalScrollBarVisibility="Auto" Padding="25,20">
-                <Grid x:Name="ContentContainer">
+            <!-- الهامش على المحتوى لا Padding على ScrollViewer: قالب MaterialDesign لا يطبّقه،
+                 فكان النصّ ملتصقاً بقائمة المحتويات. -->
+            <ScrollViewer Grid.Row="1" x:Name="HelpScrollViewer" VerticalScrollBarVisibility="Auto">
+                <Grid x:Name="ContentContainer" Margin="25,20">
 
                     <!-- Panel 1: First Run Setup -->
                     <StackPanel x:Name="Panel1" Visibility="Visible">
@@ -310,6 +312,15 @@
 
                         <TextBlock Text="استعادة نسخة احتياطية:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock Text="في حال تلف البيانات، اضغط زر 'استعادة نسخة احتياطية' في الإعدادات، واختر ملف الـ ZIP المطلوب. سيحذرك النظام بأن البيانات الحالية سيتم استبدالها بالكامل، بمجرد موافقتك سيعيد البرنامج تشغيل نفسه بالبيانات الجديدة." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap" />
+                        <TextBlock Text="بعد الاستعادة — نسخة أمان تلقائيّة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
+                        <TextBlock Text="قبل أن تستبدل المنظومة بياناتك تحفظ نسخة مقفلة من الوضع الحاليّ، اسمها يبدأ بـ CalQR_PreRestore في مجلّد النسخ، ورسالة النجاح تذكر مكانها. إن استعدت نسخة خطأً، أو احتجت شهادات صدرت بعد تاريخ النسخة، فاستعد ملفّ CalQR_PreRestore نفسه فيرجع كلّ شيء كما كان. إن تعذّر حفظ نسخة الأمان لا تتمّ الاستعادة ولا يتغيّر شيء." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap" />
+
+                        <TextBlock Text="تأكيد آخر رقم شهادة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
+                        <TextBlock Text="بعد الاستعادة تظهر نافذة تقترح آخر رقم شهادة تعرفه المنظومة. إن كان في السجلّ الورقيّ رقم أكبر صدر فعلاً فاكتبه. لا يُقبل رقم أصغر، حتّى لا يُعطى رقم شهادة مسلَّمة لشهادة أخرى." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap" />
+
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock Text="💡 نسخة الأمان تحمي من الاستعادة الخاطئة، لا من تلف القرص. أبقِ النسخ اليوميّ مفعّلاً، وانقل النسخ دوريّاً إلى وسيط خارجيّ أو إلى المجلّد السحابيّ." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
+                        </Border>
                     </StackPanel>
 
                     <!-- Panel 10: Audit Log -->
@@ -470,6 +481,15 @@
                         <TextBlock Text="كيف تستعيد نسخة احتياطية" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,10,0,2" />
                         <TextBlock FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,15" TextWrapping="Wrap"
                                    Text="1. افتح تبويب 'الإعدادات'.&#x0a;2. انقر زر 'استعادة نسخة احتياطية'.&#x0a;3. اختر ملفّ النسخة المطلوب (اسمه يبدأ بـ CalQR_Backup ويتضمّن التاريخ والوقت، وامتداده .cqbak).&#x0a;4. النسخة مقفلة بكلمة سرّ النسخ الاحتياطي. على جهاز جديد، أو لنسخة أُخذت قبل تغيير الكلمة، اكتب كلمة سرّ النسخة في خانتها قبل الضغط على زر الاستعادة (الكلمة محفوظة في الظرف المختوم). على الجهاز نفسه اتركها فارغة.&#x0a;5. سيحذّرك النظام بأن البيانات الحالية ستُستبدل بالكامل — راجع التاريخ في اسم الملف قبل الموافقة.&#x0a;6. بعد الموافقة يُعيد البرنامج تشغيل نفسه بالبيانات المستعادة." />
+                        <TextBlock Text="بعد الاستعادة — نسخة أمان تلقائيّة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
+                        <TextBlock Text="قبل أن تستبدل المنظومة بياناتك تحفظ نسخة مقفلة من الوضع الحاليّ، اسمها يبدأ بـ CalQR_PreRestore في مجلّد النسخ، ورسالة النجاح تذكر مكانها. إن استعدت نسخة خطأً، أو احتجت شهادات صدرت بعد تاريخ النسخة، فاستعد ملفّ CalQR_PreRestore نفسه فيرجع كلّ شيء كما كان. إن تعذّر حفظ نسخة الأمان لا تتمّ الاستعادة ولا يتغيّر شيء." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap" />
+
+                        <TextBlock Text="تأكيد آخر رقم شهادة:" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
+                        <TextBlock Text="بعد الاستعادة تظهر نافذة تقترح آخر رقم شهادة تعرفه المنظومة. إن كان في السجلّ الورقيّ رقم أكبر صدر فعلاً فاكتبه. لا يُقبل رقم أصغر، حتّى لا يُعطى رقم شهادة مسلَّمة لشهادة أخرى." FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap" />
+
+                        <Border Style="{StaticResource NoticeCardStyle}">
+                            <TextBlock Text="💡 نسخة الأمان تحمي من الاستعادة الخاطئة، لا من تلف القرص. أبقِ النسخ اليوميّ مفعّلاً، وانقل النسخ دوريّاً إلى وسيط خارجيّ أو إلى المجلّد السحابيّ." FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource GoldAccent}" TextWrapping="Wrap" />
+                        </Border>
 
                         <TextBlock Text="كيف تتأكّد أن النسخ الاحتياطي يعمل" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" Margin="0,5,0,2" />
                         <TextBlock FontSize="13" Foreground="{DynamicResource TextBody}" Margin="10,0,0,10" TextWrapping="Wrap"

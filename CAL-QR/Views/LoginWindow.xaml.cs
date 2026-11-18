@@ -138,6 +138,7 @@ namespace CAL_QR.Views
             bool loginSuccess = false;
             Models.User? targetUser = null;
             TimeSpan? persistedLock = null;
+            int? accountAttemptsLeft = null; // حساب موجود: عدّاده في صفّه، لا في عدّاد النافذة
 
             try
             {
@@ -165,7 +166,10 @@ namespace CAL_QR.Views
                         }
                         else if (persistedLock == null)
                         {
-                            var lockedUntil = await _userRepository.RegisterFailedLoginAsync(user.Id, DateTime.UtcNow);
+                            var failedAtUtc = DateTime.UtcNow;
+                            accountAttemptsLeft = LoginLockoutRules.AttemptsLeft(
+                                LoginLockoutRules.RegisterFailure(user.FailedLoginAttempts, user.LockedUntil, failedAtUtc).Attempts);
+                            var lockedUntil = await _userRepository.RegisterFailedLoginAsync(user.Id, failedAtUtc);
                             persistedLock = LoginLockoutRules.RemainingLock(lockedUntil, DateTime.UtcNow);
                             if (persistedLock != null)
                             {
@@ -207,6 +211,15 @@ namespace CAL_QR.Views
                 return;
             }
 
+            if (accountAttemptsLeft != null)
+            {
+                // كلمة مرور خاطئة لحساب موجود: العدّ في صفّ الحساب وحده. كانت تزيد عدّاد النافذة
+                // أيضاً، فأخطاء حساب تقفل النافذة على حساب آخر وتُظهر له محاولات متبقية ليست له.
+                ShowError($"اسم المستخدم أو كلمة المرور غير صحيحة! محاولات متبقية: {accountAttemptsLeft.Value}");
+                ClearPasswordAndFocus();
+                return;
+            }
+
             // اسم غير موجود: لا صفّ يحمل العدّاد، فيبقى عدّاد النافذة (لا حساب لحمايته).
             _failedAttempts++;
             if (_failedAttempts >= LoginLockoutRules.MaxAttempts)
@@ -217,13 +230,18 @@ namespace CAL_QR.Views
             else
             {
                 ShowError($"اسم المستخدم أو كلمة المرور غير صحيحة! محاولات متبقية: {LoginLockoutRules.MaxAttempts - _failedAttempts}");
-                TxtPassword.Password = string.Empty;
-                TxtPasswordReveal.Text = string.Empty;
-                if (TxtPassword.Visibility == Visibility.Visible)
-                    TxtPassword.Focus();
-                else
-                    TxtPasswordReveal.Focus();
+                ClearPasswordAndFocus();
             }
+        }
+
+        private void ClearPasswordAndFocus()
+        {
+            TxtPassword.Password = string.Empty;
+            TxtPasswordReveal.Text = string.Empty;
+            if (TxtPassword.Visibility == Visibility.Visible)
+                TxtPassword.Focus();
+            else
+                TxtPasswordReveal.Focus();
         }
 
         private async System.Threading.Tasks.Task TryAuditAsync(string action, Models.User user, string details)

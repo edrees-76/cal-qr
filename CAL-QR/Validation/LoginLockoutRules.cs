@@ -34,6 +34,10 @@ namespace CAL_QR.Validation
             return (attempts, null);
         }
 
+        /// <summary>Attempts left before the account locks, given its counter after a failure.</summary>
+        public static int AttemptsLeft(int attemptsAfterFailure) =>
+            attemptsAfterFailure <= 0 ? 0 : Math.Max(0, MaxAttempts - attemptsAfterFailure);
+
         public static string FormatRemaining(TimeSpan remaining)
         {
             int total = (int)Math.Ceiling(remaining.TotalSeconds);

@@ -552,19 +552,7 @@ namespace CAL_QR.ViewModels
                     .FirstOrDefault(w => w.IsActive);
                 dialog.ShowDialog();
 
-                // تحديث حالة الشهادة بعد الإغلاق (قد يكون الرقم تغيّر)
-                using (var context = _contextFactory.CreateDbContext())
-                {
-                    var cert = context.Certificates
-                        .AsNoTracking()
-                        .Where(c => c.Id == _existingCertificateId && !c.IsDeleted)
-                        .Select(c => c.CertificateNumber)
-                        .FirstOrDefault();
-                    if (cert != null)
-                    {
-                        CertificateNumber = cert;
-                    }
-                }
+                RefreshCertificateStateAfterEdit();
                 Saved?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
@@ -572,6 +560,30 @@ namespace CAL_QR.ViewModels
                 MessageBox.Show($"خطأ في فتح نموذج تعديل الشهادة: {ex.Message}", "خطأ",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        /// <summary>
+        /// حالة الشهادة بعد إغلاق نموذجها: قد يكون الرقم تغيّر، أو أُلغيت الشهادة (الإلغاء يضع
+        /// IsDeleted). كان الفرع الثاني يُترك فيبقى HasCertificate صحيحاً ومعرّف الملغاة محفوظاً:
+        /// زرّ التعديل يفتح شهادة ملغاة، وإصدار بديلة مغلق حتّى إعادة فتح السجلّ.
+        /// </summary>
+        internal void RefreshCertificateStateAfterEdit()
+        {
+            using var context = _contextFactory.CreateDbContext();
+            var number = context.Certificates
+                .AsNoTracking()
+                .Where(c => c.Id == _existingCertificateId && !c.IsDeleted)
+                .Select(c => c.CertificateNumber)
+                .FirstOrDefault();
+
+            if (number != null)
+            {
+                CertificateNumber = number;
+                return;
+            }
+
+            _existingCertificateId = 0;
+            HasCertificate = false;
         }
 
         private void LoadFormSources()

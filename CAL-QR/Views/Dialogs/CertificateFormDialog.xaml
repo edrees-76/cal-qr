@@ -594,7 +594,7 @@
                                 <Button Command="{Binding AddUncertaintyComponentCommand}" Content="إضافة مكوّن" Style="{StaticResource RowActionButton}" />
                             </StackPanel>
 
-                            <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow">
+                            <DataGrid ItemsSource="{Binding UncertaintyComponents}" Style="{StaticResource GridStyle}" Margin="4,0,4,10" LoadingRow="DataGrid_LoadingRow" CellEditEnding="UncertaintyGrid_CellEditEnding">
                                 <DataGrid.Resources>
                                     <Style TargetType="DataGridColumnHeader">
                                         <Setter Property="Template">

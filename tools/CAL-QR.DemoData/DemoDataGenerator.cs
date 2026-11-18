@@ -259,10 +259,19 @@ public static class DemoDataGenerator
             "Pancake Probe" => new[] { "Sr-90/Y-90", "Cs-137" },
             "Beta Scintillation Probe" => new[] { "Sr-90/Y-90" },
             "Personal Electronic Dosimeter (PED)" => new[] { "Cs-137" },
+            "Gamma Scintillation Probe" => new[] { "Co-60" },
             _ => new[] { "Cs-137", "Co-60" }
         };
         string unit = isProbe ? "kCPM" : type.Name.StartsWith("Personal", StringComparison.Ordinal) ? "µSv" : "µSv/h";
         double[] levels = isProbe ? new[] { 5.0, 20.0, 80.0 } : new[] { 10.0, 100.0, 1000.0 };
+
+        // العرض المبسّط (قالب G501) يطبع قيمة CF واحدة مع خطئها النسبيّ، بلا نظير ولا مستوى:
+        // صفّ واحد. ستّة صفوف كانت تُطبع أزواج CF/AE متكرّرة لا يميّز القارئ بينها.
+        if (DeviceTypeCatalog.Resolve(type.Name)?.SimplifiedResults == true)
+        {
+            nuclides = new[] { nuclides[0] };
+            levels = new[] { levels[1] };
+        }
 
         c.CalibrationResults.Clear();
         c.NuclideSummaries.Clear();

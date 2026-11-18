@@ -115,6 +115,10 @@ namespace CAL_QR
                 var hmacService = ServiceProvider.GetRequiredService<IHmacService>();
                 hmacService.Initialize();
 
+                // بعد الترحيلات والمفتاح: عدّاد الشهادات لا يقلّ عن حدّه خارج القاعدة
+                // (استعادة نسخة أقدم كانت تُرجعه فيتكرّر رقم شهادة صدرت).
+                ApplyCertificateCounterFloor();
+
                 // Start scheduled backup checks
                 var backupService = ServiceProvider.GetRequiredService<IBackupService>();
                 backupService.StartScheduledBackupTimer();
@@ -127,6 +131,40 @@ namespace CAL_QR
                 MessageBox.Show($"حدث خطأ أثناء تشغيل التطبيق في OnStartup:\n{ex.Message}\n\n{ex.StackTrace}", 
                     "خطأ حرج في الإقلاع", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
+            }
+        }
+
+        private static void ApplyCertificateCounterFloor()
+        {
+            try
+            {
+                List<(int Year, int From, int To)> raises;
+                using (var scope = ServiceProvider.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<CalQrDbContext>();
+                    raises = CertificateCounterFloor.Apply(
+                        context, ServiceProvider.GetRequiredService<ICertificateCounterFloorStore>());
+                }
+
+                if (raises.Count == 0) return;
+
+                string details = "رُفع عدّاد الشهادات إلى حدّه المحفوظ خارج القاعدة: " +
+                    string.Join("، ", raises.Select(r => $"سنة {r.Year}: من {r.From} إلى {r.To}"));
+                AppLog.Warn(details);
+                var audit = ServiceProvider.GetRequiredService<IAuditLogRepository>();
+                System.Threading.Tasks.Task.Run(() => audit.LogAsync("رفع عدّاد الشهادات", "نظام", "CertificateSequence", details))
+                    .GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                // لا إخفاء: بلا هذه الحماية قد يتكرّر رقم شهادة بعد استعادة، فيُنبَّه المستخدم.
+                AppLog.Error("تطبيق حدّ عدّاد الشهادات عند الإقلاع", ex);
+                MessageBox.Show(
+                    "تعذّر التحقّق من عدّاد أرقام الشهادات مقابل حدّه المحفوظ خارج القاعدة." + Environment.NewLine + Environment.NewLine +
+                    "إن كنت استعدت نسخة احتياطيّة للتوّ فلا تُصدر شهادات قبل مراجعة مدير النظام وسجلّ الأخطاء." + Environment.NewLine + Environment.NewLine +
+                    ex.Message,
+                    "تنبيه — عدّاد الشهادات", MessageBoxButton.OK, MessageBoxImage.Warning,
+                    MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             }
         }
 
@@ -237,6 +275,9 @@ namespace CAL_QR
             services.AddSingleton<ICertificatePdfService, CertificatePdfService>();
             services.AddSingleton<IBackupPasswordStore, DpapiBackupPasswordStore>();
             services.AddSingleton<IBackupService, BackupService>();
+            // حدّ عدّاد الشهادات خارج القاعدة: بجانب db_path.txt في مجلّد بيانات البرنامج.
+            services.AddSingleton<ICertificateCounterFloorStore>(_ =>
+                new CertificateCounterFloorStore(CAL_QR.Helpers.AppPaths.DataRoot));
             services.AddSingleton<ISearchService, SearchService>();
             services.AddSingleton<ICurrentUserService, CurrentUserService>();
             services.AddSingleton<ICertificateNumberService, CertificateNumberService>();

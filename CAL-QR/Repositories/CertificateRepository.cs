@@ -15,15 +15,19 @@ namespace CAL_QR.Repositories
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly ICertificateNumberService _numberService;
         private readonly ICertificateSignatureService _signatureService;
+        private readonly ICertificateCounterFloorStore? _counterFloorStore;
 
         public CertificateRepository(
             IDbContextFactory<CalQrDbContext> contextFactory,
             ICertificateNumberService numberService,
-            ICertificateSignatureService signatureService)
+            ICertificateSignatureService signatureService,
+            ICertificateCounterFloorStore? counterFloorStore = null)
         {
             _contextFactory = contextFactory;
             _numberService = numberService;
             _signatureService = signatureService;
+            // اختياريّ: الاختبارات بلا مخزن لا تكتب في ProgramData؛ التطبيق يمرّره عبر DI.
+            _counterFloorStore = counterFloorStore;
         }
 
         public async Task<Certificate?> GetByIdAsync(int id)
@@ -125,7 +129,43 @@ namespace CAL_QR.Repositories
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            RecordCounterFloor(context, number);
+
             return number;
+        }
+
+        /// <summary>
+        /// بعد الالتزام وحده: الرقم صدر فعلاً، فيُسجَّل حدّاً أدنى خارج القاعدة كي لا تُرجعه
+        /// استعادة نسخة أقدم (CertificateCounterFloorRules). قبل الالتزام كان فشلٌ لاحق
+        /// سيترك حدّاً لرقم لم يصدر فيُحدث فجوة.
+        ///
+        /// فشل الكتابة لا يُفشل الإصدار: الشهادة محفوظة وموقّعة، ورفض إرجاع رقمها للمستخدم
+        /// أسوأ. يُسجَّل الخطأ، والاستعادة تأخذ عدّاد القاعدة الحيّة قبل استبدالها على كلّ حال.
+        /// </summary>
+        private void RecordCounterFloor(CalQrDbContext context, string number)
+        {
+            if (_counterFloorStore == null) return;
+
+            try
+            {
+                int? year = CertificateDateRules.ExtractYear(number);
+                int? sequence = CertificateDateRules.ExtractSequence(number);
+                string? key = context.AppSettings.AsNoTracking()
+                    .Where(s => s.Key == "HmacSecretKey").Select(s => s.Value).FirstOrDefault();
+                string? ledgerId = CertificateCounterFloorRules.LedgerId(key);
+
+                if (year == null || sequence == null || ledgerId == null)
+                {
+                    AppLog.Warn($"تعذّر تسجيل حدّ عدّاد الشهادات للرقم {number}: سنة أو تسلسل أو مفتاح توقيع غير متاح.");
+                    return;
+                }
+
+                _counterFloorStore.Raise(ledgerId, new Dictionary<int, int> { [year.Value] = sequence.Value });
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error($"تسجيل حدّ عدّاد الشهادات للرقم {number}", ex);
+            }
         }
 
         /// <summary>

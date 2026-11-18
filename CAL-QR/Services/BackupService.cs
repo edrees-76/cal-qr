@@ -25,6 +25,13 @@ namespace CAL_QR.Services
             "لم تُضبط كلمة سرّ النسخ الاحتياطيّ بعد، فلم تُنشأ أيّ نسخة. اضبطها من «الإعدادات» ← «النسخ الاحتياطي والاستعادة». " +
             "النسخة غير المقفلة تكشف مفتاح توقيع الشهادات لمن يحصل عليها.";
 
+        public const string NoSafetyPasswordMessage =
+            "لا تتمّ الاستعادة بلا نسخة أمان من الوضع الحاليّ، ونسخة الأمان تحتاج كلمة سرّ: " +
+            "اضبط كلمة سرّ النسخ الاحتياطيّ من «الإعدادات» ← «النسخ الاحتياطي والاستعادة»، " +
+            "أو اكتب كلمة سرّ النسخة المستعادة في خانتها، ثمّ أعد المحاولة.";
+
+        public const string PreRestoreFilePrefix = "CalQR_PreRestore_";
+
         private const string BackupFilePattern = "CalQR_Backup_*" + BackupEncryption.FileExtension;
 
         public BackupService(
@@ -128,74 +135,14 @@ namespace CAL_QR.Services
                     Directory.CreateDirectory(destinationFolder);
                 }
 
-                string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
-                Directory.CreateDirectory(tempDir);
-
                 string backupFileName = $"CalQR_Backup_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}";
                 string backupFilePath = Path.Combine(destinationFolder, backupFileName);
-                // الأرشيف المكشوف يُبنى في المجلّد المؤقّت وحده ويُحذف معه في finally؛
-                // ما يصل إلى مجلّد النسخ هو الملفّ المشفَّر فقط.
-                string plainZipPath = Path.Combine(tempDir, "backup.zip");
                 bool cloudCopySuccess = true;
 
                 try
                 {
-                    string tempDbPath = Path.Combine(tempDir, "cal-qr.db");
-
-                    // 1. Online SQLite consistent snapshot
-                    using (var source = new SqliteConnection($"Data Source={dbPath}"))
-                    {
-                        source.Open();
-                        
-                        // Checkpoint WAL frames to db file
-                        using (var cmd = source.CreateCommand())
-                        {
-                            cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        using (var destination = new SqliteConnection($"Data Source={tempDbPath}"))
-                        {
-                            destination.Open();
-                            source.BackupDatabase(destination);
-                        }
-                    }
-
-                    // Force release SQLite pooled connection handles on the temp database file
-                    SqliteConnection.ClearAllPools();
-
-                    // نسخة من قاعدة تالفة لا تُحفظ على أنّها نسخة سليمة.
-                    EnsureDatabaseIntegrity(tempDbPath, "لقطة القاعدة");
-
-                    // 2. Compress into ZIP
-                    using (var zipStream = new FileStream(plainZipPath, FileMode.Create))
-                    using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
-                    {
-                        archive.CreateEntryFromFile(tempDbPath, "cal-qr.db");
-
-                        if (Directory.Exists(attachmentsPath))
-                        {
-                            var files = Directory.GetFiles(attachmentsPath, "*", SearchOption.AllDirectories);
-                            foreach (var file in files)
-                            {
-                                string relativePath = Path.GetRelativePath(attachmentsPath, file).Replace('\\', '/');
-                                archive.CreateEntryFromFile(file, "Attachments/" + relativePath);
-                            }
-                        }
-
-                        if (Directory.Exists(qrOutputPath))
-                        {
-                            var files = Directory.GetFiles(qrOutputPath, "*", SearchOption.AllDirectories);
-                            foreach (var file in files)
-                            {
-                                string relativePath = Path.GetRelativePath(qrOutputPath, file).Replace('\\', '/');
-                                archive.CreateEntryFromFile(file, "poster/" + relativePath);
-                            }
-                        }
-                    }
-
-                    // 2.ب التشفير بكلمة سرّ النسخ الاحتياطيّ
-                    BackupEncryption.EncryptFile(plainZipPath, backupFilePath, password);
+                    // 1–2. لقطة القاعدة + الأرشيف + التشفير. نسخة من قاعدة تالفة لا تُحفظ على أنّها سليمة.
+                    WriteEncryptedSnapshot(dbPath, attachmentsPath, qrOutputPath, backupFilePath, password, verifyIntegrity: true);
 
                     // 3. Keep last 10 backups
                     var oldBackups = Directory.GetFiles(destinationFolder, BackupFilePattern)
@@ -272,12 +219,92 @@ namespace CAL_QR.Services
                 finally
                 {
                     SqliteConnection.ClearAllPools();
-                    if (Directory.Exists(tempDir))
-                    {
-                        Directory.Delete(tempDir, true);
-                    }
                 }
             });
+        }
+
+        /// <summary>
+        /// لقطة متّسقة من القاعدة الحيّة + المرفقات + مجلّد QR، في ملفّ مشفَّر واحد. لا تأخذ قفل
+        /// الصيانة: يستدعيها «نسخ الآن» والاستعادة (نسخة الأمان) وكلاهما يحمل القفل.
+        /// الأرشيف المكشوف يُبنى في مجلّد مؤقّت ويُحذف معه؛ ما يصل إلى الوجهة هو المشفَّر فقط.
+        /// </summary>
+        private static void WriteEncryptedSnapshot(
+            string dbPath, string attachmentsPath, string qrOutputPath,
+            string backupFilePath, string password, bool verifyIntegrity)
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                string tempDbPath = Path.Combine(tempDir, "cal-qr.db");
+                string plainZipPath = Path.Combine(tempDir, "backup.zip");
+
+                // 1. Online SQLite consistent snapshot
+                using (var source = new SqliteConnection($"Data Source={dbPath}"))
+                {
+                    source.Open();
+
+                    // Checkpoint WAL frames to db file
+                    using (var cmd = source.CreateCommand())
+                    {
+                        cmd.CommandText = "PRAGMA wal_checkpoint(TRUNCATE);";
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    using (var destination = new SqliteConnection($"Data Source={tempDbPath}"))
+                    {
+                        destination.Open();
+                        source.BackupDatabase(destination);
+                    }
+                }
+
+                // Force release SQLite pooled connection handles on the temp database file
+                SqliteConnection.ClearAllPools();
+
+                if (verifyIntegrity)
+                {
+                    EnsureDatabaseIntegrity(tempDbPath, "لقطة القاعدة");
+                }
+
+                // 2. Compress into ZIP
+                using (var zipStream = new FileStream(plainZipPath, FileMode.Create))
+                using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+                {
+                    archive.CreateEntryFromFile(tempDbPath, "cal-qr.db");
+
+                    if (Directory.Exists(attachmentsPath))
+                    {
+                        var files = Directory.GetFiles(attachmentsPath, "*", SearchOption.AllDirectories);
+                        foreach (var file in files)
+                        {
+                            string relativePath = Path.GetRelativePath(attachmentsPath, file).Replace('\\', '/');
+                            archive.CreateEntryFromFile(file, "Attachments/" + relativePath);
+                        }
+                    }
+
+                    if (Directory.Exists(qrOutputPath))
+                    {
+                        var files = Directory.GetFiles(qrOutputPath, "*", SearchOption.AllDirectories);
+                        foreach (var file in files)
+                        {
+                            string relativePath = Path.GetRelativePath(qrOutputPath, file).Replace('\\', '/');
+                            archive.CreateEntryFromFile(file, "poster/" + relativePath);
+                        }
+                    }
+                }
+
+                // 2.ب التشفير بكلمة سرّ النسخ الاحتياطيّ
+                BackupEncryption.EncryptFile(plainZipPath, backupFilePath, password);
+            }
+            finally
+            {
+                SqliteConnection.ClearAllPools();
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
         }
 
         /// <summary>
@@ -307,11 +334,12 @@ namespace CAL_QR.Services
             return full;
         }
 
-        public async Task<CertificateCounterRestoreReport?> RestoreAsync(string backupFilePath, string? password = null)
+        public async Task<RestoreResult> RestoreAsync(string backupFilePath, string? password = null)
         {
             return await Task.Run(async () =>
             {
                 CertificateCounterRestoreReport? counterReport = null;
+                string safetyBackupPath;
                 string? counterWarning = null;
 
                 using var maintenanceGate = await MaintenanceGate.EnterAsync();
@@ -352,6 +380,17 @@ namespace CAL_QR.Services
                         throw new BackupPasswordException(
                             "هذه النسخة مقفلة بكلمة سرّ ولا كلمة مضبوطة على هذا الجهاز. اكتب كلمة سرّ النسخة ثمّ أعد المحاولة.");
                     }
+                }
+
+                // نسخة الأمان تُقفل بكلمة هذا الجهاز كبقيّة نسخه؛ وفي جهاز جديد بلا كلمة بعدُ
+                // بالكلمة المكتوبة للاستعادة (يعرفها من كتبها). بلا أيّ منهما لا استعادة.
+                string? devicePassword = await _passwordStore.GetPasswordAsync();
+                string? safetyPassword = !string.IsNullOrEmpty(devicePassword) ? devicePassword
+                    : !string.IsNullOrEmpty(password) ? password
+                    : null;
+                if (safetyPassword == null)
+                {
+                    throw new InvalidOperationException(NoSafetyPasswordMessage);
                 }
 
                 string? stagingParent = Path.GetDirectoryName(attachmentsPath);
@@ -457,6 +496,27 @@ namespace CAL_QR.Services
 
                     // القاعدة المستخرجة تُفحص قبل أيّ مساس بالنظام الحيّ: نسخة تالفة تُرفض هنا.
                     EnsureDatabaseIntegrity(tempDbPath, "القاعدة داخل النسخة الاحتياطيّة");
+
+                    // نسخة أمان من الوضع الحاليّ قبل أيّ مساس به، فاستعادة خاطئة يمكن التراجع عنها
+                    // باستعادة هذه النسخة (ومعها ما صدر بعد تاريخ النسخة المستعادة). فشلها يوقف
+                    // الاستعادة هنا ولم يتغيّر شيء. بلا فحص سلامة: قد تكون الاستعادة سببها خلل في
+                    // القاعدة الحاليّة، ونسختها كما هي أفضل من لا شيء.
+                    safetyBackupPath = Path.Combine(
+                        ResolveSafetyBackupFolder(backupPathRaw, backupFilePath),
+                        $"{PreRestoreFilePrefix}{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}");
+                    try
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(safetyBackupPath)!);
+                        WriteEncryptedSnapshot(dbPath, attachmentsPath, qrOutputPath, safetyBackupPath, safetyPassword, verifyIntegrity: false);
+                    }
+                    catch (Exception safetyEx)
+                    {
+                        try { if (File.Exists(safetyBackupPath)) File.Delete(safetyBackupPath); }
+                        catch (Exception cleanupEx) { AppLog.Warn("BackupService: تعذّر حذف نسخة أمان ناقصة: " + cleanupEx.Message); }
+                        throw new InvalidOperationException(
+                            "تعذّر إنشاء نسخة أمان من الوضع الحاليّ قبل الاستعادة، فلم تُستعد النسخة ولم يتغيّر شيء. " +
+                            $"تحقّق من مجلّد النسخ ومساحة القرص ثمّ أعد المحاولة. ({safetyEx.Message})", safetyEx);
+                    }
 
                     // قبل الاستبدال: عدّادات القاعدة الحيّة تُحفظ خارجها، فشهادات صدرت بعد
                     // تاريخ النسخة لا تُعطى أرقامها من جديد. الفشل لا يوقف الاستعادة (الحدّ
@@ -692,7 +752,7 @@ namespace CAL_QR.Services
                     }
 
                     // 3. Add Audit log entry
-                    await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"استعادة قاعدة البيانات والمرفقات من: {Path.GetFileName(backupFilePath)}");
+                    await _auditLogRepository.LogAsync("استعادة نسخة احتياطية", "نظام", "Backup", $"استعادة قاعدة البيانات والمرفقات من: {Path.GetFileName(backupFilePath)}. نسخة أمان لما قبلها: {safetyBackupPath}");
 
                     // المرحلة ٣ — تنظيف آثار ما قبل الاستعادة عند النجاح وحده. فشل
                     // التنظيف لا يُفشل استعادة ناجحة.
@@ -726,8 +786,22 @@ namespace CAL_QR.Services
                     }
                 }
 
-                return counterReport;
+                return new RestoreResult(safetyBackupPath, counterReport);
             });
+        }
+
+        /// <summary>
+        /// مجلّد نسخة الأمان: مجلّد النسخ المضبوط إن كان مساراً مطلقاً، وإلّا مجلّد النسخة التي
+        /// تُستعاد (موجود حتماً). اسمها CalQR_PreRestore_* لا يطابق نمط الاحتفاظ بآخر 10 نسخ،
+        /// فلا تحذفها النسخ المجدولة اللاحقة.
+        /// </summary>
+        internal static string ResolveSafetyBackupFolder(string? backupPathSetting, string backupFilePath)
+        {
+            if (!string.IsNullOrWhiteSpace(backupPathSetting) && Path.IsPathRooted(backupPathSetting))
+            {
+                return backupPathSetting;
+            }
+            return Path.GetDirectoryName(Path.GetFullPath(backupFilePath))!;
         }
 
         /// <summary>

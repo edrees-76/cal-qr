@@ -13,9 +13,10 @@ namespace CAL_QR.Services
         /// <summary>
         /// يستعيد نسخة مشفَّرة (.cqbak) أو نسخة قديمة غير مشفَّرة (.zip).
         /// للمشفَّرة: password إن كُتبت، وإلّا كلمة السرّ المضبوطة على هذا الجهاز.
-        /// يُرجع اقتراح آخر رقم شهادة لتأكيد المدير، أو null إن لم يُضبط مخزن حدّ العدّاد.
+        /// قبل أيّ مساس بالوضع الحاليّ تُكتب نسخة أمان منه (CalQR_PreRestore_*)؛ تعذّرها ⇒
+        /// InvalidOperationException ولا يتغيّر شيء. يُرجع مسار نسخة الأمان واقتراح آخر رقم شهادة.
         /// </summary>
-        Task<CertificateCounterRestoreReport?> RestoreAsync(string backupFilePath, string? password = null);
+        Task<RestoreResult> RestoreAsync(string backupFilePath, string? password = null);
 
         /// <summary>
         /// يثبّت آخر رقم شهادة أكّده المدير بعد الاستعادة: في القاعدة المستعادة (رفعاً فقط)
@@ -25,6 +26,12 @@ namespace CAL_QR.Services
 
         void StartScheduledBackupTimer();
     }
+
+    /// <summary>
+    /// SafetyBackupPath: نسخة الوضع السابق للاستعادة (استعادتها تتراجع عن هذه الاستعادة).
+    /// CounterReport: اقتراح آخر رقم شهادة، أو null إن لم يُضبط مخزن حدّ العدّاد.
+    /// </summary>
+    public sealed record RestoreResult(string SafetyBackupPath, CertificateCounterRestoreReport? CounterReport);
 
     /// <summary>
     /// ما يُعرض على المدير بعد الاستعادة. ProposedLastNumber = الأكبر من عدّاد النسخة المستعادة

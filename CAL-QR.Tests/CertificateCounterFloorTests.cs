@@ -359,7 +359,7 @@ namespace CAL_QR.Tests
                 string backup = Assert.Single(Directory.GetFiles(backups, "CalQR_Backup_*.cqbak"));
                 SetCounter(options, year, 9);
 
-                var report = await service.RestoreAsync(backup);
+                var report = (await service.RestoreAsync(backup)).CounterReport;
 
                 Assert.NotNull(report);
                 Assert.Equal(year, report!.Year);

@@ -13,6 +13,7 @@ namespace CAL_QR.Models
         UserManagement = 1 << 4,    // إدارة المستخدمين
         Verification = 1 << 5,      // التحقق
         Owners = 1 << 6,            // الجهات
-        DeviceTypes = 1 << 7        // الأنواع
+        DeviceTypes = 1 << 7,       // الأنواع
+        RevokeCertificates = 1 << 8 // إبطال شهادة صادرة — لا يُمنح من نموذج المستخدمين؛ المدير يملكه عبر HasPermission
     }
 }

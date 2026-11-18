@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Services
 {
@@ -190,9 +191,10 @@ namespace CAL_QR.Services
             var cfLines = job.NuclideLines?.Where(n => !string.IsNullOrWhiteSpace(n)).ToList() ?? new List<string>();
             if (cfLines.Count > 0)
             {
-                string fullCfText = string.Join("\n", cfLines.Select(l => $"CF {l}"));
-                if (!TryDraw(fullCfText, typefaceRegular, brushBody))
-                    TryDraw("CF: see certificate", typefaceRegular, brushBody);
+                // نصّ الملصق من قاعدة نقيّة مختبَرة: إصلاح d9726a3 ضاع في دمج #20
+                // فعادت «CF CFavg …» بلا اختبار يكشفها.
+                if (!TryDraw(CorrectionFactorLabelRules.LabelText(cfLines), typefaceRegular, brushBody))
+                    TryDraw(CorrectionFactorLabelRules.LabelFallback(job.CorrectionFactorLabel), typefaceRegular, brushBody);
             }
 
             if (!string.IsNullOrWhiteSpace(job.Model))

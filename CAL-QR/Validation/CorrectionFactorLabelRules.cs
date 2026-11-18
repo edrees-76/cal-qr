@@ -106,6 +106,17 @@ namespace CAL_QR.Validation
                 .ToList();
         }
 
+        /// <summary>
+        /// نصّ معامل التصحيح على الملصق: سطور NuclideLines كما هي، فكلّ سطر يحمل تسميته
+        /// (CF/CFavg). لا بادئة إضافيّة — كانت تُنتج «CF CFavg Cs-137 = 1.02».
+        /// </summary>
+        public static string LabelText(IEnumerable<string>? nuclideLines) =>
+            string.Join("\n", (nuclideLines ?? Enumerable.Empty<string>()).Where(l => !string.IsNullOrWhiteSpace(l)));
+
+        /// <summary>نصّ الاحتياط حين لا تتّسع السطور: التسمية المختصرة (CF أو CFavg أو CF / CFavg).</summary>
+        public static string LabelFallback(string? shortLabel) =>
+            $"{(string.IsNullOrWhiteSpace(shortLabel) ? "CF" : shortLabel.Trim())}: see certificate";
+
         // نصّا المعادلة كما في قوالب رضا (DeviceTypeCatalog) حرفيًّا.
         public const string CfFormula = "Corrected Reading = Measured Reading × CF";
         public const string CfAvgFormula = "Corrected Reading = Measured Reading × CFavg";

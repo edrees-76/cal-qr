@@ -16,6 +16,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Data;
 using CAL_QR.Helpers;
 using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -56,6 +57,7 @@ namespace CAL_QR.ViewModels
         private DateTime _expiryDate = DateTime.Today.AddYears(1);
         private string _engineerName = string.Empty;
         private string _result = "Passed";
+        private string? _savedResult; // نتيجة السجلّ كما في القاعدة — مصدر قرار الإصدار
         private string _description = string.Empty;
 
         // AutoComplete and List sources
@@ -380,23 +382,32 @@ namespace CAL_QR.ViewModels
         /// الحالة، فاختياره لمعايرة مشروطة كان يمحو أرقامها من الورقة بصمت.
         /// كان الشرطان متطابقين فيُعرض الزرّان معًا مهما كانت النتيجة.
         /// </summary>
-        public bool CanIssueCertificate =>
-            IsEditMode && _calibrationRecordId > 0 && !HasCertificate && SelectedResult != ResultFailed;
+        public bool CanIssueCertificate => IssuableDocumentNow == IssuableDocument.Certificate;
 
         /// <summary>نظير CanIssueCertificate للمسار المقابل — متنافيان بحكم الشرط.</summary>
-        public bool CanIssueStatusReport =>
-            IsEditMode && _calibrationRecordId > 0 && !HasCertificate && SelectedResult == ResultFailed;
+        public bool CanIssueStatusReport => IssuableDocumentNow == IssuableDocument.StatusReport;
+
+        // نموذج الشهادة يقرأ السجلّ المحفوظ، فالقرار يتبع النتيجة المحفوظة: نتيجة غُيّرت
+        // ولم تُحفظ توقف الزرّين حتّى الحفظ (DocumentIssueRules).
+        private IssuableDocument IssuableDocumentNow => DocumentIssueRules.Issuable(
+            IsEditMode && _calibrationRecordId > 0, HasCertificate, _savedResult, SelectedResult);
 
         /// <summary>
         /// سبب ظاهر بجوار الزرّ. الإخفاء الصامت يجعل المستخدم يظنّ البرنامج معطوبًا،
         /// وقد يغيّر النتيجة ليُظهر الزرّ الغائب — وهو أسوأ ما قد يفعله.
         /// </summary>
         public string IssueHintText =>
-            SelectedResult == ResultFailed
-                ? "الجهاز راسب — يُصدَر له تقرير حالة، لا شهادة معايرة."
-                : "الجهاز اجتاز المعايرة — تُصدَر له شهادة معايرة.";
+            HasUnsavedResultChange
+                ? "غُيّرت نتيجة المعايرة ولم تُحفظ — احفظ السجلّ أوّلاً ليُتاح إصدار الوثيقة المناسبة."
+                : SelectedResult == ResultFailed
+                    ? "الجهاز راسب — يُصدَر له تقرير حالة، لا شهادة معايرة."
+                    : "الجهاز اجتاز المعايرة — تُصدَر له شهادة معايرة.";
 
-        public bool ShowIssueHint => CanIssueCertificate || CanIssueStatusReport;
+        public bool ShowIssueHint => CanIssueCertificate || CanIssueStatusReport || HasUnsavedResultChange;
+
+        private bool HasUnsavedResultChange =>
+            IsEditMode && _calibrationRecordId > 0 && !HasCertificate
+            && DocumentIssueRules.HasUnsavedResult(_savedResult, SelectedResult);
 
         /// <summary>
         /// ثلاث حالات لحقل رقم الشهادة، لا حالة واحدة:
@@ -660,6 +671,7 @@ namespace CAL_QR.ViewModels
                         CalibrationDate = record.CalibrationDate;
                         ExpiryDate = record.ExpiryDate;
                         EngineerName = record.EngineerName;
+                        _savedResult = record.Result;
                         SelectedResult = record.Result;
                         Description = record.CalibrationDescription ?? string.Empty;
 
@@ -1028,6 +1040,7 @@ namespace CAL_QR.ViewModels
             // السجل صار محفوظاً وله معرّف ⇒ صار قابلاً لأن تُنسب إليه شهادة.
             // لا مسّ لمنطق الحفظ: ضبط حالة عرض فقط، في طور ما بعد الـCommit.
             IsEditMode = true;
+            _savedResult = SelectedResult;
             HasCertificate = false;
             OnPropertyChanged(nameof(CanIssueCertificate));
             OnPropertyChanged(nameof(CanIssueStatusReport));

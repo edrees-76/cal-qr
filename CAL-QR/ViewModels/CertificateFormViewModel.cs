@@ -50,6 +50,7 @@ namespace CAL_QR.ViewModels
         private readonly ICertificateRepository _certificateRepository;
         private readonly IAuditLogRepository _auditLogRepository;
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
+        private readonly ICurrentUserService _currentUserService;
 
         private int _calibrationRecordId;
         private bool _isSaving;
@@ -66,16 +67,18 @@ namespace CAL_QR.ViewModels
             ICertificateDraftBuilder draftBuilder,
             ICertificateRepository certificateRepository,
             IAuditLogRepository auditLogRepository,
-            IDbContextFactory<CalQrDbContext> contextFactory)
+            IDbContextFactory<CalQrDbContext> contextFactory,
+            ICurrentUserService currentUserService)
         {
             _deviceTypeRepository = deviceTypeRepository;
             _draftBuilder = draftBuilder;
             _certificateRepository = certificateRepository;
             _auditLogRepository = auditLogRepository;
             _contextFactory = contextFactory;
+            _currentUserService = currentUserService;
 
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
-            RevokeCommand = new RelayCommand(async () => await RevokeAsync(), () => _isEditMode && _certificateId > 0);
+            RevokeCommand = new RelayCommand(async () => await RevokeAsync(), () => CanRevoke);
 
             AddNuclideSummaryCommand = new RelayCommand(() =>
                 NuclideSummaries.Add(new CertificateNuclideSummary()));
@@ -1350,9 +1353,13 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        /// <summary>إبطال الشهادة للمدير وحده (CertificateRevocationRules) — يُفحص عند الإتاحة وعند التنفيذ.</summary>
+        public bool CanRevoke =>
+            _isEditMode && _certificateId > 0 && CertificateRevocationRules.CanRevoke(_currentUserService.CurrentUser);
+
         private async Task RevokeAsync()
         {
-            if (!_isEditMode || _certificateId <= 0) return;
+            if (!CanRevoke) return;
 
             string certNumber = string.IsNullOrWhiteSpace(_loadedCertificateNumber)
                 ? _certificateId.ToString()

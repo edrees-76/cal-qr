@@ -88,7 +88,7 @@ namespace CAL_QR.Tests
             return (factory, record.Id);
         }
 
-        private static CertificateFormViewModel BuildViewModel(TestDbContextFactory factory)
+        private static CertificateFormViewModel BuildViewModel(TestDbContextFactory factory, User? currentUser = null)
         {
             var hmacService = new HmacService(factory);
             hmacService.Initialize();
@@ -101,7 +101,8 @@ namespace CAL_QR.Tests
                     new CertificateNumberService(factory),
                     new CertificateSignatureService(hmacService)),
                 new AuditLogRepository(factory, new TestCurrentUserService()),
-                factory);
+                factory,
+                new TestCurrentUserService { CurrentUser = currentUser });
         }
 
         [Fact]

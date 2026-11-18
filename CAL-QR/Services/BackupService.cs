@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using CAL_QR.Data;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
+using CAL_QR.Validation;
 
 namespace CAL_QR.Services
 {
@@ -17,6 +18,7 @@ namespace CAL_QR.Services
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IAuditLogRepository _auditLogRepository;
         private readonly IBackupPasswordStore _passwordStore;
+        private readonly ICertificateCounterFloorStore? _counterFloorStore;
         private Timer? _backupTimer;
 
         public const string NoPasswordMessage =
@@ -28,11 +30,13 @@ namespace CAL_QR.Services
         public BackupService(
             IDbContextFactory<CalQrDbContext> contextFactory,
             IAuditLogRepository auditLogRepository,
-            IBackupPasswordStore passwordStore)
+            IBackupPasswordStore passwordStore,
+            ICertificateCounterFloorStore? counterFloorStore = null)
         {
             _contextFactory = contextFactory;
             _auditLogRepository = auditLogRepository;
             _passwordStore = passwordStore;
+            _counterFloorStore = counterFloorStore;
         }
 
         private string GetDatabaseFilePath()
@@ -303,10 +307,13 @@ namespace CAL_QR.Services
             return full;
         }
 
-        public async Task RestoreAsync(string backupFilePath, string? password = null)
+        public async Task<CertificateCounterRestoreReport?> RestoreAsync(string backupFilePath, string? password = null)
         {
-            await Task.Run(async () =>
+            return await Task.Run(async () =>
             {
+                CertificateCounterRestoreReport? counterReport = null;
+                string? counterWarning = null;
+
                 using var maintenanceGate = await MaintenanceGate.EnterAsync();
 
                 if (string.IsNullOrWhiteSpace(backupFilePath) || !File.Exists(backupFilePath))
@@ -450,6 +457,27 @@ namespace CAL_QR.Services
 
                     // القاعدة المستخرجة تُفحص قبل أيّ مساس بالنظام الحيّ: نسخة تالفة تُرفض هنا.
                     EnsureDatabaseIntegrity(tempDbPath, "القاعدة داخل النسخة الاحتياطيّة");
+
+                    // قبل الاستبدال: عدّادات القاعدة الحيّة تُحفظ خارجها، فشهادات صدرت بعد
+                    // تاريخ النسخة لا تُعطى أرقامها من جديد. الفشل لا يوقف الاستعادة (الحدّ
+                    // يُحدَّث أيضاً عند كلّ إصدار)، لكنّه يُسجَّل ويُعرض على المدير في النافذة.
+                    if (_counterFloorStore != null)
+                    {
+                        try
+                        {
+                            var (liveLedger, liveCounters) = ReadCertificateCounters(dbPath);
+                            if (liveLedger != null)
+                            {
+                                _counterFloorStore.Raise(liveLedger, liveCounters);
+                            }
+                        }
+                        catch (Exception counterEx)
+                        {
+                            AppLog.Error("BackupService: تعذّر حفظ عدّاد الشهادات الحيّ قبل الاستعادة", counterEx);
+                            counterWarning = "تعذّر حفظ عدّاد الشهادات من القاعدة الحاليّة قبل الاستعادة؛ " +
+                                             "راجع آخر رقم صدر فعلاً في السجلّ الورقيّ قبل التأكيد.";
+                        }
+                    }
 
                     // المرحلة ٢ — كلّ ما قبل هذه النقطة تحضير لا يمسّ النظام؛ وهنا وحدها
                     // تبدأ العمليّات المدمّرة، مرتّبة بحيث يكون الأثقل تراجعًا آخرها.
@@ -671,6 +699,11 @@ namespace CAL_QR.Services
                     try { if (Directory.Exists(attachmentsPreRestore)) Directory.Delete(attachmentsPreRestore, true); } catch (System.Exception swallowEx7) { CAL_QR.Services.AppLog.Warn("BackupService.cs:636: " + swallowEx7.Message); }
                     try { if (Directory.Exists(qrPreRestore)) Directory.Delete(qrPreRestore, true); } catch (System.Exception swallowEx8) { CAL_QR.Services.AppLog.Warn("BackupService.cs:637: " + swallowEx8.Message); }
                     try { if (File.Exists(dbSnapshot)) File.Delete(dbSnapshot); } catch (System.Exception swallowEx9) { CAL_QR.Services.AppLog.Warn("BackupService.cs:638: " + swallowEx9.Message); }
+
+                    if (_counterFloorStore != null)
+                    {
+                        counterReport = BuildCounterReport(dbPath, counterWarning);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -692,7 +725,123 @@ namespace CAL_QR.Services
                         Directory.Delete(tempDir, true);
                     }
                 }
+
+                return counterReport;
             });
+        }
+
+        /// <summary>
+        /// الاقتراح للسنة الحاليّة بعد استعادة ناجحة. فشل القراءة لا يُفشل استعادة تمّت:
+        /// يُرجع اقتراحاً ممّا أمكن مع تحذير، والمدير يكتب الرقم الصحيح.
+        /// </summary>
+        private CertificateCounterRestoreReport BuildCounterReport(string dbPath, string? warning)
+        {
+            int year = DateTime.Today.Year;
+            string? ledger = null;
+            int restored = 0;
+            try
+            {
+                var (restoredLedger, restoredCounters) = ReadCertificateCounters(dbPath);
+                ledger = restoredLedger;
+                restored = restoredCounters.TryGetValue(year, out int r) ? r : 0;
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("BackupService: تعذّرت قراءة عدّاد الشهادات من القاعدة المستعادة", ex);
+                warning = AppendWarning(warning, "تعذّرت قراءة عدّاد الشهادات من النسخة المستعادة.");
+            }
+
+            int floor = 0;
+            if (ledger != null)
+            {
+                try
+                {
+                    floor = _counterFloorStore!.Read(ledger).TryGetValue(year, out int f) ? f : 0;
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("BackupService: تعذّرت قراءة حدّ عدّاد الشهادات", ex);
+                    warning = AppendWarning(warning, "تعذّرت قراءة الحدّ المحفوظ لعدّاد الشهادات.");
+                }
+            }
+
+            return new CertificateCounterRestoreReport(ledger, year, restored, Math.Max(restored, floor), warning);
+        }
+
+        private static string AppendWarning(string? existing, string addition) =>
+            string.IsNullOrEmpty(existing) ? addition : existing + "\n" + addition;
+
+        public void ConfirmCertificateCounter(CertificateCounterRestoreReport report, int lastNumber)
+        {
+            var (value, error) = CertificateCounterFloorRules.ParseConfirmed(
+                lastNumber.ToString(System.Globalization.CultureInfo.InvariantCulture), report.ProposedLastNumber);
+            if (value == null) throw new ArgumentOutOfRangeException(nameof(lastNumber), error);
+
+            // القاعدة المستعادة لم تمرّ بالترحيلات بعد، فالكتابة SQL مباشرة على الجدول إن وُجد،
+            // لا عبر EF. رفع فقط: MAX يمنع أيّ خفض.
+            string dbPath = GetDatabaseFilePath();
+            using (var connection = new SqliteConnection($"Data Source={dbPath};Pooling=False"))
+            {
+                connection.Open();
+                if (TableExists(connection, "CertificateSequence"))
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText =
+                        "INSERT INTO CertificateSequence (Year, LastNumber) VALUES ($year, $last) " +
+                        "ON CONFLICT(Year) DO UPDATE SET LastNumber = MAX(LastNumber, excluded.LastNumber);";
+                    cmd.Parameters.AddWithValue("$year", report.Year);
+                    cmd.Parameters.AddWithValue("$last", value.Value);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            // الحدّ خارج القاعدة يحمي حتّى لو لم يكن الجدول موجوداً في نسخة قديمة جدّاً:
+            // الإقلاع التالي يرفع العدّاد إليه بعد الترحيلات.
+            if (report.LedgerId != null)
+            {
+                _counterFloorStore?.Raise(report.LedgerId, new Dictionary<int, int> { [report.Year] = value.Value });
+            }
+        }
+
+        /// <summary>هويّة سجلّ الترقيم وعدّاداته من ملفّ قاعدة، بلا EF (المخطّط قد يكون أقدم).</summary>
+        internal static (string? LedgerId, Dictionary<int, int> Counters) ReadCertificateCounters(string dbFile)
+        {
+            var counters = new Dictionary<int, int>();
+            string? key = null;
+
+            using (var connection = new SqliteConnection($"Data Source={dbFile};Pooling=False"))
+            {
+                connection.Open();
+
+                if (TableExists(connection, "AppSettings"))
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Value FROM AppSettings WHERE Key = $key LIMIT 1;";
+                    cmd.Parameters.AddWithValue("$key", CertificateCounterFloor.HmacKeySetting);
+                    key = cmd.ExecuteScalar() as string;
+                }
+
+                if (TableExists(connection, "CertificateSequence"))
+                {
+                    using var cmd = connection.CreateCommand();
+                    cmd.CommandText = "SELECT Year, LastNumber FROM CertificateSequence;";
+                    using var reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        counters[reader.GetInt32(0)] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            return (CertificateCounterFloorRules.LedgerId(key), counters);
+        }
+
+        private static bool TableExists(SqliteConnection connection, string table)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $name;";
+            cmd.Parameters.AddWithValue("$name", table);
+            return Convert.ToInt64(cmd.ExecuteScalar()) > 0;
         }
 
         public void StartScheduledBackupTimer()

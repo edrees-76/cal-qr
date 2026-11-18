@@ -856,9 +856,14 @@ namespace CAL_QR.ViewModels
                 {
                     try
                     {
-                        await _backupService.RestoreAsync(
+                        var counterReport = await _backupService.RestoreAsync(
                             openFileDialog.FileName,
                             string.IsNullOrEmpty(RestorePassword) ? null : RestorePassword);
+
+                        if (counterReport != null)
+                        {
+                            await ConfirmCertificateCounterAfterRestoreAsync(counterReport);
+                        }
 
                         // مفتاح التوقيع المخبّأ في HmacService والمخطّط يُقرآن عند الإقلاع فقط، فلا يصحّ
                         // إكمال الجلسة بعد الاستعادة (خصوصاً من جهاز آخر): شهادة تُصدَر الآن كانت ستُوقَّع بمفتاح
@@ -890,6 +895,37 @@ namespace CAL_QR.ViewModels
                         MessageBox.Show($"خطأ أثناء استعادة البيانات: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// الاستعادة قد تُرجع عدّاد الشهادات إلى تاريخ النسخة؛ المدير يؤكّد آخر رقم صدر فعلاً قبل
+        /// إعادة التشغيل. الفشل يُعرض ولا يُخفى، والإقلاع التالي يطبّق الحدّ المحفوظ على أيّ حال.
+        /// </summary>
+        private async Task ConfirmCertificateCounterAfterRestoreAsync(CertificateCounterRestoreReport report)
+        {
+            var dialog = new Views.Dialogs.CertificateCounterConfirmDialog(report)
+            {
+                Owner = Application.Current?.MainWindow
+            };
+            dialog.ShowDialog();
+            int confirmed = dialog.ConfirmedLastNumber;
+
+            try
+            {
+                _backupService.ConfirmCertificateCounter(report, confirmed);
+                await _auditLogRepository.LogAsync(
+                    "تأكيد آخر رقم شهادة بعد الاستعادة", "نظام", "CertificateSequence",
+                    $"سنة {report.Year}: في النسخة المستعادة {report.RestoredLastNumber}، المقترح {report.ProposedLastNumber}، المؤكَّد {confirmed}.");
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("تثبيت آخر رقم شهادة بعد الاستعادة", ex);
+                MessageBox.Show(
+                    $"تعذّر تثبيت آخر رقم شهادة ({confirmed}): {ex.Message}" + Environment.NewLine + Environment.NewLine +
+                    "لا تُصدر شهادات قبل أن يراجع مدير النظام عدّاد الترقيم وسجلّ الأخطاء.",
+                    "تنبيه — عدّاد الشهادات", MessageBoxButton.OK, MessageBoxImage.Warning,
+                    MessageBoxResult.OK, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             }
         }
 

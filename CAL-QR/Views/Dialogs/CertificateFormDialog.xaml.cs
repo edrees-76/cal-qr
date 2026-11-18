@@ -170,6 +170,21 @@ namespace CAL_QR.Views.Dialogs
             }), DispatcherPriority.Background);
         }
 
+        /// <summary>
+        /// جدول ميزانية عدم اليقين: تحرير خليّة لا يطلق CollectionChanged، فبلا هذا المعالج
+        /// كان تعديل الميزانية وحده لا يُعلِّم النموذج، فيُغلق بلا سؤال وتضيع التعديلات.
+        /// </summary>
+        private void UncertaintyGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (DataContext is CertificateFormViewModel vm)
+                {
+                    vm.MarkDirty();
+                }
+            }), DispatcherPriority.Background);
+        }
+
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount == 2)

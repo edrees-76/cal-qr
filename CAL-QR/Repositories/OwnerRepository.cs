@@ -46,8 +46,16 @@ namespace CAL_QR.Repositories
 
         public async Task UpdateAsync(Owner owner)
         {
+            // تحديث الحقول القابلة للتحرير فقط على السجلّ المخزَّن. وسم كائن النموذج الجديد
+            // بـ Modified كان يكتب كلّ أعمدته: CreatedAt بوقت التعديل، وIsSeedTestData وIsDeleted بـ false.
             using var context = await _contextFactory.CreateDbContextAsync();
-            context.Entry(owner).State = EntityState.Modified;
+            var stored = await context.Owners.FindAsync(owner.Id)
+                ?? throw new InvalidOperationException($"الجهة رقم {owner.Id} غير موجودة.");
+
+            stored.Name = owner.Name;
+            stored.Address = owner.Address;
+            stored.ContactPhone = owner.ContactPhone;
+            stored.ContactPerson = owner.ContactPerson;
             await context.SaveChangesAsync();
         }
 

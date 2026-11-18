@@ -519,14 +519,10 @@ namespace CAL_QR.Services.Documents
 
                 // uc and U are shown with a "%" suffix in this strip to match Reda's
                 // template (the budget table below keeps them bare). CF/CFavg is a
-                // dimensionless factor and stays unchanged.
-                static string Pct(string? v) =>
-                    string.IsNullOrWhiteSpace(v) ? string.Empty
-                    : (v!.TrimEnd().EndsWith("%") ? v.Trim() : v.Trim() + " %");
-
+                // dimensionless factor and stays unchanged. Rule: PercentDisplayRules.
                 ValueCell(cfValue);
-                ValueCell(Pct(uc));
-                ValueCell(Pct(u));
+                ValueCell(PercentDisplayRules.WithPercent(uc));
+                ValueCell(PercentDisplayRules.WithPercent(u));
             });
         }
 

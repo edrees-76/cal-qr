@@ -852,6 +852,15 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
+            // ── Case 0: العرض المبسّط يطبع قيمة واحدة (SimplifiedResultsRules) ──
+            string? simplifiedWarning = SimplifiedResultsRules.Warning(
+                _resolvedDeviceType?.SimplifiedResults == true,
+                CalibrationResults);
+            if (simplifiedWarning != null)
+            {
+                TemplateWarnings.Add(new TemplateWarning { Message = simplifiedWarning });
+            }
+
             // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──
             if (MethodologyEnabled && !string.IsNullOrWhiteSpace(MethodologyText))
             {

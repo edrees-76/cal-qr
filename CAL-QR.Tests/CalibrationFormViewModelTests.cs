@@ -217,5 +217,92 @@ namespace CAL_QR.Tests
             Assert.True(vm.CanIssueCertificate);
             Assert.False(vm.CanIssueStatusReport);
         }
+
+        // مراجعة 18 نوفمبر 2026: بعد إغلاق نموذج الشهادة كانت الحالة تُحدَّث فقط إن بقيت
+        // الشهادة حيّة. الإلغاء يضع IsDeleted، فيبقى HasCertificate صحيحاً ومعرّف الملغاة محفوظاً.
+        [Fact]
+        public async Task RefreshAfterEdit_RevokedCertificate_ClearsHasCertificateAndReopensIssuing()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            int certificateId;
+            using (var context = factory.CreateDbContext())
+            {
+                var certificate = new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = "TNRC-SSDL-2026-0001",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Model A",
+                    DeviceSerialNumber = "SN123",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today
+                };
+                context.Certificates.Add(certificate);
+                await context.SaveChangesAsync();
+                certificateId = certificate.Id;
+            }
+
+            var vm = BuildViewModel(factory);
+            vm.LoadForEdit(recordId);
+            Assert.True(vm.HasCertificate);
+            Assert.True(vm.EditCertificateCommand.CanExecute(null));
+            Assert.False(vm.CanIssueCertificate);
+
+            // ما يفعله RevokeAsync في المستودع: IsRevoked + IsDeleted.
+            using (var context = factory.CreateDbContext())
+            {
+                var stored = await context.Certificates.FindAsync(certificateId);
+                stored!.IsRevoked = true;
+                stored.IsDeleted = true;
+                await context.SaveChangesAsync();
+            }
+
+            vm.RefreshCertificateStateAfterEdit();
+
+            Assert.False(vm.HasCertificate);
+            Assert.False(vm.EditCertificateCommand.CanExecute(null));
+            Assert.True(vm.CanIssueCertificate);
+        }
+
+        [Fact]
+        public async Task RefreshAfterEdit_LiveCertificate_KeepsStateAndUpdatesNumber()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            int certificateId;
+            using (var context = factory.CreateDbContext())
+            {
+                var certificate = new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = "TNRC-SSDL-2026-0001",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Model A",
+                    DeviceSerialNumber = "SN123",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today
+                };
+                context.Certificates.Add(certificate);
+                await context.SaveChangesAsync();
+                certificateId = certificate.Id;
+            }
+
+            var vm = BuildViewModel(factory);
+            vm.LoadForEdit(recordId);
+
+            using (var context = factory.CreateDbContext())
+            {
+                var stored = await context.Certificates.FindAsync(certificateId);
+                stored!.CertificateNumber = "TNRC-SSDL-2026-0002";
+                await context.SaveChangesAsync();
+            }
+
+            vm.RefreshCertificateStateAfterEdit();
+
+            Assert.True(vm.HasCertificate);
+            Assert.Equal("TNRC-SSDL-2026-0002", vm.CertificateNumber);
+            Assert.True(vm.EditCertificateCommand.CanExecute(null));
+        }
     }
 }

@@ -79,6 +79,29 @@ namespace CAL_QR.Tests
             Assert.True(await db.Users.AnyAsync(u => u.Username == "admin" && u.IsActive));
         }
 
+        // مراجعة 18 نوفمبر 2026: العرض المبسّط (G501) يطبع قيمة CF واحدة؛ كانت الأداة تولّد
+        // ستّة صفوف لـ Dose Rate Meter فتُطبع أزواج CF/AE متكرّرة بلا تمييز.
+        [Fact]
+        public async Task Generate_SimplifiedLayoutTypes_GetOnePrintedResultRow()
+        {
+            string path = Path.Combine(_dir, "cal-qr-DEMO.db");
+            await DemoDataGenerator.GenerateAsync(path, new DemoDataOptions
+            {
+                Owners = 4, Devices = 14, Certificates = 28, FailedCertificates = 4
+            });
+
+            using var db = new Factory(path).CreateDbContext();
+            var certificates = await db.Certificates.Include(c => c.CalibrationResults).ToListAsync();
+            var simplified = certificates
+                .Where(c => DeviceTypeCatalog.Resolve(c.CertificateTemplateType)?.SimplifiedResults == true)
+                .ToList();
+
+            Assert.NotEmpty(simplified);
+            Assert.All(simplified, c =>
+                Assert.True(CAL_QR.Validation.SimplifiedResultsRules.PrintedRowCount(c.CalibrationResults) <= 1,
+                    $"{c.CertificateNumber} ({c.CertificateTemplateType})"));
+        }
+
         [Fact]
         public async Task Generate_RefusesToOverwriteExistingFile_WithoutForce()
         {

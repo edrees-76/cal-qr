@@ -209,7 +209,7 @@ The calibration was performed using an instrument-specific validated method. The
 | 4 | Visual Inspection | No physical damage to the instrument |
 | 5 | Dose Response Check | Response within acceptable range when exposed to reference gamma radiation |
 
-> ⚠ **سؤال مفتوح لرضا:** قالب `PED1` يذكر `Cs-137` في خانة المصدر والمنهجية معاً، خلافاً للتأكيد السابق (`Co-60`). لم يُغيَّر المزروع حتى يُحسم.
+> ✅ **قرار إدريس (19 نوفمبر 2026):** PED يُعايَر بـ`Cs-137` أو `Co-60` حسب التوفّر (قالب `PED1` يذكر `Cs-137`). يبقى `Co-60` النصّ الافتراضيّ المزروع، ويعدّل المعايِر `MethodologyText` و`RadiationSource` على الشهادة قبل الحفظ حين تكون النويدة `Cs-137`.
 
 **مكوّنات عدم اليقين:** لا يوجد.
 
@@ -305,5 +305,5 @@ The calibration was performed using an instrument-specific validated method. The
 | النوع | النويدة |
 |---|---|
 | Gamma Scintillation Probe | `Co-60` |
-| Personal Electronic Dosimeter (PED) | `Co-60` |
+| Personal Electronic Dosimeter (PED) | `Co-60` (افتراضيّ؛ أو `Cs-137` حسب التوفّر بتعديل المنهجية على الشهادة) |
 | Dose Rate Meter | `Cs-137` |

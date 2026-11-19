@@ -28,7 +28,8 @@ namespace CAL_QR.Tests
         }
 
         private async Task<(TestDbContextFactory factory, int recordId)> SeedRecordAsync(
-            string result, string defaultCheckResult = "Acceptable", string? correctedReadingFormula = null)
+            string result, string defaultCheckResult = "Acceptable", string? correctedReadingFormula = null,
+            string typeName = "Pancake Probe", bool methodologyEnabled = false)
         {
             var options = new DbContextOptionsBuilder<CalQrDbContext>()
                 .UseInMemoryDatabase(databaseName: "CalQrTestDb_CertFormVM_" + Guid.NewGuid().ToString())
@@ -45,7 +46,8 @@ namespace CAL_QR.Tests
 
                 var deviceType = new DeviceType
                 {
-                    Name = "Pancake Probe",
+                    Name = typeName,
+                    MethodologyEnabled = methodologyEnabled,
                     ComplianceVerdict = "APPROVED FOR OPERATIONAL USE",
                     CorrectedReadingFormula = correctedReadingFormula,
                     CreatedAt = DateTime.UtcNow
@@ -103,6 +105,32 @@ namespace CAL_QR.Tests
                 new AuditLogRepository(factory, new TestCurrentUserService()),
                 factory,
                 new TestCurrentUserService { CurrentUser = currentUser });
+        }
+
+        [Fact]
+        public async Task SimplifiedType_EmptyRadiationSource_WarnsUntilItIsWritten()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed", typeName: "Dose Rate Meter", methodologyEnabled: true);
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForRecord(recordId);
+
+            Assert.Contains(vm.TemplateWarnings, w => w.Message.Contains("Radiation Source"));
+
+            vm.RadiationSource = "The calibration was performed using a Cs-137 reference gamma source.";
+
+            Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("Radiation Source"));
+        }
+
+        [Fact]
+        public async Task FullFamilyType_EmptyRadiationSource_DoesNotWarn()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed", methodologyEnabled: true);
+            var vm = BuildViewModel(factory);
+
+            vm.LoadForRecord(recordId);
+
+            Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("Radiation Source"));
         }
 
         [Fact]

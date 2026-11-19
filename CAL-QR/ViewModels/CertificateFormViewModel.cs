@@ -505,7 +505,12 @@ namespace CAL_QR.ViewModels
         public string RadiationSource
         {
             get => _radiationSource;
-            set => SetProperty(ref _radiationSource, value);
+            set
+            {
+                // يُعاد فحص القالب ليختفي تحذير «المصدر فارغ» بمجرّد الكتابة.
+                if (SetProperty(ref _radiationSource, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _referenceGeometry = string.Empty;
@@ -859,6 +864,16 @@ namespace CAL_QR.ViewModels
             if (simplifiedWarning != null)
             {
                 TemplateWarnings.Add(new TemplateWarning { Message = simplifiedWarning });
+            }
+
+            // ── Case 0b: صفّ المصدر الإشعاعيّ ناقص في الأنواع المبسّطة (RadiationSourceRules) ──
+            string? sourceWarning = RadiationSourceRules.Warning(
+                _resolvedDeviceType?.SimplifiedResults == true,
+                MethodologyEnabled,
+                RadiationSource);
+            if (sourceWarning != null)
+            {
+                TemplateWarnings.Add(new TemplateWarning { Message = sourceWarning });
             }
 
             // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──

@@ -200,5 +200,48 @@ namespace CAL_QR.Tests
             Assert.True(viewModel.IsUnverifiable);
             Assert.False(viewModel.IsSuccess);
         }
+
+        [Fact]
+        public async Task VerifyPastedText_ValidCodeButAlteredSerial_IsRejectedWithRecordedValueShown()
+        {
+            using var harness = new Harness("alteredSn");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.NotNull(issued);
+
+            // كود V: صالح منسوخ، والرقم التسلسليّ في الورقة معدَّل.
+            string forged = harness.SignatureService.BuildQrPayload(issued).Replace("SN:PR-777", "SN:PR-999");
+            Assert.Contains("SN:PR-999", forged);
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.ConcatenatedText = forged;
+
+            await viewModel.VerifyPastedTextAsync();
+
+            Assert.True(viewModel.IsValidated);
+            Assert.False(viewModel.IsSuccess);
+            Assert.False(viewModel.IsAuthentic);
+            Assert.True(viewModel.IsNotFound);
+            Assert.Contains("PR-999", viewModel.Message);
+            Assert.Contains("PR-777", viewModel.Message);
+        }
+
+        [Fact]
+        public async Task VerifyPastedText_PartialTextWithOnlyVLine_StillAuthentic()
+        {
+            using var harness = new Harness("onlyV");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.NotNull(issued);
+
+            var viewModel = new QrVerifyViewModel(harness.Repository);
+            viewModel.ConcatenatedText = "V:" + issued.VerifyCode;
+
+            await viewModel.VerifyPastedTextAsync();
+
+            Assert.True(viewModel.IsAuthentic);
+        }
     }
 }

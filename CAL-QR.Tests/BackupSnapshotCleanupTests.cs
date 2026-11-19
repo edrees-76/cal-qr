@@ -67,6 +67,27 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public void CleanupStaleRestoreStaging_RemovesOldKeepsRecentAndLeavesSnapshotFolders()
+        {
+            string stale = MakeFolder(BackupService.RestoreStagingFolderPrefix + "old", TimeSpan.FromHours(5));
+            string recent = MakeFolder(BackupService.RestoreStagingFolderPrefix + "running", TimeSpan.FromMinutes(5));
+            string snapshot = MakeFolder(BackupService.SnapshotFolderPrefix + "old", TimeSpan.FromHours(5));
+
+            int removed = BackupService.CleanupStaleRestoreStagingFolders(_root);
+
+            Assert.Equal(1, removed);
+            Assert.False(Directory.Exists(stale));
+            Assert.True(Directory.Exists(recent));
+            Assert.True(Directory.Exists(snapshot));
+        }
+
+        [Fact]
+        public void CleanupStaleRestoreStaging_MissingRoot_ReturnsZeroWithoutThrowing()
+        {
+            Assert.Equal(0, BackupService.CleanupStaleRestoreStagingFolders(Path.Combine(_root, "nope")));
+        }
+
+        [Fact]
         public void CleanupStale_MissingRoot_ReturnsZeroWithoutThrowing()
         {
             int removed = BackupService.CleanupStaleSnapshotFolders(Path.Combine(_root, "nope"));

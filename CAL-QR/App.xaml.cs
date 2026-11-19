@@ -121,6 +121,7 @@ namespace CAL_QR
 
                 // لقطات نسخ احتياطيّ مكشوفة خلّفها انقطاع سابق تُحذف عند الإقلاع.
                 BackupService.CleanupStaleSnapshotFolders();
+                BackupService.CleanupStaleRestoreStagingFolders();
 
                 // Start scheduled backup checks
                 var backupService = ServiceProvider.GetRequiredService<IBackupService>();

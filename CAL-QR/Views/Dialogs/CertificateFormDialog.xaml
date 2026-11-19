@@ -545,7 +545,7 @@
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="4">
                                 <TextBlock Text="Radiation Source" Style="{StaticResource FieldLabel}" />
-                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="المصدر الإشعاعي المستخدم" />
+                                <TextBox Text="{Binding RadiationSource, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FieldBox}" helpers:WatermarkHelper.Watermark="مثال: The calibration was performed using a Cs-137 reference gamma source." />
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="4">
                                 <TextBlock Text="Reference Geometry" Style="{StaticResource FieldLabel}" />

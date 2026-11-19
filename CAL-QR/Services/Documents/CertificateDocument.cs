@@ -208,12 +208,23 @@ namespace CAL_QR.Services.Documents
                 .Text(_isStatusReport ? "CALIBRATION STATUS REPORT" : "CALIBRATION CERTIFICATE")
                 .Bold().FontSize(14).FontColor(NavyColor);
 
-            if (!string.IsNullOrWhiteSpace(_certificate.CertificateTemplateType))
-                column.Item().AlignCenter()
-                    .Text(_isStatusReport
-                        ? $"FOR {_certificate.CertificateTemplateType}"
-                        : $"CERTIFICATE FOR {_certificate.CertificateTemplateType}")
-                    .FontSize(10);
+            if (_isStatusReport)
+            {
+                // تقرير الحالة خارج نطاق مطابقة عنوان الشهادة: يبقى على اسم النوع.
+                if (!string.IsNullOrWhiteSpace(_certificate.CertificateTemplateType))
+                    column.Item().AlignCenter()
+                        .Text($"FOR {_certificate.CertificateTemplateType}")
+                        .FontSize(10);
+            }
+            else
+            {
+                // قوالب رضا: «CALIBRATION CERTIFICATE FOR <الجهاز بموديله>». Rule: CertificateTitleRules.
+                var subject = CertificateTitleRules.Subject(_certificate.DeviceModel, _certificate.CertificateTemplateType);
+                if (subject != null)
+                    column.Item().AlignCenter()
+                        .Text($"CALIBRATION CERTIFICATE FOR {subject}")
+                        .FontSize(10);
+            }
 
             column.Item().AlignCenter().Text($"CERTIFICATE NO. {_certificate.CertificateNumber}").Bold().FontSize(10);
         }
@@ -559,7 +570,8 @@ namespace CAL_QR.Services.Documents
                 foreach (var r in rows)
                 {
                     Row("Calibration Factor (CF)", r.CorrectionFactor);
-                    Row("Absolute Relative Error (AE)(%)", r.AbsoluteRelativeError);
+                    // القالب يطبع «3.00 %»؛ القيمة مخزّنة رقماً بلا علامة. Rule: PercentDisplayRules.
+                    Row("Absolute Relative Error (AE)(%)", PercentDisplayRules.WithPercent(r.AbsoluteRelativeError));
                 }
 
                 Row("Final Compliance Verdict", _certificate.ComplianceVerdict);

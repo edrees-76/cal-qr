@@ -154,14 +154,16 @@ This certificate is valid only for the instrument configuration and conditions s
 Measurements are traceable to the International Atomic Energy Agency (IAEA).
 ```
 
-**الفحوصات الوظيفية** — `DefaultResult = Acceptable`
+**الفحوصات الوظيفية** — `DefaultResult = Acceptable` — من قالب `G501 (2)` (5 أغسطس 2026)
 | # | CheckName | Requirement |
 |---|---|---|
-| 1 | Background Check | Count rate within normal background limits |
-| 2 | High Voltage Check | Operating voltage within specified range |
-| 3 | Audio/Alarm Check | Audible alarm operational |
-| 4 | Visual Inspection | No physical damage to instrument and probe |
-| 5 | Detector Response Check | Detector response within acceptable range when exposed to different radiation sources |
+| 1 | Survey Meter Power & Display Check | Display operational and survey meter powers on normally |
+| 2 | Detector Operating Voltage Check | Detector operating voltage within specified range |
+| 3 | Survey Meter Audio / Alarm Check | Audible alarm operational |
+| 4 | Visual Inspection | No physical damage to the survey meter and Gamma Scintillation Probe |
+| 5 | Probe Response Check | Probe response within acceptable range when exposed to reference gamma radiation |
+
+> النسخة السابقة (29 يوليو) محفوظة في الكتالوج بصمةً (`PreviousFunctionalChecks`) لترقية القواعد القائمة.
 
 **مكوّنات عدم اليقين:** لا يوجد.
 
@@ -198,14 +200,16 @@ The calibration was performed using an instrument-specific validated method. The
 
 **`AdditionalInformation`:** مطابق لـ`Gamma` (٤ بنود).
 
-**الفحوصات الوظيفية** — `DefaultResult = Acceptable`
+**الفحوصات الوظيفية** — `DefaultResult = Acceptable` — من قالب `PED1` (5 أغسطس 2026)
 | # | CheckName | Requirement |
 |---|---|---|
-| 1 | Battery & Display Check | LCD operational, battery level normal |
-| 2 | High Voltage Check | Operating voltage within specified range |
-| 3 | Audio/Alarm Check | Audible alarm operational |
-| 4 | Visual Inspection | No physical damage to instrument and probe |
-| 5 | Dose Response Check | Response within acceptable range when exposed to radiation |
+| 1 | Battery & Display Check | LCD operational and battery level normal |
+| 2 | Operational Check | Instrument powers on and operates normally |
+| 3 | Alarm Function Check | Audible and visual alarms operational |
+| 4 | Visual Inspection | No physical damage to the instrument |
+| 5 | Dose Response Check | Response within acceptable range when exposed to reference gamma radiation |
+
+> ⚠ **سؤال مفتوح لرضا:** قالب `PED1` يذكر `Cs-137` في خانة المصدر والمنهجية معاً، خلافاً للتأكيد السابق (`Co-60`). لم يُغيَّر المزروع حتى يُحسم.
 
 **مكوّنات عدم اليقين:** لا يوجد.
 
@@ -233,14 +237,14 @@ The calibration was performed using an instrument-specific validated method. The
 **`Notes`:** مطابق لـ`Gamma` (٣ بنود، بلا «عدم النسخ»).
 **`AdditionalInformation`:** مطابق لـ`Gamma` (٤ بنود).
 
-**الفحوصات الوظيفية** — `DefaultResult = Acceptable`
+**الفحوصات الوظيفية** — `DefaultResult = Acceptable` — من قالب `Dose Rate Meter 1` (5 أغسطس 2026)
 | # | CheckName | Requirement |
 |---|---|---|
-| 1 | Background Check | Count rate within normal background limits |
-| 2 | High Voltage Check | Operating voltage within specified range |
-| 3 | Audio/Alarm Check | Audible alarm operational |
-| 4 | Visual Inspection | No physical damage to instrument and probe |
-| 5 | Dose Rate Response Check | Detector response within acceptable range when exposed to different radiation sources |
+| 1 | Power & Display Check | Display operational and instrument powers on normally |
+| 2 | Operating Voltage Check | Operating voltage within specified range |
+| 3 | Audio / Alarm Check | Audible alarm operational |
+| 4 | Visual Inspection | No physical damage to the instrument |
+| 5 | Dose Rate Response Check | Instrument response within acceptable range when exposed to reference gamma radiation |
 
 **مكوّنات عدم اليقين:** لا يوجد.
 

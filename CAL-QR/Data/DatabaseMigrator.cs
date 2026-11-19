@@ -488,6 +488,17 @@ namespace CAL_QR.Data
                 AppLog.Warn("[DeviceTypeSeeder] حصيلة مزامنة إضافات الكتالوج:\n" + syncResult.ToDiagnosticsText());
             }
 
+            // مراجعة نصوص الفحوص الوظيفيّة إلى قوالب رضا الجديدة — مرّة واحدة بعلمها.
+            //
+            // موضعها الأخير بين مسارات الأنواع: بعد أن يكون كل نوع حاضراً بأسمائه المعتمدة،
+            // ولأنّ Apply (في المزامنة) تمحو ConflictsKey عند حصيلة نظيفة، بينما هذه تُلحق
+            // بلاغها به — فلو سبقتها لضاع البلاغ قبل أن يراه المدير. بلا تصعيد استثناء.
+            var revisionResult = DeviceTypeSeeder.ReviseCatalogFunctionalChecksIfNeeded(context);
+            if (revisionResult.HasDiagnostics)
+            {
+                AppLog.Warn("[DeviceTypeSeeder] حصيلة مراجعة الفحوص الوظيفيّة:\n" + revisionResult.ToDiagnosticsText());
+            }
+
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes
             try
             {

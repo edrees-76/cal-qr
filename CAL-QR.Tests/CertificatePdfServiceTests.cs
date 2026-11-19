@@ -541,6 +541,52 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public void Simplified_AeValueWithoutPercent_IsPrintedWithPercent()
+        {
+            // قالب رضا يطبع «3.00 %»؛ القيمة المخزّنة رقم بلا علامة.
+            var c = BuildSimplifiedTypeCertificate();
+            System.Linq.Enumerable.Single(c.CalibrationResults).AbsoluteRelativeError = "3.00";
+            string text = ExtractAllText(_service.GenerateBytes(c));
+            Assert.Contains("3.00 %", text);
+        }
+
+        [Fact]
+        public void Simplified_AeValueWithPercent_IsNotDoubled()
+        {
+            string text = ExtractAllText(_service.GenerateBytes(BuildSimplifiedTypeCertificate()));
+            Assert.Contains("3.85 %", text);
+            Assert.DoesNotContain("3.85 % %", text);
+        }
+
+        [Fact]
+        public void Title_ModelNamingType_PrintsModelOnly()
+        {
+            var c = BuildSimplifiedTypeCertificate();
+            c.CertificateTemplateType = "Gamma Scintillation Probe";
+            c.DeviceModel = "Gamma Scintillation Probe (Model 44-2)";
+            string text = ExtractAllText(_service.GenerateBytes(c));
+            Assert.Contains("CALIBRATION CERTIFICATE FOR Gamma Scintillation Probe (Model 44-2)", text);
+        }
+
+        [Fact]
+        public void Title_ShortModel_IsPrefixedWithType()
+        {
+            var c = BuildSimplifiedTypeCertificate();
+            c.DeviceModel = "DRM-620";
+            string text = ExtractAllText(_service.GenerateBytes(c));
+            Assert.Contains("CALIBRATION CERTIFICATE FOR Dose Rate Meter (DRM-620)", text);
+        }
+
+        [Fact]
+        public void Title_FallsBackToTemplateType_WhenModelBlank()
+        {
+            var c = BuildSimplifiedTypeCertificate();
+            c.DeviceModel = "";
+            string text = ExtractAllText(_service.GenerateBytes(c));
+            Assert.Contains("CALIBRATION CERTIFICATE FOR Dose Rate Meter", text);
+        }
+
+        [Fact]
         public void T1_Detailed_RendersStripBudgetAndRadiationTraceability()
         {
             string text = ExtractAllText(_service.GenerateBytes(BuildDetailedTypeCertificate()));

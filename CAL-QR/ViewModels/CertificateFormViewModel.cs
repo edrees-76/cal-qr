@@ -1236,13 +1236,14 @@ namespace CAL_QR.ViewModels
             {
                 ValidationErrors = string.Empty;
 
-                // نفس التوقيع حرفياً كما يستدعيه CertificateRepository.AddAsync —
-                // ثلاثة وسائط بلا existingCertificateNumber. أي اختلاف كان سينتج
-                // رسالتين متناقضتين على نفس التاريخ.
+                // نفس استدعاء المستودع حرفياً: AddAsync بثلاثة وسائط، وUpdateAsync يمرّر
+                // رقم الشهادة القائم (قاعدة حبس السنة). أي اختلاف كان سينتج رسالتين
+                // متناقضتين على نفس التاريخ.
                 var validation = CertificateDateRules.Validate(
                     CalibrationDate,
                     IssueDate,
-                    DateTime.Today);
+                    DateTime.Today,
+                    _isEditMode ? _loadedCertificateNumber : null);
 
                 if (!validation.IsValid)
                 {

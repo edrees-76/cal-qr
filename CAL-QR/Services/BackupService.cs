@@ -320,18 +320,30 @@ namespace CAL_QR.Services
         /// <paramref name="minAge"/>. يُرجع عدد ما حُذف. لا يُلقي استثناءً: فشل التنظيف لا يُفشل شيئاً.
         /// </summary>
         public static int CleanupStaleSnapshotFolders(string? tempRoot = null, TimeSpan? minAge = null)
+            => CleanupStaleFolders(tempRoot ?? Path.GetTempPath(), SnapshotFolderPrefix, minAge ?? StaleSnapshotMinAge);
+
+        public const string RestoreStagingFolderPrefix = "CalQrRestoreStaging_";
+
+        /// <summary>
+        /// يحذف مجلّدات مسرح الاستعادة المتروكة (<c>CalQrRestoreStaging_*</c>، فيها قاعدة مفكوكة
+        /// التشفير) في <paramref name="stagingRoot"/> (الافتراضيّ مجلّد بيانات المنظومة)، بالشروط
+        /// نفسها: الأقدم من <paramref name="minAge"/> فقط، ولا يُلقي استثناءً.
+        /// </summary>
+        public static int CleanupStaleRestoreStagingFolders(string? stagingRoot = null, TimeSpan? minAge = null)
+            => CleanupStaleFolders(stagingRoot ?? CAL_QR.Helpers.AppPaths.DataRoot, RestoreStagingFolderPrefix, minAge ?? StaleSnapshotMinAge);
+
+        private static int CleanupStaleFolders(string root, string prefix, TimeSpan minAge)
         {
             int removed = 0;
             try
             {
-                string root = tempRoot ?? Path.GetTempPath();
                 if (!Directory.Exists(root))
                 {
                     return 0;
                 }
 
-                DateTime cutoff = DateTime.UtcNow - (minAge ?? StaleSnapshotMinAge);
-                foreach (string dir in Directory.GetDirectories(root, SnapshotFolderPrefix + "*"))
+                DateTime cutoff = DateTime.UtcNow - minAge;
+                foreach (string dir in Directory.GetDirectories(root, prefix + "*"))
                 {
                     if (Directory.GetLastWriteTimeUtc(dir) <= cutoff
                         && FileSystemRetryHelper.TryDeleteDirectory(dir))
@@ -342,7 +354,7 @@ namespace CAL_QR.Services
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
-                AppLog.Warn("BackupService: تعذّر تنظيف لقطات النسخ الاحتياطيّ المتروكة: " + ex.Message);
+                AppLog.Warn($"BackupService: تعذّر تنظيف مجلّدات {prefix}* المتروكة: " + ex.Message);
             }
 
             return removed;
@@ -439,7 +451,10 @@ namespace CAL_QR.Services
                 {
                     stagingParent = CAL_QR.Helpers.AppPaths.DataRoot;
                 }
-                string tempDir = Path.Combine(stagingParent, "CalQrRestoreStaging_" + Guid.NewGuid().ToString("N"));
+                // مخلَّفات استعادة سابقة انقطعت (قاعدة مفكوكة التشفير) تُزال قبل مسرح جديد.
+                CleanupStaleRestoreStagingFolders(stagingParent);
+
+                string tempDir = Path.Combine(stagingParent, RestoreStagingFolderPrefix + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempDir);
 
                 try
@@ -821,10 +836,9 @@ namespace CAL_QR.Services
                 finally
                 {
                     SqliteConnection.ClearAllPools();
-                    if (Directory.Exists(tempDir))
-                    {
-                        Directory.Delete(tempDir, true);
-                    }
+                    // حذف بإعادة محاولة: قفل عابر بعد استعادة ناجحة لا يقلبها إلى خطأ، ولا يُبقي
+                    // القاعدة المفكوكة؛ وإن تعذّر الحذف يزيله التنظيف عند الإقلاع أو الاستعادة التالية.
+                    FileSystemRetryHelper.TryDeleteDirectory(tempDir);
                 }
 
                 return new RestoreResult(safetyBackupPath, counterReport);

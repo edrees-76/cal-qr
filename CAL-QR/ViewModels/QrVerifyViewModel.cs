@@ -125,24 +125,14 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
-            string? code = null;
-            var lines = ConcatenatedText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in lines)
-            {
-                if (line.StartsWith("V:"))
-                {
-                    code = line.Substring("V:".Length).Trim();
-                    break;
-                }
-            }
-
-            if (code == null)
+            var pasted = CAL_QR.Validation.QrPastedTextRules.Parse(ConcatenatedText);
+            if (!pasted.TryGetValue("V", out string? code))
             {
                 SetUnverifiable("لم يُعثر على كود تحقق في النص الملصوق.");
                 return;
             }
 
-            await VerifyAsync(code);
+            await VerifyAsync(code, pasted);
         }
 
         internal async System.Threading.Tasks.Task QuickVerifyAsync()
@@ -158,9 +148,29 @@ namespace CAL_QR.ViewModels
             await VerifyAsync(QuickVerifyCode.Trim());
         }
 
-        private async System.Threading.Tasks.Task VerifyAsync(string code)
+        private async System.Threading.Tasks.Task VerifyAsync(
+            string code, System.Collections.Generic.IReadOnlyDictionary<string, string>? pasted = null)
         {
             var result = await _certificateRepository.VerifyByCodeAsync(code);
+
+            // الكود صحيح لكنّ حقلاً آخر في النصّ الملصوق يخالف السجلّ: ورقة معدَّلة أو كود منسوخ.
+            // يُعرض بحالة الرفض الحمراء القائمة (NotFound) دون تغيير في الواجهة، وتُذكر قيمة السجلّ للمقارنة.
+            if (pasted != null && result.Certificate != null
+                && (result.Status == CertificateVerificationStatus.Authentic
+                    || result.Status == CertificateVerificationStatus.AuthenticAmended))
+            {
+                var mismatches = CAL_QR.Validation.QrPastedTextRules.FindMismatches(pasted, result.Certificate);
+                if (mismatches.Count > 0)
+                {
+                    ClearCertificateDisplay();
+                    DisplayState = VerificationDisplayState.NotFound;
+                    Message = "❌ الكود موجود، لكنّ بيانات النصّ الملصوق لا تطابق السجلّ — يُحتمل أن الورقة معدَّلة أو الكود منسوخ من شهادة أخرى: "
+                        + string.Join("؛ ", System.Linq.Enumerable.Select(mismatches,
+                            m => $"{m.Label}: في النص «{m.Pasted}» وفي السجلّ «{m.Recorded}»"));
+                    IsValidated = true;
+                    return;
+                }
+            }
 
             switch (result.Status)
             {

@@ -306,6 +306,55 @@ namespace CAL_QR.Tests
             }
         }
 
+        [Theory]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        public async Task FactoryResetAsync_CounterFloorEntry_ClearedOnlyWhenSequenceReset(bool resetSequence, bool floorSurvives)
+        {
+            string dbPath = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_floor_{Guid.NewGuid():N}.db");
+            var options = NewSqliteOptions(dbPath);
+            var factory = new TestDbContextFactory(options);
+            string qrFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_qr_{Guid.NewGuid():N}");
+            string attachmentsFolder = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_att_{Guid.NewGuid():N}");
+            string floorDir = Path.Combine(Path.GetTempPath(), $"cal_qr_reset_floor_dir_{Guid.NewGuid():N}");
+            Directory.CreateDirectory(qrFolder);
+            Directory.CreateDirectory(attachmentsFolder);
+            Directory.CreateDirectory(floorDir);
+            try
+            {
+                string ledger;
+                var store = new CertificateCounterFloorStore(floorDir);
+                using (var context = new CalQrDbContext(options))
+                {
+                    DatabaseMigrator.RunMigrations(context);
+                    context.AppSettings.Single(s => s.Key == "QrOutputPath").Value = qrFolder;
+                    context.AppSettings.Single(s => s.Key == "AttachmentsPath").Value = attachmentsFolder;
+                    var keyRow = context.AppSettings.SingleOrDefault(s => s.Key == CertificateCounterFloor.HmacKeySetting);
+                    if (keyRow == null)
+                        context.AppSettings.Add(new AppSetting { Key = CertificateCounterFloor.HmacKeySetting, Value = "floor-reset-key" });
+                    else
+                        keyRow.Value = "floor-reset-key";
+                    context.CertificateSequence.Add(new CertificateSequence { Year = 2026, LastNumber = 42 });
+                    context.SaveChanges();
+                    ledger = CertificateCounterFloor.LedgerIdOf(context)!;
+                }
+                store.Raise(ledger, new System.Collections.Generic.Dictionary<int, int> { [2026] = 42 });
+
+                var result = await SystemResetService.FactoryResetAsync(
+                    factory, "RESET-ALL-DATA",
+                    resetCertificateSequence: resetSequence, clearAuditLog: resetSequence,
+                    counterFloorStore: store);
+
+                Assert.True(result.Success);
+                Assert.Equal(floorSurvives, store.Read(ledger).ContainsKey(2026));
+            }
+            finally
+            {
+                CleanUp(dbPath, qrFolder, attachmentsFolder);
+                try { Directory.Delete(floorDir, true); } catch (IOException) { }
+            }
+        }
+
         [Fact]
         public async Task FactoryResetAsync_LiveSystemMode_KeepsCertificateSequenceAndAuditLog()
         {

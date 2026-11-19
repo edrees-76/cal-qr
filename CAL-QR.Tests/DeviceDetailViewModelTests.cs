@@ -301,6 +301,87 @@ namespace CAL_QR.Tests
             Assert.Equal("CERT-OLDER", vm.SelectedRecord?.CertificateNumber);
         }
 
+        private async Task<(DbContextOptions<CalQrDbContext> Options, DeviceDetailViewModel Vm, int RecordId)> SeedRecordWithCertificateAsync(bool revoked)
+        {
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_DetailsVM_LiveCert_" + Guid.NewGuid().ToString())
+                .Options;
+            var factory = new TestDbContextFactory(options);
+            var authService = new TestCurrentUserService();
+            authService.SetCurrentUser(new User { Username = "admin", Role = UserRole.Admin });
+            var auditRepo = new AuditLogRepository(factory, authService);
+
+            int deviceId, recordId;
+            using (var context = new CalQrDbContext(options))
+            {
+                var owner = new Owner { Name = "Owner A" };
+                var type = new DeviceType { Name = "Type A" };
+                context.Owners.Add(owner);
+                context.DeviceTypes.Add(type);
+                await context.SaveChangesAsync();
+                var device = new Device { Model = "Ludlum", SerialNumber = "SN100", OwnerId = owner.Id, DeviceTypeId = type.Id };
+                context.Devices.Add(device);
+                await context.SaveChangesAsync();
+                deviceId = device.Id;
+
+                var older = new CalibrationRecord { DeviceId = deviceId, CalibrationDate = DateTime.Today.AddMonths(-1), ExpiryDate = DateTime.Today.AddMonths(11), Result = "Passed", HmacSignature = "H1" };
+                var newer = new CalibrationRecord { DeviceId = deviceId, CalibrationDate = DateTime.Today, ExpiryDate = DateTime.Today.AddYears(1), Result = "Passed", HmacSignature = "H2" };
+                context.CalibrationRecords.AddRange(older, newer);
+                await context.SaveChangesAsync();
+                recordId = older.Id;
+
+                context.Certificates.Add(new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = "TNRC-SSDL-2026-0001",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Ludlum",
+                    DeviceSerialNumber = "SN100",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today,
+                    IsRevoked = revoked,
+                    IsDeleted = revoked
+                });
+                await context.SaveChangesAsync();
+            }
+
+            var vm = new DeviceDetailViewModel(factory, new CalibrationRepository(factory), new DeviceRepository(factory), authService, auditRepo, null!, null!);
+            vm.LoadDeviceDetails(deviceId);
+            return (options, vm, recordId);
+        }
+
+        [Fact]
+        public async Task DeleteRecordCommand_Execute_IsBlocked_WhenRecordHasLiveCertificate()
+        {
+            var (options, vm, recordId) = await SeedRecordWithCertificateAsync(revoked: false);
+            string? protectionMessage = null;
+            DeviceDetailViewModel.MessageBoxShowMock = (msg, caption, btn, img) =>
+            {
+                if (caption == "تنبيه الحماية") protectionMessage = msg;
+                return MessageBoxResult.Yes;
+            };
+
+            vm.DeleteRecordCommand.Execute(vm.Calibrations.First(c => c.Id == recordId));
+
+            using var context = new CalQrDbContext(options);
+            Assert.False((await context.CalibrationRecords.FindAsync(recordId))!.IsDeleted);
+            Assert.NotNull(protectionMessage);
+            Assert.Contains("TNRC-SSDL-2026-0001", protectionMessage);
+        }
+
+        [Fact]
+        public async Task DeleteRecordCommand_Execute_Succeeds_WhenItsCertificateWasRevoked()
+        {
+            var (options, vm, recordId) = await SeedRecordWithCertificateAsync(revoked: true);
+            DeviceDetailViewModel.MessageBoxShowMock = (msg, caption, btn, img) => MessageBoxResult.Yes;
+
+            vm.DeleteRecordCommand.Execute(vm.Calibrations.First(c => c.Id == recordId));
+
+            using var context = new CalQrDbContext(options);
+            Assert.True((await context.CalibrationRecords.FindAsync(recordId))!.IsDeleted);
+        }
+
         public void Dispose()
         {
             DeviceDetailViewModel.MessageBoxShowMock = null;

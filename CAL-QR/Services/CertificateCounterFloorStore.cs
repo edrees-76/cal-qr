@@ -18,6 +18,12 @@ namespace CAL_QR.Services
 
         /// <summary>يرفع الحدّ إلى القيم المعطاة حيث هي أكبر؛ لا يخفض شيئاً.</summary>
         void Raise(string ledgerId, IReadOnlyDictionary<int, int> lastNumbers);
+
+        /// <summary>
+        /// يمحو مدخل هذا السجلّ كلّه. للتصفير الكامل لبيانات التجربة وحده: بدونه يعيد الإقلاع
+        /// التالي رفع العدّاد إلى آخر رقم قديم فيبطل «إعادة الترقيم من 0001».
+        /// </summary>
+        void Remove(string ledgerId);
     }
 
     public sealed class CertificateCounterFloorStore : ICertificateCounterFloorStore
@@ -62,6 +68,17 @@ namespace CAL_QR.Services
 
                 all[ledgerId] = merged;
                 Save(all);
+            }
+        }
+
+        public void Remove(string ledgerId)
+        {
+            if (string.IsNullOrWhiteSpace(ledgerId)) throw new ArgumentException("هويّة سجلّ الترقيم مطلوبة.", nameof(ledgerId));
+
+            lock (Gate)
+            {
+                var all = Load();
+                if (all.Remove(ledgerId)) Save(all);
             }
         }
 

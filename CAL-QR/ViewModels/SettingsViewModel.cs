@@ -72,6 +72,7 @@ namespace CAL_QR.ViewModels
         private readonly ICurrentUserService _currentUserService;
         private readonly Func<Views.Dialogs.PaperTemplateDialog> _paperTemplateDialogFactory;
         private readonly IdleLockService _idleLockService;
+        private readonly ICertificateCounterFloorStore _counterFloorStore;
 
         public SettingsViewModel(
             IDbContextFactory<CalQrDbContext> contextFactory,
@@ -82,8 +83,10 @@ namespace CAL_QR.ViewModels
             ICurrentUserService currentUserService,
             IUserRepository userRepository,
             Func<Views.Dialogs.PaperTemplateDialog> paperTemplateDialogFactory,
-            IdleLockService idleLockService)
+            IdleLockService idleLockService,
+            ICertificateCounterFloorStore counterFloorStore)
         {
+            _counterFloorStore = counterFloorStore;
             _contextFactory = contextFactory;
             _templateRepository = templateRepository;
             _backupService = backupService;
@@ -1482,7 +1485,8 @@ namespace CAL_QR.ViewModels
                     _auditLogRepository,
                     resetCertificateSequence: testDataOnly,
                     clearAuditLog: testDataOnly,
-                    protectedPaths: new[] { BackupPath });
+                    protectedPaths: new[] { BackupPath },
+                    counterFloorStore: _counterFloorStore);
                 FactoryResetConfirmationText = string.Empty;
                 FactoryResetPassword = string.Empty;
 

@@ -135,8 +135,14 @@ namespace CAL_QR.Services
                     Directory.CreateDirectory(destinationFolder);
                 }
 
-                string backupFileName = $"CalQR_Backup_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}";
+                string backupFileName = $"CalQR_Backup_{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", System.Globalization.CultureInfo.InvariantCulture)}{BackupEncryption.FileExtension}";
                 string backupFilePath = Path.Combine(destinationFolder, backupFileName);
+                // نسختان في الثانية نفسها: لا تُطمس الأولى.
+                for (int suffix = 2; File.Exists(backupFilePath); suffix++)
+                {
+                    backupFileName = $"{Path.GetFileNameWithoutExtension(backupFileName).Split('~')[0]}~{suffix}{BackupEncryption.FileExtension}";
+                    backupFilePath = Path.Combine(destinationFolder, backupFileName);
+                }
                 bool cloudCopySuccess = true;
 
                 try
@@ -507,7 +513,7 @@ namespace CAL_QR.Services
                             if (entry.FullName.StartsWith("Attachments/", StringComparison.OrdinalIgnoreCase))
                             {
                                 string relativePath = entry.FullName.Substring("Attachments/".Length);
-                                if (!string.IsNullOrEmpty(relativePath))
+                                if (!string.IsNullOrEmpty(relativePath) && !string.IsNullOrEmpty(entry.Name))
                                 {
                                     string destPath = ResolveSafeExtractionPath(tempAttachments, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
@@ -521,7 +527,7 @@ namespace CAL_QR.Services
                             else if (entry.FullName.StartsWith("poster/", StringComparison.OrdinalIgnoreCase))
                             {
                                 string relativePath = entry.FullName.Substring("poster/".Length);
-                                if (!string.IsNullOrEmpty(relativePath))
+                                if (!string.IsNullOrEmpty(relativePath) && !string.IsNullOrEmpty(entry.Name))
                                 {
                                     string destPath = ResolveSafeExtractionPath(tempQrOutput, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
@@ -536,7 +542,7 @@ namespace CAL_QR.Services
                             {
                                 // توافق خلفيّ مع النسخ القديمة التي تستخدم "QR_Output/"
                                 string relativePath = entry.FullName.Substring("QR_Output/".Length);
-                                if (!string.IsNullOrEmpty(relativePath))
+                                if (!string.IsNullOrEmpty(relativePath) && !string.IsNullOrEmpty(entry.Name))
                                 {
                                     string destPath = ResolveSafeExtractionPath(tempQrOutput, relativePath);
                                     string destDir = Path.GetDirectoryName(destPath)!;
@@ -747,34 +753,11 @@ namespace CAL_QR.Services
                             catch (System.Exception swallowEx4) { CAL_QR.Services.AppLog.Warn("BackupService.cs:568: " + swallowEx4.Message); }
                         }
 
-                        // غياب أثر ما قبل الاستعادة يعني أنّ المجلّد لم يكن موجودًا أصلًا،
-                        // فحذف ما نقلناه هو التراجع الصحيح ولا نقل بعده. الشرط يمنع أن
-                        // يختفي فشل تراجع حقيقيّ داخل catch صامت.
-                        if (qrSwapped && Directory.Exists(qrPreRestore))
-                        {
-                            try
-                            {
-                                if (Directory.Exists(qrOutputPath))
-                                {
-                                    Directory.Delete(qrOutputPath, true);
-                                }
-                                Directory.Move(qrPreRestore, qrOutputPath);
-                            }
-                            catch (System.Exception swallowEx5) { CAL_QR.Services.AppLog.Warn("BackupService.cs:584: " + swallowEx5.Message); }
-                        }
-
-                        if (attachmentsSwapped && Directory.Exists(attachmentsPreRestore))
-                        {
-                            try
-                            {
-                                if (Directory.Exists(attachmentsPath))
-                                {
-                                    Directory.Delete(attachmentsPath, true);
-                                }
-                                Directory.Move(attachmentsPreRestore, attachmentsPath);
-                            }
-                            catch (System.Exception swallowEx6) { CAL_QR.Services.AppLog.Warn("BackupService.cs:597: " + swallowEx6.Message); }
-                        }
+                        // التراجع لا يشترط وجود أثر ما قبل الاستعادة: غيابه يعني أنّ المجلّد لم يكن
+                        // موجودًا أصلًا فيُحذف المستعاد، ووجوده بلا تثبيت المستعاد يعني أنّ النقل
+                        // الثاني فشل فيُعاد الأصل. فشل التراجع يُسجَّل ولا يُخفى.
+                        RollbackFolderSwap(qrOutputPath, qrPreRestore, qrSwapped);
+                        RollbackFolderSwap(attachmentsPath, attachmentsPreRestore, attachmentsSwapped);
 
                         try
                         {
@@ -843,6 +826,29 @@ namespace CAL_QR.Services
 
                 return new RestoreResult(safetyBackupPath, counterReport);
             });
+        }
+
+        /// <summary>
+        /// تراجع تبديل مجلّد أثناء الاستعادة: إن ثُبِّت المستعاد حُذف، ثمّ يُعاد الأصل من أثر
+        /// ما قبل الاستعادة إن وُجد ولم يكن للمسار الحيّ مجلّد.
+        /// </summary>
+        internal static void RollbackFolderSwap(string livePath, string preRestorePath, bool installed)
+        {
+            try
+            {
+                if (installed && Directory.Exists(livePath))
+                {
+                    Directory.Delete(livePath, true);
+                }
+                if (Directory.Exists(preRestorePath) && !Directory.Exists(livePath))
+                {
+                    Directory.Move(preRestorePath, livePath);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                AppLog.Warn("BackupService.RollbackFolderSwap: " + ex.Message);
+            }
         }
 
         /// <summary>

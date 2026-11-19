@@ -169,17 +169,11 @@ namespace CAL_QR.Views.Dialogs
             }
         }
 
-        private void OpenFile(AttachmentItem item)
+        private async void OpenFile(AttachmentItem item)
         {
             if (item == null || string.IsNullOrWhiteSpace(item.FullPath))
             {
                 MessageBox.Show("مسار الملف غير صالح.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            if (!System.IO.File.Exists(item.FullPath))
-            {
-                MessageBox.Show($"الملف غير موجود في المسار المحدد:\n{item.FullPath}", "الملف غير موجود", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -191,7 +185,24 @@ namespace CAL_QR.Views.Dialogs
 
             try
             {
-                var psi = new System.Diagnostics.ProcessStartInfo(item.FullPath)
+                string? path = item.FullPath;
+                if (DataContext is CalibrationFormViewModel vm)
+                {
+                    var located = await vm.LocateAttachmentAsync(item);
+                    path = located.Path;
+                    if (path == null)
+                    {
+                        MessageBox.Show(CAL_QR.Validation.AttachmentLocationRules.NotFoundMessage(located.Tried), "الملف غير موجود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+                else if (!System.IO.File.Exists(path))
+                {
+                    MessageBox.Show(CAL_QR.Validation.AttachmentLocationRules.NotFoundMessage(new[] { path }), "الملف غير موجود", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var psi = new System.Diagnostics.ProcessStartInfo(path)
                 {
                     UseShellExecute = true
                 };

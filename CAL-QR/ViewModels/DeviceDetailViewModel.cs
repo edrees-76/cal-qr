@@ -53,7 +53,7 @@ namespace CAL_QR.ViewModels
             _certificateRepository = certificateRepository;
             _certificatePdfService = certificatePdfService;
 
-            OpenAttachmentCommand = new RelayCommand(OpenAttachment);
+            OpenAttachmentCommand = new RelayCommand(async p => await OpenAttachmentAsync(p));
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
             ExportPdfCommand = new RelayCommand(async () => await ExportPdfAsync(), CanExportPdf);
             DeleteRecordCommand = new RelayCommand(DeleteRecord, CanDeleteRecord);
@@ -200,7 +200,7 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void OpenAttachment(object? parameter)
+        private async Task OpenAttachmentAsync(object? parameter)
         {
             if (parameter is not Attachment att) return;
 
@@ -212,13 +212,15 @@ namespace CAL_QR.ViewModels
 
             try
             {
-                if (File.Exists(att.FilePath))
+                var (path, tried) = await CAL_QR.Helpers.AttachmentPaths.LocateAsync(
+                    _contextFactory, att.FilePath, att.CalibrationRecordId, att.FileName);
+                if (path != null && AttachmentRules.IsAllowed(path))
                 {
-                    Process.Start(new ProcessStartInfo(att.FilePath) { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
                 }
                 else
                 {
-                    MessageBox.Show("الملف المرفق غير موجود على المسار المحدد.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(AttachmentLocationRules.NotFoundMessage(tried), "الملفّ غير موجود", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
             catch (Exception ex)

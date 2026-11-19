@@ -1190,6 +1190,14 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        /// <summary>
+        /// موضع مرفق للفتح. المرفق المحفوظ يُبحث عنه أيضاً في مجلّد السجلّ داخل جذر المرفقات
+        /// الحاليّ إن مات مساره المخزّن؛ المرفق غير المحفوظ بعدُ مساره هو الملفّ المصدر فقط.
+        /// </summary>
+        public Task<(string? Path, IReadOnlyList<string> Tried)> LocateAttachmentAsync(AttachmentItem item)
+            => AttachmentPaths.LocateAsync(_contextFactory, item.FullPath,
+                item.IsSaved ? _calibrationRecordId : 0, item.FileName);
+
         public Action? CloseWindowAction { get; set; }
     }
 

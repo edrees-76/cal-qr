@@ -490,13 +490,13 @@ namespace CAL_QR.Data
 
             // مراجعة نصوص الفحوص الوظيفيّة إلى قوالب رضا الجديدة — مرّة واحدة بعلمها.
             //
-            // موضعها الأخير بين مسارات الأنواع: بعد أن يكون كل نوع حاضراً بأسمائه المعتمدة،
-            // ولأنّ Apply (في المزامنة) تمحو ConflictsKey عند حصيلة نظيفة، بينما هذه تُلحق
-            // بلاغها به — فلو سبقتها لضاع البلاغ قبل أن يراه المدير. بلا تصعيد استثناء.
+            // موضعها الأخير بين مسارات الأنواع: بعد أن يكون كل نوع حاضراً بأسمائه المعتمدة.
+            // صامتة للمدير بقرار إدريس (لا إشعار في أيّ حالة)؛ أثرها سطر في السجلّ الملفّيّ
+            // فقط. بلا تصعيد استثناء (فشلها يُسجَّل داخلها).
             var revisionResult = DeviceTypeSeeder.ReviseCatalogFunctionalChecksIfNeeded(context);
-            if (revisionResult.HasDiagnostics)
+            if (revisionResult.HasRevisionLog)
             {
-                AppLog.Warn("[DeviceTypeSeeder] حصيلة مراجعة الفحوص الوظيفيّة:\n" + revisionResult.ToDiagnosticsText());
+                AppLog.Warn("[DeviceTypeSeeder] مراجعة الفحوص الوظيفيّة:\n" + revisionResult.ToRevisionLogText());
             }
 
             // One-time migration for splitting CertificateManagement (Records) to Verification, Owners, and DeviceTypes

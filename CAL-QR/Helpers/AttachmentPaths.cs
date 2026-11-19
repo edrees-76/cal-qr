@@ -31,6 +31,21 @@ namespace CAL_QR.Helpers
             => Path.Combine(root, recordId.ToString());
 
         public static string SignedFolder(string root, int recordId)
-            => Path.Combine(RecordFolder(root, recordId), "signed");
+            => Path.Combine(RecordFolder(root, recordId), CAL_QR.Validation.AttachmentLocationRules.SignedFolderName);
+
+        /// <summary>
+        /// يحدّد موضع مرفق محفوظ للفتح: المسار المخزّن، وإلّا مجلّد السجلّ في جذر المرفقات
+        /// الحاليّ. Path فارغ إن لم يوجد الملفّ، وTried بالمواضع المجرَّبة لرسالة الخطأ.
+        /// </summary>
+        public static async Task<(string? Path, System.Collections.Generic.IReadOnlyList<string> Tried)> LocateAsync(
+            IDbContextFactory<CalQrDbContext> contextFactory, string? storedPath, int recordId, string? fileName)
+        {
+            if (!string.IsNullOrWhiteSpace(storedPath) && File.Exists(storedPath))
+                return (storedPath, new[] { storedPath });
+
+            string root = await ResolveRootAsync(contextFactory);
+            var candidates = CAL_QR.Validation.AttachmentLocationRules.Candidates(storedPath, root, recordId, fileName);
+            return (CAL_QR.Validation.AttachmentLocationRules.FirstExisting(candidates, File.Exists), candidates);
+        }
     }
 }

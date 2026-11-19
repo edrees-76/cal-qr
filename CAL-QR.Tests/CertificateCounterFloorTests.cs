@@ -239,6 +239,30 @@ namespace CAL_QR.Tests
         // ── الإصدار يسجّل الحدّ ────────────────────────────────────────────────
 
         [Fact]
+        public void Store_Remove_DeletesOnlyThatLedger()
+        {
+            string dir = Path.Combine(Path.GetTempPath(), "cal_qr_floor_remove_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var store = new CertificateCounterFloorStore(dir);
+                store.Raise("ledger-a", new Dictionary<int, int> { [2026] = 5 });
+                store.Raise("ledger-b", new Dictionary<int, int> { [2026] = 9 });
+
+                store.Remove("ledger-a");
+                store.Remove("ledger-missing");
+
+                var reopened = new CertificateCounterFloorStore(dir);
+                Assert.Empty(reopened.Read("ledger-a"));
+                Assert.Equal(9, reopened.Read("ledger-b")[2026]);
+            }
+            finally
+            {
+                try { Directory.Delete(dir, true); } catch (IOException) { }
+            }
+        }
+
+        [Fact]
         public async Task AddAsync_RecordsIssuedNumberInFloorStore()
         {
             string dir = NewTempDir("issue");

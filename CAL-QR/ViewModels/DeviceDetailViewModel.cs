@@ -325,10 +325,24 @@ namespace CAL_QR.ViewModels
                         MessageBoxImage.Warning);
                     return;
                 }
+
+                // شهادة صادرة حيّة (لم تُبطَل) تبقى تُصادَق بالـQR؛ حذف سجلّها يُخفي أصلها من الواجهة
+                // ويترك شهادة يتيمة. الإبطال يسبق الحذف، والشهادة المبطَلة (IsDeleted) لا تمنع.
+                bool hasLiveCertificate = await context.Certificates
+                    .AnyAsync(c => c.CalibrationRecordId == record.Id && !c.IsDeleted);
+                if (hasLiveCertificate)
+                {
+                    ShowMessageBox(
+                        $"لا يمكن حذف هذا السجلّ لأنّ له شهادة صادرة ما زالت سارية ({record.DisplayCertificateNumber}).\nأبطِل الشهادة أولاً من شاشتها ثمّ أعد المحاولة.",
+                        "تنبيه الحماية",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
             }
 
             var confirmResult = ShowMessageBox(
-                $"هل أنت متأكد من رغبتك في حذف شهادة المعايرة ذات الرقم ({record.CertificateNumber})؟\nهذا الإجراء سيقوم بحذف الشهادة ومرفقاتها نهائياً من النظام.",
+                $"هل أنت متأكد من رغبتك في حذف شهادة المعايرة ذات الرقم ({record.DisplayCertificateNumber})؟\nهذا الإجراء سيقوم بحذف الشهادة ومرفقاتها نهائياً من النظام.",
                 "تأكيد الحذف",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
@@ -345,7 +359,7 @@ namespace CAL_QR.ViewModels
                     "حذف شهادة معايرة",
                     "CalibrationRecord",
                     record.Id.ToString(),
-                    $"حذف ناعم لشهادة المعايرة رقم {record.CertificateNumber} للجهاز موديل {Device?.Model} رقم تسلسلي {Device?.SerialNumber}");
+                    $"حذف ناعم لشهادة المعايرة رقم {record.DisplayCertificateNumber} للجهاز موديل {Device?.Model} رقم تسلسلي {Device?.SerialNumber}");
 
                 // Raise calibration changed event
                 CAL_QR.Helpers.CalibrationEvents.RaiseCalibrationChanged();

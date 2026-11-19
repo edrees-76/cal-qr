@@ -31,7 +31,8 @@ namespace CAL_QR.Services
             IAuditLogRepository? auditLogRepository = null,
             bool resetCertificateSequence = true,
             bool clearAuditLog = true,
-            IEnumerable<string>? protectedPaths = null)
+            IEnumerable<string>? protectedPaths = null,
+            ICertificateCounterFloorStore? counterFloorStore = null)
         {
             if (confirmationPhrase != RequiredConfirmationPhrase)
             {
@@ -45,6 +46,11 @@ namespace CAL_QR.Services
             int ownersCount = await context.Owners.CountAsync();
             int devicesCount = await context.Devices.CountAsync();
             int recordsCount = await context.CalibrationRecords.CountAsync();
+
+            // بصمة سجلّ الترقيم تُقرأ قبل التصفير: حدّ العدّاد خارج القاعدة مفتاحه بصمة مفتاح التوقيع.
+            string? ledgerId = resetCertificateSequence && counterFloorStore != null
+                ? CertificateCounterFloor.LedgerIdOf(context)
+                : null;
 
             using var transaction = await context.Database.BeginTransactionAsync();
 
@@ -104,6 +110,19 @@ namespace CAL_QR.Services
 
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // تصفير الترقيم يشمل الحدّ المحفوظ خارج القاعدة، وإلّا رفعه الإقلاع التالي من جديد.
+                if (ledgerId != null)
+                {
+                    try
+                    {
+                        counterFloorStore!.Remove(ledgerId);
+                    }
+                    catch (Exception floorEx)
+                    {
+                        AppLog.Error("تعذّر مسح حدّ عدّاد الشهادات بعد التصفير؛ قد يُرفع العدّاد عند الإقلاع.", floorEx);
+                    }
+                }
             }
             catch (Exception ex)
             {

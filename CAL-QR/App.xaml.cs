@@ -119,6 +119,9 @@ namespace CAL_QR
                 // (استعادة نسخة أقدم كانت تُرجعه فيتكرّر رقم شهادة صدرت).
                 ApplyCertificateCounterFloor();
 
+                // لقطات نسخ احتياطيّ مكشوفة خلّفها انقطاع سابق تُحذف عند الإقلاع.
+                BackupService.CleanupStaleSnapshotFolders();
+
                 // Start scheduled backup checks
                 var backupService = ServiceProvider.GetRequiredService<IBackupService>();
                 backupService.StartScheduledBackupTimer();

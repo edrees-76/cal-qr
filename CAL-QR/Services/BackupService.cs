@@ -232,7 +232,10 @@ namespace CAL_QR.Services
             string dbPath, string attachmentsPath, string qrOutputPath,
             string backupFilePath, string password, bool verifyIntegrity)
         {
-            string tempDir = Path.Combine(Path.GetTempPath(), "CalQrBackup_" + Guid.NewGuid().ToString("N"));
+            // مخلَّفات انقطاع سابق (تيّار/إنهاء قسريّ) تُزال قبل بناء لقطة جديدة.
+            CleanupStaleSnapshotFolders();
+
+            string tempDir = Path.Combine(Path.GetTempPath(), SnapshotFolderPrefix + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
 
             try
@@ -300,11 +303,49 @@ namespace CAL_QR.Services
             finally
             {
                 SqliteConnection.ClearAllPools();
-                if (Directory.Exists(tempDir))
+                // حذف بإعادة محاولة: قفل عابر (مضادّ فيروسات/مفهرس) لا يُفشل النسخة ولا يُبقي
+                // اللقطة المكشوفة؛ وإن تعذّر الحذف يسجّله المساعد ويزيله التنظيف عند الإقلاع أو النسخة التالية.
+                FileSystemRetryHelper.TryDeleteDirectory(tempDir);
+            }
+        }
+
+        public const string SnapshotFolderPrefix = "CalQrBackup_";
+
+        /// <summary>أقلّ عمر لمجلّد لقطة قبل اعتباره مخلَّفاً (حماية من لقطة جارية في عمليّة أخرى).</summary>
+        public static readonly TimeSpan StaleSnapshotMinAge = TimeSpan.FromHours(2);
+
+        /// <summary>
+        /// يحذف مجلّدات لقطات النسخ الاحتياطيّ المتروكة في المجلّد المؤقّت (تحمل قاعدة البيانات
+        /// ومفتاح التوقيع غير مشفَّرين). لا يمسّ إلا ما اسمه <c>CalQrBackup_*</c> وأقدم من
+        /// <paramref name="minAge"/>. يُرجع عدد ما حُذف. لا يُلقي استثناءً: فشل التنظيف لا يُفشل شيئاً.
+        /// </summary>
+        public static int CleanupStaleSnapshotFolders(string? tempRoot = null, TimeSpan? minAge = null)
+        {
+            int removed = 0;
+            try
+            {
+                string root = tempRoot ?? Path.GetTempPath();
+                if (!Directory.Exists(root))
                 {
-                    Directory.Delete(tempDir, true);
+                    return 0;
+                }
+
+                DateTime cutoff = DateTime.UtcNow - (minAge ?? StaleSnapshotMinAge);
+                foreach (string dir in Directory.GetDirectories(root, SnapshotFolderPrefix + "*"))
+                {
+                    if (Directory.GetLastWriteTimeUtc(dir) <= cutoff
+                        && FileSystemRetryHelper.TryDeleteDirectory(dir))
+                    {
+                        removed++;
+                    }
                 }
             }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                AppLog.Warn("BackupService: تعذّر تنظيف لقطات النسخ الاحتياطيّ المتروكة: " + ex.Message);
+            }
+
+            return removed;
         }
 
         /// <summary>

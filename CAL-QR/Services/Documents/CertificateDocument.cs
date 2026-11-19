@@ -526,7 +526,8 @@ namespace CAL_QR.Services.Documents
                 // التعريف يشرح متوسّطاً لا وجود له.
                 HeaderCell(cfHeader, showAverageFormula ? "CFavg = ΣCF / n" : null);
                 HeaderCell("Combined Standard Uncertainty (uc)");
-                HeaderCell($"Expanded Uncertainty (U) (k = {coverageFactor}) (95% confidence level)");
+                // عبارة مستوى الثقة 95% تصحّ عند k = 2 فقط (CoverageFactorRules).
+                HeaderCell($"Expanded Uncertainty (U) (k = {coverageFactor}){CoverageFactorRules.ConfidenceSuffix(coverageFactor)}");
 
                 // uc and U are shown with a "%" suffix in this strip to match Reda's
                 // template (the budget table below keeps them bare). CF/CFavg is a

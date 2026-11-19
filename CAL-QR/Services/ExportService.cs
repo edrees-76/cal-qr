@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -31,6 +32,10 @@ namespace CAL_QR.Services
 
             LoadLogoBytes();
         }
+
+        // نسب التقارير بثقافة ثابتة كالتواريخ في الملف نفسه، فلا تتبدّل الفاصلة العشرية
+        // بإعدادات ويندوز الإقليميّة.
+        private static string Pct(double value) => value.ToString("F1", CultureInfo.InvariantCulture);
 
         private void LoadLogoBytes()
         {
@@ -511,9 +516,9 @@ namespace CAL_QR.Services
                                     table.Cell().Background("#1A3A6B").Padding(5).AlignCenter().Text("النتيجة: راسب (Failed)").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
                                     table.Cell().Background("#1A3A6B").Padding(5).AlignCenter().Text("النتيجة: مشروط (Conditional)").FontFamily("Cairo").Bold().FontSize(9).FontColor(Colors.White);
 
-                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.PassedCount} ({data.PassedPercent:F1}%)").FontFamily("Cairo").FontSize(10).FontColor("#2E7D32").Bold();
-                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.FailedCount} ({data.FailedPercent:F1}%)").FontFamily("Cairo").FontSize(10).FontColor("#C62828").Bold();
-                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.ConditionalCount} ({data.ConditionalPercent:F1}%)").FontFamily("Cairo").FontSize(10).FontColor("#F9A825").Bold();
+                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.PassedCount} ({Pct(data.PassedPercent)}%)").FontFamily("Cairo").FontSize(10).FontColor("#2E7D32").Bold();
+                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.FailedCount} ({Pct(data.FailedPercent)}%)").FontFamily("Cairo").FontSize(10).FontColor("#C62828").Bold();
+                                    table.Cell().Border(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).AlignCenter().Text($"{data.ConditionalCount} ({Pct(data.ConditionalPercent)}%)").FontFamily("Cairo").FontSize(10).FontColor("#F9A825").Bold();
                                 });
 
                                 col.Item().PaddingVertical(10);
@@ -764,9 +769,9 @@ namespace CAL_QR.Services
                         cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                     }
 
-                    ws.Cell(12, 1).Value = $"{data.PassedCount} ({data.PassedPercent:F1}%)";
-                    ws.Cell(12, 2).Value = $"{data.FailedCount} ({data.FailedPercent:F1}%)";
-                    ws.Cell(12, 3).Value = $"{data.ConditionalCount} ({data.ConditionalPercent:F1}%)";
+                    ws.Cell(12, 1).Value = $"{data.PassedCount} ({Pct(data.PassedPercent)}%)";
+                    ws.Cell(12, 2).Value = $"{data.FailedCount} ({Pct(data.FailedPercent)}%)";
+                    ws.Cell(12, 3).Value = $"{data.ConditionalCount} ({Pct(data.ConditionalPercent)}%)";
                     for (int col = 1; col <= 3; col++)
                     {
                         ws.Cell(12, col).Style.Font.FontName = "Cairo";

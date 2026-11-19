@@ -27,12 +27,16 @@ namespace CAL_QR.Data
         /// </summary>
         public List<string> HiddenTypes { get; } = new List<string>();
 
-        /// <summary>أنواع استُبدلت فحوصها الوظيفيّة بنصوص الكتالوج الجديدة (مراجعة القوالب).</summary>
+        /// <summary>
+        /// أنواع استُبدلت فحوصها الوظيفيّة بنصوص الكتالوج الجديدة (مراجعة القوالب).
+        /// للسجلّ الملفّيّ والاختبارات فقط — لا تدخل HasDiagnostics ولا تُعرض على المدير.
+        /// </summary>
         public List<string> RevisedFunctionalChecks { get; } = new List<string>();
 
         /// <summary>
         /// أنواع لم تُستبدل فحوصها لأنها لا تطابق بصمة المراجعة السابقة — عدّلها المستخدم
-        /// أو أضاف إليها. تُترك كما هي ويُبلَّغ المدير ليقرّر.
+        /// أو أضاف إليها. تُترك كما هي. للسجلّ الملفّيّ والاختبارات فقط، بلا إشعار للمدير
+        /// (قرار إدريس: التحديث يجري بصمت كأنّه تحديث للمنظومة).
         /// </summary>
         public List<string> RevisionSkippedTypes { get; } = new List<string>();
 
@@ -45,8 +49,24 @@ namespace CAL_QR.Data
 
         /// <summary>هل ثمة ما يستحق عرضه على المدير؟</summary>
         public bool HasDiagnostics =>
-            Failure != null || AliasConflicts.Count > 0 || HiddenTypes.Count > 0 || Renamed > 0
-            || RevisedFunctionalChecks.Count > 0 || RevisionSkippedTypes.Count > 0;
+            Failure != null || AliasConflicts.Count > 0 || HiddenTypes.Count > 0 || Renamed > 0;
+
+        /// <summary>هل ثمة ما يُسجَّل في السجلّ الملفّيّ من مراجعة الفحوص؟</summary>
+        public bool HasRevisionLog => RevisedFunctionalChecks.Count > 0 || RevisionSkippedTypes.Count > 0;
+
+        /// <summary>نصّ السجلّ الملفّيّ لمراجعة الفحوص (لا يُخزَّن في AppSettings ولا يُعرض للمدير).</summary>
+        public string ToRevisionLogText()
+        {
+            var lines = new List<string>();
+
+            foreach (var revised in RevisedFunctionalChecks)
+                lines.Add($"حُدِّثت الفحوص الوظيفيّة لنوع «{revised}» إلى نصوص قالب م. رضا الجديد.");
+
+            foreach (var skipped in RevisionSkippedTypes)
+                lines.Add($"الفحوص الوظيفيّة لنوع «{skipped}» معدَّلة يدويّاً فلم تُستبدل بنصوص قالب م. رضا الجديد.");
+
+            return string.Join("\n", lines);
+        }
 
         /// <summary>نصّ مقروء يُخزَّن في AppSettings ويُعرض كما هو.</summary>
         public string ToDiagnosticsText()
@@ -79,20 +99,6 @@ namespace CAL_QR.Data
                     $"النوع «{hidden}» موجود لكنه مخفي (محذوف ناعماً). " +
                     "لن يظهر في القوائم، ولن يُقبل إنشاء نوع جديد بنفس الاسم. " +
                     "استرجعه من إدارة الأنواع إن كان إخفاؤه غير مقصود.");
-            }
-
-            foreach (var revised in RevisedFunctionalChecks)
-            {
-                lines.Add(
-                    $"حُدِّثت الفحوص الوظيفيّة لنوع «{revised}» إلى نصوص قالب م. رضا الجديد. " +
-                    "الشهادات الصادرة والمسودّات القائمة تحتفظ بفحوصها كما هي.");
-            }
-
-            foreach (var skipped in RevisionSkippedTypes)
-            {
-                lines.Add(
-                    $"الفحوص الوظيفيّة لنوع «{skipped}» معدَّلة يدويّاً، فلم تُستبدل بنصوص قالب م. رضا الجديد. " +
-                    "راجعها من إدارة أنواع الأجهزة إن أردت تحديثها.");
             }
 
             return string.Join("\n", lines);
@@ -141,7 +147,8 @@ namespace CAL_QR.Data
         /// <summary>
         /// علم مراجعة نصوص الفحوص الوظيفيّة إلى قوالب رضا الجديدة (5 أغسطس 2026) على
         /// القواعد القائمة. مستقلّ عن علمَي البذر والإصلاح لأنّ كليهما مضبوط سلفاً.
-        /// فشلها يُسجَّل تحت RepairFailureKey (يعرضه إشعار المدير القائم).
+        /// المراجعة صامتة تماماً: لا إشعار للمدير لا عند النجاح ولا عند التخطّي ولا عند الفشل،
+        /// وكلّها تُسجَّل في السجلّ الملفّيّ (AppLog).
         /// </summary>
         public const string RevisionFlagKey = "DeviceTypeCatalogRevision_v2";
 
@@ -326,10 +333,13 @@ namespace CAL_QR.Data
         ///   • صفوفه تطابق الكتالوج الحاليّ ⟵ لا شيء (قاعدة جديدة أو مراجعة سابقة).
         ///   • صفوفه تطابق البصمة السابقة حرفيّاً ⟵ تُستبدل بالنصوص الجديدة ويُبلَّغ المدير.
         ///   • بلا صفوف ⟵ لا شيء (قرار المستخدم أو مسار البذر، لا شأن للمراجعة به).
-        ///   • غير ذلك ⟵ معدَّلة يدويّاً: تُترك ويُبلَّغ المدير ليقرّر.
+        ///   • غير ذلك ⟵ معدَّلة يدويّاً: تُترك كما هي.
+        ///
+        /// صامتة للمدير بقرار إدريس (19 نوفمبر 2026): لا إشعار في أيّ حالة لأنّه يُربك ويبدو
+        /// كأنّ المنظومة تُحدَّث. الأثر الوحيد سطر في السجلّ الملفّيّ يكتبه DatabaseMigrator.
         ///
         /// تمسّ جدول القوالب وحده. الشهادات (صادرة أو مسودّة) تحمل نسخها المجمّدة فلا تتأثّر.
-        /// محروسة كنظيراتها: لا تُصعِّد استثناءً، وفشلها يُسجَّل والعلم لا يُكتب فتُعاد المحاولة.
+        /// محروسة كنظيراتها: لا تُصعِّد استثناءً، وفشلها يُسجَّل في AppLog والعلم لا يُكتب فتُعاد المحاولة.
         /// </summary>
         public static DeviceTypeSeedResult ReviseCatalogFunctionalChecksIfNeeded(CalQrDbContext context)
         {
@@ -383,8 +393,6 @@ namespace CAL_QR.Data
                     result.RevisedFunctionalChecks.Add(target.Name);
                 }
 
-                AppendDiagnostics(context, result);
-
                 if (flag == null)
                 {
                     context.AppSettings.Add(new AppSetting { Key = RevisionFlagKey, Value = "true", UpdatedAt = DateTime.UtcNow });
@@ -395,22 +403,17 @@ namespace CAL_QR.Data
                     flag.UpdatedAt = DateTime.UtcNow;
                 }
 
-                // فشلٌ سابق لهذه المراجعة مسجَّل تحت RepairFailureKey. لا يُمحى إلا إن كان
-                // الإصلاح v1 نفسه ناجحاً (علمه مضبوط)، كي لا يُخفى فشلٌ يخصّ v1.
-                var repairDone = context.AppSettings.Any(s => s.Key == RepairFlagKey && s.Value == "true");
-                var staleFailure = context.AppSettings.FirstOrDefault(s => s.Key == RepairFailureKey);
-                if (repairDone && staleFailure != null)
-                {
-                    context.AppSettings.Remove(staleFailure);
-                }
-
                 context.SaveChanges();
                 return result;
             }
             catch (Exception ex)
             {
+                // صامتة للمدير بقرار إدريس، لكنّها ليست catch صامتاً: السبب في السجلّ الملفّيّ،
+                // والعلم لا يُكتب فتُعاد المحاولة عند الإقلاع التالي. يُسقَط ما تتبّعه المحاولة
+                // الفاشلة كي لا يحمله السياق إلى خطوات الإقلاع التالية فيُحفظ نصفه.
                 result.Failure = ex;
-                RecordRepairFailure(context, ex);
+                context.ChangeTracker.Clear();
+                CAL_QR.Services.AppLog.Error("DeviceTypeSeeder: فشلت مراجعة نصوص الفحوص الوظيفيّة", ex);
                 return result;
             }
         }
@@ -438,28 +441,6 @@ namespace CAL_QR.Data
 
         private static bool TextEquals(string? a, string? b) =>
             string.Equals((a ?? string.Empty).Trim(), (b ?? string.Empty).Trim(), StringComparison.Ordinal);
-
-        /// <summary>
-        /// يُلحق حصيلة المراجعة بحصيلة ConflictsKey القائمة ولا يستبدلها: قد تحمل تعارضاً
-        /// من البذر لم يُقرّه المدير بعد. حصيلة نظيفة لا تكتب شيئاً ولا تمحو شيئاً.
-        /// </summary>
-        private static void AppendDiagnostics(CalQrDbContext context, DeviceTypeSeedResult result)
-        {
-            if (!result.HasDiagnostics) return;
-
-            string text = result.ToDiagnosticsText();
-            var setting = context.AppSettings.FirstOrDefault(s => s.Key == ConflictsKey);
-
-            if (setting == null)
-            {
-                context.AppSettings.Add(new AppSetting { Key = ConflictsKey, Value = text, UpdatedAt = DateTime.UtcNow });
-            }
-            else
-            {
-                setting.Value = string.IsNullOrWhiteSpace(setting.Value) ? text : setting.Value + "\n" + text;
-                setting.UpdatedAt = DateTime.UtcNow;
-            }
-        }
 
         /// <summary>
         /// تسجيل سبب فشل الترقية التصحيحية. نظيرة RecordFailure ومبنية على نفس

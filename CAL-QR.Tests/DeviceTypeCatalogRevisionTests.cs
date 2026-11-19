@@ -75,6 +75,14 @@ namespace CAL_QR.Tests
                 .ToArray();
         }
 
+        /// <summary>المراجعة صامتة بقرار إدريس: لا حصيلة تعارض ولا فشل في AppSettings.</summary>
+        private static void AssertNoAdminNotice(CalQrDbContext context)
+        {
+            Assert.Null(context.AppSettings.SingleOrDefault(s => s.Key == DeviceTypeSeeder.ConflictsKey));
+            Assert.Null(context.AppSettings.SingleOrDefault(s => s.Key == DeviceTypeSeeder.FailureKey));
+            Assert.Null(context.AppSettings.SingleOrDefault(s => s.Key == DeviceTypeSeeder.RepairFailureKey));
+        }
+
         [Fact]
         public void Catalog_RevisedTypes_HaveDistinctPreviousFingerprint()
         {
@@ -121,7 +129,7 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public void OldUntouchedChecks_AreReplaced_AndAdminIsNotified()
+        public void OldUntouchedChecks_AreReplaced_WithoutAnyAdminNotice()
         {
             string dbPath = NewDbPath("old");
             var options = OptionsFor(dbPath);
@@ -144,8 +152,8 @@ namespace CAL_QR.Tests
                         .Where(t => t.DeviceTypeId == type.Id).OrderBy(t => t.SortOrder).ToList();
                     Assert.True(DeviceTypeSeeder.FunctionalChecksMatch(rows, Def(DoseRateMeter).FunctionalChecks));
 
-                    var notice = context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.ConflictsKey).Value;
-                    Assert.Contains($"«{DoseRateMeter}»", notice);
+                    // صامتة بقرار إدريس: لا مفتاح إشعار ولا فشل في AppSettings.
+                    AssertNoAdminNotice(context);
                     Assert.Equal("true", context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.RevisionFlagKey).Value);
                 }
             }
@@ -153,7 +161,7 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public void UserEditedChecks_AreKept_AndReportedAsSkipped()
+        public void UserEditedChecks_AreKept_WithoutAnyAdminNotice()
         {
             string dbPath = NewDbPath("edited");
             var options = OptionsFor(dbPath);
@@ -178,15 +186,14 @@ namespace CAL_QR.Tests
                     var type = context.DeviceTypes.Single(t => t.Name == DoseRateMeter);
                     Assert.Equal("Lab-specific limit", context.DeviceTypeFunctionalCheckTemplates
                         .Where(t => t.DeviceTypeId == type.Id).OrderBy(t => t.SortOrder).First().Requirement);
-                    Assert.Contains("معدَّلة يدويّاً",
-                        context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.ConflictsKey).Value);
+                    AssertNoAdminNotice(context);
                 }
             }
             finally { CleanUp(dbPath); }
         }
 
         [Fact]
-        public void ExistingUnacknowledgedNotice_IsPreserved_RevisionIsAppended()
+        public void ExistingUnacknowledgedNotice_IsLeftUntouched()
         {
             string dbPath = NewDbPath("append");
             var options = OptionsFor(dbPath);
@@ -207,9 +214,8 @@ namespace CAL_QR.Tests
 
                 using (var context = new CalQrDbContext(options))
                 {
-                    var notice = context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.ConflictsKey).Value;
-                    Assert.StartsWith("تعارض سابق\n", notice);
-                    Assert.Contains($"«{DoseRateMeter}»", notice);
+                    // بلاغ البذر الذي لم يُقرّه المدير يبقى كما هو، والمراجعة لا تُلحق به شيئاً.
+                    Assert.Equal("تعارض سابق", context.AppSettings.Single(s => s.Key == DeviceTypeSeeder.ConflictsKey).Value);
                 }
             }
             finally { CleanUp(dbPath); }

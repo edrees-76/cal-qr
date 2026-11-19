@@ -27,7 +27,7 @@
             <TextBlock Text="نظام معايرة أجهزة المسح الإشعاعي بتقنية QR" FontSize="13.5" Foreground="{DynamicResource TextBody}" HorizontalAlignment="Center" Margin="0,5,0,5" FontFamily="{StaticResource CairoFont}" TextAlignment="Center" />
             
             <Border Background="{DynamicResource PrimaryNavy}" CornerRadius="12" Padding="12,4" HorizontalAlignment="Center" Margin="0,5,0,15">
-                <TextBlock Text="الإصدار: 1.0.3" FontSize="13" Foreground="White" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="الإصدار: 1.0.4" FontSize="13" Foreground="White" FontFamily="{StaticResource CairoFont}" />
             </Border>
 
             <!-- Separator -->

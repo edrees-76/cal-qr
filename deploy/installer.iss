@@ -18,7 +18,7 @@
 #endif
 
 #ifndef AppVersion
-  #define AppVersion "1.0.3"
+  #define AppVersion "1.0.4"
 #endif
 
 [Setup]
@@ -66,7 +66,7 @@ StatusCreateIcons=يجري إنشاء الاختصارات...
 UninstallStatusLabel=يرجى الانتظار ريثما يتم إزالة تثبيت %1 من جهازك.
 
 [CustomMessages]
-; NameAndVersion مصدر عنوان شريط العنوان وصفحة الترحيب («الإصدار ‎1.0.3»).
+; NameAndVersion مصدر عنوان شريط العنوان وصفحة الترحيب («الإصدار ‎1.0.4»).
 NameAndVersion=%1 الإصدار ‎%2
 
 [Tasks]

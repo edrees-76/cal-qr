@@ -27,6 +27,15 @@ namespace CAL_QR.Data
         /// </summary>
         public List<string> HiddenTypes { get; } = new List<string>();
 
+        /// <summary>أنواع استُبدلت فحوصها الوظيفيّة بنصوص الكتالوج الجديدة (مراجعة القوالب).</summary>
+        public List<string> RevisedFunctionalChecks { get; } = new List<string>();
+
+        /// <summary>
+        /// أنواع لم تُستبدل فحوصها لأنها لا تطابق بصمة المراجعة السابقة — عدّلها المستخدم
+        /// أو أضاف إليها. تُترك كما هي ويُبلَّغ المدير ليقرّر.
+        /// </summary>
+        public List<string> RevisionSkippedTypes { get; } = new List<string>();
+
         /// <summary>
         /// سبب فشل البذر إن وقع. غير خالٍ يعني أن البذر لم يُنفَّذ، وأن السبب
         /// مكتوب في AppSettings تحت DeviceTypeSeeder.FailureKey، وأن المحاولة
@@ -36,7 +45,8 @@ namespace CAL_QR.Data
 
         /// <summary>هل ثمة ما يستحق عرضه على المدير؟</summary>
         public bool HasDiagnostics =>
-            Failure != null || AliasConflicts.Count > 0 || HiddenTypes.Count > 0 || Renamed > 0;
+            Failure != null || AliasConflicts.Count > 0 || HiddenTypes.Count > 0 || Renamed > 0
+            || RevisedFunctionalChecks.Count > 0 || RevisionSkippedTypes.Count > 0;
 
         /// <summary>نصّ مقروء يُخزَّن في AppSettings ويُعرض كما هو.</summary>
         public string ToDiagnosticsText()
@@ -69,6 +79,20 @@ namespace CAL_QR.Data
                     $"النوع «{hidden}» موجود لكنه مخفي (محذوف ناعماً). " +
                     "لن يظهر في القوائم، ولن يُقبل إنشاء نوع جديد بنفس الاسم. " +
                     "استرجعه من إدارة الأنواع إن كان إخفاؤه غير مقصود.");
+            }
+
+            foreach (var revised in RevisedFunctionalChecks)
+            {
+                lines.Add(
+                    $"حُدِّثت الفحوص الوظيفيّة لنوع «{revised}» إلى نصوص قالب م. رضا الجديد. " +
+                    "الشهادات الصادرة والمسودّات القائمة تحتفظ بفحوصها كما هي.");
+            }
+
+            foreach (var skipped in RevisionSkippedTypes)
+            {
+                lines.Add(
+                    $"الفحوص الوظيفيّة لنوع «{skipped}» معدَّلة يدويّاً، فلم تُستبدل بنصوص قالب م. رضا الجديد. " +
+                    "راجعها من إدارة أنواع الأجهزة إن أردت تحديثها.");
             }
 
             return string.Join("\n", lines);
@@ -113,6 +137,13 @@ namespace CAL_QR.Data
         /// المحاولة ستُعاد عند الإقلاع التالي.
         /// </summary>
         public const string RepairFailureKey = "DeviceTypeCatalogRepairFailure_v1";
+
+        /// <summary>
+        /// علم مراجعة نصوص الفحوص الوظيفيّة إلى قوالب رضا الجديدة (5 أغسطس 2026) على
+        /// القواعد القائمة. مستقلّ عن علمَي البذر والإصلاح لأنّ كليهما مضبوط سلفاً.
+        /// فشلها يُسجَّل تحت RepairFailureKey (يعرضه إشعار المدير القائم).
+        /// </summary>
+        public const string RevisionFlagKey = "DeviceTypeCatalogRevision_v2";
 
         /// <summary>
         /// مسار الإقلاع. يُنفَّذ مرة واحدة، ووجود علم البذر يعني الخروج فوراً.
@@ -282,6 +313,151 @@ namespace CAL_QR.Data
                 result.Failure = ex;
                 CAL_QR.Services.AppLog.Error("DeviceTypeSeeder: فشلت مزامنة إضافات الكتالوج", ex);
                 return result;
+            }
+        }
+
+        /// <summary>
+        /// مراجعة نصوص الفحوص الوظيفيّة على القواعد القائمة — مرّة واحدة بعلم RevisionFlagKey.
+        ///
+        /// السبب: SeedChildTemplates كلٌّ-أو-لا-شيء، فنوعٌ زُرعت فحوصه سابقاً لا يتلقّى نصوص
+        /// الكتالوج الجديدة أبداً. والاستبدال الأعمى كان سيمحو فحوصاً عدّلها المستخدم.
+        ///
+        /// القاعدة: لكل نوع في الكتالوج له PreviousFunctionalChecks:
+        ///   • صفوفه تطابق الكتالوج الحاليّ ⟵ لا شيء (قاعدة جديدة أو مراجعة سابقة).
+        ///   • صفوفه تطابق البصمة السابقة حرفيّاً ⟵ تُستبدل بالنصوص الجديدة ويُبلَّغ المدير.
+        ///   • بلا صفوف ⟵ لا شيء (قرار المستخدم أو مسار البذر، لا شأن للمراجعة به).
+        ///   • غير ذلك ⟵ معدَّلة يدويّاً: تُترك ويُبلَّغ المدير ليقرّر.
+        ///
+        /// تمسّ جدول القوالب وحده. الشهادات (صادرة أو مسودّة) تحمل نسخها المجمّدة فلا تتأثّر.
+        /// محروسة كنظيراتها: لا تُصعِّد استثناءً، وفشلها يُسجَّل والعلم لا يُكتب فتُعاد المحاولة.
+        /// </summary>
+        public static DeviceTypeSeedResult ReviseCatalogFunctionalChecksIfNeeded(CalQrDbContext context)
+        {
+            var result = new DeviceTypeSeedResult();
+
+            try
+            {
+                var flag = context.AppSettings.FirstOrDefault(s => s.Key == RevisionFlagKey);
+                if (flag != null && flag.Value == "true")
+                {
+                    return result;
+                }
+
+                var existing = context.DeviceTypes.ToList();
+
+                foreach (var definition in DeviceTypeCatalog.All)
+                {
+                    if (definition.PreviousFunctionalChecks.Length == 0) continue;
+
+                    // نفس أولويّة Apply: الاسم المعتمد أوّلاً ثم المرادف.
+                    var target = existing.FirstOrDefault(t => NameEquals(t.Name, definition.Name))
+                        ?? existing.FirstOrDefault(t => definition.Aliases.Any(a => NameEquals(t.Name, a)));
+                    if (target == null) continue;
+
+                    var rows = context.DeviceTypeFunctionalCheckTemplates
+                        .Where(t => t.DeviceTypeId == target.Id)
+                        .OrderBy(t => t.SortOrder).ThenBy(t => t.Id)
+                        .ToList();
+
+                    if (rows.Count == 0) continue;
+                    if (FunctionalChecksMatch(rows, definition.FunctionalChecks)) continue;
+
+                    if (!FunctionalChecksMatch(rows, definition.PreviousFunctionalChecks))
+                    {
+                        result.RevisionSkippedTypes.Add(target.Name);
+                        continue;
+                    }
+
+                    context.DeviceTypeFunctionalCheckTemplates.RemoveRange(rows);
+                    foreach (var check in definition.FunctionalChecks)
+                    {
+                        context.DeviceTypeFunctionalCheckTemplates.Add(new DeviceTypeFunctionalCheckTemplate
+                        {
+                            DeviceTypeId = target.Id,
+                            SortOrder = check.SortOrder,
+                            CheckName = check.CheckName,
+                            Requirement = check.Requirement,
+                            DefaultResult = check.DefaultResult
+                        });
+                    }
+                    result.RevisedFunctionalChecks.Add(target.Name);
+                }
+
+                AppendDiagnostics(context, result);
+
+                if (flag == null)
+                {
+                    context.AppSettings.Add(new AppSetting { Key = RevisionFlagKey, Value = "true", UpdatedAt = DateTime.UtcNow });
+                }
+                else
+                {
+                    flag.Value = "true";
+                    flag.UpdatedAt = DateTime.UtcNow;
+                }
+
+                // فشلٌ سابق لهذه المراجعة مسجَّل تحت RepairFailureKey. لا يُمحى إلا إن كان
+                // الإصلاح v1 نفسه ناجحاً (علمه مضبوط)، كي لا يُخفى فشلٌ يخصّ v1.
+                var repairDone = context.AppSettings.Any(s => s.Key == RepairFlagKey && s.Value == "true");
+                var staleFailure = context.AppSettings.FirstOrDefault(s => s.Key == RepairFailureKey);
+                if (repairDone && staleFailure != null)
+                {
+                    context.AppSettings.Remove(staleFailure);
+                }
+
+                context.SaveChanges();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                result.Failure = ex;
+                RecordRepairFailure(context, ex);
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// تطابق صفوف قالب قائمة مع قائمة كتالوج: نفس العدد ونفس الترتيب، والاسم والمتطلّب
+        /// والنتيجة الافتراضيّة متساوية حرفيّاً بعد Trim (فارغ ≡ null). قيمة SortOrder نفسها
+        /// لا تُقارن، بل الترتيب: نافذة النوع تعيد ترقيم الصفوف عند كل حفظ.
+        /// </summary>
+        public static bool FunctionalChecksMatch(
+            IReadOnlyList<DeviceTypeFunctionalCheckTemplate> rows,
+            IReadOnlyList<CatalogFunctionalCheck> expected)
+        {
+            if (rows.Count != expected.Count) return false;
+
+            var ordered = expected.OrderBy(e => e.SortOrder).ToList();
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (!TextEquals(rows[i].CheckName, ordered[i].CheckName)) return false;
+                if (!TextEquals(rows[i].Requirement, ordered[i].Requirement)) return false;
+                if (!TextEquals(rows[i].DefaultResult, ordered[i].DefaultResult)) return false;
+            }
+            return true;
+        }
+
+        private static bool TextEquals(string? a, string? b) =>
+            string.Equals((a ?? string.Empty).Trim(), (b ?? string.Empty).Trim(), StringComparison.Ordinal);
+
+        /// <summary>
+        /// يُلحق حصيلة المراجعة بحصيلة ConflictsKey القائمة ولا يستبدلها: قد تحمل تعارضاً
+        /// من البذر لم يُقرّه المدير بعد. حصيلة نظيفة لا تكتب شيئاً ولا تمحو شيئاً.
+        /// </summary>
+        private static void AppendDiagnostics(CalQrDbContext context, DeviceTypeSeedResult result)
+        {
+            if (!result.HasDiagnostics) return;
+
+            string text = result.ToDiagnosticsText();
+            var setting = context.AppSettings.FirstOrDefault(s => s.Key == ConflictsKey);
+
+            if (setting == null)
+            {
+                context.AppSettings.Add(new AppSetting { Key = ConflictsKey, Value = text, UpdatedAt = DateTime.UtcNow });
+            }
+            else
+            {
+                setting.Value = string.IsNullOrWhiteSpace(setting.Value) ? text : setting.Value + "\n" + text;
+                setting.UpdatedAt = DateTime.UtcNow;
             }
         }
 

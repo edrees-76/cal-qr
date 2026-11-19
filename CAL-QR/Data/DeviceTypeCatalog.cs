@@ -78,6 +78,15 @@ namespace CAL_QR.Data
         public bool ClientBoxShowsStandardTraceabilityStatus { get; init; }
 
         public CatalogFunctionalCheck[] FunctionalChecks { get; init; } = Array.Empty<CatalogFunctionalCheck>();
+
+        /// <summary>
+        /// نصوص الفحوص الوظيفيّة كما زُرعت في المراجعة السابقة للكتالوج — بصمة لا قالب.
+        /// تقرأها DeviceTypeSeeder.ReviseCatalogFunctionalChecksIfNeeded وحدها: صفوف نوع
+        /// قائم تُستبدل بـFunctionalChecks فقط إن طابقت هذه البصمة حرفيّاً، أي إن لم
+        /// يعدّلها المستخدم. فارغة ⟵ لا مراجعة لفحوص هذا النوع.
+        /// </summary>
+        public CatalogFunctionalCheck[] PreviousFunctionalChecks { get; init; } = Array.Empty<CatalogFunctionalCheck>();
+
         public CatalogUncertaintyComponent[] UncertaintyComponents { get; init; } = Array.Empty<CatalogUncertaintyComponent>();
     }
 
@@ -256,7 +265,17 @@ namespace CAL_QR.Data
                     "The instrument performance is within acceptable limits in accordance with laboratory procedures.\n" +
                     "This certificate is valid only for the instrument configuration and conditions specified.\n" +
                     "Measurements are traceable to the International Atomic Energy Agency (IAEA).",
+                // من قالب G501 (2) — 5 أغسطس 2026.
                 FunctionalChecks = new[]
+                {
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Survey Meter Power & Display Check", Requirement = "Display operational and survey meter powers on normally", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "Detector Operating Voltage Check", Requirement = "Detector operating voltage within specified range", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Survey Meter Audio / Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to the survey meter and Gamma Scintillation Probe", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Probe Response Check", Requirement = "Probe response within acceptable range when exposed to reference gamma radiation", DefaultResult = "Acceptable" }
+                },
+                // قالب G501 (1) — 29 يوليو 2026. بصمة للترقية فقط.
+                PreviousFunctionalChecks = new[]
                 {
                     new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Acceptable" },
                     new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },
@@ -320,6 +339,8 @@ namespace CAL_QR.Data
             // بلا عدم يقين إطلاقاً ⇒ UncertaintyEnabled = false.
             // النويدة Co-60 في الموضعين — تضارب القالب (خانة المصدر Co-60 /
             // المنهجية Cs-137) كان خطأ كتابة في المنهجية، أكّد رضا تصحيحه.
+            // ⚠ سؤال مفتوح لرضا: قالب PED1 (5 أغسطس) يذكر Cs-137 في الموضعين معاً.
+            // لم يُغيَّر هنا بقرار إدريس (جولة مطابقة القوالب) حتى يحسمه رضا.
             new DeviceTypeDefinition
             {
                 Name = "Personal Electronic Dosimeter (PED)",
@@ -353,7 +374,17 @@ namespace CAL_QR.Data
                     "The instrument performance is within acceptable limits in accordance with laboratory procedures.\n" +
                     "This certificate is valid only for the instrument configuration and conditions specified.\n" +
                     "Measurements are traceable to the International Atomic Energy Agency (IAEA).",
+                // من قالب PED1 — 5 أغسطس 2026.
                 FunctionalChecks = new[]
+                {
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Battery & Display Check", Requirement = "LCD operational and battery level normal", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "Operational Check", Requirement = "Instrument powers on and operates normally", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Alarm Function Check", Requirement = "Audible and visual alarms operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to the instrument", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Dose Response Check", Requirement = "Response within acceptable range when exposed to reference gamma radiation", DefaultResult = "Acceptable" }
+                },
+                // قالب PED — 29 يوليو 2026. بصمة للترقية فقط.
+                PreviousFunctionalChecks = new[]
                 {
                     new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Battery & Display Check", Requirement = "LCD operational, battery level normal", DefaultResult = "Acceptable" },
                     new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },
@@ -399,7 +430,17 @@ namespace CAL_QR.Data
                     "The instrument performance is within acceptable limits in accordance with laboratory procedures.\n" +
                     "This certificate is valid only for the instrument configuration and conditions specified.\n" +
                     "Measurements are traceable to the International Atomic Energy Agency (IAEA).",
+                // من قالب Dose Rate Meter 1 — 5 أغسطس 2026.
                 FunctionalChecks = new[]
+                {
+                    new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Power & Display Check", Requirement = "Display operational and instrument powers on normally", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 2, CheckName = "Operating Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 3, CheckName = "Audio / Alarm Check", Requirement = "Audible alarm operational", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 4, CheckName = "Visual Inspection", Requirement = "No physical damage to the instrument", DefaultResult = "Acceptable" },
+                    new CatalogFunctionalCheck { SortOrder = 5, CheckName = "Dose Rate Response Check", Requirement = "Instrument response within acceptable range when exposed to reference gamma radiation", DefaultResult = "Acceptable" }
+                },
+                // قالب Dose Rate Meter — 29 يوليو 2026. بصمة للترقية فقط.
+                PreviousFunctionalChecks = new[]
                 {
                     new CatalogFunctionalCheck { SortOrder = 1, CheckName = "Background Check", Requirement = "Count rate within normal background limits", DefaultResult = "Acceptable" },
                     new CatalogFunctionalCheck { SortOrder = 2, CheckName = "High Voltage Check", Requirement = "Operating voltage within specified range", DefaultResult = "Acceptable" },

@@ -94,7 +94,7 @@ namespace CAL_QR.ViewModels
 
             ToggleTabHeaderCommand = new RelayCommand(ToggleTabHeader);
             ChangeTabCommand = new RelayCommand(ChangeTab);
-            SelectSearchResultCommand = new RelayCommand(async (p) => await SelectSearchResultAsync(p));
+            SelectSearchResultCommand = new AsyncRelayCommand(async (p) => await SelectSearchResultAsync(p), onError: AsyncRelayCommand.ShowUnexpectedError);
             FocusSearchCommand = new RelayCommand(FocusSearch);
             NavigateToDevicesCommand  = new RelayCommand(() => NavigateToTabIfAllowed(TabIndexDevices));
             NavigateToReportsCommand  = new RelayCommand(() => NavigateToTabIfAllowed(TabIndexReports));
@@ -104,7 +104,7 @@ namespace CAL_QR.ViewModels
             SearchEvents.NavigateToDevice += OnNavigateToDevice;
             SearchEvents.NavigateToCalibrationRecord += OnNavigateToCalibrationRecord;
             
-            AcknowledgeAllExpiredDevicesCommand = new RelayCommand(async () => await AcknowledgeAllExpiredDevicesAsync());
+            AcknowledgeAllExpiredDevicesCommand = new AsyncRelayCommand(async () => await AcknowledgeAllExpiredDevicesAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
 
             // Setup search debounce timer
             _searchDebounceTimer = new DispatcherTimer

@@ -97,29 +97,29 @@ namespace CAL_QR.ViewModels
             _paperTemplateDialogFactory = paperTemplateDialogFactory;
             _idleLockService = idleLockService;
 
-            ChangePasswordCommand = new RelayCommand(async () => await ChangePasswordAsync(), CanChangePassword);
-            SaveGeneralSettingsCommand = new RelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit);
-            SavePrintTemplateCommand = new RelayCommand(async () => await SavePrintTemplateAsync(), () => CanEdit);
-            SavePathsCommand = new RelayCommand(async () => await SavePathsAsync(), () => CanEdit && CanSavePaths());
+            ChangePasswordCommand = new AsyncRelayCommand(async () => await ChangePasswordAsync(), CanChangePassword, onError: AsyncRelayCommand.ShowUnexpectedError);
+            SaveGeneralSettingsCommand = new AsyncRelayCommand(async () => await SaveGeneralSettingsAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            SavePrintTemplateCommand = new AsyncRelayCommand(async () => await SavePrintTemplateAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            SavePathsCommand = new AsyncRelayCommand(async () => await SavePathsAsync(), () => CanEdit && CanSavePaths(), onError: AsyncRelayCommand.ShowUnexpectedError);
             BrowseBackupPathCommand = new RelayCommand(BrowseBackupPath, () => CanEdit);
             BrowseCloudBackupPathCommand = new RelayCommand(BrowseCloudBackupPath, () => CanEdit);
             BrowseDatabasePathCommand = new RelayCommand(BrowseDatabasePath, () => CanEdit);
             BrowseAttachmentsPathCommand = new RelayCommand(BrowseAttachmentsPath, () => CanEdit);
             BrowseQrOutputPathCommand = new RelayCommand(BrowseQrOutputPath, () => CanEdit);
-            BackupNowCommand = new RelayCommand(async () => await BackupNowAsync(), () => CanBackupNow);
-            RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync(), () => CanRestoreBackup);
+            BackupNowCommand = new AsyncRelayCommand(async () => await BackupNowAsync(), () => CanBackupNow, onError: AsyncRelayCommand.ShowUnexpectedError);
+            RestoreBackupCommand = new AsyncRelayCommand(async () => await RestoreBackupAsync(), () => CanRestoreBackup, onError: AsyncRelayCommand.ShowUnexpectedError);
             OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
-            EditTemplateCommand = new RelayCommand(async () => await EditTemplateAsync(), () => CanEdit && SelectedDefaultTemplate != null);
+            EditTemplateCommand = new AsyncRelayCommand(async () => await EditTemplateAsync(), () => CanEdit && SelectedDefaultTemplate != null, onError: AsyncRelayCommand.ShowUnexpectedError);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
-            FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
-            UnlockResetCommand = new RelayCommand(async () => await UnlockResetAsync(), () => !string.IsNullOrEmpty(ResetGatePassword));
-            SaveHelpSectionPasswordCommand = new RelayCommand(
-                async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword());
-            ClearHelpSectionPasswordCommand = new RelayCommand(
-                async () => await ClearHelpSectionPasswordAsync(), () => IsHelpSectionPasswordVisible && HelpSectionPasswordIsSet);
+            FactoryResetCommand = new AsyncRelayCommand(async () => await FactoryResetAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            UnlockResetCommand = new AsyncRelayCommand(async () => await UnlockResetAsync(), () => !string.IsNullOrEmpty(ResetGatePassword), onError: AsyncRelayCommand.ShowUnexpectedError);
+            SaveHelpSectionPasswordCommand = new AsyncRelayCommand(
+                async () => await SaveHelpSectionPasswordAsync(), () => CanSaveHelpSectionPassword(), onError: AsyncRelayCommand.ShowUnexpectedError);
+            ClearHelpSectionPasswordCommand = new AsyncRelayCommand(
+                async () => await ClearHelpSectionPasswordAsync(), () => IsHelpSectionPasswordVisible && HelpSectionPasswordIsSet, onError: AsyncRelayCommand.ShowUnexpectedError);
 
-            SaveBackupPasswordCommand = new RelayCommand(
-                async () => await SaveBackupPasswordAsync(), () => CanSaveBackupPassword());
+            SaveBackupPasswordCommand = new AsyncRelayCommand(
+                async () => await SaveBackupPasswordAsync(), () => CanSaveBackupPassword(), onError: AsyncRelayCommand.ShowUnexpectedError);
 
             _ = LoadSettingsAsync();
             _ = LoadHelpSectionPasswordStateAsync();
@@ -153,14 +153,14 @@ namespace CAL_QR.ViewModels
 
         #region Properties
         // Password Properties
-        public string CurrentPassword { get => _currentPassword; set { if (SetProperty(ref _currentPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
-        public string NewPassword { get => _newPassword; set { if (SetProperty(ref _newPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
-        public string ConfirmPassword { get => _confirmPassword; set { if (SetProperty(ref _confirmPassword, value)) (ChangePasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string CurrentPassword { get => _currentPassword; set { if (SetProperty(ref _currentPassword, value)) (ChangePasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string NewPassword { get => _newPassword; set { if (SetProperty(ref _newPassword, value)) (ChangePasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string ConfirmPassword { get => _confirmPassword; set { if (SetProperty(ref _confirmPassword, value)) (ChangePasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
 
         // كلمة سرّ قسم «مفتاح التوقيع» — تُدخَل هنا وتُخزَّن مُجزّأة بـBCrypt.
         // ❌ لا قيمة افتراضية لأيٍّ منها في الكود. التلميح يبدأ فارغاً.
-        public string HelpSectionPassword { get => _helpSectionPassword; set { if (SetProperty(ref _helpSectionPassword, value)) (SaveHelpSectionPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
-        public string HelpSectionPasswordConfirm { get => _helpSectionPasswordConfirm; set { if (SetProperty(ref _helpSectionPasswordConfirm, value)) (SaveHelpSectionPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string HelpSectionPassword { get => _helpSectionPassword; set { if (SetProperty(ref _helpSectionPassword, value)) (SaveHelpSectionPasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string HelpSectionPasswordConfirm { get => _helpSectionPasswordConfirm; set { if (SetProperty(ref _helpSectionPasswordConfirm, value)) (SaveHelpSectionPasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
 
         /// <summary>نصّ حرّ يكتبه المدير، يُخزَّن كما هو ويُعرض فوق حقل الإدخال.</summary>
         public string HelpSectionPasswordHint { get => _helpSectionPasswordHint; set => SetProperty(ref _helpSectionPasswordHint, value); }
@@ -192,7 +192,7 @@ namespace CAL_QR.ViewModels
             set 
             { 
                 if (SetProperty(ref _databasePath, value)) 
-                    (SavePathsCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
+                    (SavePathsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); 
             } 
         }
 
@@ -202,7 +202,7 @@ namespace CAL_QR.ViewModels
             set 
             { 
                 if (SetProperty(ref _attachmentsPath, value)) 
-                    (SavePathsCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
+                    (SavePathsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); 
             } 
         }
 
@@ -212,7 +212,7 @@ namespace CAL_QR.ViewModels
             set 
             { 
                 if (SetProperty(ref _qrOutputPath, value)) 
-                    (SavePathsCommand as RelayCommand)?.RaiseCanExecuteChanged(); 
+                    (SavePathsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); 
             } 
         }
 
@@ -231,7 +231,7 @@ namespace CAL_QR.ViewModels
             {
                 if (SetProperty(ref _selectedDefaultTemplate, value))
                 {
-                    (EditTemplateCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (EditTemplateCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -304,7 +304,7 @@ namespace CAL_QR.ViewModels
                 _originalDatabasePath = DatabasePath;
                 _originalAttachmentsPath = AttachmentsPath;
                 _originalQrOutputPath = QrOutputPath;
-                (SavePathsCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (SavePathsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 
                 // Load templates
                 var templatesList = await _templateRepository.GetAllAsync();
@@ -760,7 +760,7 @@ namespace CAL_QR.ViewModels
                 _originalDatabasePath = DatabasePath;
                 _originalAttachmentsPath = AttachmentsPath;
                 _originalQrOutputPath = QrOutputPath;
-                (SavePathsCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (SavePathsCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 
                 await _auditLogRepository.LogAsync("تحديث مسارات ملفات النظام", "نظام", "Settings", "تحديث مسارات قاعدة البيانات والمرفقات بنجاح.");
 
@@ -1013,7 +1013,7 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _resetGatePassword, value))
-                    (UnlockResetCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (UnlockResetCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -1201,8 +1201,8 @@ namespace CAL_QR.ViewModels
 
         #region كلمة سرّ النسخ الاحتياطيّ
 
-        public string BackupPassword { get => _backupPassword; set { if (SetProperty(ref _backupPassword, value)) (SaveBackupPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
-        public string BackupPasswordConfirm { get => _backupPasswordConfirm; set { if (SetProperty(ref _backupPasswordConfirm, value)) (SaveBackupPasswordCommand as RelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string BackupPassword { get => _backupPassword; set { if (SetProperty(ref _backupPassword, value)) (SaveBackupPasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
+        public string BackupPasswordConfirm { get => _backupPasswordConfirm; set { if (SetProperty(ref _backupPasswordConfirm, value)) (SaveBackupPasswordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); } }
 
         /// <summary>تُستعمل فقط لنسخة مقفلة بكلمة غير المضبوطة على هذا الجهاز (جهاز آخر، أو كلمة سابقة).</summary>
         public string RestorePassword { get => _restorePassword; set => SetProperty(ref _restorePassword, value); }

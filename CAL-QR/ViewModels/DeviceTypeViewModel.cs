@@ -22,6 +22,7 @@ namespace CAL_QR.ViewModels
         private readonly Func<Views.Dialogs.DeviceTypeFormDialog> _deviceTypeFormDialogFactory;
         private readonly Func<Views.Dialogs.DeviceTypeDetailDialog> _deviceTypeDetailDialogFactory;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAuditLogRepository _auditLogRepository;
 
         private ObservableCollection<DeviceTypeDisplayItem> _deviceTypes = new();
         private string _searchText = string.Empty;
@@ -32,13 +33,15 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             Func<Views.Dialogs.DeviceTypeFormDialog> deviceTypeFormDialogFactory,
             Func<Views.Dialogs.DeviceTypeDetailDialog> deviceTypeDetailDialogFactory,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IAuditLogRepository auditLogRepository)
         {
             _deviceTypeRepository = deviceTypeRepository;
             _contextFactory = contextFactory;
             _deviceTypeFormDialogFactory = deviceTypeFormDialogFactory;
             _deviceTypeDetailDialogFactory = deviceTypeDetailDialogFactory;
             _currentUserService = currentUserService;
+            _auditLogRepository = auditLogRepository;
 
             LoadDataCommand = new AsyncRelayCommand(async () => await LoadDataAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
             AddTypeCommand = new AsyncRelayCommand(async () => await OpenAddTypeAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
@@ -189,6 +192,9 @@ namespace CAL_QR.ViewModels
                 try
                 {
                     await _deviceTypeRepository.SoftDeleteAsync(item.Id);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.DeviceTypeDeleted,
+                        MasterDataAuditRules.DeviceTypeEntity, item.Id, item.Name);
                     await LoadDataAsync();
                 }
                 catch (Exception ex)

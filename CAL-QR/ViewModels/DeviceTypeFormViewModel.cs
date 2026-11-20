@@ -9,6 +9,8 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
@@ -85,6 +87,7 @@ namespace CAL_QR.ViewModels
     public class DeviceTypeFormViewModel : BaseViewModel
     {
         private readonly IDeviceTypeRepository _repo;
+        private readonly IAuditLogRepository _auditLogRepository;
 
         private int _deviceTypeId;
         private bool _isEditMode;
@@ -119,9 +122,10 @@ namespace CAL_QR.ViewModels
         // تنبيه: نوع الكتالوج؟
         private bool _isCatalogType;
 
-        public DeviceTypeFormViewModel(IDeviceTypeRepository repo)
+        public DeviceTypeFormViewModel(IDeviceTypeRepository repo, IAuditLogRepository auditLogRepository)
         {
             _repo = repo;
+            _auditLogRepository = auditLogRepository;
 
             SaveCommand          = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
             CancelCommand        = new RelayCommand(Cancel);
@@ -305,11 +309,17 @@ namespace CAL_QR.ViewModels
                     var updated = BuildDeviceType();
                     updated.Id = DeviceTypeId;
                     await _repo.UpdateTemplateAsync(updated);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.DeviceTypeEdited,
+                        MasterDataAuditRules.DeviceTypeEntity, updated.Id, updated.Name);
                 }
                 else
                 {
                     var type = BuildDeviceType();
                     await _repo.AddAsync(type);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.DeviceTypeAdded,
+                        MasterDataAuditRules.DeviceTypeEntity, type.Id, type.Name);
                 }
 
                 MasterDataEvents.RaiseDeviceTypeAdded();

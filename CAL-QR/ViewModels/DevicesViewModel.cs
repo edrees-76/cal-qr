@@ -752,6 +752,7 @@ namespace CAL_QR.ViewModels
             var vm = (DeviceDetailViewModel)dialog.DataContext;
             int? preferredRecordId = item.CalibrationRecordId > 0 ? item.CalibrationRecordId : (int?)null;
             await vm.LoadDeviceDetailsAsync(item.DeviceId, preferredRecordId);
+            vm.Saved += async (s, e) => await LoadDataAsync();
             dialog.ShowDialog();
         }
 
@@ -1019,6 +1020,7 @@ namespace CAL_QR.ViewModels
                 var dialog = _deviceDetailDialogFactory();
                 var vm = (DeviceDetailViewModel)dialog.DataContext;
                 await vm.LoadDeviceDetailsAsync(item.DeviceId, preferredRecordId);
+                vm.Saved += async (s, e) => await LoadDataAsync();
                 dialog.ShowDialog();
             }
             catch (Exception ex)

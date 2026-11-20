@@ -58,9 +58,9 @@ namespace CAL_QR.ViewModels
             _certificateRepository = certificateRepository;
             _certificatePdfService = certificatePdfService;
 
-            OpenAttachmentCommand = new RelayCommand(async p => await OpenAttachmentAsync(p));
+            OpenAttachmentCommand = new AsyncRelayCommand(async p => await OpenAttachmentAsync(p), onError: AsyncRelayCommand.ShowUnexpectedError);
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
-            ExportPdfCommand = new RelayCommand(async () => await ExportPdfAsync(), CanExportPdf);
+            ExportPdfCommand = new AsyncRelayCommand(async () => await ExportPdfAsync(), CanExportPdf, onError: AsyncRelayCommand.ShowUnexpectedError);
             DeleteRecordCommand = new AsyncRelayCommand(DeleteRecordAsync, () => ShowDeleteRecord,
                 onError: AsyncRelayCommand.ShowUnexpectedError);
         }

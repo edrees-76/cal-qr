@@ -44,9 +44,9 @@ namespace CAL_QR.ViewModels
         {
             _certificateRepository = certificateRepository;
 
-            VerifyPastedTextCommand = new RelayCommand(async () => await VerifyPastedTextAsync());
+            VerifyPastedTextCommand = new AsyncRelayCommand(async () => await VerifyPastedTextAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
             ClearCommand = new RelayCommand(Clear);
-            QuickVerifyCommand = new RelayCommand(async () => await QuickVerifyAsync());
+            QuickVerifyCommand = new AsyncRelayCommand(async () => await QuickVerifyAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
         }
 
         #region Properties

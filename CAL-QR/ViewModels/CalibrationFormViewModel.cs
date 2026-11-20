@@ -102,16 +102,23 @@ namespace CAL_QR.ViewModels
             SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
-            IssueCertificateCommand = new RelayCommand(IssueCertificate, () => CanIssueCertificate);
-            IssueStatusReportCommand = new RelayCommand(IssueStatusReport, () => CanIssueStatusReport);
+            IssueCertificateCommand = new RelayCommand(async () => await IssueCertificateAsync(), () => CanIssueCertificate);
+            IssueStatusReportCommand = new RelayCommand(async () => await IssueStatusReportAsync(), () => CanIssueStatusReport);
             // شرط وجود لا شرط صلاحيّة — عن قصد. هذا الحوار لا يُفتح إلّا من
             // OpenAddDeviceDialog أو OpenEditDialog في DevicesViewModel، وكلاهما
             // يبدأ بـ if (!CanEdit) return; فالحارس على عتبة النافذة لا على الزرّ.
             // لا تُضِف فحص CanEdit هنا ظنًّا أنّه ناقص.
             EditCertificateCommand = new RelayCommand(EditCertificate, () => HasCertificate && _existingCertificateId > 0);
             
-            LoadFormSources();
+            Initialization = LoadFormSourcesAsync();
         }
+
+        /// <summary>
+        /// تحميل القوائم المرجعيّة (الجهات والأنواع والمهندسون) يبدأ في الـconstructor ولا يُنتظر فيه.
+        /// دوالّ LoadFor* تنتظر هذه المهمّة قبل أن تبحث في القوائم، فلا يمكن نسيان التهيئة.
+        /// لا تفشل المهمّة أبداً: الخطأ يُعرض داخل LoadFormSourcesAsync.
+        /// </summary>
+        public Task Initialization { get; }
 
         #region Properties
         public string OwnerText
@@ -452,7 +459,7 @@ namespace CAL_QR.ViewModels
         public ICommand EditCertificateCommand { get; }
         #endregion
 
-        private void IssueCertificate()
+        private async Task IssueCertificateAsync()
         {
             if (!CanIssueCertificate) return;
 
@@ -462,7 +469,7 @@ namespace CAL_QR.ViewModels
                 dialog.ViewModel.CertificateIssued += OnCertificateIssued;
                 try
                 {
-                    dialog.LoadForRecord(_calibrationRecordId);
+                    await dialog.LoadForRecord(_calibrationRecordId);
                     dialog.Owner = Application.Current?.Windows
                         .OfType<Window>()
                         .FirstOrDefault(w => w.IsActive);
@@ -480,7 +487,7 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void IssueStatusReport()
+        private async Task IssueStatusReportAsync()
         {
             if (!CanIssueStatusReport) return;
 
@@ -490,7 +497,7 @@ namespace CAL_QR.ViewModels
                 dialog.ViewModel.CertificateIssued += OnCertificateIssued;
                 try
                 {
-                    dialog.LoadForStatusReport(_calibrationRecordId);
+                    await dialog.LoadForStatusReport(_calibrationRecordId);
                     dialog.Owner = Application.Current?.Windows
                         .OfType<Window>()
                         .FirstOrDefault(w => w.IsActive);
@@ -586,24 +593,24 @@ namespace CAL_QR.ViewModels
             HasCertificate = false;
         }
 
-        private void LoadFormSources()
+        private async Task LoadFormSourcesAsync()
         {
             try
             {
-                var owners = Task.Run(async () => await _ownerRepository.GetAllAsync()).Result;
+                var owners = await _ownerRepository.GetAllAsync();
                 Owners = new ObservableCollection<Owner>(owners);
 
-                var types = Task.Run(async () => await _deviceTypeRepository.GetAllAsync()).Result;
+                var types = await _deviceTypeRepository.GetAllAsync();
                 DeviceTypes = new ObservableCollection<DeviceType>(types);
 
-                using (var context = _contextFactory.CreateDbContext())
+                using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    var engineers = context.CalibrationRecords
+                    var engineers = await context.CalibrationRecords
                         .AsNoTracking()
                         .Select(r => r.EngineerName)
                         .Distinct()
                         .Where(name => !string.IsNullOrEmpty(name))
-                        .ToList();
+                        .ToListAsync();
                     Engineers = new ObservableCollection<string>(engineers);
                 }
             }
@@ -642,16 +649,18 @@ namespace CAL_QR.ViewModels
             });
         }
 
-        public void LoadForEdit(int recordId)
+        public async Task LoadForEdit(int recordId)
         {
             IsEditMode = true;
             _calibrationRecordId = recordId;
 
+            await Initialization;
+
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                using (var context = await _contextFactory.CreateDbContextAsync())
                 {
-                    var record = context.CalibrationRecords
+                    var record = await context.CalibrationRecords
                         .Include(r => r.Device)
                             .ThenInclude(d => d!.Owner)
                         .Include(r => r.Device)
@@ -662,7 +671,7 @@ namespace CAL_QR.ViewModels
                         // موسومة «مكتملة ✓» — حالة كاذبة. نظير الفلترة نفسها في
                         // AttachmentRepository.GetByRecordIdAsync.
                         .Include(r => r.Attachments.Where(a => a.CertificateId == null))
-                        .FirstOrDefault(r => r.Id == recordId);
+                        .FirstOrDefaultAsync(r => r.Id == recordId);
 
                     if (record != null && record.Device != null)
                     {
@@ -702,11 +711,11 @@ namespace CAL_QR.ViewModels
 
                     // استعلام وجود مباشر: يبقى سطح ICertificateRepository بلا توسيع،
                     // ويطابق أسلوب هذا الملف في القراءات المحلية.
-                    var existingCert = context.Certificates
+                    var existingCert = await context.Certificates
                         .AsNoTracking()
                         .Where(c => c.CalibrationRecordId == recordId && !c.IsDeleted)
                         .Select(c => new { c.Id })
-                        .FirstOrDefault();
+                        .FirstOrDefaultAsync();
                     HasCertificate = existingCert != null;
                     _existingCertificateId = existingCert?.Id ?? 0;
                 }
@@ -721,15 +730,17 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        public void LoadForDeviceOnly(int deviceId)
+        public async Task LoadForDeviceOnly(int deviceId)
         {
             IsEditMode = false;
             _deviceId = deviceId;
             _calibrationRecordId = 0;
 
+            await Initialization;
+
             try
             {
-                var device = Task.Run(async () => await _deviceRepository.GetByIdAsync(deviceId)).Result;
+                var device = await _deviceRepository.GetByIdAsync(deviceId);
                 if (device != null)
                 {
                     SelectedOwner = Owners.FirstOrDefault(o => o.Id == device.OwnerId);

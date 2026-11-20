@@ -943,7 +943,7 @@ namespace CAL_QR.ViewModels
         /// <summary>
         /// يقرأ السجل والجهاز والمالك والنوع بقوالبه، يبني المسوّدة عبر الخدمة، ويملأ الخصائص.
         /// </summary>
-        public void LoadForRecord(int calibrationRecordId)
+        public async Task LoadForRecord(int calibrationRecordId)
         {
             _calibrationRecordId = calibrationRecordId;
 
@@ -965,9 +965,7 @@ namespace CAL_QR.ViewModels
                     return;
                 }
 
-                var deviceType = Task
-                    .Run(async () => await _deviceTypeRepository.GetByIdWithTemplatesAsync(record.Device.DeviceTypeId))
-                    .Result;
+                var deviceType = await _deviceTypeRepository.GetByIdWithTemplatesAsync(record.Device.DeviceTypeId);
 
                 if (deviceType == null)
                 {
@@ -995,9 +993,9 @@ namespace CAL_QR.ViewModels
         /// الوضع يُثبَّت هنا لحظة الفتح لا عبر مفتاح داخل النافذة — قرار معماريّ
         /// يمنع سهو المستخدم في إصدار النوع الخطأ.
         /// </summary>
-        public void LoadForStatusReport(int calibrationRecordId)
+        public async Task LoadForStatusReport(int calibrationRecordId)
         {
-            LoadForRecord(calibrationRecordId);
+            await LoadForRecord(calibrationRecordId);
             DocumentType = CertificateDocumentType.CalibrationStatusReport;
 
             // ApplyDraft بذر ComplianceVerdict من قالب النوع، وقيمته هناك

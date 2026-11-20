@@ -114,7 +114,7 @@ namespace CAL_QR.ViewModels
             // Dialog triggers
             AddDeviceCommand = new RelayCommand(OpenAddDeviceDialog, () => CanEdit);
             ViewDetailsCommand = new RelayCommand(async p => await OpenDetailsDialogAsync(p));
-            EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
+            EditDeviceCommand = new RelayCommand(async p => await OpenEditDialogAsync(p), (p) => CanEdit);
             EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog, (p) => CanEdit);
             ManageSignedCopyCommand = new RelayCommand(
                 async (p) => await OpenSignedCopyDialogAsync(p),
@@ -754,21 +754,21 @@ namespace CAL_QR.ViewModels
             dialog.ShowDialog();
         }
 
-        private void OpenEditDialog(object? parameter)
+        private async Task OpenEditDialogAsync(object? parameter)
         {
             if (!CanEdit) return;
             if (parameter is not DeviceDisplayItem item) return;
 
             var dialog = _calibrationFormDialogFactory();
             var vm = (CalibrationFormViewModel)dialog.DataContext;
-            
+
             if (item.CalibrationRecordId > 0)
             {
-                vm.LoadForEdit(item.CalibrationRecordId);
+                await vm.LoadForEdit(item.CalibrationRecordId);
             }
             else
             {
-                vm.LoadForDeviceOnly(item.DeviceId);
+                await vm.LoadForDeviceOnly(item.DeviceId);
             }
 
             vm.Saved += async (s, e) => await LoadDataAsync();

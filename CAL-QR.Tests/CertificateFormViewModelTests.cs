@@ -113,7 +113,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Passed", typeName: "Dose Rate Meter", methodologyEnabled: true);
             var vm = BuildViewModel(factory);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             Assert.Contains(vm.TemplateWarnings, w => w.Message.Contains("Radiation Source"));
 
@@ -128,7 +128,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Passed", methodologyEnabled: true);
             var vm = BuildViewModel(factory);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("Radiation Source"));
         }
@@ -141,7 +141,7 @@ namespace CAL_QR.Tests
             var vm = BuildViewModel(factory);
 
             // Act
-            vm.LoadForStatusReport(recordId);
+            await vm.LoadForStatusReport(recordId);
 
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(vm.CertificateTemplateType));
@@ -158,7 +158,7 @@ namespace CAL_QR.Tests
             var vm = BuildViewModel(factory);
 
             // Act
-            vm.LoadForStatusReport(recordId);
+            await vm.LoadForStatusReport(recordId);
 
             // Assert
             Assert.Equal(2, vm.FunctionalChecks.Count);
@@ -177,7 +177,7 @@ namespace CAL_QR.Tests
             var vm = BuildViewModel(factory);
 
             // Act
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             // Assert
             Assert.Equal(2, vm.FunctionalChecks.Count);
@@ -195,7 +195,7 @@ namespace CAL_QR.Tests
             var vm = BuildViewModel(factory);
 
             // Act
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             // Assert
             Assert.False(string.IsNullOrWhiteSpace(vm.CertificateTemplateType));
@@ -209,7 +209,7 @@ namespace CAL_QR.Tests
             // Arrange
             var (factory, recordId) = await SeedRecordAsync("Failed");
             var vm = BuildViewModel(factory);
-            vm.LoadForStatusReport(recordId);
+            await vm.LoadForStatusReport(recordId);
 
             foreach (var check in vm.FunctionalChecks)
                 check.Result = "Acceptable";
@@ -234,14 +234,14 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Failed");
 
             var certificateVm = BuildViewModel(factory);
-            certificateVm.LoadForRecord(recordId);
+            await certificateVm.LoadForRecord(recordId);
 
             Assert.False(certificateVm.IsStatusReport);
             Assert.Equal("إصدار شهادة جديدة", certificateVm.FormTitle);
             Assert.Equal("حفظ وإصدار الشهادة", certificateVm.SaveButtonText);
 
             var reportVm = BuildViewModel(factory);
-            reportVm.LoadForStatusReport(recordId);
+            await reportVm.LoadForStatusReport(recordId);
 
             Assert.True(reportVm.IsStatusReport);
             Assert.Equal("إصدار تقرير حالة جديد", reportVm.FormTitle);
@@ -255,7 +255,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Failed");
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             var raised = new List<string>();
             vm.PropertyChanged += (_, e) =>
@@ -282,7 +282,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Passed", "Yes");
             var vm = BuildViewModel(factory);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             Assert.All(vm.FunctionalChecks, c => Assert.Equal("Yes", c.Result));
             Assert.Contains("Yes", vm.ResultOptions);
@@ -297,7 +297,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             Assert.Equal(4, vm.ResultOptions.Count);
             Assert.Null(vm.ResultOptions[0]);
@@ -319,7 +319,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
             Assert.Equal(CorrectionFactorLabelRules.CfAvgFormula, vm.CorrectedReadingFormula);
 
             vm.CalibrationResults.Clear();
@@ -340,7 +340,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             vm.CorrectedReadingFormula = "Corrected Reading = Measured Reading × CFavg × k";
             vm.CalibrationResults.Clear();
@@ -397,7 +397,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed", correctedReadingFormula: CorrectionFactorLabelRules.CfAvgFormula);
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             vm.CalibrationResults.Clear();
             vm.NuclideSummaries.Clear();
@@ -464,7 +464,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             Assert.False(vm.HasUnsavedChanges);
         }
@@ -475,7 +475,7 @@ namespace CAL_QR.Tests
             var (factory, recordId) = await SeedRecordAsync("Failed");
             var vm = BuildViewModel(factory);
 
-            vm.LoadForStatusReport(recordId);
+            await vm.LoadForStatusReport(recordId);
 
             Assert.False(vm.HasUnsavedChanges);
         }
@@ -485,7 +485,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             vm.Notes = "ملاحظة جديدة " + Guid.NewGuid();
 
@@ -497,7 +497,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             vm.FunctionalChecks.Add(new CertificateFunctionalCheck());
 
@@ -513,7 +513,7 @@ namespace CAL_QR.Tests
             vm.MarkDirty();
             Assert.False(vm.HasUnsavedChanges);
 
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
             vm.MarkDirty();
             Assert.True(vm.HasUnsavedChanges);
         }
@@ -523,7 +523,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
-            vm.LoadForRecord(recordId);
+            await vm.LoadForRecord(recordId);
 
             vm.ValidationErrors = "خطأ ما";
 

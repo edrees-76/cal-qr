@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -66,9 +67,9 @@ namespace CAL_QR.Views.Dialogs
         /// <summary>يُكشف ليشترك المستدعي في CertificateIssued قبل العرض.</summary>
         public CertificateFormViewModel ViewModel => _viewModel;
 
-        public void LoadForRecord(int calibrationRecordId) => _viewModel.LoadForRecord(calibrationRecordId);
+        public Task LoadForRecord(int calibrationRecordId) => _viewModel.LoadForRecord(calibrationRecordId);
 
-        public void LoadForStatusReport(int calibrationRecordId) => _viewModel.LoadForStatusReport(calibrationRecordId);
+        public Task LoadForStatusReport(int calibrationRecordId) => _viewModel.LoadForStatusReport(calibrationRecordId);
 
         public void LoadForEdit(int certificateId) => _viewModel.LoadForEdit(certificateId);
 

@@ -13,7 +13,7 @@ namespace CAL_QR.Validation
         private const char ArabicLetterMark = '؜';
 
         /// <summary>
-        /// AE = |RE| — قيمة مطلقة **نصية**: إزالة إشارة السالب البادئة فقط،
+        /// AE = |RE| — قيمة مطلقة **نصية**: إزالة إشارة البداية (سالبة أو موجبة صريحة) فقط،
         /// بلا Parse ولا Math.Abs ولا إعادة تنسيق.
         ///
         /// السبب (وهو قرار معتمد لا تفصيل تنفيذي): القيم تُخزَّن نصاً للحفاظ على
@@ -43,13 +43,14 @@ namespace CAL_QR.Validation
                 index++;
             }
 
-            if (index >= value.Length || !IsMinusSign(value[index]))
+            if (index >= value.Length || !(IsMinusSign(value[index]) || IsPlusSign(value[index])))
             {
-                // لا إشارة سالب بادئة — القيمة مطلقة أصلاً أو غير رقمية
+                // لا إشارة بادئة — القيمة مطلقة أصلاً أو غير رقمية
                 return value;
             }
 
-            // إسقاط الإشارة وعلامات الاتجاه التي سبقتها، مع الإبقاء على بقية النص حرفياً
+            // إسقاط الإشارة (سالبة أو موجبة صريحة) وعلامات الاتجاه التي سبقتها،
+            // مع الإبقاء على بقية النص حرفياً
             return value.Substring(index + 1).Trim();
         }
 
@@ -58,5 +59,9 @@ namespace CAL_QR.Validation
 
         private static bool IsMinusSign(char c) =>
             c == '-' || c == '−' || c == '﹣' || c == '－';
+
+        // + (U+002B) و﹢ (U+FE62) و＋ (U+FF0B): إشارة موجبة صريحة لا معنى لها في القيمة المطلقة.
+        private static bool IsPlusSign(char c) =>
+            c == '+' || c == '﹢' || c == '＋';
     }
 }

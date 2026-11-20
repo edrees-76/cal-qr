@@ -161,6 +161,12 @@ namespace CAL_QR.Tests
         [InlineData("< 0.1", "< 0.1")]
         [InlineData("N/A", "N/A")]
         [InlineData("-0.00", "0.00")]
+        [InlineData("+5.40", "5.40")]
+        [InlineData("＋5.40", "5.40")]
+        [InlineData("﹢5.40", "5.40")]
+        [InlineData("‎+5.40", "5.40")]
+        [InlineData("+ 5.40", "5.40")]
+        [InlineData("+0.00", "0.00")]
         [InlineData("", "")]
         public void AbsoluteOf_StripsTheSignWithoutReformattingTheNumber(string input, string expected)
         {

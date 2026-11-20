@@ -409,6 +409,63 @@ namespace CAL_QR.Tests
             Assert.Empty(Directory.GetFiles(_dir, BackupService.PreRestoreFilePrefix + "*", SearchOption.AllDirectories));
         }
 
+        // DATA-08: اسم النسخة بدقّة الثانية؛ نسختان في الثانية نفسها لا تُطمس الأولى بل تأخذ اللاحقة ~2.
+        [Fact]
+        public async Task BackupNow_NameAlreadyTaken_AddsASuffixAndNeverOverwrites()
+        {
+            var service = NewService(new TestBackupPasswordStore());
+
+            // أسماء الثواني الستّ القادمة محجوزة سلفاً، فأيّ ثانية تُنجَز فيها النسخة تصطدم باسم قائم.
+            DateTime start = DateTime.Now;
+            var placeholders = new System.Collections.Generic.Dictionary<string, byte[]>();
+            for (int s = 0; s <= 5; s++)
+            {
+                string stamp = start.AddSeconds(s).ToString("yyyy-MM-dd_HH-mm-ss", System.Globalization.CultureInfo.InvariantCulture);
+                string path = Path.Combine(_backupFolder, $"CalQR_Backup_{stamp}{BackupEncryption.FileExtension}");
+                byte[] bytes = Encoding.UTF8.GetBytes("placeholder-" + s);
+                File.WriteAllBytes(path, bytes);
+                placeholders[path] = bytes;
+            }
+
+            await service.BackupNowAsync(_backupFolder);
+
+            string created = Assert.Single(Directory.GetFiles(_backupFolder).Where(f => !placeholders.ContainsKey(f)));
+            Assert.Contains("~", Path.GetFileName(created));
+            Assert.True(BackupEncryption.IsEncryptedBackup(created));
+            foreach (var placeholder in placeholders)
+            {
+                Assert.Equal(placeholder.Value, File.ReadAllBytes(placeholder.Key));
+            }
+        }
+
+        // DATA-04: إدخالات المجلّدات في الأرشيف (أسماؤها تنتهي بـ«/» وNameها فارغ) تُتخطّى عند الاستخراج.
+        [Fact]
+        public async Task Restore_ZipWithFolderEntries_SkipsThemAndStillRestoresTheFiles()
+        {
+            var service = NewService(new TestBackupPasswordStore());
+            await service.BackupNowAsync(_backupFolder);
+            string backup = Assert.Single(Directory.GetFiles(_backupFolder));
+
+            string zip = Path.Combine(_dir, "CalQR_Backup_folders.zip");
+            BackupEncryption.DecryptFile(backup, zip, TestBackupPasswordStore.DefaultPassword);
+            using (var archive = ZipFile.Open(zip, ZipArchiveMode.Update))
+            {
+                archive.CreateEntry("Attachments/sub/");
+                archive.CreateEntry("poster/");
+                archive.CreateEntry("QR_Output/old/");
+                var extra = archive.CreateEntry("Attachments/sub/extra.txt");
+                using var writer = new StreamWriter(extra.Open());
+                writer.Write("extra");
+            }
+            AddMarker("MarkerAddedAfterBackup");
+
+            await service.RestoreAsync(zip);
+
+            Assert.False(HasSetting("MarkerAddedAfterBackup"));
+            Assert.Equal("extra", File.ReadAllText(Path.Combine(_dir, "Attachments", "sub", "extra.txt")));
+            Assert.True(File.Exists(Path.Combine(_dir, "Attachments", "att.txt")));
+        }
+
         [Fact]
         public async Task Restore_WritesSafetyBackup_ThatUndoesTheRestore()
         {

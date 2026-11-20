@@ -10,6 +10,7 @@ using CAL_QR.Repositories;
 using CAL_QR.Services;
 using CAL_QR.Validation;
 using CAL_QR.ViewModels;
+using CAL_QR.ViewModels.Base;
 
 #pragma warning disable CS1998
 
@@ -456,6 +457,43 @@ namespace CAL_QR.Tests
             // الرأس عرض على الشاشة فيتبع البيانات؛ المعادلة داخل حمولة التوقيع فلا تُلمس.
             Assert.Equal("Average Correction Factor (CFavg)", vm.CorrectionFactorColumnHeader);
             Assert.Equal(CorrectionFactorLabelRules.CfFormula, vm.CorrectedReadingFormula);
+        }
+
+        // CALC-07: في التعديل يمرّر النموذج رقم الشهادة القائم إلى قاعدة التواريخ، فتظهر رسالة
+        // حبس السنة في النموذج نفسه لا استثناء المستودع.
+        [Fact]
+        public async Task EditMode_MovingIssueDateOutsideTheNumberYear_ShowsTheFormMessage()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            int numberYear = DateTime.Today.Year - 1;
+
+            int certificateId;
+            using (var context = factory.CreateDbContext())
+            {
+                var certificate = new Certificate
+                {
+                    CalibrationRecordId = recordId,
+                    CertificateNumber = $"TNRC-SSDL-{numberYear}-0001",
+                    CertificateTemplateType = "Pancake Probe",
+                    ClientName = "Owner A",
+                    DeviceModel = "Model A",
+                    DeviceSerialNumber = "SN123",
+                    CalibrationDate = DateTime.Today,
+                    IssueDate = DateTime.Today,
+                };
+                certificate.CalibrationResults.Add(Row("Cs-137"));
+                certificate.NuclideSummaries.Add(Summary("Cs-137", "1.02"));
+                context.Certificates.Add(certificate);
+                await context.SaveChangesAsync();
+                certificateId = certificate.Id;
+            }
+
+            var vm = BuildViewModel(factory);
+            vm.LoadForEdit(certificateId);
+
+            await ((AsyncRelayCommand)vm.SaveCommand).ExecuteAsync(null);
+
+            Assert.Contains($"خارج سنة الرقم ({numberYear})", vm.ValidationErrors);
         }
 
         [Fact]

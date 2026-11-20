@@ -23,14 +23,21 @@ namespace CAL_QR.ViewModels
         private readonly ICalibrationRepository _calibrationRepository;
         private readonly IDeviceRepository _deviceRepository;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAuditLogRepository _auditLogRepository;
         private readonly ICertificateRepository _certificateRepository;
         private readonly ICertificatePdfService _certificatePdfService;
+
+        // معرّفات سجلّات الجهاز التي لها أيّ صفّ في Certificates (سارية أو مبطَلة)، تُملأ مع التحميل.
+        private HashSet<int> _recordIdsWithCertificate = new();
 
         private Device? _device;
         private ObservableCollection<CalibrationRecord> _calibrations = new();
         private ObservableCollection<TimelineNode> _calibrationsTimeline = new();
         private ObservableCollection<Attachment> _selectedRecordAttachments = new();
         private CalibrationRecord? _selectedRecord;
+
+        /// <summary>يُطلَق بعد حذف سجلّ ليُعيد جدول الأجهزة تحميل نفسه.</summary>
+        public event EventHandler? Saved;
 
         public static Func<string, string, MessageBoxButton, MessageBoxImage, MessageBoxResult>? MessageBoxShowMock { get; set; }
 
@@ -39,6 +46,7 @@ namespace CAL_QR.ViewModels
             ICalibrationRepository calibrationRepository,
             IDeviceRepository deviceRepository,
             ICurrentUserService currentUserService,
+            IAuditLogRepository auditLogRepository,
             ICertificateRepository certificateRepository,
             ICertificatePdfService certificatePdfService)
         {
@@ -46,16 +54,20 @@ namespace CAL_QR.ViewModels
             _calibrationRepository = calibrationRepository;
             _deviceRepository = deviceRepository;
             _currentUserService = currentUserService;
+            _auditLogRepository = auditLogRepository;
             _certificateRepository = certificateRepository;
             _certificatePdfService = certificatePdfService;
 
             OpenAttachmentCommand = new AsyncRelayCommand(async p => await OpenAttachmentAsync(p), onError: AsyncRelayCommand.ShowUnexpectedError);
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
             ExportPdfCommand = new AsyncRelayCommand(async () => await ExportPdfAsync(), CanExportPdf, onError: AsyncRelayCommand.ShowUnexpectedError);
+            DeleteRecordCommand = new AsyncRelayCommand(DeleteRecordAsync, () => ShowDeleteRecord,
+                onError: AsyncRelayCommand.ShowUnexpectedError);
         }
 
         public ICommand PrintRecordCommand { get; }
         public ICommand ExportPdfCommand { get; }
+        public ICommand DeleteRecordCommand { get; }
 
         #region Properties
         public Device? Device
@@ -92,8 +104,28 @@ namespace CAL_QR.ViewModels
                     LoadAttachmentsForRecord(value);
                     (PrintRecordCommand as RelayCommand)?.RaiseCanExecuteChanged();
                     OnPropertyChanged(nameof(ShowLegacySignature));
+                    RefreshDeleteRecordState();
                 }
             }
+        }
+
+        /// <summary>
+        /// زرّ «حذف السجلّ»: يظهر للمدير وحده ولسجلّ لم تصدر له أيّ شهادة (لا سارية ولا مبطَلة)
+        /// ولا هو سجلّ مُرحَّل قديم. الإخفاء لا التعطيل: الميزة غير موجودة لهذا السجلّ.
+        /// والفحص يُعاد على قاعدة البيانات لحظة التنفيذ (DeleteRecordAsync).
+        /// </summary>
+        public bool ShowDeleteRecord =>
+            SelectedRecord != null
+            && CalibrationRecordDeletionRules.Evaluate(
+                _currentUserService.CurrentUser,
+                _recordIdsWithCertificate.Contains(SelectedRecord.Id),
+                SelectedRecord.CertificateNumber,
+                SelectedRecord.HmacSignature) == CalibrationRecordDeletionDecision.Allowed;
+
+        private void RefreshDeleteRecordState()
+        {
+            OnPropertyChanged(nameof(ShowDeleteRecord));
+            (DeleteRecordCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
         }
 
         /// <summary>
@@ -135,6 +167,15 @@ namespace CAL_QR.ViewModels
                 {
                     var issuedNumbers = CertificateNumberDisplayRules.Load(context, records.Select(r => r.Id));
                     CertificateNumberDisplayRules.Populate(records, issuedNumbers);
+
+                    // أيّ صفّ شهادة (سارية أو مبطَلة) يمنع حذف السجلّ؛ لا مرشّح على IsDeleted عمداً.
+                    var recordIds = records.Select(r => r.Id).ToList();
+                    _recordIdsWithCertificate = context.Certificates
+                        .AsNoTracking()
+                        .Where(c => recordIds.Contains(c.CalibrationRecordId))
+                        .Select(c => c.CalibrationRecordId)
+                        .Distinct()
+                        .ToHashSet();
                 }
 
                 Calibrations = new ObservableCollection<CalibrationRecord>(records);
@@ -165,6 +206,7 @@ namespace CAL_QR.ViewModels
                     });
                 }
                 CalibrationsTimeline = new ObservableCollection<TimelineNode>(nodes);
+                RefreshDeleteRecordState();
             }
             catch (Exception ex)
             {
@@ -286,6 +328,71 @@ namespace CAL_QR.ViewModels
                 ShowMessageBox($"فشل تصدير الشهادة: {ex.Message}", "تصدير PDF",
                     MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        /// <summary>
+        /// حذف ناعم لسجلّ معايرة لم تصدر له شهادة. يُعاد الفحص من قاعدة البيانات هنا لأنّ ما في
+        /// الذاكرة قد يكون قديماً (شهادة صدرت من نموذج المعايرة بعد فتح هذه النافذة).
+        /// </summary>
+        private async Task DeleteRecordAsync()
+        {
+            var selected = SelectedRecord;
+            if (selected == null) return;
+
+            CalibrationRecord? fresh;
+            bool hasCertificateRow;
+            using (var context = await _contextFactory.CreateDbContextAsync())
+            {
+                fresh = await context.CalibrationRecords.AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == selected.Id && !r.IsDeleted);
+                hasCertificateRow = await context.Certificates
+                    .AnyAsync(c => c.CalibrationRecordId == selected.Id);
+            }
+
+            if (fresh == null)
+            {
+                ShowMessageBox("هذا السجلّ لم يعد موجوداً.", "حذف السجلّ",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadDeviceDetailsAsync(selected.DeviceId);
+                return;
+            }
+
+            var decision = CalibrationRecordDeletionRules.Evaluate(
+                _currentUserService.CurrentUser, hasCertificateRow,
+                fresh.CertificateNumber, fresh.HmacSignature);
+            if (decision != CalibrationRecordDeletionDecision.Allowed)
+            {
+                ShowMessageBox(CalibrationRecordDeletionRules.BlockMessage(decision)!, "تنبيه الحماية",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                await LoadDeviceDetailsAsync(selected.DeviceId);
+                return;
+            }
+
+            string dateText = fresh.CalibrationDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            var confirm = ShowMessageBox(
+                $"هل أنت متأكد من حذف سجلّ المعايرة بتاريخ ({dateText}) للجهاز {Device?.Model} (الرقم التسلسلي {Device?.SerialNumber})؟\nلم تصدر لهذا السجلّ شهادة. سيُحذف من النظام ولن يظهر بعد ذلك في القوائم.",
+                "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            await _calibrationRepository.SoftDeleteAsync(fresh.Id);
+
+            try
+            {
+                await _auditLogRepository.LogAsync(
+                    "حذف سجلّ معايرة",
+                    "CalibrationRecord",
+                    fresh.Id.ToString(),
+                    $"حذف ناعم لسجلّ معايرة بتاريخ {dateText} (بلا شهادة) للجهاز موديل {Device?.Model} رقم تسلسلي {Device?.SerialNumber}");
+            }
+            catch (Exception auditEx)
+            {
+                // الحذف تمّ فعلاً؛ فشل التدقيق يُسجَّل في السجلّ الدائم ولا يُلغي النتيجة ولا يُخفى.
+                AppLog.Error("DeviceDetail: audit log failed after record delete", auditEx);
+            }
+
+            CAL_QR.Helpers.CalibrationEvents.RaiseCalibrationChanged();
+            Saved?.Invoke(this, EventArgs.Empty);
+            await LoadDeviceDetailsAsync(fresh.DeviceId);
         }
 
         private MessageBoxResult ShowMessageBox(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon)

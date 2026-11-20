@@ -432,6 +432,39 @@ namespace CAL_QR.Tests
             return sb.ToString();
         }
 
+        [Theory]
+        [InlineData("2", true)]
+        [InlineData("2.0", true)]
+        [InlineData("3", false)]
+        [InlineData("1.96", false)]
+        public void GenerateBytes_ConfidenceLevelPhrase_AppearsOnlyWhenCoverageFactorIsTwo(string k, bool expectPhrase)
+        {
+            var certificate = BuildBaseCertificate();
+            certificate.ComplianceVerdict = "Passed";
+            certificate.UncertaintyEnabled = true;
+            certificate.CombinedUncertainty = "0.05";
+            certificate.ExpandedUncertainty = "0.10";
+            certificate.CoverageFactor = k;
+            certificate.CalibrationResults.Add(new CertificateCalibrationResult
+            {
+                SortOrder = 1, SourceId = "SRC-1", Radionuclide = "Cs-137",
+                MeasuredReading = "10.1", CorrectionFactor = "1.02", Unit = "µSv/h"
+            });
+            certificate.NuclideSummaries.Add(new CertificateNuclideSummary
+            {
+                SortOrder = 1, Radionuclide = "Cs-137", AverageCorrectionFactor = "1.02"
+            });
+
+            string text = System.Text.RegularExpressions.Regex.Replace(
+                ExtractAllText(_service.GenerateBytes(certificate)), @"\s+", " ");
+
+            // رأس U يعرض k المخزَّن دائماً، وعبارة 95% تصحّ عند k = 2 فقط.
+            Assert.Contains($"(k = {k})", text);
+            // الرأس يلتفّ على أكثر من سطر في الـPDF فيتشظّى النصّ المستخرَج، فنفحص الكلمة المميِّزة
+            // «confidence» (لا تَرِد في أيّ مكان آخر من هذه الشهادة).
+            Assert.Equal(expectPhrase, text.Contains("confidence", StringComparison.OrdinalIgnoreCase));
+        }
+
         [Fact]
         public void ClientSection_FamilyA_ShowsReadoutLabel_AndDropsRemovedFields()
         {

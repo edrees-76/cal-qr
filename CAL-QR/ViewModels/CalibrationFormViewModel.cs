@@ -99,11 +99,11 @@ namespace CAL_QR.ViewModels
             _auditLogRepository = auditLogRepository;
             _certificateFormDialogFactory = certificateFormDialogFactory;
 
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
+            SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave, AsyncRelayCommand.ShowUnexpectedError);
             AddAttachmentCommand = new RelayCommand(AddAttachment);
             RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
-            IssueCertificateCommand = new RelayCommand(async () => await IssueCertificateAsync(), () => CanIssueCertificate);
-            IssueStatusReportCommand = new RelayCommand(async () => await IssueStatusReportAsync(), () => CanIssueStatusReport);
+            IssueCertificateCommand = new AsyncRelayCommand(IssueCertificateAsync, () => CanIssueCertificate, AsyncRelayCommand.ShowUnexpectedError);
+            IssueStatusReportCommand = new AsyncRelayCommand(IssueStatusReportAsync, () => CanIssueStatusReport, AsyncRelayCommand.ShowUnexpectedError);
             // شرط وجود لا شرط صلاحيّة — عن قصد. هذا الحوار لا يُفتح إلّا من
             // OpenAddDeviceDialog أو OpenEditDialog في DevicesViewModel، وكلاهما
             // يبدأ بـ if (!CanEdit) return; فالحارس على عتبة النافذة لا على الزرّ.

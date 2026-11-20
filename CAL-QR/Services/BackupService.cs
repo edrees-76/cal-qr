@@ -13,7 +13,7 @@ using CAL_QR.Validation;
 
 namespace CAL_QR.Services
 {
-    public class BackupService : IBackupService
+    public class BackupService : IBackupService, IDisposable
     {
         private readonly IDbContextFactory<CalQrDbContext> _contextFactory;
         private readonly IAuditLogRepository _auditLogRepository;
@@ -984,6 +984,13 @@ namespace CAL_QR.Services
             _backupTimer?.Dispose();
             // Run check every 1 hour (first execution after 1 minute)
             _backupTimer = new Timer(async _ => await CheckAndRunScheduledBackupAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromHours(1));
+        }
+
+        /// <summary>يحرّر مؤقّت النسخ المجدول عند إغلاق حاوية الخدمات.</summary>
+        public void Dispose()
+        {
+            _backupTimer?.Dispose();
+            _backupTimer = null;
         }
 
         private async Task CheckAndRunScheduledBackupAsync()

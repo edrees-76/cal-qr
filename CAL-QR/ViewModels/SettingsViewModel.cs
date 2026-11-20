@@ -363,7 +363,12 @@ namespace CAL_QR.ViewModels
 
                 bool currentValid = false;
                 try { currentValid = BCrypt.Net.BCrypt.Verify(CurrentPassword, user.PasswordHash); }
-                catch { currentValid = false; }
+                catch (System.Exception ex)
+                {
+                    // تجزئة تالفة أو غير صالحة تُعامَل «غير مطابقة»، مع تسجيل السبب.
+                    AppLog.Error("التحقق من كلمة المرور الحاليّة (تجزئة غير صالحة)", ex);
+                    currentValid = false;
+                }
 
                 if (!currentValid)
                 {
@@ -1036,7 +1041,11 @@ namespace CAL_QR.ViewModels
                 if (user != null && !string.IsNullOrEmpty(user.PasswordHash))
                 {
                     try { valid = BCrypt.Net.BCrypt.Verify(ResetGatePassword, user.PasswordHash); }
-                    catch { valid = false; }
+                    catch (System.Exception ex)
+                    {
+                        AppLog.Error("التحقق من كلمة مرور بوابة التصفير (تجزئة غير صالحة)", ex);
+                        valid = false;
+                    }
                 }
 
                 ResetGatePassword = string.Empty;

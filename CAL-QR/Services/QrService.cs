@@ -22,7 +22,10 @@ namespace CAL_QR.Services
             // غياب الشعار يُحتمَل أدناه أصلًا.
             string logoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Logo", "nuclear-center-logo.png");
 
+            // يُحرَّر في finally ليبقى المقبض مُحرَّراً حتى لو ألقى GetGraphic استثناءً.
             Bitmap? logoImage = null;
+            try
+            {
             if (File.Exists(logoPath))
             {
                 try
@@ -52,11 +55,14 @@ namespace CAL_QR.Services
 
             using Bitmap resizedBitmap = new Bitmap(qrBitmap, new Size(sizePx, sizePx));
 
-            logoImage?.Dispose();
-
             using var ms = new MemoryStream();
             resizedBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
             return ms.ToArray();
+            }
+            finally
+            {
+                logoImage?.Dispose();
+            }
         }
 
         public string GenerateVerificationText(

@@ -11,7 +11,6 @@ namespace CAL_QR.Repositories
         Task<CalibrationRecord?> GetByCertificateNumberAsync(string certificateNumber);
         Task<IEnumerable<CalibrationRecord>> GetByDeviceIdAsync(int deviceId);
         Task AddAsync(CalibrationRecord record);
-        Task UpdateAsync(CalibrationRecord record);
         Task SoftDeleteAsync(int id);
     }
 }

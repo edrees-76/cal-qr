@@ -69,7 +69,26 @@ namespace CAL_QR.Repositories
                     d.IsDefault = false;
                 }
             }
-            context.Entry(template).State = EntityState.Modified;
+            // DATA-07: يُحمَّل المخزَّن وتُنسخ الحقول المعروفة وحدها؛ لا EntityState.Modified
+            // على كائن مفصول لأنّه يكتب كلّ الأعمدة (كان يطمس CreatedAt عند كلّ تعديل).
+            var stored = await context.PaperTemplates.FirstOrDefaultAsync(t => t.Id == template.Id)
+                ?? throw new InvalidOperationException($"لا يوجد قالب ورق بالمعرّف {template.Id}.");
+
+            stored.TemplateName = template.TemplateName;
+            stored.PaperType = template.PaperType;
+            stored.PaperWidthMm = template.PaperWidthMm;
+            stored.PaperHeightMm = template.PaperHeightMm;
+            stored.Columns = template.Columns;
+            stored.Rows = template.Rows;
+            stored.LabelWidthMm = template.LabelWidthMm;
+            stored.LabelHeightMm = template.LabelHeightMm;
+            stored.MarginTopMm = template.MarginTopMm;
+            stored.MarginLeftMm = template.MarginLeftMm;
+            stored.MarginRightMm = template.MarginRightMm;
+            stored.MarginBottomMm = template.MarginBottomMm;
+            stored.HorizontalGapMm = template.HorizontalGapMm;
+            stored.VerticalGapMm = template.VerticalGapMm;
+            stored.IsDefault = template.IsDefault;
             await context.SaveChangesAsync();
         }
 

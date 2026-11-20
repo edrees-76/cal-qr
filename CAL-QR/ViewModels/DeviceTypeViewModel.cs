@@ -183,7 +183,7 @@ namespace CAL_QR.ViewModels
                 return;
             }
 
-            var result = MessageBox.Show($"هل أنت متأكد من حذف نوع الجهاز '{item.Name}'؟", "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show($"هل أنت متأكد من حذف نوع الجهاز '{item.Name}'؟", "تأكيد الحذف", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             if (result == MessageBoxResult.Yes)
             {
                 try

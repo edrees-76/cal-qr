@@ -53,7 +53,7 @@
             <Button Grid.Column="1" Content="تأكيد الإلغاء"
                     Style="{StaticResource MaterialDesignRaisedButton}"
                     Background="{DynamicResource ErrorRed}" BorderBrush="{DynamicResource ErrorRed}" Foreground="White"
-                    Click="ConfirmButton_Click" IsDefault="True"/>
+                    Click="ConfirmButton_Click"/>
 
             <Button Grid.Column="3" Content="إلغاء"
                     Style="{StaticResource MaterialDesignOutlinedButton}"

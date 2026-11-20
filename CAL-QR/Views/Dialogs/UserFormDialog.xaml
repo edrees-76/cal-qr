@@ -39,7 +39,7 @@
                     <TextBlock Text="إدارة حسابات المستخدمين" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryNavy}" FontFamily="{StaticResource CairoFont}" />
                     <TextBlock Text="إنشاء حساب مستخدم جديد وتخصيص صلاحيات العمل الخاصة به" FontSize="11" Foreground="{DynamicResource TextMuted}" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click">
+                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Width="30" Height="30" Padding="0" Click="CloseButton_Click" IsCancel="True">
                     <materialDesign:PackIcon Kind="Close" Foreground="{DynamicResource ErrorRed}" Width="20" Height="20" />
                 </Button>
             </Grid>

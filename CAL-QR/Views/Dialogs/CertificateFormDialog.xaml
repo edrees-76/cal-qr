@@ -888,7 +888,7 @@
                             </Button.Style>
                         </Button>
                         <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}"
-                                BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click"
+                                BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" IsCancel="True"
                                 FontFamily="{StaticResource CairoFont}" />
                     </StackPanel>
                 </Grid>

@@ -64,7 +64,7 @@
                         </StackPanel>
                     </Button>
 
-                    <Button Click="Cancel_Click" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
+                    <Button Click="Cancel_Click" IsCancel="True" Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Border>

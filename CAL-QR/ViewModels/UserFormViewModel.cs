@@ -43,7 +43,7 @@ namespace CAL_QR.ViewModels
             _userRepository = userRepository;
             _currentUserService = currentUserService;
 
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
+            SaveCommand = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
             CancelCommand = new RelayCommand(Cancel);
         }
 
@@ -54,7 +54,7 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _fullName, value))
-                    (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -64,7 +64,7 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _username, value))
-                    (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -74,7 +74,7 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _password, value))
-                    (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 
@@ -86,7 +86,7 @@ namespace CAL_QR.ViewModels
                 if (SetProperty(ref _role, value))
                 {
                     OnPropertyChanged(nameof(IsNotAdminRole));
-                    (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -196,7 +196,7 @@ namespace CAL_QR.ViewModels
             }
 
             _isSaving = true;
-            (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 
             try
             {
@@ -306,7 +306,7 @@ namespace CAL_QR.ViewModels
             finally
             {
                 _isSaving = false;
-                (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 

@@ -40,11 +40,11 @@ namespace CAL_QR.ViewModels
             _deviceTypeDetailDialogFactory = deviceTypeDetailDialogFactory;
             _currentUserService = currentUserService;
 
-            LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            AddTypeCommand = new RelayCommand(async () => await OpenAddTypeAsync(), () => CanEdit);
-            EditTypeCommand = new RelayCommand(async (p) => await OpenEditTypeAsync(p), (p) => CanEdit);
-            ViewDetailsCommand = new RelayCommand(async p => await OpenTypeDetailsAsync(p));
-            DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p), (p) => CanEdit);
+            LoadDataCommand = new AsyncRelayCommand(async () => await LoadDataAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
+            AddTypeCommand = new AsyncRelayCommand(async () => await OpenAddTypeAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            EditTypeCommand = new AsyncRelayCommand(async (p) => await OpenEditTypeAsync(p), (p) => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            ViewDetailsCommand = new AsyncRelayCommand(async p => await OpenTypeDetailsAsync(p), onError: AsyncRelayCommand.ShowUnexpectedError);
+            DeleteCommand = new AsyncRelayCommand(async (p) => await DeleteDeviceTypeAsync(p), (p) => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToDeviceType += OnNavigateToDeviceType;

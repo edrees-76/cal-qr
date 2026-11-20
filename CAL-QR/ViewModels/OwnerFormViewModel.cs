@@ -24,7 +24,7 @@ namespace CAL_QR.ViewModels
         {
             _ownerRepository = ownerRepository;
 
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
+            SaveCommand = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
             CancelCommand = new RelayCommand(Cancel);
         }
 
@@ -35,7 +35,7 @@ namespace CAL_QR.ViewModels
             {
                 if (SetProperty(ref _name, value))
                 {
-                    (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
                 }
             }
         }

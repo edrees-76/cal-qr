@@ -123,7 +123,7 @@ namespace CAL_QR.ViewModels
         {
             _repo = repo;
 
-            SaveCommand          = new RelayCommand(async () => await SaveAsync(), CanSave);
+            SaveCommand          = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
             CancelCommand        = new RelayCommand(Cancel);
             AddFunctionalCheckCommand   = new RelayCommand(AddFunctionalCheck);
             RemoveFunctionalCheckCommand = new RelayCommand(RemoveFunctionalCheck);
@@ -143,7 +143,7 @@ namespace CAL_QR.ViewModels
         public string Name
         {
             get => _name;
-            set { if (SetProperty(ref _name, value)) (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged(); }
+            set { if (SetProperty(ref _name, value)) (SaveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged(); }
         }
 
         public string? ProcedureNo           { get => _procedureNo;           set => SetProperty(ref _procedureNo, value); }

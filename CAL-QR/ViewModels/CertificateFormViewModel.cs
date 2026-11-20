@@ -77,8 +77,8 @@ namespace CAL_QR.ViewModels
             _contextFactory = contextFactory;
             _currentUserService = currentUserService;
 
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
-            RevokeCommand = new RelayCommand(async () => await RevokeAsync(), () => CanRevoke);
+            SaveCommand = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
+            RevokeCommand = new AsyncRelayCommand(async () => await RevokeAsync(), () => CanRevoke, onError: AsyncRelayCommand.ShowUnexpectedError);
 
             AddNuclideSummaryCommand = new RelayCommand(() =>
                 NuclideSummaries.Add(new CertificateNuclideSummary()));

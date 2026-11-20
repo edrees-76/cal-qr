@@ -517,22 +517,32 @@ namespace CAL_QR.ViewModels
 
         private async void OnCertificateIssued(object? sender, CertificateIssuedEventArgs e)
         {
-            CertificateNumber = e.CertificateNumber;
-            HasCertificate = true;
-
+            // معالج حدث (async void لا مفرّ منه): الجسم كلّه داخل try حتى لا يخرج
+            // أيّ استثناء (ومنه معالجات Saved) إلى سياق الواجهة فينهار التطبيق.
             try
             {
-                await PersistCertificateNumberAsync(e.CalibrationRecordId, e.CertificateNumber);
-            }
-            catch (System.Exception swallowEx1)
-            {
-                CAL_QR.Services.AppLog.Error("CalibrationFormViewModel.cs:507", swallowEx1);
-                // الشهادة حُفظت بالفعل في جدول Certificates —
-                // فشل ربط الرقم بـ CalibrationRecord لا يُعطّل العملية.
-            }
+                CertificateNumber = e.CertificateNumber;
+                HasCertificate = true;
 
-            Saved?.Invoke(this, EventArgs.Empty);
-            CloseWindowAction?.Invoke();
+                try
+                {
+                    await PersistCertificateNumberAsync(e.CalibrationRecordId, e.CertificateNumber);
+                }
+                catch (System.Exception swallowEx1)
+                {
+                    CAL_QR.Services.AppLog.Error("CalibrationFormViewModel.cs:507", swallowEx1);
+                    // الشهادة حُفظت بالفعل في جدول Certificates —
+                    // فشل ربط الرقم بـ CalibrationRecord لا يُعطّل العملية.
+                }
+
+                Saved?.Invoke(this, EventArgs.Empty);
+                CloseWindowAction?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                CAL_QR.Services.AppLog.Error("CalibrationFormViewModel.OnCertificateIssued", ex);
+                AsyncRelayCommand.ShowUnexpectedError(ex);
+            }
         }
 
         internal async Task PersistCertificateNumberAsync(int recordId, string certificateNumber)

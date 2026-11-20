@@ -23,7 +23,6 @@ namespace CAL_QR.ViewModels
         private readonly ICalibrationRepository _calibrationRepository;
         private readonly IDeviceRepository _deviceRepository;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IAuditLogRepository _auditLogRepository;
         private readonly ICertificateRepository _certificateRepository;
         private readonly ICertificatePdfService _certificatePdfService;
 
@@ -33,7 +32,6 @@ namespace CAL_QR.ViewModels
         private ObservableCollection<Attachment> _selectedRecordAttachments = new();
         private CalibrationRecord? _selectedRecord;
 
-        public event EventHandler? Saved;
         public static Func<string, string, MessageBoxButton, MessageBoxImage, MessageBoxResult>? MessageBoxShowMock { get; set; }
 
         public DeviceDetailViewModel(
@@ -49,19 +47,16 @@ namespace CAL_QR.ViewModels
             _calibrationRepository = calibrationRepository;
             _deviceRepository = deviceRepository;
             _currentUserService = currentUserService;
-            _auditLogRepository = auditLogRepository;
             _certificateRepository = certificateRepository;
             _certificatePdfService = certificatePdfService;
 
             OpenAttachmentCommand = new RelayCommand(async p => await OpenAttachmentAsync(p));
             PrintRecordCommand = new RelayCommand(PrintRecord, CanPrintRecord);
             ExportPdfCommand = new RelayCommand(async () => await ExportPdfAsync(), CanExportPdf);
-            DeleteRecordCommand = new RelayCommand(DeleteRecord, CanDeleteRecord);
         }
 
         public ICommand PrintRecordCommand { get; }
         public ICommand ExportPdfCommand { get; }
-        public ICommand DeleteRecordCommand { get; }
 
         #region Properties
         public Device? Device
@@ -304,79 +299,6 @@ namespace CAL_QR.ViewModels
             var defaultResult = button == MessageBoxButton.YesNo ? MessageBoxResult.No : MessageBoxResult.OK;
             return MessageBox.Show(messageBoxText, caption, button, icon, defaultResult,
                 MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
-        }
-
-        private bool CanDeleteRecord(object? parameter)
-        {
-            return _currentUserService.CurrentUser?.Role == UserRole.Admin;
-        }
-
-        private async void DeleteRecord(object? parameter)
-        {
-            if (parameter is not CalibrationRecord record) return;
-
-            // Check how many non-deleted calibration records exist for this device
-            using (var context = await _contextFactory.CreateDbContextAsync())
-            {
-                var dbCount = await context.CalibrationRecords.CountAsync(r => r.DeviceId == record.DeviceId && !r.IsDeleted);
-                if (dbCount <= 1)
-                {
-                    ShowMessageBox(
-                        "لا يمكن حذف شهادة المعايرة هذه لأنها الشهادة الوحيدة المتبقية للجهاز.\nيجب أن يحتفظ كل جهاز بسجل معايرة واحد على الأقل.\n\nتنويه: لحذف هذا السجل بالكامل، يجب حذف الجهاز نفسه (خيار حذف الجهاز غير متوفر حالياً بالواجهة الرئيسية).",
-                        "تنبيه الحماية",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                    return;
-                }
-
-                // شهادة صادرة حيّة (لم تُبطَل) تبقى تُصادَق بالـQR؛ حذف سجلّها يُخفي أصلها من الواجهة
-                // ويترك شهادة يتيمة. الإبطال يسبق الحذف، والشهادة المبطَلة (IsDeleted) لا تمنع.
-                bool hasLiveCertificate = await context.Certificates
-                    .AnyAsync(c => c.CalibrationRecordId == record.Id && !c.IsDeleted);
-                if (hasLiveCertificate)
-                {
-                    ShowMessageBox(
-                        $"لا يمكن حذف هذا السجلّ لأنّ له شهادة صادرة ما زالت سارية ({record.DisplayCertificateNumber}).\nأبطِل الشهادة أولاً من شاشتها ثمّ أعد المحاولة.",
-                        "تنبيه الحماية",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-                    return;
-                }
-            }
-
-            var confirmResult = ShowMessageBox(
-                $"هل أنت متأكد من رغبتك في حذف شهادة المعايرة ذات الرقم ({record.DisplayCertificateNumber})؟\nهذا الإجراء سيقوم بحذف الشهادة ومرفقاتها نهائياً من النظام.",
-                "تأكيد الحذف",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (confirmResult != MessageBoxResult.Yes) return;
-
-            try
-            {
-                // Soft delete Calibration Record
-                await _calibrationRepository.SoftDeleteAsync(record.Id);
-
-                // Audit Log
-                await _auditLogRepository.LogAsync(
-                    "حذف شهادة معايرة",
-                    "CalibrationRecord",
-                    record.Id.ToString(),
-                    $"حذف ناعم لشهادة المعايرة رقم {record.DisplayCertificateNumber} للجهاز موديل {Device?.Model} رقم تسلسلي {Device?.SerialNumber}");
-
-                // Raise calibration changed event
-                CAL_QR.Helpers.CalibrationEvents.RaiseCalibrationChanged();
-
-                // Trigger Saved event to tell DevicesViewModel to reload
-                Saved?.Invoke(this, EventArgs.Empty);
-
-                // Reload local dialog data
-                LoadDeviceDetails(record.DeviceId);
-            }
-            catch (Exception ex)
-            {
-                ShowMessageBox($"خطأ أثناء حذف الشهادة: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
         }
     }
 

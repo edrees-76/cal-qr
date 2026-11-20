@@ -914,26 +914,36 @@ namespace CAL_QR.ViewModels
             if (!string.IsNullOrWhiteSpace(ReferenceGeometry)
                 && !string.IsNullOrWhiteSpace(Distance))
             {
-                var textDistNum = TemplateFieldChecker.ExtractDistanceNumber(ReferenceGeometry);
-                var fieldDistNum = TemplateFieldChecker.ExtractDistanceNumberFromField(Distance);
+                var geometryDistance = TemplateFieldChecker.ParseGeometryDistance(ReferenceGeometry);
+                var fieldDistance = TemplateFieldChecker.ParseDistanceField(Distance);
 
-                if (textDistNum != null
-                    && fieldDistNum != null
-                    && !textDistNum.Equals(fieldDistNum, StringComparison.Ordinal))
+                if (geometryDistance != null && fieldDistance != null)
                 {
-                    TemplateWarnings.Add(new TemplateWarning
+                    // CALC-03: مقارنة عدديّة بعد توحيد الأرقام والوحدة؛ والإصلاح التلقائيّ
+                    // لا يُعرض عند اختلاف الوحدة (يُصحَّح يدويّاً).
+                    var comparison = TemplateFieldChecker.CompareDistances(geometryDistance, fieldDistance);
+                    if (!comparison.AreConsistent)
                     {
-                        Message = "المسافة في الهندسة المرجعية ("
-                            + textDistNum
-                            + ") لا تطابق حقل المسافة (" + fieldDistNum + ")",
-                        CanAutoFix = true,
-                        FixAction = () =>
+                        string message = "المسافة في الهندسة المرجعية ("
+                            + geometryDistance.Display
+                            + ") لا تطابق حقل المسافة (" + fieldDistance.Display + ")";
+                        if (comparison.UnitsDiffer)
                         {
-                            ReferenceGeometry = TemplateFieldChecker.ReplaceDistanceNumber(
-                                ReferenceGeometry, textDistNum, fieldDistNum);
-                            RunTemplateConsistencyChecks();
+                            message += " — الوحدتان مختلفتان، يرجى التصحيح يدوياً";
                         }
-                    });
+
+                        TemplateWarnings.Add(new TemplateWarning
+                        {
+                            Message = message,
+                            CanAutoFix = comparison.CanAutoFix,
+                            FixAction = comparison.CanAutoFix ? () =>
+                            {
+                                ReferenceGeometry = TemplateFieldChecker.ReplaceDistanceNumber(
+                                    ReferenceGeometry, geometryDistance.RawNumber, fieldDistance.NormalizedNumber);
+                                RunTemplateConsistencyChecks();
+                            } : null
+                        });
+                    }
                 }
             }
         }

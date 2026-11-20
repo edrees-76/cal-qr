@@ -136,6 +136,55 @@ namespace CAL_QR.Tests
             }
         }
 
+        // CALC-05: نسب تقارير الأداء بثقافة ثابتة، فلا تتبدّل الفاصلة العشريّة بإعدادات ويندوز.
+        [Theory]
+        [InlineData("de-DE")]
+        [InlineData("ar-EG")]
+        public async Task PerformanceExcel_Percentages_UseInvariantCulture(string cultureName)
+        {
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_PerfPct_" + Guid.NewGuid().ToString())
+                .Options;
+            var service = new ExportService(new TestDbContextFactory(options));
+
+            var reportData = new PerformanceReportData
+            {
+                StartDate = DateTime.Today.AddMonths(-1),
+                EndDate = DateTime.Today,
+                TotalRecords = 3,
+                PassedCount = 2,
+                FailedCount = 1,
+                ConditionalCount = 0,
+                PassedPercent = 66.6667,
+                FailedPercent = 33.3333,
+                ConditionalPercent = 0,
+                IsDetailed = false
+            };
+
+            string tempDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PerfPctTemp_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            string path = Path.Combine(tempDir, "pct.xlsx");
+
+            var previous = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(cultureName);
+
+                await service.ExportPerformanceReportToExcelAsync(reportData, path);
+
+                using var workbook = new ClosedXML.Excel.XLWorkbook(path);
+                var ws = workbook.Worksheet(1);
+                Assert.Equal("2 (66.7%)", ws.Cell(12, 1).GetString());
+                Assert.Equal("1 (33.3%)", ws.Cell(12, 2).GetString());
+                Assert.Equal("0 (0.0%)", ws.Cell(12, 3).GetString());
+            }
+            finally
+            {
+                System.Globalization.CultureInfo.CurrentCulture = previous;
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            }
+        }
+
         [Fact]
         public async Task ExportService_PerformanceExcelDetailedColumns_AreCorrect()
         {

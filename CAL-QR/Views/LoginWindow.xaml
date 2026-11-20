@@ -147,7 +147,7 @@
                     <!-- Credits -->
                     <StackPanel Grid.Row="3" Margin="0,5,0,0">
                         <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,8" />
-                        <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تصميم و تطوير و تنفيذ" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,3,0,6" FontFamily="{StaticResource CairoFont}" />
 
@@ -288,7 +288,7 @@
                     <!-- Credits -->
                     <StackPanel Grid.Row="3" Margin="0,5,0,0">
                         <Separator Background="{DynamicResource AppBorder}" Margin="0,0,0,8" />
-                        <TextBlock Text="تصميم و تطوير و تنفيد" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                        <TextBlock Text="تصميم و تطوير و تنفيذ" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . ادريس فتح الله الهرى" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
                         <TextBlock Text="م . رضا المريمى" FontSize="11" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,3,0,6" FontFamily="{StaticResource CairoFont}" />
 

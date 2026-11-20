@@ -171,7 +171,7 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
-        public async Task Scenario2_EndToEndPermissions()
+        public void Scenario2_EndToEndPermissions()
         {
             // Arrange
             string testDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "E2E_Scenario2_" + Guid.NewGuid().ToString("N"));
@@ -191,7 +191,6 @@ namespace CAL_QR.Tests
             }
 
             var authService = new TestCurrentUserService();
-            var auditRepo = new AuditLogRepository(factory, authService);
 
             // 1. Create a user with only Reports permission
             var standardUser = new User
@@ -234,41 +233,7 @@ namespace CAL_QR.Tests
             Assert.True(mainVm.IsSettingsVisible);
             Assert.True(mainVm.IsUserManagementVisible);
 
-            // 5. Check Delete capability in DeviceDetailViewModel
-            var calRepo = new CalibrationRepository(factory);
-            var devRepo = new DeviceRepository(factory);
-            var detailVm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
-
-            // Prepare device and multiple calibration records
-            int deviceId;
-            using (var context = new CalQrDbContext(options))
-            {
-                var owner = new Owner { Name = "Owner" };
-                var type = new DeviceType { Name = "Type" };
-                context.Owners.Add(owner);
-                context.DeviceTypes.Add(type);
-                await context.SaveChangesAsync();
-
-                var device = new Device { Model = "Model", SerialNumber = "SN", OwnerId = owner.Id, DeviceTypeId = type.Id };
-                context.Devices.Add(device);
-                await context.SaveChangesAsync();
-                deviceId = device.Id;
-
-                context.CalibrationRecords.Add(new CalibrationRecord { DeviceId = deviceId, CertificateNumber = "CERT-1", CalibrationDate = DateTime.Today, ExpiryDate = DateTime.Today.AddYears(1), Result = "Passed", HmacSignature = "HMAC1" });
-                context.CalibrationRecords.Add(new CalibrationRecord { DeviceId = deviceId, CertificateNumber = "CERT-2", CalibrationDate = DateTime.Today, ExpiryDate = DateTime.Today.AddYears(1), Result = "Passed", HmacSignature = "HMAC2" });
-                await context.SaveChangesAsync();
-            }
-
-            detailVm.LoadDeviceDetails(deviceId);
-
-            // Admin can delete
-            Assert.True(detailVm.DeleteRecordCommand.CanExecute(detailVm.Calibrations[0]));
-
-            // Change to non-admin user
-            authService.SetCurrentUser(standardUser);
-            // Standard user cannot delete
-            Assert.False(detailVm.DeleteRecordCommand.CanExecute(detailVm.Calibrations[0]));
-
+            // لا زرّ ولا أمر لحذف سجلّ المعايرة (أُزيل الأمر الميّت)؛ الإبطال هو المسار الوحيد.
         }
 
         [Fact]

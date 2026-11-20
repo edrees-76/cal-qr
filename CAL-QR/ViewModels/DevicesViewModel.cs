@@ -751,7 +751,6 @@ namespace CAL_QR.ViewModels
             var vm = (DeviceDetailViewModel)dialog.DataContext;
             int? preferredRecordId = item.CalibrationRecordId > 0 ? item.CalibrationRecordId : (int?)null;
             vm.LoadDeviceDetails(item.DeviceId, preferredRecordId);
-            vm.Saved += async (s, e) => await LoadDataAsync();
             dialog.ShowDialog();
         }
 

@@ -132,6 +132,30 @@ namespace CAL_QR.Tests
             Assert.False(vm.SaveCommand.CanExecute(null));
         }
 
+        // TEST-02 دفعة 2: القوائم تُحمَّل بمهمّة تهيئة لا تُنتظر في الـconstructor،
+        // فيجب أن تنتظرها دوالّ التحميل قبل البحث في القوائم، وإلّا بقي المالك والنوع فارغين.
+        [Fact]
+        public async Task LoadForDeviceOnly_AwaitsInitialization_AndSelectsOwnerAndType()
+        {
+            var (factory, _) = await SeedRecordAsync("Passed");
+            int deviceId;
+            using (var context = factory.CreateDbContext())
+            {
+                deviceId = context.Devices.Select(d => d.Id).Single();
+            }
+            var vm = BuildViewModel(factory);
+
+            await vm.LoadForDeviceOnly(deviceId);
+            await vm.Initialization;
+
+            Assert.NotNull(vm.SelectedOwner);
+            Assert.Equal("Owner A", vm.SelectedOwner!.Name);
+            Assert.NotNull(vm.SelectedDeviceType);
+            Assert.Equal("Pancake Probe", vm.SelectedDeviceType!.Name);
+            Assert.Equal("SN123", vm.SerialNumber);
+            Assert.False(vm.IsEditMode);
+        }
+
         [Fact]
         public async Task PersistCertificateNumberAsync_SavesNumberToDatabase()
         {
@@ -159,7 +183,7 @@ namespace CAL_QR.Tests
         {
             var (failedFactory, failedId) = await SeedRecordAsync("Failed");
             var failedVm = BuildViewModel(failedFactory);
-            failedVm.LoadForEdit(failedId);
+            await failedVm.LoadForEdit(failedId);
 
             Assert.True(failedVm.IsEditMode);
             Assert.False(failedVm.CanIssueCertificate);
@@ -167,14 +191,14 @@ namespace CAL_QR.Tests
 
             var (passedFactory, passedId) = await SeedRecordAsync("Passed");
             var passedVm = BuildViewModel(passedFactory);
-            passedVm.LoadForEdit(passedId);
+            await passedVm.LoadForEdit(passedId);
 
             Assert.True(passedVm.CanIssueCertificate);
             Assert.False(passedVm.CanIssueStatusReport);
 
             var (condFactory, condId) = await SeedRecordAsync("Conditional");
             var condVm = BuildViewModel(condFactory);
-            condVm.LoadForEdit(condId);
+            await condVm.LoadForEdit(condId);
 
             Assert.True(condVm.CanIssueCertificate);
             Assert.False(condVm.CanIssueStatusReport);
@@ -190,7 +214,7 @@ namespace CAL_QR.Tests
         {
             var (factory, recordId) = await SeedRecordAsync("Passed");
             var vm = BuildViewModel(factory);
-            vm.LoadForEdit(recordId);
+            await vm.LoadForEdit(recordId);
 
             Assert.True(vm.CanIssueCertificate);
 
@@ -244,7 +268,7 @@ namespace CAL_QR.Tests
             }
 
             var vm = BuildViewModel(factory);
-            vm.LoadForEdit(recordId);
+            await vm.LoadForEdit(recordId);
             Assert.True(vm.HasCertificate);
             Assert.True(vm.EditCertificateCommand.CanExecute(null));
             Assert.False(vm.CanIssueCertificate);
@@ -289,7 +313,7 @@ namespace CAL_QR.Tests
             }
 
             var vm = BuildViewModel(factory);
-            vm.LoadForEdit(recordId);
+            await vm.LoadForEdit(recordId);
 
             using (var context = factory.CreateDbContext())
             {

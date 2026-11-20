@@ -114,6 +114,104 @@ namespace CAL_QR.Tests.Services
             Assert.Null(TemplateFieldChecker.ExtractDistanceNumberFromField(""));
         }
 
+        // ── CALC-03: مقارنة المسافة دلاليّاً ──
+
+        private static DistanceComparison Compare(string geometry, string field)
+        {
+            var g = TemplateFieldChecker.ParseGeometryDistance(geometry);
+            var f = TemplateFieldChecker.ParseDistanceField(field);
+            Assert.NotNull(g);
+            Assert.NotNull(f);
+            return TemplateFieldChecker.CompareDistances(g!, f!);
+        }
+
+        [Theory]
+        [InlineData("Distance = 1.0 meter (Axis)", "1 meter")]
+        [InlineData("Distance = 1 meter (Axis)", "1.00 meter")]
+        [InlineData("Distance = 1.0 meter (Axis)", "100 cm")]
+        [InlineData("Distance = 1.0 meter (Axis)", "1000 mm")]
+        [InlineData("Distance = 1.5 meter (Axis)", "1,5 m")]
+        [InlineData("Distance = 1.5 meter (Axis)", "١٫٥ م")]
+        [InlineData("Distance = 1.0 meter (Axis)", "١.٠")]
+        [InlineData("Distance = 1.0 meter (Axis)", "1.0")]
+        public void CompareDistances_SameDistance_IsConsistent(string geometry, string field)
+        {
+            Assert.True(Compare(geometry, field).AreConsistent);
+        }
+
+        [Fact]
+        public void CompareDistances_DifferentNumberSameUnit_OffersAutoFix()
+        {
+            var result = Compare("Distance = 1.0 meter (Axis)", "2.0 meter");
+
+            Assert.False(result.AreConsistent);
+            Assert.True(result.CanAutoFix);
+            Assert.False(result.UnitsDiffer);
+        }
+
+        [Fact]
+        public void CompareDistances_UnitlessField_OffersAutoFixWhenValuesDiffer()
+        {
+            var result = Compare("Distance = 1.0 meter (Axis)", "2.0");
+
+            Assert.False(result.AreConsistent);
+            Assert.True(result.CanAutoFix);
+        }
+
+        [Fact]
+        public void CompareDistances_DifferentUnitAndValue_NeverOffersAutoFix()
+        {
+            // 1.0 meter مقابل 50 cm: القيمتان مختلفتان بعد توحيد الوحدة، والوحدتان مختلفتان.
+            var result = Compare("Distance = 1.0 meter (Axis)", "50 cm");
+
+            Assert.False(result.AreConsistent);
+            Assert.False(result.CanAutoFix);
+            Assert.True(result.UnitsDiffer);
+        }
+
+        [Fact]
+        public void ParseDistanceField_ArabicDigitsAndDecimalSeparator_Normalized()
+        {
+            var reading = TemplateFieldChecker.ParseDistanceField("١٫٥ متر");
+
+            Assert.NotNull(reading);
+            Assert.Equal("1.5", reading!.NormalizedNumber);
+            Assert.Equal(1.5m, reading.Value);
+            Assert.Equal(DistanceUnit.Meter, reading.Unit);
+        }
+
+        [Theory]
+        [InlineData("2 mm", DistanceUnit.Millimeter)]
+        [InlineData("2 millimeters", DistanceUnit.Millimeter)]
+        [InlineData("2 cm", DistanceUnit.Centimeter)]
+        [InlineData("2 سم", DistanceUnit.Centimeter)]
+        [InlineData("2 m", DistanceUnit.Meter)]
+        [InlineData("2 metre", DistanceUnit.Meter)]
+        [InlineData("2", DistanceUnit.Unspecified)]
+        [InlineData("2 minutes", DistanceUnit.Unspecified)]
+        public void ParseDistanceField_RecognisesTheUnit(string field, DistanceUnit expected)
+        {
+            Assert.Equal(expected, TemplateFieldChecker.ParseDistanceField(field)!.Unit);
+        }
+
+        [Fact]
+        public void ParseDistanceField_NoNumber_ReturnsNull()
+        {
+            Assert.Null(TemplateFieldChecker.ParseDistanceField("Direct contact"));
+        }
+
+        [Fact]
+        public void ReplaceDistanceNumber_WithArabicRawNumber_UsesTheNormalizedReplacement()
+        {
+            var geometry = TemplateFieldChecker.ParseGeometryDistance("Distance = ١٫٠ meter (Axis)")!;
+            var field = TemplateFieldChecker.ParseDistanceField("2,5 meter")!;
+
+            string fixedText = TemplateFieldChecker.ReplaceDistanceNumber(
+                "Distance = ١٫٠ meter (Axis)", geometry.RawNumber, field.NormalizedNumber);
+
+            Assert.Equal("Distance = 2.5 meter (Axis)", fixedText);
+        }
+
         // ── ReplaceRadionuclide ──
 
         [Fact]

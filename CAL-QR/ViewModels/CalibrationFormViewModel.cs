@@ -848,6 +848,8 @@ namespace CAL_QR.ViewModels
                 DeviceType finalType = null!;
                 bool ownerAdded = false;
                 bool typeAdded = false;
+                bool ownerReactivated = false;
+                bool typeReactivated = false;
                 string realSignature = string.Empty;
 
                 using (var context = await _contextFactory.CreateDbContextAsync())
@@ -874,6 +876,7 @@ namespace CAL_QR.ViewModels
                                     context.Owners.Update(existing);
                                     await context.SaveChangesAsync();
                                     ownerAdded = true;
+                                    ownerReactivated = true;
                                 }
                                 finalOwner = existing;
                             }
@@ -911,6 +914,7 @@ namespace CAL_QR.ViewModels
                                     context.DeviceTypes.Update(existing);
                                     await context.SaveChangesAsync();
                                     typeAdded = true;
+                                    typeReactivated = true;
                                 }
                                 finalType = existing;
                             }
@@ -1048,6 +1052,23 @@ namespace CAL_QR.ViewModels
             {
                 postCommitFailed = true;
                 postCommitError += $"\n- خطأ تسجيل العمليات (Audit Log): {ex.Message}";
+            }
+
+            // جهة أو نوع أُنشئ (أو أُعيد تفعيله) من هذا النموذج: أثر تدقيق مستقلّ بعد الـCommit.
+            // فشله يُسجَّل في AppLog ولا يغيّر نتيجة الحفظ.
+            if (ownerAdded)
+            {
+                await MasterDataAuditWriter.TryLogAsync(
+                    _auditLogRepository, MasterDataAuditRules.OwnerAdded,
+                    MasterDataAuditRules.OwnerEntity, finalOwner.Id, finalOwner.Name,
+                    ownerReactivated ? MasterDataAuditRules.NoteReactivated : MasterDataAuditRules.NoteFromCalibrationForm);
+            }
+            if (typeAdded)
+            {
+                await MasterDataAuditWriter.TryLogAsync(
+                    _auditLogRepository, MasterDataAuditRules.DeviceTypeAdded,
+                    MasterDataAuditRules.DeviceTypeEntity, finalType.Id, finalType.Name,
+                    typeReactivated ? MasterDataAuditRules.NoteReactivated : MasterDataAuditRules.NoteFromCalibrationForm);
             }
 
             // لا توليد QR على مستوى السجل. رمز الاستجابة السريعة يخصّ الشهادة،

@@ -22,6 +22,7 @@ namespace CAL_QR.ViewModels
         private readonly Func<Views.Dialogs.OwnerFormDialog> _ownerFormDialogFactory;
         private readonly Func<Views.Dialogs.OwnerDetailDialog> _ownerDetailDialogFactory;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAuditLogRepository _auditLogRepository;
 
         private ObservableCollection<OwnerDisplayItem> _owners = new();
         private string _searchText = string.Empty;
@@ -32,13 +33,15 @@ namespace CAL_QR.ViewModels
             IDbContextFactory<CalQrDbContext> contextFactory,
             Func<Views.Dialogs.OwnerFormDialog> ownerFormDialogFactory,
             Func<Views.Dialogs.OwnerDetailDialog> ownerDetailDialogFactory,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IAuditLogRepository auditLogRepository)
         {
             _ownerRepository = ownerRepository;
             _contextFactory = contextFactory;
             _ownerFormDialogFactory = ownerFormDialogFactory;
             _ownerDetailDialogFactory = ownerDetailDialogFactory;
             _currentUserService = currentUserService;
+            _auditLogRepository = auditLogRepository;
 
             LoadDataCommand = new AsyncRelayCommand(async () => await LoadDataAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
             AddOwnerCommand = new AsyncRelayCommand(async () => await OpenAddOwnerAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
@@ -196,6 +199,9 @@ namespace CAL_QR.ViewModels
                 try
                 {
                     await _ownerRepository.SoftDeleteAsync(item.Id);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.OwnerDeleted,
+                        MasterDataAuditRules.OwnerEntity, item.Id, item.Name);
                     await LoadDataAsync();
                 }
                 catch (Exception ex)

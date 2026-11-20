@@ -6,13 +6,16 @@ using CAL_QR.ViewModels.Base;
 using CAL_QR.Models;
 using CAL_QR.Repositories;
 using CAL_QR.Helpers;
+using CAL_QR.Services;
+using CAL_QR.Validation;
 
 namespace CAL_QR.ViewModels
 {
     public class OwnerFormViewModel : BaseViewModel
     {
         private readonly IOwnerRepository _ownerRepository;
-        
+        private readonly IAuditLogRepository _auditLogRepository;
+
         private string _name = string.Empty;
         private string _address = string.Empty;
         private string _contactPhone = string.Empty;
@@ -20,9 +23,10 @@ namespace CAL_QR.ViewModels
         private bool _isEditMode;
         private int _ownerId;
 
-        public OwnerFormViewModel(IOwnerRepository ownerRepository)
+        public OwnerFormViewModel(IOwnerRepository ownerRepository, IAuditLogRepository auditLogRepository)
         {
             _ownerRepository = ownerRepository;
+            _auditLogRepository = auditLogRepository;
 
             SaveCommand = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
             CancelCommand = new RelayCommand(Cancel);
@@ -107,6 +111,9 @@ namespace CAL_QR.ViewModels
                         ContactPerson = ContactPerson
                     };
                     await _ownerRepository.UpdateAsync(owner);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.OwnerEdited,
+                        MasterDataAuditRules.OwnerEntity, owner.Id, owner.Name);
                 }
                 else
                 {
@@ -118,6 +125,9 @@ namespace CAL_QR.ViewModels
                         ContactPerson = ContactPerson
                     };
                     await _ownerRepository.AddAsync(owner);
+                    await MasterDataAuditWriter.TryLogAsync(
+                        _auditLogRepository, MasterDataAuditRules.OwnerAdded,
+                        MasterDataAuditRules.OwnerEntity, owner.Id, owner.Name);
                 }
 
                 // Raise the event to reload owners list

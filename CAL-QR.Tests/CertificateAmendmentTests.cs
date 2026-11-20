@@ -235,6 +235,47 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public async Task ClearingRelativeError_AlsoClearsTheDerivedAbsoluteError()
+        {
+            using var harness = new Harness("clear-re");
+
+            string number = await harness.Repository.AddAsync(NewCertificate(harness.CalibrationRecordId));
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.Equal("3.70", issued!.CalibrationResults.Single().AbsoluteRelativeError);
+
+            issued.CalibrationResults.Single().RelativeError = "";
+            await harness.Repository.UpdateAsync(issued);
+
+            var after = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.True(string.IsNullOrEmpty(after!.CalibrationResults.Single().RelativeError));
+            Assert.Null(after.CalibrationResults.Single().AbsoluteRelativeError);
+        }
+
+        [Fact]
+        public async Task LegacyRowWithAbsoluteErrorOnly_KeepsItAcrossAnEdit()
+        {
+            using var harness = new Harness("legacy-ae");
+
+            var certificate = NewCertificate(harness.CalibrationRecordId);
+            certificate.CalibrationResults.Single().RelativeError = null;
+            string number = await harness.Repository.AddAsync(certificate);
+
+            using (var context = new CalQrDbContext(harness.Options))
+            {
+                var row = context.CertificateCalibrationResults.Single();
+                row.AbsoluteRelativeError = "3.70";
+                await context.SaveChangesAsync();
+            }
+
+            var issued = await harness.Repository.GetByCertificateNumberAsync(number);
+            issued!.CalibrationResults.Single().MeasuredReading = "5.25";
+            await harness.Repository.UpdateAsync(issued);
+
+            var after = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.Equal("3.70", after!.CalibrationResults.Single().AbsoluteRelativeError);
+        }
+
+        [Fact]
         public async Task EditingBeforeTheSignedCopyArrives_RotatesTheCodeButLeavesAmendedAtNull()
         {
             using var harness = new Harness("beforeprint");

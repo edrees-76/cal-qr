@@ -101,26 +101,27 @@ namespace CAL_QR.ViewModels
             _certificateRepository = certificateRepository;
             _currentUserService = currentUserService;
 
-            LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            SearchCommand = new RelayCommand(async () => { CurrentPage = 1; await LoadDataAsync(); });
-            ClearFiltersCommand = new RelayCommand(async () => await ClearFiltersAsync());
+            LoadDataCommand = new AsyncRelayCommand(LoadDataAsync, onError: AsyncRelayCommand.ShowUnexpectedError);
+            SearchCommand = new AsyncRelayCommand(async () => { CurrentPage = 1; await LoadDataAsync(); }, onError: AsyncRelayCommand.ShowUnexpectedError);
+            ClearFiltersCommand = new AsyncRelayCommand(ClearFiltersAsync, onError: AsyncRelayCommand.ShowUnexpectedError);
             ToggleAdvancedSearchCommand = new RelayCommand(() => IsAdvancedSearchVisible = !IsAdvancedSearchVisible);
             ToggleViewCommand = new RelayCommand(() => IsTableView = !IsTableView);
             
             // Pagination Commands
-            NextPageCommand = new RelayCommand(async () => { CurrentPage++; await LoadDataAsync(); }, () => CurrentPage < TotalPages);
-            PrevPageCommand = new RelayCommand(async () => { CurrentPage--; await LoadDataAsync(); }, () => CurrentPage > 1);
+            NextPageCommand = new AsyncRelayCommand(async () => { CurrentPage++; await LoadDataAsync(); }, () => CurrentPage < TotalPages, AsyncRelayCommand.ShowUnexpectedError);
+            PrevPageCommand = new AsyncRelayCommand(async () => { CurrentPage--; await LoadDataAsync(); }, () => CurrentPage > 1, AsyncRelayCommand.ShowUnexpectedError);
 
             // Dialog triggers
             AddDeviceCommand = new RelayCommand(OpenAddDeviceDialog, () => CanEdit);
-            ViewDetailsCommand = new RelayCommand(async p => await OpenDetailsDialogAsync(p));
-            EditDeviceCommand = new RelayCommand(async p => await OpenEditDialogAsync(p), (p) => CanEdit);
+            ViewDetailsCommand = new AsyncRelayCommand(OpenDetailsDialogAsync, onError: AsyncRelayCommand.ShowUnexpectedError);
+            EditDeviceCommand = new AsyncRelayCommand(OpenEditDialogAsync, (p) => CanEdit, AsyncRelayCommand.ShowUnexpectedError);
             EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog, (p) => CanEdit);
-            ManageSignedCopyCommand = new RelayCommand(
-                async (p) => await OpenSignedCopyDialogAsync(p),
-                (p) => CanEdit);
+            ManageSignedCopyCommand = new AsyncRelayCommand(
+                OpenSignedCopyDialogAsync,
+                (p) => CanEdit,
+                AsyncRelayCommand.ShowUnexpectedError);
             PrintDeviceCommand = new RelayCommand(PrintSpecificCertificate);
-            PrintBatchCommand = new RelayCommand(async () => await PrintBatchAsync());
+            PrintBatchCommand = new AsyncRelayCommand(PrintBatchAsync, onError: AsyncRelayCommand.ShowUnexpectedError);
             PrintSpecificCertificateCommand = new RelayCommand(PrintSpecificCertificate);
 
             // Search Events Subscription

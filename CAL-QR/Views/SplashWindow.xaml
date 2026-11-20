@@ -35,7 +35,7 @@
 
             <!-- Credits -->
             <StackPanel Grid.Row="4" Margin="0,10,0,0">
-                <TextBlock Text="تصميم و تنفيد و تطوير" Foreground="#8090B0" FontSize="11" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
+                <TextBlock Text="تصميم و تنفيذ و تطوير" Foreground="#8090B0" FontSize="11" HorizontalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="م . ادريس فتح الله الهرى" Foreground="#8090B0" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
                 <TextBlock Text="م . رضا المريمى" Foreground="#8090B0" FontSize="11" HorizontalAlignment="Center" Margin="0,3,0,0" FontFamily="{StaticResource CairoFont}" />
             </StackPanel>

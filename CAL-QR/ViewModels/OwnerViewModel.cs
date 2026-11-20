@@ -40,11 +40,11 @@ namespace CAL_QR.ViewModels
             _ownerDetailDialogFactory = ownerDetailDialogFactory;
             _currentUserService = currentUserService;
 
-            LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-            AddOwnerCommand = new RelayCommand(async () => await OpenAddOwnerAsync(), () => CanEdit);
-            EditOwnerCommand = new RelayCommand(async (p) => await OpenEditOwnerAsync(p), (p) => CanEdit);
-            ViewDetailsCommand = new RelayCommand(async p => await OpenOwnerDetailsAsync(p));
-            DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p), (p) => CanEdit);
+            LoadDataCommand = new AsyncRelayCommand(async () => await LoadDataAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
+            AddOwnerCommand = new AsyncRelayCommand(async () => await OpenAddOwnerAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            EditOwnerCommand = new AsyncRelayCommand(async (p) => await OpenEditOwnerAsync(p), (p) => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            ViewDetailsCommand = new AsyncRelayCommand(async p => await OpenOwnerDetailsAsync(p), onError: AsyncRelayCommand.ShowUnexpectedError);
+            DeleteCommand = new AsyncRelayCommand(async (p) => await DeleteOwnerAsync(p), (p) => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
 
             // Subscribe to search navigation
             SearchEvents.NavigateToOwner += OnNavigateToOwner;

@@ -41,7 +41,7 @@ namespace CAL_QR.ViewModels
             _templateRepository = templateRepository;
             _currentUserService = currentUserService;
 
-            SaveCommand = new RelayCommand(async () => await SaveAsync(), CanSave);
+            SaveCommand = new AsyncRelayCommand(async () => await SaveAsync(), CanSave, onError: AsyncRelayCommand.ShowUnexpectedError);
         }
 
         public bool CanEdit => PaperTemplateAuthorizationRules.CanSaveTemplate(_currentUserService.CurrentUser);

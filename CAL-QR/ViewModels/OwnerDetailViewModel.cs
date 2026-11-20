@@ -51,11 +51,11 @@ namespace CAL_QR.ViewModels
 
         public ICommand NavigateToDeviceCommand { get; }
 
-        public void LoadDetails(int ownerId)
+        public async Task LoadDetailsAsync(int ownerId)
         {
             try
             {
-                var o = Task.Run(async () => await _ownerRepository.GetByIdAsync(ownerId)).Result;
+                var o = await _ownerRepository.GetByIdAsync(ownerId);
                 if (o == null) return;
 
                 Owner = new OwnerDisplayItem
@@ -67,7 +67,7 @@ namespace CAL_QR.ViewModels
                     ContactPerson = o.ContactPerson
                 };
 
-                var devicesList = Task.Run(async () => await _deviceRepository.GetByOwnerIdAsync(ownerId)).Result.ToList();
+                var devicesList = (await _deviceRepository.GetByOwnerIdAsync(ownerId)).ToList();
 
                 using (var context = _contextFactory.CreateDbContext())
                 {

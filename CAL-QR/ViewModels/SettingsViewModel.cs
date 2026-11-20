@@ -109,7 +109,7 @@ namespace CAL_QR.ViewModels
             BackupNowCommand = new RelayCommand(async () => await BackupNowAsync(), () => CanBackupNow);
             RestoreBackupCommand = new RelayCommand(async () => await RestoreBackupAsync(), () => CanRestoreBackup);
             OpenTemplatesDialogCommand = new RelayCommand(OpenTemplatesDialog, () => CanEdit);
-            EditTemplateCommand = new RelayCommand(EditTemplate, () => CanEdit && SelectedDefaultTemplate != null);
+            EditTemplateCommand = new RelayCommand(async () => await EditTemplateAsync(), () => CanEdit && SelectedDefaultTemplate != null);
             NewTemplateCommand = new RelayCommand(NewTemplate, () => CanEdit);
             FactoryResetCommand = new RelayCommand(async () => await FactoryResetAsync(), () => CanEdit);
             UnlockResetCommand = new RelayCommand(async () => await UnlockResetAsync(), () => !string.IsNullOrEmpty(ResetGatePassword));
@@ -948,14 +948,15 @@ namespace CAL_QR.ViewModels
             _ = LoadSettingsAsync(); // Reload templates after dialog closes
         }
 
-        private void EditTemplate()
+        private async Task EditTemplateAsync()
         {
             if (SelectedDefaultTemplate != null)
             {
+                var templateId = SelectedDefaultTemplate.Id;
                 var dialog = _paperTemplateDialogFactory();
                 if (dialog.DataContext is PaperTemplateViewModel vm)
                 {
-                    vm.LoadTemplate(SelectedDefaultTemplate.Id);
+                    await vm.LoadTemplateAsync(templateId);
                 }
                 dialog.ShowDialog();
                 _ = LoadSettingsAsync(); // Reload templates after dialog closes

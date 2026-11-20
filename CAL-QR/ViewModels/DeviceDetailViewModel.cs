@@ -300,7 +300,10 @@ namespace CAL_QR.ViewModels
             {
                 return MessageBoxShowMock(messageBoxText, caption, button, icon);
             }
-            return MessageBox.Show(messageBoxText, caption, button, icon);
+            // التركيز الافتراضيّ على «لا» في تأكيدات نعم/لا (الحذف نهائيّ)، والقراءة من اليمين.
+            var defaultResult = button == MessageBoxButton.YesNo ? MessageBoxResult.No : MessageBoxResult.OK;
+            return MessageBox.Show(messageBoxText, caption, button, icon, defaultResult,
+                MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
         }
 
         private bool CanDeleteRecord(object? parameter)

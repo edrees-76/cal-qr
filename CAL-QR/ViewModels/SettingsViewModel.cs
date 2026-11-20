@@ -859,7 +859,7 @@ namespace CAL_QR.ViewModels
                     confirmText = "⚠ هذه نسخة قديمة غير مقفلة بكلمة سرّ (من قبل تفعيل قفل النسخ). بعد استعادتها خذ نسخة جديدة مقفلة، واحذف الملفّات القديمة غير المقفلة.\n\n" + confirmText;
                 }
 
-                var confirm = MessageBox.Show(confirmText, "تأكيد الاسترداد الحاسم", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var confirm = MessageBox.Show(confirmText, "تأكيد الاسترداد الحاسم", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
                 if (confirm == MessageBoxResult.Yes)
                 {
                     try
@@ -1168,7 +1168,9 @@ namespace CAL_QR.ViewModels
                 "إزالة كلمة سرّ قسم «مفتاح التوقيع»؟ سيبقى القسم مقفلاً بلا محتوى حتى تُضبط كلمة جديدة.",
                 "تأكيد",
                 MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                MessageBoxImage.Question,
+                MessageBoxResult.No,
+                MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
 
             if (confirm != MessageBoxResult.Yes)
             {
@@ -1416,7 +1418,9 @@ namespace CAL_QR.ViewModels
                 + "هل أنت متأكد 100% من تنفيذ التصفير الكامل؟",
                 "تأكيد التصفير الكامل للنظام (Factory Reset)",
                 MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                MessageBoxImage.Warning,
+                MessageBoxResult.No,
+                MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
 
             if (confirm != MessageBoxResult.Yes)
             {
@@ -1466,7 +1470,9 @@ namespace CAL_QR.ViewModels
                         "تم إنشاء النسخة الاحتياطية المحلية بنجاح، لكن فشل نسخها إلى المسار السحابي. النسخة المحلية كافية كشبكة أمان.\n\nهل تريد متابعة التصفير؟",
                         "تحذير النسخ السحابي",
                         MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.No,
+                        MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
                     if (proceed != MessageBoxResult.Yes)
                     {
                         FactoryResetPassword = string.Empty;

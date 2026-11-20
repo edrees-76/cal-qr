@@ -1135,7 +1135,7 @@ namespace CAL_QR.ViewModels
         {
             if (parameter is not AttachmentItem item) return;
 
-            var result = MessageBox.Show($"هل أنت متأكد من حذف المرفق '{item.FileName}'؟", "تأكيد حذف المرفق", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var result = MessageBox.Show($"هل أنت متأكد من حذف المرفق '{item.FileName}'؟", "تأكيد حذف المرفق", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             if (result == MessageBoxResult.Yes)
             {
                 Attachments.Remove(item);

@@ -225,7 +225,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <materialDesign:PackIcon Kind="FileDocument" Foreground="{DynamicResource PrimaryNavy}" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,5,0" />
                                                 <TextBlock Grid.Column="1" Text="{Binding FileName}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontFamily="{StaticResource CairoFont}" />
-                                                <Button Grid.Column="2" Command="{Binding DataContext.RemoveAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0">
+                                                <Button Grid.Column="2" Command="{Binding DataContext.RemoveAttachmentCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" Style="{StaticResource MaterialDesignToolIconButton}" Width="25" Height="25" Padding="0" ToolTip="حذف المرفق" AutomationProperties.Name="حذف المرفق">
                                                     <materialDesign:PackIcon Kind="Delete" Foreground="{DynamicResource ErrorRed}" Width="14" Height="14" />
                                                 </Button>
                                             </Grid>
@@ -290,7 +290,7 @@
                         </StackPanel>
                     </Button>
                     <Button Command="{Binding SaveCommand}" Content="حفظ" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="40" Margin="0,0,10,0" FontFamily="{StaticResource CairoFont}" />
-                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" FontFamily="{StaticResource CairoFont}" />
+                    <Button Content="إلغاء" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextMuted}" BorderBrush="{DynamicResource AppBorder}" Height="40" Width="80" Click="CancelButton_Click" IsCancel="True" FontFamily="{StaticResource CairoFont}" />
                 </StackPanel>
             </Grid>
         </Grid>

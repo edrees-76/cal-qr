@@ -169,7 +169,9 @@ namespace CAL_QR.ViewModels
                 $"هل تريد حذف النسخة الموقّعة '{item.FileName}'؟ ستعود الشهادة إلى حالة «بانتظار النسخة الموقّعة».",
                 "تأكيد حذف النسخة الموقّعة",
                 MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                MessageBoxImage.Question,
+                MessageBoxResult.No,
+                MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
 
             if (result != MessageBoxResult.Yes) return;
 

@@ -53,7 +53,7 @@
                     </Grid.ColumnDefinitions>
                     
                     <Button Grid.Column="0" Content="عرض التفاصيل 📊" Style="{StaticResource MaterialDesignRaisedButton}" Background="{DynamicResource PrimaryNavy}" BorderBrush="{DynamicResource PrimaryNavy}" Height="36" Margin="0,0,5,0" Click="ShowDetailsButton_Click" FontFamily="{StaticResource CairoFont}" />
-                    <Button Grid.Column="1" Content="إغلاق" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextBody}" BorderBrush="#CBD5E1" Height="36" Margin="5,0,0,0" Click="CloseButton_Click" FontFamily="{StaticResource CairoFont}" />
+                    <Button Grid.Column="1" Content="إغلاق" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="{DynamicResource TextBody}" BorderBrush="#CBD5E1" Height="36" Margin="5,0,0,0" Click="CloseButton_Click" IsCancel="True" FontFamily="{StaticResource CairoFont}" />
                 </Grid>
             </Border>
         </Grid>

@@ -44,7 +44,6 @@ namespace CAL_QR.Tests
             var calRepo = new CalibrationRepository(factory);
             var devRepo = new DeviceRepository(factory);
             var authService = new TestCurrentUserService();
-            var auditRepo = new AuditLogRepository(factory, authService);
 
             int deviceId;
             CalibrationRecord recordOlder, recordNewer;
@@ -84,14 +83,14 @@ namespace CAL_QR.Tests
                 await context.SaveChangesAsync();
             }
 
-            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, auditRepo, null!, null!);
+            var vm = new DeviceDetailViewModel(factory, calRepo, devRepo, authService, null!, null!);
 
             // 1. Without preferredRecordId -> defaults to FirstOrDefault (latest)
-            vm.LoadDeviceDetails(deviceId);
+            await vm.LoadDeviceDetailsAsync(deviceId);
             Assert.Equal("CERT-NEWER", vm.SelectedRecord?.CertificateNumber);
 
             // 2. With preferredRecordId -> sets SelectedRecord to the specific older record requested
-            vm.LoadDeviceDetails(deviceId, recordOlder.Id);
+            await vm.LoadDeviceDetailsAsync(deviceId, recordOlder.Id);
             Assert.Equal("CERT-OLDER", vm.SelectedRecord?.CertificateNumber);
         }
 

@@ -39,7 +39,6 @@ namespace CAL_QR.ViewModels
             ICalibrationRepository calibrationRepository,
             IDeviceRepository deviceRepository,
             ICurrentUserService currentUserService,
-            IAuditLogRepository auditLogRepository,
             ICertificateRepository certificateRepository,
             ICertificatePdfService certificatePdfService)
         {
@@ -117,13 +116,13 @@ namespace CAL_QR.ViewModels
         public ICommand OpenAttachmentCommand { get; }
         #endregion
 
-        public void LoadDeviceDetails(int deviceId, int? preferredRecordId = null)
+        public async Task LoadDeviceDetailsAsync(int deviceId, int? preferredRecordId = null)
         {
             try
             {
-                Device = Task.Run(async () => await _deviceRepository.GetByIdAsync(deviceId)).Result;
+                Device = await _deviceRepository.GetByIdAsync(deviceId);
 
-                var records = Task.Run(async () => await _calibrationRepository.GetByDeviceIdAsync(deviceId)).Result.ToList();
+                var records = (await _calibrationRepository.GetByDeviceIdAsync(deviceId)).ToList();
                 for (int i = 0; i < records.Count; i++)
                 {
                     records[i].SequenceNumber = i + 1;

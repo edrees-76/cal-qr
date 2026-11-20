@@ -113,7 +113,7 @@ namespace CAL_QR.ViewModels
 
             // Dialog triggers
             AddDeviceCommand = new RelayCommand(OpenAddDeviceDialog, () => CanEdit);
-            ViewDetailsCommand = new RelayCommand(OpenDetailsDialog);
+            ViewDetailsCommand = new RelayCommand(async p => await OpenDetailsDialogAsync(p));
             EditDeviceCommand = new RelayCommand(OpenEditDialog, (p) => CanEdit);
             EditCertificateCommand = new RelayCommand(OpenEditCertificateDialog, (p) => CanEdit);
             ManageSignedCopyCommand = new RelayCommand(
@@ -743,14 +743,14 @@ namespace CAL_QR.ViewModels
             dialog.ShowDialog();
         }
 
-        private void OpenDetailsDialog(object? parameter)
+        private async Task OpenDetailsDialogAsync(object? parameter)
         {
             if (parameter is not DeviceDisplayItem item) return;
 
             var dialog = _deviceDetailDialogFactory();
             var vm = (DeviceDetailViewModel)dialog.DataContext;
             int? preferredRecordId = item.CalibrationRecordId > 0 ? item.CalibrationRecordId : (int?)null;
-            vm.LoadDeviceDetails(item.DeviceId, preferredRecordId);
+            await vm.LoadDeviceDetailsAsync(item.DeviceId, preferredRecordId);
             dialog.ShowDialog();
         }
 
@@ -930,7 +930,7 @@ namespace CAL_QR.ViewModels
         private void OnNavigateToDevice(int deviceId)
         {
             if (!EnsureCanViewDevices()) return;
-            ShowDeviceDetailsById(deviceId);
+            _ = ShowDeviceDetailsByIdAsync(deviceId);
         }
 
         private void OnNavigateToCalibrationRecord(int recordId)
@@ -944,7 +944,7 @@ namespace CAL_QR.ViewModels
                     .FirstOrDefault(r => r.Id == recordId && !r.IsDeleted);
                 if (record != null)
                 {
-                    ShowDeviceDetailsById(record.DeviceId, record.Id);
+                    _ = ShowDeviceDetailsByIdAsync(record.DeviceId, record.Id);
                 }
             }
             catch (Exception ex)
@@ -953,7 +953,9 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void ShowDeviceDetailsById(int deviceId, int? preferredRecordId = null)
+        // تُستدعى بلا انتظار من معالجات SearchEvents المتزامنة؛ كلّ مسارات الخطأ تُلتقط
+        // داخلها فلا يضيع استثناء في مهمّة غير مراقَبة.
+        private async Task ShowDeviceDetailsByIdAsync(int deviceId, int? preferredRecordId = null)
         {
             try
             {
@@ -1011,13 +1013,12 @@ namespace CAL_QR.ViewModels
                     LatestCalibrationRecordId = latestCal?.Id ?? 0
                 };
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    var dialog = _deviceDetailDialogFactory();
-                    var vm = (DeviceDetailViewModel)dialog.DataContext;
-                    vm.LoadDeviceDetails(item.DeviceId, preferredRecordId);
-                    dialog.ShowDialog();
-                });
+                // معالجات SearchEvents تُطلَق من خيط الواجهة (MainViewModel)، فبعد await
+                // نعود إلى الخيط نفسه ويبقى ShowDialog عليه كما كان تحت Dispatcher.Invoke.
+                var dialog = _deviceDetailDialogFactory();
+                var vm = (DeviceDetailViewModel)dialog.DataContext;
+                await vm.LoadDeviceDetailsAsync(item.DeviceId, preferredRecordId);
+                dialog.ShowDialog();
             }
             catch (Exception ex)
             {

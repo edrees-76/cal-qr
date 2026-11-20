@@ -49,6 +49,49 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public async Task TemplateRepository_Update_WithDetachedCopy_KeepsCreatedAt()
+        {
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Templates_CreatedAt_" + System.Guid.NewGuid().ToString())
+                .Options;
+            var repo = new PaperTemplateRepository(new TestDbContextFactory(options));
+
+            var original = new PaperTemplate { TemplateName = "T", PaperType = "A4", Columns = 2, Rows = 4 };
+            await repo.AddAsync(original);
+            var createdAt = (await repo.GetByIdAsync(original.Id))!.CreatedAt;
+
+            // كما يفعل PaperTemplateViewModel: كائن جديد بالمعرّف نفسه، CreatedAt الافتراضيّ.
+            var detached = new PaperTemplate
+            {
+                Id = original.Id,
+                TemplateName = "Renamed",
+                PaperType = "A4",
+                Columns = 3,
+                Rows = 5,
+                LabelWidthMm = 60
+            };
+            await repo.UpdateAsync(detached);
+
+            var after = await repo.GetByIdAsync(original.Id);
+            Assert.Equal("Renamed", after!.TemplateName);
+            Assert.Equal(3, after.Columns);
+            Assert.Equal(60m, after.LabelWidthMm);
+            Assert.Equal(createdAt, after.CreatedAt);
+        }
+
+        [Fact]
+        public async Task TemplateRepository_Update_UnknownId_Throws()
+        {
+            var options = new DbContextOptionsBuilder<CalQrDbContext>()
+                .UseInMemoryDatabase(databaseName: "CalQrTestDb_Templates_Unknown_" + System.Guid.NewGuid().ToString())
+                .Options;
+            var repo = new PaperTemplateRepository(new TestDbContextFactory(options));
+
+            await Assert.ThrowsAsync<System.InvalidOperationException>(
+                () => repo.UpdateAsync(new PaperTemplate { Id = 999, TemplateName = "X" }));
+        }
+
+        [Fact]
         public async Task TemplateRepository_SetDefault_UnsetsOtherDefaults()
         {
             var options = new DbContextOptionsBuilder<CalQrDbContext>()

@@ -81,13 +81,6 @@ namespace CAL_QR.Repositories
             await context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(Device device)
-        {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            context.Entry(device).State = EntityState.Modified;
-            await context.SaveChangesAsync();
-        }
-
         public async Task SoftDeleteAsync(int id)
         {
             using var context = await _contextFactory.CreateDbContextAsync();

@@ -76,14 +76,6 @@ namespace CAL_QR.Repositories
             await context.SaveChangesAsync();
         }
 
-        public async Task UpdateAsync(CalibrationRecord record)
-        {
-            using var context = await _contextFactory.CreateDbContextAsync();
-            record.UpdatedAt = DateTime.UtcNow;
-            context.Entry(record).State = EntityState.Modified;
-            await context.SaveChangesAsync();
-        }
-
         public async Task SoftDeleteAsync(int id)
         {
             using var context = await _contextFactory.CreateDbContextAsync();

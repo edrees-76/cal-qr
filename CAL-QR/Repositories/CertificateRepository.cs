@@ -261,6 +261,7 @@ namespace CAL_QR.Repositories
             // عمداً — لا يُنقل: فينتشر الأثر إلى المخزَّن (عبر SetValues) وإلى
             // الصفوف الجديدة (عبر SyncChildren) معاً.
             SanitizeUserText(certificate);
+            ClearStaleAbsoluteErrors(stored, certificate);
             NormalizeDerivedValues(certificate);
 
             context.Entry(stored).CurrentValues.SetValues(certificate);
@@ -606,6 +607,29 @@ namespace CAL_QR.Repositories
                 if (!string.IsNullOrWhiteSpace(result.RelativeError))
                 {
                     result.AbsoluteRelativeError = MeasurementValueRules.AbsoluteOf(result.RelativeError);
+                }
+            }
+        }
+
+        /// <summary>
+        /// CALC-04ب: AE مشتقّة من RE ولا حقل لها في الواجهة، فإذا فُرِّغ RE في صفّ كان له RE
+        /// مخزَّن بقيت AE القديمة يتيمة تُطبع وتدخل الحمولة. تُمسح هنا عند الانتقال
+        /// (RE مخزَّن غير فارغ ← وارد فارغ) فقط؛ أمّا الصفّ المخزَّن بلا RE أصلاً
+        /// (شهادات قديمة سبقت عمود RE وقد تحمل AE وحدها) فلا يُمسّ.
+        /// </summary>
+        private static void ClearStaleAbsoluteErrors(Certificate stored, Certificate incoming)
+        {
+            foreach (var row in incoming.CalibrationResults)
+            {
+                if (!string.IsNullOrWhiteSpace(row.RelativeError))
+                {
+                    continue;
+                }
+
+                var previous = stored.CalibrationResults.FirstOrDefault(r => r.Id == row.Id && row.Id != 0);
+                if (previous != null && !string.IsNullOrWhiteSpace(previous.RelativeError))
+                {
+                    row.AbsoluteRelativeError = null;
                 }
             }
         }

@@ -43,7 +43,7 @@ namespace CAL_QR.ViewModels
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             AddTypeCommand = new RelayCommand(async () => await OpenAddTypeAsync(), () => CanEdit);
             EditTypeCommand = new RelayCommand(async (p) => await OpenEditTypeAsync(p), (p) => CanEdit);
-            ViewDetailsCommand = new RelayCommand(OpenTypeDetails);
+            ViewDetailsCommand = new RelayCommand(async p => await OpenTypeDetailsAsync(p));
             DeleteCommand = new RelayCommand(async (p) => await DeleteDeviceTypeAsync(p), (p) => CanEdit);
 
             // Subscribe to search navigation
@@ -160,14 +160,14 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void OpenTypeDetails(object? parameter)
+        private async Task OpenTypeDetailsAsync(object? parameter)
         {
             if (parameter is not DeviceTypeDisplayItem item) return;
 
             var dialog = _deviceTypeDetailDialogFactory();
             if (dialog.DataContext is DeviceTypeDetailViewModel vm)
             {
-                vm.LoadDetails(item.Id);
+                await vm.LoadDetailsAsync(item.Id);
             }
             dialog.ShowDialog();
         }

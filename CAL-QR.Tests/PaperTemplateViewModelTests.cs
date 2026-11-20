@@ -138,7 +138,7 @@ namespace CAL_QR.Tests
             await repo.AddAsync(oldTemplate);
 
             var vm = new PaperTemplateViewModel(repo, Editor());
-            vm.LoadTemplate(oldTemplate.Id);
+            await vm.LoadTemplateAsync(oldTemplate.Id);
 
             Assert.Equal("Old Template", vm.TemplateName);
             Assert.Equal(0, vm.MarginRight);

@@ -51,11 +51,11 @@ namespace CAL_QR.ViewModels
 
         public ICommand NavigateToDeviceCommand { get; }
 
-        public void LoadDetails(int deviceTypeId)
+        public async Task LoadDetailsAsync(int deviceTypeId)
         {
             try
             {
-                var t = Task.Run(async () => await _deviceTypeRepository.GetByIdAsync(deviceTypeId)).Result;
+                var t = await _deviceTypeRepository.GetByIdAsync(deviceTypeId);
                 if (t == null) return;
 
                 TypeInfo = new DeviceTypeDisplayItem
@@ -64,7 +64,7 @@ namespace CAL_QR.ViewModels
                     Name = t.Name
                 };
 
-                var devicesList = Task.Run(async () => await _deviceRepository.GetByDeviceTypeIdAsync(deviceTypeId)).Result.ToList();
+                var devicesList = (await _deviceRepository.GetByDeviceTypeIdAsync(deviceTypeId)).ToList();
 
                 using (var context = _contextFactory.CreateDbContext())
                 {

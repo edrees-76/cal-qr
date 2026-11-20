@@ -104,10 +104,10 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        public void LoadTemplate(int id)
+        public async Task LoadTemplateAsync(int id)
         {
             _templateId = id;
-            var t = Task.Run(async () => await _templateRepository.GetByIdAsync(id)).Result;
+            var t = await _templateRepository.GetByIdAsync(id);
             if (t != null)
             {
                 TemplateName = t.TemplateName;

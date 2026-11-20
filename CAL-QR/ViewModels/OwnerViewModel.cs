@@ -43,7 +43,7 @@ namespace CAL_QR.ViewModels
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             AddOwnerCommand = new RelayCommand(async () => await OpenAddOwnerAsync(), () => CanEdit);
             EditOwnerCommand = new RelayCommand(async (p) => await OpenEditOwnerAsync(p), (p) => CanEdit);
-            ViewDetailsCommand = new RelayCommand(OpenOwnerDetails);
+            ViewDetailsCommand = new RelayCommand(async p => await OpenOwnerDetailsAsync(p));
             DeleteCommand = new RelayCommand(async (p) => await DeleteOwnerAsync(p), (p) => CanEdit);
 
             // Subscribe to search navigation
@@ -167,14 +167,14 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void OpenOwnerDetails(object? parameter)
+        private async Task OpenOwnerDetailsAsync(object? parameter)
         {
             if (parameter is not OwnerDisplayItem item) return;
 
             var dialog = _ownerDetailDialogFactory();
             if (dialog.DataContext is OwnerDetailViewModel vm)
             {
-                vm.LoadDetails(item.Id);
+                await vm.LoadDetailsAsync(item.Id);
             }
             dialog.ShowDialog();
         }

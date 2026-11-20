@@ -235,6 +235,20 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public async Task ExplicitPlusInRelativeError_IsDroppedFromTheDerivedAbsoluteError()
+        {
+            using var harness = new Harness("plus-re");
+
+            var certificate = NewCertificate(harness.CalibrationRecordId);
+            certificate.CalibrationResults.Single().RelativeError = "+3.70";
+            string number = await harness.Repository.AddAsync(certificate);
+
+            var stored = await harness.Repository.GetByCertificateNumberAsync(number);
+            Assert.Equal("+3.70", stored!.CalibrationResults.Single().RelativeError);
+            Assert.Equal("3.70", stored.CalibrationResults.Single().AbsoluteRelativeError);
+        }
+
+        [Fact]
         public async Task ClearingRelativeError_AlsoClearsTheDerivedAbsoluteError()
         {
             using var harness = new Harness("clear-re");

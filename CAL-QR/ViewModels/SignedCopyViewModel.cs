@@ -38,8 +38,8 @@ namespace CAL_QR.ViewModels
             _auditLogRepository = auditLogRepository;
             _contextFactory = contextFactory;
 
-            AddSignedCopyCommand = new RelayCommand(async () => await AddSignedCopyAsync());
-            RemoveSignedCopyCommand = new RelayCommand(async (param) => await RemoveSignedCopyAsync(param));
+            AddSignedCopyCommand = new AsyncRelayCommand(async () => await AddSignedCopyAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
+            RemoveSignedCopyCommand = new AsyncRelayCommand(async (param) => await RemoveSignedCopyAsync(param), onError: AsyncRelayCommand.ShowUnexpectedError);
             CloseCommand = new RelayCommand(Close);
         }
 

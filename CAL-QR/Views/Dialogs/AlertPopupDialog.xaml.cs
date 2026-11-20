@@ -12,10 +12,18 @@ namespace CAL_QR.Views.Dialogs
 
         private async void ShowDetailsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DataContext is MainViewModel vm)
+            // معالج حدث (async void لا مفرّ منه): يُلتقط الاستثناء ويُسجَّل، ويُغلق الحوار دائماً.
+            try
             {
-                await vm.AcknowledgeAllExpiredDevicesAsync();
-                vm.SelectedTabIndex = MainViewModel.TabIndexDashboard;
+                if (DataContext is MainViewModel vm)
+                {
+                    await vm.AcknowledgeAllExpiredDevicesAsync();
+                    vm.SelectedTabIndex = MainViewModel.TabIndexDashboard;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                CAL_QR.Services.AppLog.Error("AlertPopupDialog.ShowDetails", ex);
             }
             Close();
         }

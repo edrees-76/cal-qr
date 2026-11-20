@@ -65,8 +65,8 @@ namespace CAL_QR.ViewModels
             _auditLogRepository = auditLogRepository;
             _currentUserService = currentUserService;
 
-            ExportCommand = new RelayCommand(async () => await ExportAsync(), CanExport);
-            ExportPerformanceCommand = new RelayCommand(async () => await ExportPerformanceAsync(), CanExportPerformance);
+            ExportCommand = new AsyncRelayCommand(async () => await ExportAsync(), CanExport, onError: AsyncRelayCommand.ShowUnexpectedError);
+            ExportPerformanceCommand = new AsyncRelayCommand(async () => await ExportPerformanceAsync(), CanExportPerformance, onError: AsyncRelayCommand.ShowUnexpectedError);
 
             _ = InitializeDataAsync();
         }
@@ -228,7 +228,7 @@ namespace CAL_QR.ViewModels
             set
             {
                 if (SetProperty(ref _matchingCount, value))
-                    (ExportCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                    (ExportCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 

@@ -54,7 +54,7 @@ namespace CAL_QR.ViewModels
 
             Printers = new ObservableCollection<string>(_printService.GetAvailablePrinters());
             
-            PrintCommand = new RelayCommand(Print);
+            PrintCommand = new AsyncRelayCommand(PrintAsync, onError: AsyncRelayCommand.ShowUnexpectedError);
         }
 
         #region Properties
@@ -288,7 +288,7 @@ namespace CAL_QR.ViewModels
                 BatchItems[i].QrImage = _printService.RenderLabelPreview(_previewJobs[i], SelectedTemplate);
         }
 
-        private async void Print()
+        private async Task PrintAsync()
         {
             if (CalibrationRecords.Count == 0 || SelectedTemplate == null) return;
 

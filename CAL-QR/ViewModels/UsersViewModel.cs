@@ -41,11 +41,11 @@ namespace CAL_QR.ViewModels
             _userFormDialogFactory = userFormDialogFactory;
             _currentUserService = currentUserService;
 
-            AddUserCommand = new RelayCommand(async () => await OpenAddUserAsync(), () => CanEdit);
-            EditUserCommand = new RelayCommand(async (p) => await OpenEditUserAsync(p), (p) => CanEdit);
-            ToggleActiveCommand = new RelayCommand(async (p) => await ToggleActiveAsync(p), (p) => CanEdit && !_isSaving);
-            FilterCommand = new RelayCommand(async () => await ApplyFiltersAsync());
-            ClearCommand = new RelayCommand(async () => await ClearFiltersAsync());
+            AddUserCommand = new AsyncRelayCommand(async () => await OpenAddUserAsync(), () => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            EditUserCommand = new AsyncRelayCommand(async (p) => await OpenEditUserAsync(p), (p) => CanEdit, onError: AsyncRelayCommand.ShowUnexpectedError);
+            ToggleActiveCommand = new AsyncRelayCommand(async (p) => await ToggleActiveAsync(p), (p) => CanEdit && !_isSaving, onError: AsyncRelayCommand.ShowUnexpectedError);
+            FilterCommand = new AsyncRelayCommand(async () => await ApplyFiltersAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
+            ClearCommand = new AsyncRelayCommand(async () => await ClearFiltersAsync(), onError: AsyncRelayCommand.ShowUnexpectedError);
 
             _ = LoadUsersAsync();
             _ = LoadAuditLogsAsync();
@@ -285,7 +285,7 @@ namespace CAL_QR.ViewModels
             }
 
             _isSaving = true;
-            (ToggleActiveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+            (ToggleActiveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
 
             try
             {
@@ -311,7 +311,7 @@ namespace CAL_QR.ViewModels
             finally
             {
                 _isSaving = false;
-                (ToggleActiveCommand as RelayCommand)?.RaiseCanExecuteChanged();
+                (ToggleActiveCommand as AsyncRelayCommand)?.RaiseCanExecuteChanged();
             }
         }
 

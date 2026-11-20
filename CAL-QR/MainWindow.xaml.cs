@@ -174,16 +174,25 @@ namespace CAL_QR
             // ونوافذ الحوار تستعمله مالكاً لها، فيُضبط صراحةً على النافذة الرئيسيّة الحيّة.
             Application.Current.MainWindow = this;
 
-            await _viewModel.CheckAlertsAsync();
-            if (_viewModel.ShouldShowAlertPopup)
+            // معالج حدث (async void لا مفرّ منه): الجسم كلّه داخل try حتى لا يخرج
+            // استثناء إلى الـDispatcher فينهار التطبيق عند فتح النافذة الرئيسيّة.
+            try
             {
-                var popup = App.ServiceProvider.GetRequiredService<Views.Dialogs.AlertPopupDialog>();
-                popup.Owner = this;
-                popup.DataContext = _viewModel;
-                popup.ShowDialog();
-            }
+                await _viewModel.CheckAlertsAsync();
+                if (_viewModel.ShouldShowAlertPopup)
+                {
+                    var popup = App.ServiceProvider.GetRequiredService<Views.Dialogs.AlertPopupDialog>();
+                    popup.Owner = this;
+                    popup.DataContext = _viewModel;
+                    popup.ShowDialog();
+                }
 
-            await ShowDeviceTypeSeedNoticeAsync();
+                await ShowDeviceTypeSeedNoticeAsync();
+            }
+            catch (Exception ex)
+            {
+                CAL_QR.Services.AppLog.Error("MainWindow_Loaded", ex);
+            }
         }
 
         /// <summary>

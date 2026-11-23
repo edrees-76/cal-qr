@@ -14,6 +14,12 @@ namespace CAL_QR.Services
     {
         private const double MmToPx = 3.7795;
 
+        // نفس مسار CairoFont في App.xaml (Cairo.ttf مضمَّن كـResource).
+        private static readonly Lazy<FontFamily> _embeddedCairo = new(() =>
+            new FontFamily(new Uri("pack://application:,,,/CAL-QR;component/Assets/Fonts/"), "./#Cairo"));
+
+        private static FontFamily EmbeddedCairo => _embeddedCairo.Value;
+
         public IEnumerable<string> GetAvailablePrinters()
         {
             try
@@ -117,8 +123,10 @@ namespace CAL_QR.Services
             double widthPx = (double)template.LabelWidthMm * MmToPx;
             double heightPx = (double)template.LabelHeightMm * MmToPx;
 
-            var typefaceBold = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
-            var typefaceRegular = new Typeface(new FontFamily("Cairo"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+            // UX-05: الخطّ المضمَّن في التطبيق (نفس مورد الواجهة CairoFont) لا خطّ النظام،
+            // فلا تختلف الطباعة على جهاز لا يحمل Cairo.
+            var typefaceBold = new Typeface(EmbeddedCairo, FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
+            var typefaceRegular = new Typeface(EmbeddedCairo, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
             var brushDark = Brushes.Black;
             var brushBody = Brushes.DarkSlateGray;
 

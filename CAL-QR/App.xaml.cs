@@ -155,9 +155,8 @@ namespace CAL_QR
                 string details = "رُفع عدّاد الشهادات إلى حدّه المحفوظ خارج القاعدة: " +
                     string.Join("، ", raises.Select(r => $"سنة {r.Year}: من {r.From} إلى {r.To}"));
                 AppLog.Warn(details);
-                var audit = ServiceProvider.GetRequiredService<IAuditLogRepository>();
-                System.Threading.Tasks.Task.Run(() => audit.LogAsync("رفع عدّاد الشهادات", "نظام", "CertificateSequence", details))
-                    .GetAwaiter().GetResult();
+                // فشل التدقيق هنا لا يعني فشل الحماية (الرفع طُبِّق وسُجّل أعلاه)، فلا يصل إلى catch أدناه.
+                CertificateCounterFloor.TryLogRaise(ServiceProvider.GetRequiredService<IAuditLogRepository>(), details);
             }
             catch (Exception ex)
             {

@@ -350,7 +350,8 @@ namespace CAL_QR.ViewModels
                     await _auditLogRepository.LogAsync("طباعة متعددة ملصقات QR", "Devices", "", $"طباعة رمز الاستجابة السريعة للشهادات: {certNumbers}");
                 }
 
-                SaveSettings();
+                // الطباعة تمّت: فشل حفظ آخر طابعة/قالب يُسجَّل ولا يُعرض «خطأ أثناء الطباعة».
+                await TrySaveLastPrintSettingsAsync(_contextFactory, SelectedPrinter, SelectedTemplate?.Id);
 
                 MessageBox.Show("تم إرسال أمر الطباعة بنجاح.", "تمت الطباعة", MessageBoxButton.OK, MessageBoxImage.Information);
                 CloseWindowAction?.Invoke();
@@ -361,23 +362,33 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void SaveSettings()
+        /// <summary>
+        /// يحفظ آخر طابعة وقالب لتُختارا في الطباعة التالية. كان إطلاقاً بلا انتظار (Task.Run)
+        /// فيضيع فشله بلا أثر، ويقرأ الخصائص من خيط آخر بعد إغلاق النافذة. القيم تُمرَّر الآن من
+        /// خيط الواجهة، ويُنتظر الحفظ، وفشله يُكتب في AppLog ولا يُلقى: الطباعة نفسها نجحت.
+        /// </summary>
+        internal static async Task TrySaveLastPrintSettingsAsync(
+            IDbContextFactory<CalQrDbContext> contextFactory, string printerName, int? templateId)
         {
-            Task.Run(async () =>
+            try
             {
-                using var context = await _contextFactory.CreateDbContextAsync();
+                using var context = await contextFactory.CreateDbContextAsync();
                 var printerSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "LastPrinterName");
                 if (printerSetting != null)
                 {
-                    printerSetting.Value = SelectedPrinter;
+                    printerSetting.Value = printerName;
                 }
                 var templateSetting = await context.AppSettings.FirstOrDefaultAsync(s => s.Key == "LastTemplateId");
-                if (templateSetting != null && SelectedTemplate != null)
+                if (templateSetting != null && templateId.HasValue)
                 {
-                    templateSetting.Value = SelectedTemplate.Id.ToString();
+                    templateSetting.Value = templateId.Value.ToString();
                 }
                 await context.SaveChangesAsync();
-            });
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("PrintPreview: saving last printer/template failed after a successful print", ex);
+            }
         }
 
         public Action? CloseWindowAction { get; set; }

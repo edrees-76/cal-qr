@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -101,7 +102,7 @@ namespace CAL_QR.ViewModels
 
             SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave, AsyncRelayCommand.ShowUnexpectedError);
             AddAttachmentCommand = new RelayCommand(AddAttachment);
-            RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
+            RemoveAttachmentCommand = new AsyncRelayCommand(RemoveAttachmentAsync, null, AsyncRelayCommand.ShowUnexpectedError);
             IssueCertificateCommand = new AsyncRelayCommand(IssueCertificateAsync, () => CanIssueCertificate, AsyncRelayCommand.ShowUnexpectedError);
             IssueStatusReportCommand = new AsyncRelayCommand(IssueStatusReportAsync, () => CanIssueStatusReport, AsyncRelayCommand.ShowUnexpectedError);
             // شرط وجود لا شرط صلاحيّة — عن قصد. هذا الحوار لا يُفتح إلّا من
@@ -630,33 +631,57 @@ namespace CAL_QR.ViewModels
             }
         }
 
+        private CancellationTokenSource? _serialCheckCts;
+
+        /// <summary>آخر فحص تكرار للرقم التسلسليّ (للاختبارات؛ لا يرمي أبداً).</summary>
+        public Task SerialCheckTask { get; private set; } = Task.CompletedTask;
+
         private void CheckSerialNumberDuplicate()
         {
             SerialNumberWarning = string.Empty;
+
+            // كلّ تغيير يُلغي الفحص السابق: نتيجته المتأخّرة لا تُطبَّق على رقم تغيّر.
+            _serialCheckCts?.Cancel();
             if (string.IsNullOrWhiteSpace(SerialNumber) || _isEditMode) return;
 
-            Task.Run(async () =>
+            // الرقم تغيّر والفحص الجديد لم يعد بعد: لا يبقى معرّف جهاز قديم يستعمله
+            // الحفظ. مع _deviceId = 0 يبحث الحفظ بالرقم نفسه وقت الحفظ (آمن).
+            _deviceId = 0;
+
+            var cts = new CancellationTokenSource();
+            _serialCheckCts = cts;
+            SerialCheckTask = CheckSerialNumberDuplicateAsync(SerialNumber.Trim(), cts.Token);
+        }
+
+        private async Task CheckSerialNumberDuplicateAsync(string serialNumber, CancellationToken ct)
+        {
+            try
             {
-                var existing = await _deviceRepository.GetBySerialNumberAsync(SerialNumber.Trim());
+                var existing = await _deviceRepository.GetBySerialNumberAsync(serialNumber);
+                if (ct.IsCancellationRequested) return;
+
                 if (existing != null)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        SerialNumberWarning = $"تنبيه: هذا الرقم التسلسلي مسجل مسبقاً لجهاز {existing.Model} تابع لجهة {existing.Owner?.Name}. سيتم ربط المعايرة به.";
-                        _deviceId = existing.Id;
-                        SelectedOwner = Owners.FirstOrDefault(o => o.Id == existing.OwnerId);
-                        SelectedDeviceType = DeviceTypes.FirstOrDefault(t => t.Id == existing.DeviceTypeId);
-                        Model = existing.Model;
-                    });
+                    SerialNumberWarning = $"تنبيه: هذا الرقم التسلسلي مسجل مسبقاً لجهاز {existing.Model} تابع لجهة {existing.Owner?.Name}. سيتم ربط المعايرة به.";
+                    _deviceId = existing.Id;
+                    SelectedOwner = Owners.FirstOrDefault(o => o.Id == existing.OwnerId);
+                    SelectedDeviceType = DeviceTypes.FirstOrDefault(t => t.Id == existing.DeviceTypeId);
+                    Model = existing.Model;
                 }
                 else
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        _deviceId = 0;
-                    });
+                    _deviceId = 0;
                 }
-            });
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error("CheckSerialNumberDuplicate", ex);
+                if (!ct.IsCancellationRequested)
+                {
+                    _deviceId = 0;
+                    SerialNumberWarning = "تعذّر فحص تكرار الرقم التسلسلي الآن؛ سيُتحقَّق منه عند الحفظ.";
+                }
+            }
         }
 
         public async Task LoadForEdit(int recordId)
@@ -1173,19 +1198,44 @@ namespace CAL_QR.ViewModels
             }
         }
 
-        private void RemoveAttachment(object? parameter)
+        private async Task RemoveAttachmentAsync(object? parameter)
         {
             if (parameter is not AttachmentItem item) return;
 
             var result = MessageBox.Show($"هل أنت متأكد من حذف المرفق '{item.FileName}'؟", "تأكيد حذف المرفق", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No, MessageBoxOptions.RightAlign | MessageBoxOptions.RtlReading);
             if (result == MessageBoxResult.Yes)
             {
-                Attachments.Remove(item);
-                if (item.IsSaved && item.Id > 0)
+                var removed = await TryRemoveAttachmentAsync(item);
+                if (!removed)
                 {
-                    Task.Run(async () => await _attachmentRepository.DeleteAsync(item.Id));
+                    MessageBox.Show($"تعذّر حذف المرفق '{item.FileName}'. لم يُحذف المرفق.", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        /// <summary>
+        /// الحذف الفعليّ بعد التأكيد. المرفق المحفوظ يُحذف من القاعدة أوّلاً وبالانتظار،
+        /// ولا يُزال من القائمة المعروضة إلّا بعد نجاح الحذف: فشله يُسجَّل ويُرجَع false
+        /// ويبقى المرفق ظاهراً، بدل أن يبدو محذوفاً ثمّ يعود عند فتح السجلّ.
+        /// المرفق غير المحفوظ بعد لا صفّ له في القاعدة فيُزال من القائمة مباشرة.
+        /// </summary>
+        public async Task<bool> TryRemoveAttachmentAsync(AttachmentItem item)
+        {
+            if (item.IsSaved && item.Id > 0)
+            {
+                try
+                {
+                    await _attachmentRepository.DeleteAsync(item.Id);
+                }
+                catch (Exception ex)
+                {
+                    AppLog.Error("RemoveAttachment", ex);
+                    return false;
+                }
+            }
+
+            Attachments.Remove(item);
+            return true;
         }
 
         private async Task SaveAttachmentsAsync()

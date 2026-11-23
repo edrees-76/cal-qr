@@ -137,7 +137,7 @@ namespace CAL_QR.Views.Dialogs
             }
         }
 
-        private void NewTemplate_Click(object sender, RoutedEventArgs e)
+        private async void NewTemplate_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new PaperTemplateDialog();
             dialog.Owner = this;
@@ -145,11 +145,18 @@ namespace CAL_QR.Views.Dialogs
 
             if (_viewModel != null)
             {
-                Task.Run(async () =>
+                // التحميل على خيط الواجهة بالانتظار: مجموعات الـVM مرتبطة بالواجهة، وأيّ خطأ
+                // يُسجَّل ويُعرض بدل أن يضيع في مهمّة غير مراقَبة.
+                try
                 {
                     await _viewModel.LoadDataAsync(_calibrationRecordIds);
-                    Dispatcher.Invoke(() => RedrawGrid());
-                });
+                    RedrawGrid();
+                }
+                catch (Exception ex)
+                {
+                    CAL_QR.Services.AppLog.Error("BatchPrintPreviewDialog.NewTemplate", ex);
+                    MessageBox.Show($"تعذّر تحديث المعاينة بعد إضافة القالب: {ex.Message}", "خطأ", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 

@@ -133,6 +133,7 @@ namespace CAL_QR.ViewModels
             CalibrationResults.CollectionChanged += (_, _) => MarkDirty();
             NuclideSummaries.CollectionChanged += (_, _) => MarkDirty();
             UncertaintyComponents.CollectionChanged += (_, _) => MarkDirty();
+            UncertaintyComponents.CollectionChanged += (_, _) => RunTemplateConsistencyChecks();
             FunctionalChecks.CollectionChanged += (_, _) => MarkDirty();
         }
 
@@ -550,7 +551,11 @@ namespace CAL_QR.ViewModels
         public bool UncertaintyEnabled
         {
             get => _uncertaintyEnabled;
-            set => SetProperty(ref _uncertaintyEnabled, value);
+            set
+            {
+                if (SetProperty(ref _uncertaintyEnabled, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         public ObservableCollection<CertificateUncertaintyComponent> UncertaintyComponents { get; }
@@ -560,21 +565,33 @@ namespace CAL_QR.ViewModels
         public string CombinedUncertainty
         {
             get => _combinedUncertainty;
-            set => SetProperty(ref _combinedUncertainty, value);
+            set
+            {
+                if (SetProperty(ref _combinedUncertainty, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _expandedUncertainty = string.Empty;
         public string ExpandedUncertainty
         {
             get => _expandedUncertainty;
-            set => SetProperty(ref _expandedUncertainty, value);
+            set
+            {
+                if (SetProperty(ref _expandedUncertainty, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         private string _coverageFactor = string.Empty;
         public string CoverageFactor
         {
             get => _coverageFactor;
-            set => SetProperty(ref _coverageFactor, value);
+            set
+            {
+                if (SetProperty(ref _coverageFactor, value))
+                    RunTemplateConsistencyChecks();
+            }
         }
 
         #endregion
@@ -874,6 +891,19 @@ namespace CAL_QR.ViewModels
             if (sourceWarning != null)
             {
                 TemplateWarnings.Add(new TemplateWarning { Message = sourceWarning });
+            }
+
+            // ── Case 0c: فحوص عدديّة غير مانعة (CALC-02 المرحلة 1): U مقابل k×uc،
+            // مجموع المساهمات، معقوليّة k، حدود القيم. تنبيه فقط، بلا إصلاح تلقائيّ. ──
+            foreach (string numericWarning in NumericConsistencyRules.Warnings(
+                         UncertaintyEnabled,
+                         CombinedUncertainty,
+                         CoverageFactor,
+                         ExpandedUncertainty,
+                         UncertaintyComponents,
+                         CalibrationResults))
+            {
+                TemplateWarnings.Add(new TemplateWarning { Message = numericWarning });
             }
 
             // ── Case 1: Radionuclide in MethodologyText vs CalibrationResults ──

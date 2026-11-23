@@ -135,6 +135,44 @@ namespace CAL_QR.Tests
         }
 
         [Fact]
+        public async Task NumericConsistency_ExpandedUncertaintyMismatch_WarnsAndClearsWhenFixed_WithoutBlocking()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+            await vm.LoadForRecord(recordId);
+
+            vm.UncertaintyEnabled = true;
+            vm.CombinedUncertainty = "0.52";
+            vm.CoverageFactor = "2";
+            vm.ExpandedUncertainty = "1.30";
+
+            Assert.Contains(vm.TemplateWarnings, w => w.Message.Contains("k × uc"));
+            // تنبيه فقط: لا أثر على القيم المكتوبة.
+            Assert.Equal("1.30", vm.ExpandedUncertainty);
+            Assert.All(vm.TemplateWarnings, w => Assert.False(w.CanAutoFix && w.Message.Contains("k × uc")));
+
+            vm.ExpandedUncertainty = "1.04";
+
+            Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("k × uc"));
+        }
+
+        [Fact]
+        public async Task NumericConsistency_UncertaintyDisabled_NoUncertaintyWarnings()
+        {
+            var (factory, recordId) = await SeedRecordAsync("Passed");
+            var vm = BuildViewModel(factory);
+            await vm.LoadForRecord(recordId);
+
+            vm.UncertaintyEnabled = false;
+            vm.CombinedUncertainty = "0.52";
+            vm.CoverageFactor = "20";
+            vm.ExpandedUncertainty = "1.30";
+
+            Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("k × uc"));
+            Assert.DoesNotContain(vm.TemplateWarnings, w => w.Message.Contains("خارج المدى المعتاد"));
+        }
+
+        [Fact]
         public async Task LoadForStatusReport_SeedsNotPerformedVerdict_NotTemplateApproval()
         {
             // Arrange

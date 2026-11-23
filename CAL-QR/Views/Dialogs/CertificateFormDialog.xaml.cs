@@ -182,6 +182,8 @@ namespace CAL_QR.Views.Dialogs
                 if (DataContext is CertificateFormViewModel vm)
                 {
                     vm.MarkDirty();
+                    // CALC-02: فحوص عدم اليقين تعتمد على خلايا هذا الجدول.
+                    vm.RunTemplateConsistencyChecks();
                 }
             }), DispatcherPriority.Background);
         }

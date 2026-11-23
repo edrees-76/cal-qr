@@ -17,6 +17,9 @@ namespace CAL_QR.Views.Dialogs
             }
         }
 
+        /// <summary>معرّف القالب الذي حُفظ في هذا الحوار، أو null إن أُغلق دون حفظ.</summary>
+        public int? SavedTemplateId => (DataContext as PaperTemplateViewModel)?.SavedTemplateId;
+
         private void Cancel_Click(object sender, RoutedEventArgs e)
         {
             Close();

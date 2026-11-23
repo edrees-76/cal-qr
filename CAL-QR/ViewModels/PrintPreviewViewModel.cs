@@ -147,12 +147,13 @@ namespace CAL_QR.ViewModels
 
         public string BatchStatusText => IsBatchMode ? $"معاينة دفعة طباعة: {CalibrationRecords.Count} ملصقات" : "معاينة ملصق فردي";
 
-        public async Task LoadDataAsync(int calibrationRecordId)
+        public async Task LoadDataAsync(int calibrationRecordId, int? preferredTemplateId = null)
         {
-            await LoadDataAsync(new List<int> { calibrationRecordId });
+            await LoadDataAsync(new List<int> { calibrationRecordId }, preferredTemplateId);
         }
 
-        public async Task LoadDataAsync(List<int> calibrationRecordIds)
+        /// <param name="preferredTemplateId">قالب يُختار صراحةً (القالب المُنشأ للتوّ)؛ الطابعة الحاليّة تبقى مختارة.</param>
+        public async Task LoadDataAsync(List<int> calibrationRecordIds, int? preferredTemplateId = null)
         {
             using (var context = await _contextFactory.CreateDbContextAsync())
             {
@@ -204,25 +205,15 @@ namespace CAL_QR.ViewModels
             using (var context = await _contextFactory.CreateDbContextAsync())
             {
                 var lastPrinter = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastPrinterName");
-                if (lastPrinter != null && !string.IsNullOrWhiteSpace(lastPrinter.Value) && Printers.Contains(lastPrinter.Value))
-                {
-                    SelectedPrinter = lastPrinter.Value;
-                }
-                else if (Printers.Count > 0)
-                {
-                    SelectedPrinter = Printers[0];
-                }
+                // الطابعة الحاليّة (اختيار المستخدم) تبقى إن كانت متاحة، وإلا المحفوظة ثمّ الأولى.
+                SelectedPrinter = PrintSelectionRules.PickPrinter(Printers, SelectedPrinter, lastPrinter?.Value);
 
                 var lastTemplateIdSetting = await context.AppSettings.AsNoTracking().FirstOrDefaultAsync(s => s.Key == "LastTemplateId");
-                if (lastTemplateIdSetting != null && int.TryParse(lastTemplateIdSetting.Value, out int tid) && tid > 0)
-                {
-                    SelectedTemplate = Templates.FirstOrDefault(t => t.Id == tid);
-                }
+                int? lastTemplateId = lastTemplateIdSetting != null && int.TryParse(lastTemplateIdSetting.Value, out int tid) && tid > 0
+                    ? tid
+                    : null;
 
-                if (SelectedTemplate == null)
-                {
-                    SelectedTemplate = Templates.FirstOrDefault(t => t.IsDefault) ?? Templates.FirstOrDefault();
-                }
+                SelectedTemplate = PrintSelectionRules.PickTemplate(Templates, preferredTemplateId, lastTemplateId);
             }
         }
 

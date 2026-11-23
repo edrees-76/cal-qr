@@ -76,6 +76,9 @@ namespace CAL_QR.ViewModels
 
         public ICommand SaveCommand { get; }
 
+        /// <summary>معرّف القالب بعد حفظ ناجح؛ null إن لم يُحفظ شيء (إلغاء أو فشل).</summary>
+        public int? SavedTemplateId { get; private set; }
+
         private void UpdateDefaultDimensions()
         {
             if (PaperType == "A4")
@@ -210,6 +213,9 @@ namespace CAL_QR.ViewModels
                 {
                     await _templateRepository.SetDefaultAsync(template.Id);
                 }
+
+                // معرّف القالب المحفوظ (يملؤه EF للقالب الجديد) ليختاره مستدعي المعاينة تلقائياً.
+                SavedTemplateId = template.Id;
 
                 ShowMessageBox("تم حفظ قالب الطباعة بنجاح.", "تم الحفظ", MessageBoxButton.OK, MessageBoxImage.Information);
                 Saved?.Invoke(this, EventArgs.Empty);

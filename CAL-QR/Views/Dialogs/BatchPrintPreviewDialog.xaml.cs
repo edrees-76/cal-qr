@@ -149,7 +149,8 @@ namespace CAL_QR.Views.Dialogs
                 // يُسجَّل ويُعرض بدل أن يضيع في مهمّة غير مراقَبة.
                 try
                 {
-                    await _viewModel.LoadDataAsync(_calibrationRecordIds);
+                    // القالب المحفوظ للتوّ يُختار تلقائياً (null عند الإلغاء فيبقى الاختيار كما كان).
+                    await _viewModel.LoadDataAsync(_calibrationRecordIds, dialog.SavedTemplateId);
                     RedrawGrid();
                 }
                 catch (Exception ex)

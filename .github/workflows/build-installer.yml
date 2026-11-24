@@ -34,10 +34,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET 8
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
@@ -124,7 +124,7 @@ jobs:
           if (-not (Test-Path "C:\ProgramData\CAL-QR\cal-qr.db")) { throw "User database was deleted by the uninstaller." }
 
       - name: Upload Installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.hash.outputs.name }}
           path: |
